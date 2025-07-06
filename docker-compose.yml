@@ -1,0 +1,20 @@
+services:
+  frontend:
+    container_name: od-frontend
+    build:
+      target: runner
+      context: .
+    restart: always
+    ports:
+      - 3000:3000
+  frontend-local:
+    extends:
+      service: frontend
+    build:
+      target: dev
+      context: .
+    volumes:
+      - .:/app
+      - /app/node_modules
+    ports:
+      - 3000:3000
