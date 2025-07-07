@@ -15,6 +15,7 @@ const eslintConfig = [
   ...compat.extends('next/core-web-vitals', 'next/typescript'),
   eslintConfigPrettier,
   {
+    ignores: ['./.next/**/*.ts', './.next/**/*.js'],
     rules: {
       ...reactHooksPlugin.configs.recommended.rules,
       'react/prop-types': 'off',
@@ -52,8 +53,6 @@ const eslintConfig = [
       'react/jsx-fragments': ['warn', 'syntax'],
       'react/self-closing-comp': ['warn'],
       '@typescript-eslint/no-namespace': 'off',
-      'import/no-default-export': 'error',
-      'import/prefer-default-export': 'off',
       'import/no-cycle': 'error',
       'import/extensions': [
         'error',
@@ -75,6 +74,7 @@ const eslintConfig = [
           },
         },
       ],
+      'import/no-default-export': 'off',
       'no-plusplus': 'error',
       curly: ['error', 'all'],
       camelcase: 'error',
