@@ -1,15 +1,18 @@
-import { Geist, Geist_Mono as GeistMono } from 'next/font/google';
+import { PT_Sans as PTSans, PT_Sans_Narrow as PtSansNarrow } from 'next/font/google';
+import { RadixProvider } from '@/ui/theme';
 import type { Metadata } from 'next';
-import './globals.css';
 
-const geistSans = Geist({
-  variable: '--font-geist-sans',
-  subsets: ['latin'],
+// TODO: install local fonts
+const ptSans = PTSans({
+  variable: '--font-pt-sans',
+  subsets: ['cyrillic', 'latin'],
+  weight: ['400', '700'],
 });
 
-const geistMono = GeistMono({
-  variable: '--font-geist-mono',
-  subsets: ['latin'],
+const ptSansNarrow = PtSansNarrow({
+  variable: '--font-pt-sans-narrow',
+  subsets: ['cyrillic', 'latin'],
+  weight: ['700'],
 });
 
 export const metadata: Metadata = {
@@ -23,7 +26,9 @@ const RootLayout = ({
   children: React.ReactNode;
 }>) => (
   <html lang="ru">
-    <body className={`${geistSans.variable} ${geistMono.variable}`}>{children}</body>
+    <body className={`${ptSansNarrow.variable} ${ptSans.variable}`}>
+      <RadixProvider>{children}</RadixProvider>
+    </body>
   </html>
 );
 

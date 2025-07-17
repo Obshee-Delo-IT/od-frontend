@@ -1,0 +1,82 @@
+.radix-themes {
+  --cursor-button: pointer;
+  --cursor-disabled: not-allowed;
+
+  --white: #fff;
+
+  --red-1: #ffeaea;
+  --red-2: #ffcfcf;
+  --red-3: #ffb2b2;
+  --red-4: #ff8686;
+  --red-5: #f55555;
+  --red-6: #d83030;
+  --red-7: #be1710;
+  --red-8: #ae0a04;
+  --red-9: #8a0703;
+  --red-10: #5c0302;
+
+  --gray-1: #f9fafb;
+  --gray-2: #f2f4f7;
+  --gray-3: #e4e7ec;
+  --gray-4: #ced2da;
+  --gray-5: #97a1af;
+  --gray-6: #637083;
+  --gray-7: #414e62;
+  --gray-8: #344051;
+  --gray-9: #202b37;
+  --gray-10: #141c24;
+
+  --default-font-family: 'PT Sans', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+
+  --font-size-1: calc(12px * var(--scaling));
+  --font-size-2: calc(14px * var(--scaling));
+  --font-size-3: calc(16px * var(--scaling));
+  --font-size-4: calc(18px * var(--scaling));
+  --font-size-5: calc(22px * var(--scaling));
+  --font-size-6: calc(24px * var(--scaling));
+  --font-size-7: calc(28px * var(--scaling));
+  --font-size-8: calc(32px * var(--scaling));
+  --font-size-9: calc(48px * var(--scaling));
+
+  --line-height-1: calc(140% * var(--scaling));
+  --line-height-2: calc(140% * var(--scaling));
+  --line-height-3: calc(140% * var(--scaling));
+  --line-height-4: calc(140% * var(--scaling));
+  --line-height-5: calc(140% * var(--scaling));
+  --line-height-6: calc(140% * var(--scaling));
+  --line-height-7: calc(120% * var(--scaling));
+  --line-height-8: calc(130% * var(--scaling));
+  --line-height-9: calc(120% * var(--scaling));
+
+  --letter-spacing-1: 0%;
+  --letter-spacing-2: 0%;
+  --letter-spacing-3: 0%;
+  --letter-spacing-4: 0%;
+  --letter-spacing-5: 0%;
+  --letter-spacing-6: 0%;
+  --letter-spacing-7: 0%;
+  --letter-spacing-8: 0%;
+  --letter-spacing-9: 2%;
+
+  --default-line-height: 140%;
+}
+
+.rt-BaseButton:where(.rt-variant-solid) {
+  background-color: var(--accent-8);
+}
+
+@media (hover: hover) {
+  .rt-BaseButton:where(.rt-variant-solid):where(:hover) {
+    background-color: var(--accent-10);
+  }
+}
+
+.rt-BaseButton:where(.rt-variant-solid):where([data-disabled]) {
+  color: var(--white);
+  background-color: var(--red-3);
+}
+
+.rt-Text:where(.rt-r-size-9),
+.rt-Heading:where(.rt-r-size-9) {
+  font-family: 'PT Sans Narrow', 'PT Sans', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+}
