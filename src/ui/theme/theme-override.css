@@ -1,5 +1,13 @@
 .radix-themes {
   --cursor-button: pointer;
+  --cursor-checkbox: pointer;
+  --cursor-disabled: default;
+  --cursor-link: pointer;
+  --cursor-menu-item: pointer;
+  --cursor-radio: pointer;
+  --cursor-slider-thumb: grab;
+  --cursor-slider-thumb-active: grabbing;
+  --cursor-switch: pointer;
   --cursor-disabled: not-allowed;
 
   --white: #fff;
@@ -76,7 +84,71 @@
   background-color: var(--red-3);
 }
 
+.rt-BaseButton:where(.rt-variant-outline) {
+  /* background-color: transparent; */
+  color: var(--red-8);
+  box-shadow: inset 0 0 0 1px var(--red-8);
+}
+
+@media (hover: hover) {
+  .rt-BaseButton:where(.rt-variant-outline):where(:hover) {
+    bacground-color: var(--red-1);
+    color: var(--red-10);
+    box-shadow: inset 0 0 0 1px var(--red-10);
+  }
+}
+
+.rt-BaseButton:where(.rt-variant-outline):where([data-disabled]) {
+  color: var(--red-3);
+  box-shadow: inset 0 0 0 1px var(--red-3);
+}
+
+.rt-BaseButton:where(.rt-variant-soft, .rt-variant-ghost) {
+  color: var(--red-8);
+  background: transparent;
+}
+
+@media (hover: hover) {
+  .rt-BaseButton:where(.rt-variant-soft, .rt-variant-ghost):where(:hover) {
+    background-color: var(--red-1);
+    color: var(--red-10);
+  }
+}
+
+.rt-BaseButton:where(.rt-variant-soft, .rt-variant-ghost):where([data-disabled]) {
+  color: var(--red-3);
+  box-shadow: inset 0 0 0 1px var(--red-3);
+}
+
+.rt-BaseButton:where(.rt-r-size-3) {
+  padding-left: 20px;
+  padding-right: 20px;
+}
+
+.rt-BaseButton:where(.rt-r-size-2) {
+  padding-left: var(--space-4);
+  padding-right: var(--space-4);
+}
+
+.rt-Text:where([data-accent-color]) {
+  color: var(--red-8);
+}
+
+.rt-Text:where([data-accent-color='gray']) {
+  color: var(--gray-9);
+}
+
 .rt-Text:where(.rt-r-size-9),
 .rt-Heading:where(.rt-r-size-9) {
   font-family: 'PT Sans Narrow', 'PT Sans', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+}
+
+@media (hover: hover) {
+  .rt-Link:where(:any-link, button):where(:hover) {
+    color: var(--red-10);
+  }
+}
+
+.rt-Link:where(:any-link, button):where(:active) {
+  color: var(--red-8);
 }
