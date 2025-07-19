@@ -1,4 +1,5 @@
 import { Button, Text } from '@radix-ui/themes';
+import { Link } from '@/ui/components/Link';
 
 const Home = async () => {
   const a = await fetch('https://od-dev.tmweb.ru/wp-json/wp/v2/posts', {
@@ -16,13 +17,16 @@ const Home = async () => {
           <div>{title?.rendered}</div>
         </div>
       ))}
-      <Button size="4">Button</Button>
-      <Button size="3">Button</Button>
-      <Button size="2">Button</Button>
-      <Button size="2" disabled>
-        Button
-      </Button>
       <Button size="1">Button</Button>
+      <Button size="2">Button</Button>
+      <Button size="3">Button</Button>
+      <Button size="4">Button</Button>
+
+      <Link href="fsdd">fdsfds</Link>
+      <Link href="fsdd" color="white" leftIcon={1} rightIcon={2}>
+        fds
+      </Link>
+
       <div>
         <Text size="9">9</Text>
         <Text size="8">8</Text>
