@@ -4,7 +4,7 @@ import NextLink, { LinkProps as NextLinkProps } from 'next/link';
 import { PropsWithChildren, ReactNode } from 'react';
 import css from './Link.module.css';
 
-interface LinkProps extends Omit<NextLinkProps, 'passHref'>, Pick<RadixLinkProps, 'size'> {
+interface LinkProps extends Omit<NextLinkProps, 'passHref'>, Omit<RadixLinkProps, 'href' | 'color' | 'asChild'> {
   color?: 'red' | 'gray' | 'white';
   leftIcon?: ReactNode;
   rightIcon?: ReactNode;
@@ -16,24 +16,27 @@ export const Link: React.FC<PropsWithChildren<LinkProps>> = ({
   children,
   leftIcon,
   rightIcon,
+  href,
   ...props
 }) => {
   const mappedColor = color !== 'white' ? color : undefined;
 
   return (
-    <NextLink {...props} passHref legacyBehavior>
-      <RadixLink
-        underline="none"
-        size={size}
-        color={mappedColor}
-        className={clsx(css.link, {
-          [css.whiteLink]: color === 'white',
-        })}
-      >
+    <RadixLink
+      underline="none"
+      size={size}
+      color={mappedColor}
+      className={clsx(css.link, {
+        [css.whiteLink]: color === 'white',
+      })}
+      asChild
+      {...props}
+    >
+      <NextLink href={href} {...props}>
         {!!leftIcon && <span>{leftIcon}</span>}
         {children}
         {!!rightIcon && <span>{rightIcon}</span>}
-      </RadixLink>
-    </NextLink>
+      </NextLink>
+    </RadixLink>
   );
 };
