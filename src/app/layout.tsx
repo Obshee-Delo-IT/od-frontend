@@ -1,6 +1,7 @@
 import { PT_Sans as PTSans, PT_Sans_Narrow as PtSansNarrow } from 'next/font/google';
 import { RadixProvider } from '@/ui/theme';
 import type { Metadata } from 'next';
+import '@/ui/styles/global.css';
 
 // TODO: install local fonts
 const ptSans = PTSans({
@@ -25,7 +26,7 @@ const RootLayout = ({
 }: Readonly<{
   children: React.ReactNode;
 }>) => (
-  <html lang="ru">
+  <html lang="ru" className="rt-reset">
     <body className={`${ptSansNarrow.variable} ${ptSans.variable}`}>
       <RadixProvider>{children}</RadixProvider>
     </body>

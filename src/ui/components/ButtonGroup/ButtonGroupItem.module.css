@@ -1,0 +1,93 @@
+.item {
+  position: relative;
+}
+
+.content {
+  position: absolute;
+  left: -30px;
+  top: 54px;
+  width: 235px;
+  max-width: 235px;
+  padding: 20px 25px;
+  box-shadow: var(--shadow-sm);
+  border-radius: var(--radius-2);
+  transition:
+    width,
+    height,
+    300ms ease;
+}
+
+.content[data-state='open'] {
+  animation: scaleIn 200ms ease;
+}
+.content[data-state='closed'] {
+  animation: scaleOut 200ms ease;
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: rotateX(-30deg) scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: rotateX(0deg) scale(1);
+  }
+}
+
+@keyframes scaleOut {
+  from {
+    opacity: 1;
+    transform: rotateX(0deg) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: rotateX(-10deg) scale(0.95);
+  }
+}
+
+.trigger {
+  padding: none;
+  border: none;
+}
+
+.base {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 10px 20px;
+  background: transparent;
+  cursor: var(--cursor-button);
+  border: 1px solid transparent;
+  border-radius: var(--radius-2);
+  color: var(--white);
+  transition: 0.2s ease;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+}
+
+.base[data-state='open'] .icon {
+  transform: rotate(-180deg);
+}
+
+.baseActive {
+  background-color: var(--red-6);
+  border-color: var(--red-6);
+}
+
+.base:hover,
+.base:active {
+  border-color: var(--red-5);
+  background-color: var(--red-6);
+}
+
+.icon {
+  transition: transform 0.25s ease;
+}
+
+.icon path {
+  stroke: var(--white);
+}
