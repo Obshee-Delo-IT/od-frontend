@@ -9,6 +9,7 @@ interface ButtonGroupItem {
   id: number;
   href: string;
   text?: string;
+  active?: boolean;
   content?: SubMenuLink[];
 }
 
@@ -19,8 +20,13 @@ interface ButtonGroupProps {
 export const ButtonGroup: React.FC<ButtonGroupProps> = ({ items = [] }) => (
   <NavigationMenu className={css.root}>
     <NavigationMenuList className={css.list}>
-      {items.map(({ href, id, content, text }) => (
-        <ButtonGroupItem key={id} href={href} content={content?.length ? <ButtonGroupSubMenu links={content} /> : null}>
+      {items.map(({ href, id, content, text, active }) => (
+        <ButtonGroupItem
+          key={id}
+          href={href}
+          active={active}
+          content={content?.length ? <ButtonGroupSubMenu links={content} /> : null}
+        >
           {text}
         </ButtonGroupItem>
       ))}

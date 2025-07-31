@@ -29,7 +29,6 @@ export const ButtonGroupItem: React.FC<PropsWithChildren<ButtonGroupItemProps>> 
     <NavigationMenuTrigger asChild>
       <Text
         size="3"
-        weight="bold"
         asChild
         className={clsx(css.base, {
           [css.baseActive]: active,

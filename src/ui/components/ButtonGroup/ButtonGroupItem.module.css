@@ -76,6 +76,7 @@
 .baseActive {
   background-color: var(--red-6);
   border-color: var(--red-6);
+  font-weight: 700;
 }
 
 .base:hover,
