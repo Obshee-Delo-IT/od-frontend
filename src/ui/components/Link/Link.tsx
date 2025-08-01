@@ -14,8 +14,8 @@ export const Link: React.FC<PropsWithChildren<LinkProps>> = ({
   size,
   color = 'red',
   children,
-  leftIcon,
-  rightIcon,
+  leftIcon = null,
+  rightIcon = null,
   href,
   ...props
 }) => {
@@ -33,9 +33,9 @@ export const Link: React.FC<PropsWithChildren<LinkProps>> = ({
       {...props}
     >
       <NextLink href={href} {...props}>
-        {!!leftIcon && <span>{leftIcon}</span>}
-        {children}
-        {!!rightIcon && <span>{rightIcon}</span>}
+        {leftIcon}
+        <span>{children}</span>
+        {rightIcon}
       </NextLink>
     </RadixLink>
   );
