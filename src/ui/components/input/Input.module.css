@@ -1,0 +1,93 @@
+:global(.rt-TextFieldRoot).root {
+  --text-field-height: 48px;
+  width: 320px;
+  border-radius: 999px;
+  box-shadow: none;
+  font-size: var(--font-size-3);
+}
+
+:global(.rt-TextFieldRoot).root :global(.rt-TextFieldInput) {
+  padding: 14px 20px;
+}
+
+/* input - tone gray */
+
+:global(.rt-TextFieldRoot).inputGray {
+  --text-field-focus-color: var(--gray-6);
+  background-color: var(--white);
+  outline: none;
+  border: 1px solid var(--gray-4);
+  color: var(--gray-9);
+}
+
+:global(.rt-TextFieldRoot).inputRed :global(.rt-TextFieldInput::placeholder) {
+  color: var(--gray-6);
+}
+
+:global(.rt-TextFieldRoot).inputGray:focus-within {
+  outline: none;
+  border: 1px solid var(--gray-4);
+}
+
+:global(.rt-TextFieldRoot).inputGray:disabled {
+  background-color: var(--gray-1);
+  color: var(--gray-6);
+  outline: none;
+  border: 1px solid var(--gray-4);
+}
+
+:global(.rt-TextFieldRoot).inputGray:hover {
+  outline: none;
+  border: 1px solid var(--gray-6);
+}
+
+:global(.rt-TextFieldRoot:where(:invalid)).inputGray {
+  outline: none;
+  border: 1px solid var(--red-10);
+}
+
+/* input - tone red */
+:global(.rt-TextFieldRoot).inputRed {
+  --text-field-focus-color: var(--red-1);
+  background-color: var(--red-8);
+  outline: none;
+  border: 1px solid var(--red-1);
+  color: var(--red-1);
+}
+
+:global(.rt-TextFieldRoot).inputRed :global(.rt-TextFieldInput::placeholder) {
+  color: var(--red-1);
+}
+
+:global(.rt-TextFieldRoot).inputRed:focus-within {
+  background-color: var(--red-7);
+  outline: none;
+  border: 1px solid var(--red-4);
+}
+
+:global(.rt-TextFieldRoot).inputRed:disabled {
+  background-color: var(--red-8);
+  outline: none;
+  border: 1px solid var(--red-3);
+}
+
+:global(.rt-TextFieldRoot).inputRed:hover {
+  background-color: var(--red-5);
+  outline: none;
+  border: 1px solid var(--red-1);
+}
+
+/**/
+
+.message {
+  line-height: 20px;
+  margin-top: 4px;
+}
+
+.messageGray {
+  color: var(--gray-6);
+}
+
+.messageRed {
+  color: var(--red-1);
+}

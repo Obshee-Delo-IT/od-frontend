@@ -92,7 +92,7 @@
 
 @media (hover: hover) {
   .rt-BaseButton:where(.rt-variant-outline):where(:hover) {
-    bacground-color: var(--red-1);
+    background-color: var(--red-1);
     color: var(--red-10);
     box-shadow: inset 0 0 0 1px var(--red-10);
   }
