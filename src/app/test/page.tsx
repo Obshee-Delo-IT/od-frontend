@@ -57,6 +57,9 @@ const Home = async () => (
     <IconButton variant="solid">
       <MenuIcon />
     </IconButton>
+    <MenuIcon color="purple" />
+    <MenuIcon color="var(--red-7)" size={40} />
+    <SearchIcon size={84} color="black" />
     <IconButton variant="outline">
       <SearchIcon />
     </IconButton>
