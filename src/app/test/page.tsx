@@ -45,7 +45,13 @@ const Home = async () => (
       ]}
     />
 
-    <Accordion type="multiple" />
+    <Accordion
+      type="multiple"
+      items={[
+        { value: 1, text: 'TEST', content: <div>123</div> },
+        { value: 2, text: 'sss', href: 'fdssd', content: <div>32322</div> },
+      ]}
+    />
   </main>
 );
 
