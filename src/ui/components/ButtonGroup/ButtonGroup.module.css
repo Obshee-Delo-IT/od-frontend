@@ -1,0 +1,15 @@
+.root {
+  display: block;
+  position: relative;
+  width: 100%;
+  z-index: 1;
+}
+
+.list {
+  display: flex;
+  background-color: var(--red-8);
+  padding: 10px;
+  list-style: none;
+  margin: 0;
+  gap: var(--space-3);
+}

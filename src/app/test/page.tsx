@@ -1,4 +1,5 @@
 import { Button, Text } from '@radix-ui/themes';
+import { ButtonGroup } from '@/ui/components/ButtonGroup';
 import { Input } from '@/ui/components/input';
 import { Link } from '@/ui/components/Link';
 
@@ -28,6 +29,23 @@ const Home = async () => (
 
     <Input description="Input Default" tone="gray" message="Hint message goes here" rightIcon={1} />
     <Input description="Input Default" tone="red" message="Hint message goes here" />
+    <ButtonGroup
+      items={[
+        { href: 'fd', id: 1, text: 'ffffffff' },
+        {
+          href: 'fdsfds',
+          id: 2,
+          text: 'bbbbbbbbb',
+          content: [
+            {
+              href: 'bbb',
+              id: 1,
+              text: 'hehe',
+            },
+          ],
+        },
+      ]}
+    />
   </main>
 );
 
