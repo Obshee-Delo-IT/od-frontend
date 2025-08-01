@@ -1,4 +1,5 @@
 import { Button, Text } from '@radix-ui/themes';
+import { Accordion } from '@/ui/components/Accordion';
 import { ButtonGroup } from '@/ui/components/ButtonGroup';
 import { Link } from '@/ui/components/Link';
 
@@ -41,6 +42,14 @@ const Home = async () => (
             },
           ],
         },
+      ]}
+    />
+
+    <Accordion
+      type="multiple"
+      items={[
+        { value: 1, text: 'TEST', content: <div>123</div> },
+        { value: 2, text: 'sss', href: 'fdssd', content: <div>32322</div> },
       ]}
     />
   </main>
