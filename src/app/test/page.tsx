@@ -1,4 +1,6 @@
 import { Button, Text } from '@radix-ui/themes';
+import HexagonIcon from '@/ui/assets/icons/hexagon.svg';
+import InfoIcon from '@/ui/assets/icons/info.svg';
 import { ButtonGroup } from '@/ui/components/ButtonGroup';
 import { Input } from '@/ui/components/input';
 import { Link } from '@/ui/components/Link';
@@ -27,8 +29,21 @@ const Home = async () => (
       <Text size="1">1</Text>
     </div>
 
-    <Input description="Input Default" tone="gray" message="Hint message goes here" rightIcon={1} />
-    <Input description="Input Default" tone="red" message="Hint message goes here" />
+    <Input
+      description="Input Default"
+      tone="gray"
+      message="Hint message goes here"
+      leftIcon={<HexagonIcon />}
+      rightIcon={<InfoIcon />}
+    />
+    <Input
+      description="Input Default"
+      tone="red"
+      message="Hint message goes here"
+      leftIcon={<HexagonIcon />}
+      rightIcon={<InfoIcon />}
+    />
+
     <ButtonGroup
       items={[
         { href: 'fd', id: 1, text: 'ffffffff' },

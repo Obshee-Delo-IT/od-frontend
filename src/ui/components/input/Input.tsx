@@ -27,18 +27,34 @@ const Input = React.forwardRef<RootRef, InputProps>(
         className={clsx(css.root, {
           [css.inputGray]: tone === 'gray',
           [css.inputRed]: tone === 'red',
+          [css.errorGray]: error === true,
         })}
         ref={ref}
         {...props}
       >
-        <TextField.Slot side="left">123</TextField.Slot>
-        {rightIcon && (
-          <TextField.Slot className="zalupa" side="right">
-            {rightIcon}
+        {leftIcon && (
+          <TextField.Slot
+            className={clsx(css.icon, css.leftIcon, {
+              [css.iconGrayLeft]: tone === 'gray',
+              [css.iconRed]: tone === 'red',
+            })}
+            side="left"
+          >
+            {leftIcon}
           </TextField.Slot>
         )}
 
-        {leftIcon}
+        {rightIcon && (
+          <TextField.Slot
+            className={clsx(css.rightIcon, css.icon, {
+              [css.iconGrayRight]: tone === 'gray',
+              [css.iconRed]: tone === 'red',
+            })}
+            side="right"
+          >
+            {rightIcon}
+          </TextField.Slot>
+        )}
       </TextField.Root>
       <p
         className={clsx(css.message, {

@@ -4,9 +4,6 @@
   border-radius: 999px;
   box-shadow: none;
   font-size: var(--font-size-3);
-}
-
-:global(.rt-TextFieldRoot).root :global(.rt-TextFieldInput) {
   padding: 14px 20px;
 }
 
@@ -14,7 +11,7 @@
 
 :global(.rt-TextFieldRoot).inputGray {
   --text-field-focus-color: var(--gray-6);
-  background-color: var(--white);
+  background: var(--white);
   outline: none;
   border: 1px solid var(--gray-4);
   color: var(--gray-9);
@@ -30,7 +27,7 @@
 }
 
 :global(.rt-TextFieldRoot).inputGray:disabled {
-  background-color: var(--gray-1);
+  background: var(--gray-1);
   color: var(--gray-6);
   outline: none;
   border: 1px solid var(--gray-4);
@@ -46,10 +43,14 @@
   border: 1px solid var(--red-10);
 }
 
+.errorGray {
+  border: 1px solid var(--red-3);
+}
+
 /* input - tone red */
 :global(.rt-TextFieldRoot).inputRed {
   --text-field-focus-color: var(--red-1);
-  background-color: var(--red-8);
+  background: var(--red-8);
   outline: none;
   border: 1px solid var(--red-1);
   color: var(--red-1);
@@ -60,19 +61,19 @@
 }
 
 :global(.rt-TextFieldRoot).inputRed:focus-within {
-  background-color: var(--red-7);
+  background: var(--red-7);
   outline: none;
   border: 1px solid var(--red-4);
 }
 
 :global(.rt-TextFieldRoot).inputRed:disabled {
-  background-color: var(--red-8);
+  background: var(--red-8);
   outline: none;
   border: 1px solid var(--red-3);
 }
 
 :global(.rt-TextFieldRoot).inputRed:hover {
-  background-color: var(--red-5);
+  background: var(--red-5);
   outline: none;
   border: 1px solid var(--red-1);
 }
@@ -90,4 +91,28 @@
 
 .messageRed {
   color: var(--red-1);
+}
+
+.icon {
+  padding: 0;
+}
+
+.iconGrayRight path {
+  stroke: var(--gray-9);
+}
+
+.iconGrayLeft path {
+  stroke: var(--gray-5);
+}
+
+.iconRed path {
+  stroke: var(--red-1);
+}
+
+.rightIcon {
+  margin-left: 4px;
+}
+
+.leftIcon {
+  margin-right: 4px;
 }
