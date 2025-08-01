@@ -1,6 +1,7 @@
-import { Button, Text } from '@radix-ui/themes';
+import { Button, IconButton, Text } from '@radix-ui/themes';
 import { Accordion } from '@/ui/components/Accordion';
 import { ButtonGroup } from '@/ui/components/ButtonGroup';
+import { MenuIcon, SearchIcon, WarningIcon, CrossCircleFilledIcon } from '@/ui/components/Icons';
 import { Link } from '@/ui/components/Link';
 
 const Home = async () => (
@@ -52,6 +53,22 @@ const Home = async () => (
         { value: 2, text: 'sss', href: 'fdssd', content: <div>32322</div> },
       ]}
     />
+
+    <IconButton variant="solid">
+      <MenuIcon />
+    </IconButton>
+    <MenuIcon color="purple" />
+    <MenuIcon color="var(--red-7)" size={40} />
+    <SearchIcon size={84} color="black" />
+    <IconButton variant="outline">
+      <SearchIcon />
+    </IconButton>
+    <IconButton variant="outline">
+      <WarningIcon />
+    </IconButton>
+    <IconButton variant="outline" radius="medium">
+      <CrossCircleFilledIcon />
+    </IconButton>
   </main>
 );
 

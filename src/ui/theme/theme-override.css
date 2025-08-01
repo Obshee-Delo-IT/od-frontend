@@ -155,3 +155,11 @@
 .rt-Link:where(:any-link, button):where(:active) {
   color: var(--red-8);
 }
+
+.rt-BaseButton:active {
+  outline: none;
+}
+
+.rt-IconButton {
+  padding: 0;
+}
