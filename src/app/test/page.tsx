@@ -1,20 +1,8 @@
 import { Button, Text } from '@radix-ui/themes';
 import { ButtonGroup } from '@/ui/components/ButtonGroup';
 import { Link } from '@/ui/components/Link';
-import './style.css';
 
 const Home = async () => (
-  // const a = await fetch('https://od-dev.tmweb.ru/wp-json/wp/v2/posts', {
-  //   headers: {
-  //     Authorization: 'Basic ' + btoa(`${process.env.WP_USER}:${process.env.WP_PASSWORD}`),
-  //   },
-  // });
-  // let b: { id: number; title: { rendered: string } }[] = [];
-
-  // if (a.ok) {
-  //   b = (await a.json()) as { id: number; title: { rendered: string } }[];
-  // }
-
   <main>
     <Button size="1">Button</Button>
     <Button size="2">Button</Button>
@@ -57,4 +45,5 @@ const Home = async () => (
     />
   </main>
 );
+
 export default Home;
