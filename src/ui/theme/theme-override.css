@@ -167,3 +167,11 @@
   font-size: var(--font-size-3);
   padding: 14px 20px;
 }
+
+.rt-BaseButton:active {
+  outline: none;
+}
+
+.rt-IconButton {
+  padding: 0;
+}
