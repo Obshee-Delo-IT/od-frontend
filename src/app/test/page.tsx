@@ -38,7 +38,7 @@ const Home = async () => (
       leftIcon={<HexagonIcon />}
       rightIcon={<InfoIcon />}
       label="Label goes here"
-      disabled
+      error
     />
 
     <Input
@@ -48,7 +48,7 @@ const Home = async () => (
       leftIcon={<HexagonIcon />}
       rightIcon={<InfoIcon />}
       label="Label goes here"
-      disabled
+      error
     />
 
     <ButtonGroup

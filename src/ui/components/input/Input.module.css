@@ -19,9 +19,8 @@
   border: 1px solid var(--gray-4);
 }
 
-.grayDisabled {
+.inputGray.disabled {
   background: var(--gray-1);
-  outline: none;
   border: 1px solid var(--gray-4);
 }
 
@@ -48,14 +47,13 @@
   border: 1px solid var(--red-4);
 }
 
-.redDisabled {
+.inputRed.disabled {
   background: var(--red-8);
   color: var(--red-3);
-  outline: none;
   border: 1px solid var(--red-3);
 }
 
-.redDisabled :global(.rt-TextFieldInput::placeholder) {
+.inputRed.disabled :global(.rt-TextFieldInput::placeholder) {
   color: var(--red-3);
   -webkit-text-fill-color: var(--red-3);
 }
@@ -118,19 +116,19 @@
   margin-right: 4px;
 }
 
-.errorGray.inputGray {
+.inputGray.error {
   border: 1px solid var(--red-3);
 }
 
-.errorGray.inputGray:hover {
+.inputGray.error:hover {
   border: 1px solid var(--red-4);
 }
 
-.errorGray.inputGray:disabled {
+.inputGray.error:disabled {
   border: 1px solid var(--red-3);
 }
 
-.errorGray.inputGray .rightIcon path {
+.inputGray.error .rightIcon path {
   stroke: var(--danger-9);
 }
 
@@ -138,12 +136,12 @@
   color: var(--danger-9);
 }
 
-.errorRed.inputRed {
+.inputRed.error {
   background: var(--red-9);
   border: none;
 }
 
-.errorRed.inputRed .icon path {
+.inputRed.error .icon path {
   background: var(--danger-1);
 }
 
