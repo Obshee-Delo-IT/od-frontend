@@ -1,15 +1,4 @@
-:global(.rt-TextFieldRoot).root {
-  --text-field-height: 48px;
-  width: 320px;
-  border-radius: 999px;
-  box-shadow: none;
-  font-size: var(--font-size-3);
-  padding: 14px 20px;
-}
-
-/* input - tone gray */
-
-:global(.rt-TextFieldRoot).inputGray {
+.inputGray {
   --text-field-focus-color: var(--gray-6);
   background: var(--white);
   outline: none;
@@ -17,38 +6,32 @@
   color: var(--gray-9);
 }
 
-:global(.rt-TextFieldRoot) .errorGray {
-  border: 1px solid var(--red-3);
-}
-
-:global(.rt-TextFieldRoot).inputRed :global(.rt-TextFieldInput::placeholder) {
+.inputGray::placeholder {
   color: var(--gray-6);
 }
 
-:global(.rt-TextFieldRoot).inputGray:focus-within {
+.errorGray {
+  border: 1px solid var(--red-3);
+}
+
+.inputGray:focus-within {
   outline: none;
   border: 1px solid var(--gray-4);
 }
 
-:global(.rt-TextFieldRoot).inputGray:disabled {
+.inputGray:disabled {
   background: var(--gray-1);
   color: var(--gray-6);
   outline: none;
   border: 1px solid var(--gray-4);
 }
 
-:global(.rt-TextFieldRoot).inputGray:hover {
+.inputGray:hover {
   outline: none;
   border: 1px solid var(--gray-6);
 }
 
-:global(.rt-TextFieldRoot:where(:invalid)).inputGray {
-  outline: none;
-  border: 1px solid var(--red-10);
-}
-
-/* input - tone red */
-:global(.rt-TextFieldRoot).inputRed {
+.inputRed {
   --text-field-focus-color: var(--red-1);
   background: var(--red-8);
   outline: none;
@@ -56,29 +39,27 @@
   color: var(--red-1);
 }
 
-:global(.rt-TextFieldRoot).inputRed :global(.rt-TextFieldInput::placeholder) {
+.inputRed::placeholder {
   color: var(--red-1);
 }
 
-:global(.rt-TextFieldRoot).inputRed:focus-within {
+.inputRed:focus-within {
   background: var(--red-7);
   outline: none;
   border: 1px solid var(--red-4);
 }
 
-:global(.rt-TextFieldRoot).inputRed:disabled {
+.inputRed:disabled {
   background: var(--red-8);
   outline: none;
   border: 1px solid var(--red-3);
 }
 
-:global(.rt-TextFieldRoot).inputRed:hover {
+.inputRed:hover {
   background: var(--red-5);
   outline: none;
   border: 1px solid var(--red-1);
 }
-
-/**/
 
 .label {
   line-height: 20px;

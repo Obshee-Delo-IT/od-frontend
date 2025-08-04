@@ -30,17 +30,18 @@ const Home = async () => (
     </div>
 
     <Input
-      description="Input Default"
-      tone="gray"
+      placeholder="Input Default"
+      color="gray"
       message="Hint message goes here"
       leftIcon={<HexagonIcon />}
       rightIcon={<InfoIcon />}
+      id="1"
       label="Label goes here"
     />
 
     <Input
-      description="Input Default"
-      tone="red"
+      placeholder="Input Default"
+      color="red"
       message="Hint message goes here"
       leftIcon={<HexagonIcon />}
       rightIcon={<InfoIcon />}

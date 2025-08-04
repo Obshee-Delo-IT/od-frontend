@@ -158,3 +158,12 @@
 .rt-Link:where(:any-link, button):where(:active) {
   color: var(--red-8);
 }
+
+.rt-TextFieldRoot {
+  --text-field-height: 48px;
+  width: 100%;
+  border-radius: var(--radius-full);
+  box-shadow: none;
+  font-size: var(--font-size-3);
+  padding: 14px 20px;
+}

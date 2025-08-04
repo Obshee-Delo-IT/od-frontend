@@ -9,34 +9,34 @@ type RootRef = React.ElementRef<typeof TextField.Root>;
 type OwnProps = {
   leftIcon?: React.ReactNode;
   rightIcon?: React.ReactNode;
-  description?: string;
   message?: string;
   label?: string;
   error?: boolean;
-  tone?: 'gray' | 'red';
+  color?: 'gray' | 'red';
 };
 
 type InputProps = RootProps & OwnProps;
 
 const Input = React.forwardRef<RootRef, InputProps>(
-  ({ leftIcon, rightIcon, description, message, label, error, tone, ...props }, ref) => (
+  ({ leftIcon, rightIcon, message, label, error, color, id, ...props }, ref) => (
     <div>
-      <p
+      <label
+        htmlFor={id}
         className={clsx(css.label, {
-          [css.labelGray]: tone === 'gray',
-          [css.labelRed]: tone === 'red',
+          [css.labelGray]: color === 'gray',
+          [css.labelRed]: color === 'red',
         })}
       >
         {label}
-      </p>
+      </label>
       <TextField.Root
-        placeholder={description}
+        id={id}
         size="3"
         className={clsx(css.root, {
-          [css.inputGray]: tone === 'gray',
-          [css.inputRed]: tone === 'red',
-          [css.errorGray]: error && tone == 'gray',
-          [css.errorRed]: error && tone == 'red',
+          [css.inputGray]: color === 'gray',
+          [css.inputRed]: color === 'red',
+          [css.errorGray]: error && color == 'gray',
+          [css.errorRed]: error && color == 'red',
         })}
         ref={ref}
         {...props}
@@ -44,8 +44,8 @@ const Input = React.forwardRef<RootRef, InputProps>(
         {leftIcon && (
           <TextField.Slot
             className={clsx(css.icon, css.leftIcon, {
-              [css.iconGrayLeft]: tone === 'gray',
-              [css.iconRed]: tone === 'red',
+              [css.iconGrayLeft]: color === 'gray',
+              [css.iconRed]: color === 'red',
             })}
             side="left"
           >
@@ -56,8 +56,8 @@ const Input = React.forwardRef<RootRef, InputProps>(
         {rightIcon && (
           <TextField.Slot
             className={clsx(css.rightIcon, css.icon, {
-              [css.iconGrayRight]: tone === 'gray',
-              [css.iconRed]: tone === 'red',
+              [css.iconGrayRight]: color === 'gray',
+              [css.iconRed]: color === 'red',
             })}
             side="right"
           >
@@ -67,8 +67,8 @@ const Input = React.forwardRef<RootRef, InputProps>(
       </TextField.Root>
       <p
         className={clsx(css.message, {
-          [css.messageGray]: tone === 'gray',
-          [css.messageRed]: tone === 'red',
+          [css.messageGray]: color === 'gray',
+          [css.messageRed]: color === 'red',
         })}
         data-error={!!error}
       >
