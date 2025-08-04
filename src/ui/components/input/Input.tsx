@@ -21,13 +21,22 @@ type InputProps = RootProps & OwnProps;
 const Input = React.forwardRef<RootRef, InputProps>(
   ({ leftIcon, rightIcon, description, message, label, error, tone, ...props }, ref) => (
     <div>
+      <p
+        className={clsx(css.label, {
+          [css.labelGray]: tone === 'gray',
+          [css.labelRed]: tone === 'red',
+        })}
+      >
+        {label}
+      </p>
       <TextField.Root
         placeholder={description}
         size="3"
         className={clsx(css.root, {
           [css.inputGray]: tone === 'gray',
           [css.inputRed]: tone === 'red',
-          [css.errorGray]: error === true,
+          [css.errorGray]: error && tone == 'gray',
+          [css.errorRed]: error && tone == 'red',
         })}
         ref={ref}
         {...props}
@@ -61,6 +70,7 @@ const Input = React.forwardRef<RootRef, InputProps>(
           [css.messageGray]: tone === 'gray',
           [css.messageRed]: tone === 'red',
         })}
+        data-error={!!error}
       >
         {message}
       </p>

@@ -17,6 +17,10 @@
   color: var(--gray-9);
 }
 
+:global(.rt-TextFieldRoot) .errorGray {
+  border: 1px solid var(--red-3);
+}
+
 :global(.rt-TextFieldRoot).inputRed :global(.rt-TextFieldInput::placeholder) {
   color: var(--gray-6);
 }
@@ -41,10 +45,6 @@
 :global(.rt-TextFieldRoot:where(:invalid)).inputGray {
   outline: none;
   border: 1px solid var(--red-10);
-}
-
-.errorGray {
-  border: 1px solid var(--red-3);
 }
 
 /* input - tone red */
@@ -80,8 +80,23 @@
 
 /**/
 
+.label {
+  line-height: 20px;
+  margin: 0;
+  margin-bottom: 6px;
+}
+
+.labelGray {
+  color: var(--gray-8);
+}
+
+.labelRed {
+  color: var(--white);
+}
+
 .message {
   line-height: 20px;
+  margin: 0;
   margin-top: 4px;
 }
 
@@ -115,4 +130,37 @@
 
 .leftIcon {
   margin-right: 4px;
+}
+
+.errorGray.inputGray {
+  border: 1px solid var(--red-3);
+}
+
+.errorGray.inputGray:hover {
+  border: 1px solid var(--red-4);
+}
+
+.errorGray.inputGray:disabled {
+  border: 1px solid var(--red-3);
+}
+
+.errorGray.inputGray .rightIcon path {
+  stroke: var(--danger-9);
+}
+
+.messageGray[data-error='true'] {
+  color: var(--danger-9);
+}
+
+.errorRed.inputRed {
+  background: var(--red-9);
+  border: none;
+}
+
+.errorRed.inputRed .icon path {
+  background: var(--danger-1);
+}
+
+.messageRed[data-error='true'] {
+  color: var(--danger-1);
 }

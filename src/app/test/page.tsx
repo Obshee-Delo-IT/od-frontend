@@ -35,13 +35,16 @@ const Home = async () => (
       message="Hint message goes here"
       leftIcon={<HexagonIcon />}
       rightIcon={<InfoIcon />}
+      label="Label goes here"
     />
+
     <Input
       description="Input Default"
       tone="red"
       message="Hint message goes here"
       leftIcon={<HexagonIcon />}
       rightIcon={<InfoIcon />}
+      label="Label goes here"
     />
 
     <ButtonGroup

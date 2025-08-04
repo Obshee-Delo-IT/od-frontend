@@ -34,6 +34,9 @@
   --gray-9: #202b37;
   --gray-10: #141c24;
 
+  --danger-1: #fffcfc;
+  --danger-9: #e5484d;
+
   --default-font-family: 'PT Sans', 'Helvetica Neue', Helvetica, Arial, sans-serif;
 
   --font-size-1: calc(12px * var(--scaling));
