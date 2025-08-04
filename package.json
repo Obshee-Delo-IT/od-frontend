@@ -21,6 +21,7 @@
     "@radix-ui/react-navigation-menu": "^1.2.13",
     "@radix-ui/themes": "^3.2.1",
     "clsx": "^2.1.1",
+    "nanoid": "^5.1.5",
     "next": "15.3.5",
     "normalize.css": "^8.0.1",
     "react": "19.1.0",
