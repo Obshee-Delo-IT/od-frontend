@@ -34,6 +34,9 @@
   --gray-9: #202b37;
   --gray-10: #141c24;
 
+  --danger-1: #fffcfc;
+  --danger-9: #e5484d;
+
   --default-font-family: 'PT Sans', 'Helvetica Neue', Helvetica, Arial, sans-serif;
 
   --font-size-1: calc(12px * var(--scaling));
@@ -154,6 +157,15 @@
 
 .rt-Link:where(:any-link, button):where(:active) {
   color: var(--red-8);
+}
+
+.rt-TextFieldRoot {
+  --text-field-height: 48px;
+  width: 100%;
+  border-radius: var(--radius-full);
+  box-shadow: none;
+  font-size: var(--font-size-3);
+  padding: 14px 20px;
 }
 
 .rt-BaseButton:active {

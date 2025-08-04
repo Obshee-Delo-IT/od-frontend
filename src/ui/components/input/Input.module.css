@@ -1,0 +1,150 @@
+.inputGray {
+  --text-field-focus-color: var(--gray-6);
+  background: var(--white);
+  outline: none;
+  border: 1px solid var(--gray-4);
+  color: var(--gray-9);
+}
+
+.inputGray input::placeholder {
+  color: var(--gray-6);
+}
+
+.errorGray {
+  border: 1px solid var(--red-3);
+}
+
+.inputGray:focus-within {
+  outline: none;
+  border: 1px solid var(--gray-4);
+}
+
+.inputGray.disabled {
+  background: var(--gray-1);
+  border: 1px solid var(--gray-4);
+}
+
+.inputGray:hover {
+  outline: none;
+  border: 1px solid var(--gray-6);
+}
+
+.inputRed {
+  --text-field-focus-color: var(--red-1);
+  background: var(--red-8);
+  outline: none;
+  border: 1px solid var(--red-1);
+  color: var(--red-1);
+}
+
+.inputRed input::placeholder {
+  color: var(--red-1);
+}
+
+.inputRed:focus-within {
+  background: var(--red-7);
+  outline: none;
+  border: 1px solid var(--red-4);
+}
+
+.inputRed.disabled {
+  background: var(--red-8);
+  color: var(--red-3);
+  border: 1px solid var(--red-3);
+}
+
+.inputRed.disabled :global(.rt-TextFieldInput::placeholder) {
+  color: var(--red-3);
+  -webkit-text-fill-color: var(--red-3);
+}
+
+.inputRed:hover {
+  background: var(--red-5);
+  outline: none;
+  border: 1px solid var(--red-1);
+}
+
+.label {
+  font-size: var(--font-size-2);
+  margin: 0;
+  margin-bottom: 6px;
+}
+
+.labelGray {
+  color: var(--gray-8);
+}
+
+.labelRed {
+  color: var(--white);
+}
+
+.message {
+  line-height: 20px;
+  margin: 0;
+  margin-top: 4px;
+}
+
+.messageGray {
+  color: var(--gray-6);
+}
+
+.messageRed {
+  color: var(--red-1);
+}
+
+.icon {
+  padding: 0;
+}
+
+.iconGrayRight path {
+  stroke: var(--gray-9);
+}
+
+.iconGrayLeft path {
+  stroke: var(--gray-5);
+}
+
+.iconRed path {
+  stroke: var(--red-1);
+}
+
+.rightIcon {
+  margin-left: 4px;
+}
+
+.leftIcon {
+  margin-right: 4px;
+}
+
+.inputGray.error {
+  border: 1px solid var(--red-3);
+}
+
+.inputGray.error:hover {
+  border: 1px solid var(--red-4);
+}
+
+.inputGray.error:disabled {
+  border: 1px solid var(--red-3);
+}
+
+.inputGray.error .rightIcon path {
+  stroke: var(--danger-9);
+}
+
+.messageGray[data-error='true'] {
+  color: var(--danger-9);
+}
+
+.inputRed.error {
+  background: var(--red-9);
+  border: none;
+}
+
+.inputRed.error .icon path {
+  background: var(--danger-1);
+}
+
+.messageRed[data-error='true'] {
+  color: var(--danger-1);
+}

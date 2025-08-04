@@ -1,7 +1,10 @@
 import { Button, IconButton, Text } from '@radix-ui/themes';
+import HexagonIcon from '@/ui/assets/icons/hexagon.svg';
+import InfoIcon from '@/ui/assets/icons/info.svg';
 import { Accordion } from '@/ui/components/Accordion';
 import { ButtonGroup } from '@/ui/components/ButtonGroup';
 import { MenuIcon, SearchIcon, WarningIcon, CrossCircleFilledIcon } from '@/ui/components/Icons';
+import { Input } from '@/ui/components/input';
 import { Link } from '@/ui/components/Link';
 
 const Home = async () => (
@@ -27,6 +30,26 @@ const Home = async () => (
       <Text size="2">2</Text>
       <Text size="1">1</Text>
     </div>
+
+    <Input
+      placeholder="Input Default"
+      color="gray"
+      message="Hint message goes here"
+      leftIcon={<HexagonIcon />}
+      rightIcon={<InfoIcon />}
+      label="Label goes here"
+      error
+    />
+
+    <Input
+      placeholder="Input Default"
+      color="red"
+      message="Hint message goes here"
+      leftIcon={<HexagonIcon />}
+      rightIcon={<InfoIcon />}
+      label="Label goes here"
+      error
+    />
 
     <ButtonGroup
       items={[
