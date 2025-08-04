@@ -35,7 +35,6 @@ const Home = async () => (
       message="Hint message goes here"
       leftIcon={<HexagonIcon />}
       rightIcon={<InfoIcon />}
-      id="1"
       label="Label goes here"
     />
 

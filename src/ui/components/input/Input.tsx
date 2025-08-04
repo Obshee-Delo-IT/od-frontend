@@ -1,5 +1,6 @@
-import { TextField } from '@radix-ui/themes';
+import { Text, TextField } from '@radix-ui/themes';
 import clsx from 'clsx';
+import { nanoid } from 'nanoid';
 import * as React from 'react';
 import css from './Input.module.css';
 
@@ -18,7 +19,7 @@ type OwnProps = {
 type InputProps = RootProps & OwnProps;
 
 const Input = React.forwardRef<RootRef, InputProps>(
-  ({ leftIcon, rightIcon, message, label, error, color, id, ...props }, ref) => (
+  ({ leftIcon, rightIcon, message, label, error, color, id = nanoid(), ...props }, ref) => (
     <div>
       <label
         htmlFor={id}
@@ -32,7 +33,7 @@ const Input = React.forwardRef<RootRef, InputProps>(
       <TextField.Root
         id={id}
         size="3"
-        className={clsx(css.root, {
+        className={clsx({
           [css.inputGray]: color === 'gray',
           [css.inputRed]: color === 'red',
           [css.errorGray]: error && color == 'gray',
@@ -65,7 +66,9 @@ const Input = React.forwardRef<RootRef, InputProps>(
           </TextField.Slot>
         )}
       </TextField.Root>
-      <p
+
+      <Text
+        size="2"
         className={clsx(css.message, {
           [css.messageGray]: color === 'gray',
           [css.messageRed]: color === 'red',
@@ -73,7 +76,7 @@ const Input = React.forwardRef<RootRef, InputProps>(
         data-error={!!error}
       >
         {message}
-      </p>
+      </Text>
     </div>
   )
 );

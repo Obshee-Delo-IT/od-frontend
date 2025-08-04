@@ -6,7 +6,7 @@
   color: var(--gray-9);
 }
 
-.inputGray::placeholder {
+.inputGray input::placeholder {
   color: var(--gray-6);
 }
 
@@ -39,7 +39,7 @@
   color: var(--red-1);
 }
 
-.inputRed::placeholder {
+.inputRed input::placeholder {
   color: var(--red-1);
 }
 
@@ -62,7 +62,7 @@
 }
 
 .label {
-  line-height: 20px;
+  font-size: var(--font-size-2);
   margin: 0;
   margin-bottom: 6px;
 }
