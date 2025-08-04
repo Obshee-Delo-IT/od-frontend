@@ -38,6 +38,8 @@ const Input = React.forwardRef<RootRef, InputProps>(
           [css.inputRed]: color === 'red',
           [css.errorGray]: error && color == 'gray',
           [css.errorRed]: error && color == 'red',
+          [css.grayDisabled]: !!props.disabled && color === 'gray',
+          [css.redDisabled]: !!props.disabled && color === 'red',
         })}
         ref={ref}
         {...props}

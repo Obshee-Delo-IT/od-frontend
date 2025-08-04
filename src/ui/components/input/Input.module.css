@@ -19,9 +19,8 @@
   border: 1px solid var(--gray-4);
 }
 
-.inputGray:disabled {
+.grayDisabled {
   background: var(--gray-1);
-  color: var(--gray-6);
   outline: none;
   border: 1px solid var(--gray-4);
 }
@@ -49,10 +48,16 @@
   border: 1px solid var(--red-4);
 }
 
-.inputRed:disabled {
+.redDisabled {
   background: var(--red-8);
+  color: var(--red-3);
   outline: none;
   border: 1px solid var(--red-3);
+}
+
+.redDisabled :global(.rt-TextFieldInput::placeholder) {
+  color: var(--red-3);
+  -webkit-text-fill-color: var(--red-3);
 }
 
 .inputRed:hover {
