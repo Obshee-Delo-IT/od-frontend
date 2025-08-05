@@ -1,0 +1,16 @@
+.wrapper {
+  background-color: var(--red-8);
+}
+
+.container {
+  width: 1200px;
+  margin: 0 auto;
+}
+
+.logo {
+  width: 230px;
+}
+
+.input {
+  width: 320px;
+}

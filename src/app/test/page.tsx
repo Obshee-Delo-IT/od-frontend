@@ -1,4 +1,5 @@
 import { Button, IconButton, Text } from '@radix-ui/themes';
+import { Header } from '@/modules';
 import HexagonIcon from '@/ui/assets/icons/hexagon.svg';
 import InfoIcon from '@/ui/assets/icons/info.svg';
 import { Accordion } from '@/ui/components/Accordion';
@@ -9,6 +10,7 @@ import { Link } from '@/ui/components/Link';
 
 const Home = async () => (
   <main>
+    <Header />
     <Button size="1">Button</Button>
     <Button size="2">Button</Button>
     <Button size="3">Button</Button>
