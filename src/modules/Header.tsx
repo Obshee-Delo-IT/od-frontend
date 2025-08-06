@@ -77,7 +77,7 @@ export const Header = () => (
       <div className={css.logoCont}>
         <Logo className={css.logo} />
       </div>
-      <IconButton variant="solid" radius="medium">
+      <IconButton variant="surface" radius="medium">
         <SearchIcon />
       </IconButton>
       <IconButton variant="outline" radius="medium">
