@@ -21,7 +21,7 @@ const Home = async () => (
       fds
     </Link>
 
-    <div>
+    <div style={{ width: '100vh' }}>
       <Text size="9">9</Text>
       <Text size="8">8</Text>
       <Text size="7">7</Text>
