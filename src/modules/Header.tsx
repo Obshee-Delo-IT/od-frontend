@@ -43,7 +43,7 @@ const Header = () => {
           </div>
           <div className={css.searchBar}>
             <div className={css.input}>
-              <Input color="red" placeholder="Поиск по сайту" rightIcon={<SearchIcon />} />
+              <Input color="red" id="headerSearch" placeholder="Поиск по сайту" rightIcon={<SearchIcon />} />
             </div>
             <Button size="4" variant="outline">
               Оказать помощь
@@ -120,7 +120,7 @@ const Header = () => {
           )}
         </div>
       </div>
-      {isOpen ? (
+      {isOpen && (
         <>
           <div className={css.menuMobile} ref={menuRef}>
             <Link href="/test" color="gray" className={css.menuMobile_link}>
@@ -194,8 +194,6 @@ const Header = () => {
           </div>
           <div className={css.menuMobile_overlay} />
         </>
-      ) : (
-        ''
       )}
     </div>
   );
