@@ -1,7 +1,8 @@
 'use client';
 
-import { Button, IconButton } from '@radix-ui/themes';
+import { Button, Container, IconButton } from '@radix-ui/themes';
 import clsx from 'clsx';
+import Nextlink from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 import Logo from '@/ui/assets/icons/logo.svg';
 import { Accordion } from '@/ui/components/Accordion';
@@ -36,7 +37,7 @@ const Header = () => {
 
   return (
     <div className={css.header}>
-      <div className={clsx(css.container, css.headerDesktop)}>
+      <Container size="4" className={clsx(css.container, css.headerDesktop)}>
         <div className={css.top}>
           <div className={css.logoCont}>
             <Logo className={css.logo} />
@@ -45,8 +46,8 @@ const Header = () => {
             <div className={css.input}>
               <Input color="red" id="headerSearch" placeholder="Поиск по сайту" rightIcon={<SearchIcon />} />
             </div>
-            <Button size="4" variant="outline">
-              Оказать помощь
+            <Button asChild size="4" variant="outline">
+              <Nextlink href="/test">Оказать помощь</Nextlink>
             </Button>
           </div>
         </div>
@@ -100,26 +101,28 @@ const Header = () => {
             ]}
           />
         </div>
-      </div>
-      <div className={clsx(css.container, css.headerMobile)}>
-        <div className={css.logoCont}>
-          <Logo className={css.logo} />
-        </div>
-        <div className={css.mobileButtons}>
-          <IconButton variant="surface" radius="medium" className={css.searchBtn}>
-            <SearchIcon />
-          </IconButton>
-          {isOpen ? (
-            <IconButton variant="outline" radius="medium" onClick={() => setIsOpen(false)}>
-              <CrossIcon />
+      </Container>
+      <Container size="4" className={clsx(css.container)}>
+        <div className={css.headerMobile}>
+          <div className={css.logoCont}>
+            <Logo className={css.logo} />
+          </div>
+          <div className={css.mobileButtons}>
+            <IconButton variant="surface" radius="medium" className={css.searchBtn}>
+              <SearchIcon />
             </IconButton>
-          ) : (
-            <IconButton variant="outline" radius="medium" onClick={() => setIsOpen(true)}>
-              <MenuIcon />
-            </IconButton>
-          )}
+            {isOpen ? (
+              <IconButton variant="outline" radius="medium" onClick={() => setIsOpen(false)}>
+                <CrossIcon />
+              </IconButton>
+            ) : (
+              <IconButton variant="outline" radius="medium" onClick={() => setIsOpen(true)}>
+                <MenuIcon />
+              </IconButton>
+            )}
+          </div>
         </div>
-      </div>
+      </Container>
       {isOpen && (
         <>
           <div className={css.menuMobile} ref={menuRef}>
@@ -189,7 +192,9 @@ const Header = () => {
               КОНТАКТЫ
             </Link>{' '}
             <div className={css.menuMobile_button}>
-              <Button size="3">Оказать помощь</Button>
+              <Button asChild size="3">
+                <Nextlink href="/test">Оказать помощь</Nextlink>
+              </Button>
             </div>
           </div>
           <div className={css.menuMobile_overlay} />
