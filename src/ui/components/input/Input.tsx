@@ -21,15 +21,17 @@ type InputProps = RootProps & OwnProps;
 const Input = React.forwardRef<RootRef, InputProps>(
   ({ leftIcon, rightIcon, message, label, error, color, id = nanoid(), ...props }, ref) => (
     <div>
-      <label
-        htmlFor={id}
-        className={clsx(css.label, {
-          [css.labelGray]: color === 'gray',
-          [css.labelRed]: color === 'red',
-        })}
-      >
-        {label}
-      </label>
+      {label && (
+        <label
+          htmlFor={id}
+          className={clsx(css.label, {
+            [css.labelGray]: color === 'gray',
+            [css.labelRed]: color === 'red',
+          })}
+        >
+          {label}
+        </label>
+      )}
       <TextField.Root
         id={id}
         size="3"
