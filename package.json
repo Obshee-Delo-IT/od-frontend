@@ -9,12 +9,16 @@
     "lint": "next lint --max-warnings 0",
     "format": "prettier --write .",
     "prepare": "husky",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "lint:styles": "stylelint \"**/*.css\" --fix --mw 0"
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx}": [
       "eslint --fix --max-warnings 0",
       "prettier --write"
+    ],
+    "*.css": [
+      "stylelint \"**/*.css\" --fix --mw 0"
     ]
   },
   "browserslist": [
@@ -53,9 +57,14 @@
     "lint-staged": "16.1.2",
     "postcss-discard-comments": "7.0.4",
     "postcss-flexbugs-fixes": "5.0.2",
+    "postcss": "8.5.6",
     "postcss-nested": "7.0.2",
     "postcss-preset-env": "10.2.4",
     "prettier": "3.6.2",
+    "stylelint": "16.23.1",
+    "stylelint-config-idiomatic-order": "10.0.0",
+    "stylelint-config-recommended": "17.0.0",
+    "stylelint-order": "7.0.0",
     "typescript": "5.8.3"
   }
 }

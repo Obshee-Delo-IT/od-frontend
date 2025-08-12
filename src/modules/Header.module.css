@@ -1,7 +1,7 @@
 .header {
-  background-color: var(--red-8);
   width: 100%;
   padding: 6px 20px 0px 20px;
+  background-color: var(--red-8);
 
   @media (--mobile) {
     padding: 6px 20px;
@@ -21,15 +21,15 @@
   display: none;
 
   @media (--mobile) {
+    position: absolute;
+    z-index: 100;
+    top: 49.78px;
+    left: 0;
     display: flex;
+    width: 100%;
     flex-direction: column;
     padding: 0px 15px;
     background-color: var(--white);
-    position: absolute;
-    top: 49.78px;
-    left: 0;
-    width: 100%;
-    z-index: 100;
   }
 }
 
@@ -77,12 +77,12 @@
   display: none;
 
   @media (--mobile) {
-    display: block;
     position: fixed;
-    inset: 49.78px 0 0 0;
-    background: rgba(0, 0, 0, 0.4);
-    backdrop-filter: blur(2px);
     z-index: 90;
+    display: block;
+    backdrop-filter: blur(2px);
+    background: rgba(0, 0, 0, 0.4);
+    inset: 49.78px 0 0 0;
   }
 }
 
