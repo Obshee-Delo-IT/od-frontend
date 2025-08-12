@@ -73,6 +73,8 @@
 
   --shadow-sm: 0px 2px 10px 0px rgba(0, 0, 0, 0.07);
   --shadow-lg: 0px 10px 20px -15px rgba(14, 18, 22, 0.2);
+
+  --container-4: 1200px;
 }
 
 .rt-BaseButton:where(.rt-variant-solid) {

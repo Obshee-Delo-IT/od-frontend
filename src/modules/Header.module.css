@@ -1,11 +1,6 @@
 .header {
   background-color: var(--red-8);
   width: 100%;
-}
-
-.container {
-  max-width: 1200px;
-  margin: 0 auto;
   padding: 6px 20px 0px 20px;
 }
 
@@ -58,6 +53,10 @@
 }
 
 @media (max-width: 900px) {
+  .header {
+    padding: 6px 20px;
+  }
+
   .headerDesktop {
     display: none;
   }
@@ -73,6 +72,8 @@
     padding: 0px 15px;
     background-color: var(--white);
     position: absolute;
+    top: 49.78px;
+    left: 0;
     width: 100%;
     z-index: 100;
   }
@@ -102,10 +103,6 @@
   .menuMobile_button {
     padding: 25px 0px;
     text-align: center;
-  }
-
-  .container {
-    padding: 6px 20px;
   }
 
   .logoCont {
