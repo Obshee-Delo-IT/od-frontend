@@ -1,15 +1,15 @@
 .root {
-  display: block;
   position: relative;
-  width: 100%;
   z-index: 1;
+  display: block;
+  width: 100%;
 }
 
 .list {
   display: flex;
-  background-color: var(--red-8);
   padding: 10px;
-  list-style: none;
   margin: 0;
+  background-color: var(--red-8);
   gap: var(--space-3);
+  list-style: none;
 }

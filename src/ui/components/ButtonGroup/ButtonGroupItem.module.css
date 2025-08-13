@@ -4,14 +4,14 @@
 
 .content {
   position: absolute;
-  left: -30px;
   top: 54px;
+  left: -30px;
   width: 235px;
   max-width: 235px;
   padding: 20px 25px;
-  box-shadow: var(--shadow-sm);
   border-radius: var(--radius-2);
   background-color: var(--white);
+  box-shadow: var(--shadow-sm);
   transition:
     width,
     height,
@@ -48,35 +48,40 @@
 }
 
 .trigger {
-  padding: none;
+  padding: 0;
   border: none;
 }
 
-.base {
-  height: 100%;
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  padding: 10px 20px;
-  background: transparent;
-  cursor: var(--cursor-button);
-  border: 1px solid transparent;
-  border-radius: var(--radius-2);
-  color: var(--white);
-  transition: 0.2s ease;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  text-decoration: none;
+.icon {
+  transition: transform 0.25s ease;
+
+  & path {
+    stroke: var(--white);
+  }
 }
 
-.base[data-state='open'] .icon {
-  transform: rotate(-180deg);
+.base {
+  display: flex;
+  height: 100%;
+  align-items: center;
+  padding: 10px 20px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-2);
+  background: transparent;
+  color: var(--white);
+  cursor: var(--cursor-button);
+  gap: var(--space-2);
+  text-decoration: none;
+  transition: 0.2s ease;
+
+  &[data-state='open'] .icon {
+    transform: rotate(-180deg);
+  }
 }
 
 .baseActive {
-  background-color: var(--red-6);
   border-color: var(--red-6);
+  background-color: var(--red-6);
   font-weight: 700;
 }
 
@@ -84,12 +89,4 @@
 .base:active {
   border-color: var(--red-5);
   background-color: var(--red-6);
-}
-
-.icon {
-  transition: transform 0.25s ease;
-}
-
-.icon path {
-  stroke: var(--white);
 }

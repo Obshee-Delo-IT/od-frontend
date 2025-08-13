@@ -1,20 +1,45 @@
 .header {
-  background-color: var(--red-8);
   width: 100%;
   padding: 6px 20px 0px 20px;
+  background-color: var(--red-8);
+
+  @media (--mobile) {
+    padding: 6px 20px;
+  }
 }
 
 .headerMobile {
   display: none;
+
+  @media (--mobile) {
+    display: flex;
+    justify-content: space-between;
+  }
 }
 
 .menuMobile {
   display: none;
+
+  @media (--mobile) {
+    position: absolute;
+    z-index: 100;
+    top: 49.78px;
+    left: 0;
+    display: flex;
+    width: 100%;
+    flex-direction: column;
+    padding: 0px 15px;
+    background-color: var(--white);
+  }
 }
 
 .logoCont {
   width: 230px;
   height: 100%;
+
+  @media (--mobile) {
+    width: 129px;
+  }
 }
 
 .logo {
@@ -41,80 +66,67 @@
   justify-content: center;
 }
 
-.menuMobile_overlay {
-  display: none;
-}
-
-@media (max-width: 1200px) {
-  .bottom div ul li a {
+.bottom div ul li a {
+  @media (--small-desktop) {
     padding: 5px;
     font-size: var(--font-size-2);
   }
 }
 
-@media (max-width: 900px) {
-  .header {
-    padding: 6px 20px;
-  }
+.menuMobile_overlay {
+  display: none;
 
-  .headerDesktop {
-    display: none;
-  }
-
-  .headerMobile {
-    display: flex;
-    justify-content: space-between;
-  }
-
-  .menuMobile {
-    display: flex;
-    flex-direction: column;
-    padding: 0px 15px;
-    background-color: var(--white);
-    position: absolute;
-    top: 49.78px;
-    left: 0;
-    width: 100%;
-    z-index: 100;
-  }
-
-  .menuMobile_overlay {
-    display: block;
+  @media (--mobile) {
     position: fixed;
-    inset: 49.78px 0 0 0;
-    background: rgba(0, 0, 0, 0.4);
-    backdrop-filter: blur(2px);
     z-index: 90;
+    display: block;
+    backdrop-filter: blur(2px);
+    background: rgba(0, 0, 0, 0.4);
+    inset: 49.78px 0 0 0;
   }
+}
 
-  .menuMobile_link {
+.menuMobile_link {
+  @media (--mobile) {
     padding: 10px 0px;
     border-bottom: 1px solid var(--gray-4);
   }
+}
 
-  .menuMobile_accordion {
+.menuMobile_accordion {
+  @media (--mobile) {
     border-bottom: 1px solid var(--gray-4);
   }
+}
 
-  .accordion_link {
+.accordion_link {
+  @media (--mobile) {
     padding: 10px 15px;
   }
+}
 
-  .menuMobile_button {
+.menuMobile_button {
+  @media (--mobile) {
     padding: 25px 0px;
     text-align: center;
   }
+}
 
-  .logoCont {
-    width: 129px;
-  }
-
-  .mobileButtons {
+.mobileButtons {
+  @media (--mobile) {
     display: flex;
     align-items: center;
   }
+}
 
-  .searchBtn {
+.searchBtn {
+  @media (--mobile) {
     margin-right: 8px;
+  }
+}
+
+.headerDesktop {
+  @media (--mobile) {
+    display: none;
   }
 }
