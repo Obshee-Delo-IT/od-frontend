@@ -1,9 +1,9 @@
 .inputGray {
   --text-field-focus-color: var(--gray-6);
-  background: var(--white);
-  outline: none;
   border: 1px solid var(--gray-4);
+  background: var(--white);
   color: var(--gray-9);
+  outline: none;
 }
 
 .inputGray input::placeholder {
@@ -15,26 +15,26 @@
 }
 
 .inputGray:focus-within {
-  outline: none;
   border: 1px solid var(--gray-4);
+  outline: none;
 }
 
 .inputGray.disabled {
-  background: var(--gray-1);
   border: 1px solid var(--gray-4);
+  background: var(--gray-1);
 }
 
 .inputGray:hover {
-  outline: none;
   border: 1px solid var(--gray-6);
+  outline: none;
 }
 
 .inputRed {
   --text-field-focus-color: var(--red-1);
-  background: var(--red-8);
-  outline: none;
   border: 1px solid var(--red-1);
+  background: var(--red-8);
   color: var(--red-1);
+  outline: none;
 }
 
 .inputRed input::placeholder {
@@ -42,15 +42,15 @@
 }
 
 .inputRed:focus-within {
+  border: 1px solid var(--red-4);
   background: var(--red-7);
   outline: none;
-  border: 1px solid var(--red-4);
 }
 
 .inputRed.disabled {
+  border: 1px solid var(--red-3);
   background: var(--red-8);
   color: var(--red-3);
-  border: 1px solid var(--red-3);
 }
 
 .inputRed.disabled :global(.rt-TextFieldInput::placeholder) {
@@ -59,15 +59,15 @@
 }
 
 .inputRed:hover {
+  border: 1px solid var(--red-1);
   background: var(--red-5);
   outline: none;
-  border: 1px solid var(--red-1);
 }
 
 .label {
-  font-size: var(--font-size-2);
   margin: 0;
   margin-bottom: 6px;
+  font-size: var(--font-size-2);
 }
 
 .labelGray {
@@ -79,9 +79,9 @@
 }
 
 .message {
-  line-height: 20px;
   margin: 0;
   margin-top: 4px;
+  line-height: 20px;
 }
 
 .messageGray {
@@ -137,8 +137,8 @@
 }
 
 .inputRed.error {
-  background: var(--red-9);
   border: none;
+  background: var(--red-9);
 }
 
 .inputRed.error .icon path {

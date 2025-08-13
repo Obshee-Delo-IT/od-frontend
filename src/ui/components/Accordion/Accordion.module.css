@@ -3,22 +3,22 @@
 }
 
 .item {
-  width: 100%;
   overflow: hidden;
+  width: 100%;
   padding: 0;
 }
 
 .trigger {
   display: flex;
-  gap: 10px;
   width: 100%;
-  cursor: pointer;
-  padding: 10px 0;
   height: 42px;
   flex: 1;
   align-items: center;
-  background-color: inherit;
+  padding: 10px 0;
   border: none;
+  background-color: inherit;
+  cursor: pointer;
+  gap: 10px;
   transition: background-color 0.2s ease;
 }
 
