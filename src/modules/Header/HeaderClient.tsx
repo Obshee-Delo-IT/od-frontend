@@ -3,7 +3,7 @@
 import { Button, Container, IconButton } from '@radix-ui/themes';
 import clsx from 'clsx';
 import Nextlink from 'next/link';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import Logo from '@/ui/assets/icons/logo.svg';
 import { Accordion } from '@/ui/components/Accordion';
 import { ButtonGroup } from '@/ui/components/ButtonGroup';
@@ -25,13 +25,6 @@ interface HeaderClientProps {
 
 const HeaderClient = ({ navItems }: HeaderClientProps) => {
   const [isOpen, setIsOpen] = useState(false);
-  const menuRef = useRef<HTMLDivElement>(null);
-
-  const handleClickOutside = (event: MouseEvent) => {
-    if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
-      setIsOpen(false);
-    }
-  };
 
   useEffect(() => {
     if (isOpen) {
@@ -39,11 +32,6 @@ const HeaderClient = ({ navItems }: HeaderClientProps) => {
     } else {
       document.body.style.overflow = '';
     }
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
   }, [isOpen]);
 
   return (
@@ -89,7 +77,7 @@ const HeaderClient = ({ navItems }: HeaderClientProps) => {
       </Container>
       {isOpen && (
         <>
-          <div className={css.menuMobile} ref={menuRef}>
+          <div className={css.menuMobile}>
             {navItems?.map((item) => {
               if (item.content.length === 0) {
                 return (
@@ -126,7 +114,7 @@ const HeaderClient = ({ navItems }: HeaderClientProps) => {
               </Button>
             </div>
           </div>
-          <div className={css.menuMobile_overlay} />
+          <div className={css.menuMobile_overlay} onClick={() => setIsOpen(false)} />
         </>
       )}
     </div>
