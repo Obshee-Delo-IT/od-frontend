@@ -1,3 +1,4 @@
+import { Text } from '@radix-ui/themes';
 import clsx from 'clsx';
 import Image from 'next/image';
 import LogoIcon from '@/ui/assets/icons/logo.webp';
@@ -8,14 +9,19 @@ interface LogoProps {
 }
 
 export const Logo = ({ size }: LogoProps) => (
-  <div>
-    <Image
-      src={LogoIcon}
-      alt="Общее Дело"
-      className={clsx(css.logo, {
-        [css.small]: size === 'sm',
-        [css.large]: size === 'lg',
-      })}
-    />
+  <div
+    className={clsx(css.logo, {
+      [css.sm]: size === 'sm',
+      [css.lg]: size === 'lg',
+    })}
+  >
+    <div className={css.icon}>
+      <Image src={LogoIcon} alt="Общее Дело" />
+    </div>
+    <div>
+      <Text className={css.name}>Общероссийская</Text>
+      <Text className={css.name}>общественная</Text>
+      <Text className={css.name}>организация</Text>
+    </div>
   </div>
 );

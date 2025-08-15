@@ -33,10 +33,7 @@ const HeaderClient = ({ navItems }: HeaderClientProps) => {
     <div className={css.header}>
       <Container size="4" className={clsx(css.container, css.headerDesktop)}>
         <div className={css.top}>
-          <Logo />
-          {/* <div className={css.logoCont}>
-            <Logo className={css.logo} />
-          </div> */}
+          <Logo size="lg" />
           <div className={css.searchBar}>
             <div className={css.input}>
               <Input color="red" id="headerSearch" placeholder="Поиск по сайту" rightIcon={<SearchIcon />} />
@@ -52,9 +49,7 @@ const HeaderClient = ({ navItems }: HeaderClientProps) => {
       </Container>
       <Container size="4" className={clsx(css.container)}>
         <div className={css.headerMobile}>
-          {/* <div className={css.logoCont}>
-            <Logo className={css.logo} />
-          </div> */}
+          <Logo size="sm" />
           <div className={css.mobileButtons}>
             <IconButton variant="surface" radius="medium" className={css.searchBtn}>
               <SearchIcon />
