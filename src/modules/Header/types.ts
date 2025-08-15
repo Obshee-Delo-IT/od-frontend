@@ -5,17 +5,10 @@ export type SourceNavItem = {
   title: { rendered: string };
 };
 
-export type NavItemProps = {
-  href: string;
-  id: number;
-  text: string;
-  parent: number;
-};
-
-export type ResultNavItem = {
+export type NavItem = {
   id: number;
   parent: number;
   href: string;
   text: string;
-  content: NavItemProps[];
+  content: NavItem[];
 };

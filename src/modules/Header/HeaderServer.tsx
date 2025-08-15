@@ -1,5 +1,5 @@
 import { HeaderClient } from './HeaderClient';
-import { ResultNavItem, SourceNavItem } from './types';
+import { toNavItems } from './utils/toNavItems';
 
 const HeaderServer = async () => {
   const url = process.env.WP_BASE;
@@ -21,38 +21,9 @@ const HeaderServer = async () => {
   });
   const bodyNav = await responseNav.json();
 
-  function sortNavItems(items: SourceNavItem[]): ResultNavItem[] {
-    return items
-      .map((item) => ({
-        id: item.id,
-        parent: item.parent,
-        href: item.url,
-        text: item.title.rendered,
-        content: [],
-      }))
-      .sort((a, b) => {
-        if (a.parent === b.parent) {
-          return 0;
-        }
-        return a.parent === 0 ? -1 : 1;
-      });
-  }
+  const navItems = toNavItems(bodyNav);
 
-  const sorted = sortNavItems(bodyNav);
-  const map = new Map();
-
-  for (const item of sorted) {
-    if (item.parent === 0) {
-      map.set(item.id, item);
-    } else {
-      map.get(item.parent)?.content.push(item);
-    }
-  }
-  const nav = Array.from(map.values());
-
-  return <HeaderClient navItems={nav} />;
+  return <HeaderClient navItems={navItems} />;
 };
-
-HeaderServer.displayName = 'HeaderServer';
 
 export { HeaderServer };

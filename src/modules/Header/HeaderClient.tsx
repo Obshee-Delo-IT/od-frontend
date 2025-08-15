@@ -4,23 +4,18 @@ import { Button, Container, IconButton } from '@radix-ui/themes';
 import clsx from 'clsx';
 import Nextlink from 'next/link';
 import { useEffect, useState } from 'react';
-import Logo from '@/ui/assets/icons/logo.svg';
+// import Logo from '@/ui/assets/icons/logo.svg';
 import { Accordion } from '@/ui/components/Accordion';
 import { ButtonGroup } from '@/ui/components/ButtonGroup';
 import { CrossIcon, MenuIcon, SearchIcon } from '@/ui/components/Icons';
 import { Input } from '@/ui/components/input';
 import { Link } from '@/ui/components/Link';
 import css from './HeaderClient.module.css';
-
-interface NavItemProps {
-  href: string;
-  id: number;
-  text: string;
-  content: NavItemProps[];
-}
+import { NavItem } from './types';
+import { Logo } from '../../ui/components/Logo';
 
 interface HeaderClientProps {
-  navItems?: NavItemProps[];
+  navItems?: NavItem[];
 }
 
 const HeaderClient = ({ navItems }: HeaderClientProps) => {
@@ -38,9 +33,10 @@ const HeaderClient = ({ navItems }: HeaderClientProps) => {
     <div className={css.header}>
       <Container size="4" className={clsx(css.container, css.headerDesktop)}>
         <div className={css.top}>
-          <div className={css.logoCont}>
+          <Logo />
+          {/* <div className={css.logoCont}>
             <Logo className={css.logo} />
-          </div>
+          </div> */}
           <div className={css.searchBar}>
             <div className={css.input}>
               <Input color="red" id="headerSearch" placeholder="Поиск по сайту" rightIcon={<SearchIcon />} />
@@ -56,9 +52,9 @@ const HeaderClient = ({ navItems }: HeaderClientProps) => {
       </Container>
       <Container size="4" className={clsx(css.container)}>
         <div className={css.headerMobile}>
-          <div className={css.logoCont}>
+          {/* <div className={css.logoCont}>
             <Logo className={css.logo} />
-          </div>
+          </div> */}
           <div className={css.mobileButtons}>
             <IconButton variant="surface" radius="medium" className={css.searchBtn}>
               <SearchIcon />
