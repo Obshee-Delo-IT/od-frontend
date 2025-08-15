@@ -1,5 +1,4 @@
-import { fetchMenus } from '@/lib';
-import { fetchMenuItems } from '@/lib/fetchMenuItems';
+import { fetchMenuItems, fetchMenus } from '@/shared/api';
 import { HeaderClient } from './HeaderClient';
 import { toNavItems } from './utils/toNavItems';
 

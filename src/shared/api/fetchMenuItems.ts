@@ -1,8 +1,8 @@
-import { customFetch } from './customFetch';
+import { customFetch } from '@/lib/customFetch';
 
 interface FetchMenuItemsProps {
   menuId: number;
 }
 
 export const fetchMenuItems = ({ menuId }: FetchMenuItemsProps) =>
-  customFetch({ addUrl: `/wp-json/wp/v2/menu-items/?menus=${menuId}` });
+  customFetch(`/wp-json/wp/v2/menu-items/?menus=${menuId}`);
