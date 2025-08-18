@@ -1,5 +1,5 @@
 import { Container, IconButton } from '@radix-ui/themes';
-import { VkIcon } from '@/ui/components/Icons';
+import { OdnoklassnikiIcon, VkIcon, YoutubeIcon } from '@/ui/components/Icons';
 import { Logo } from '@/ui/components/Logo';
 import css from './Footer.module.css';
 
@@ -9,8 +9,14 @@ export const Footer = () => (
       <div className={css.navigation}>
         <div>
           <Logo size="lg" />
-          <IconButton variant="outline">
+          <IconButton variant="classic">
             <VkIcon />
+          </IconButton>
+          <IconButton variant="classic">
+            <OdnoklassnikiIcon />
+          </IconButton>
+          <IconButton variant="classic">
+            <YoutubeIcon />
           </IconButton>
         </div>
         <div>

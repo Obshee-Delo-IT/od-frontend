@@ -14,3 +14,5 @@ export { CirclePlayIcon } from './CirclePlayIcon';
 export { AddOutlinedIcon } from './AddOutlinedIcon';
 export { CrossCircleFilledIcon } from './CrossCircleFilledIcon';
 export { VkIcon } from './VkIcon';
+export { OdnoklassnikiIcon } from './OdnoklassnikiIcon';
+export { YoutubeIcon } from './YoutubeIcon';
