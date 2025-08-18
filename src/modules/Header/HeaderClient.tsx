@@ -4,7 +4,6 @@ import { Button, Container, IconButton } from '@radix-ui/themes';
 import clsx from 'clsx';
 import Nextlink from 'next/link';
 import { useEffect, useState } from 'react';
-// import Logo from '@/ui/assets/icons/logo.svg';
 import { Accordion } from '@/ui/components/Accordion';
 import { ButtonGroup } from '@/ui/components/ButtonGroup';
 import { CrossIcon, MenuIcon, SearchIcon } from '@/ui/components/Icons';
@@ -33,7 +32,9 @@ const HeaderClient = ({ navItems }: HeaderClientProps) => {
     <div className={css.header}>
       <Container size="4" className={clsx(css.container, css.headerDesktop)}>
         <div className={css.top}>
-          <Logo size="lg" />
+          <Nextlink href="/test" className={css.link}>
+            <Logo size="lg" />
+          </Nextlink>
           <div className={css.searchBar}>
             <div className={css.input}>
               <Input color="red" id="headerSearch" placeholder="Поиск по сайту" rightIcon={<SearchIcon />} />
@@ -49,7 +50,9 @@ const HeaderClient = ({ navItems }: HeaderClientProps) => {
       </Container>
       <Container size="4" className={clsx(css.container)}>
         <div className={css.headerMobile}>
-          <Logo size="sm" />
+          <Nextlink href="/test" className={css.link}>
+            <Logo size="sm" />
+          </Nextlink>
           <div className={css.mobileButtons}>
             <IconButton variant="surface" radius="medium" className={css.searchBtn}>
               <SearchIcon />
