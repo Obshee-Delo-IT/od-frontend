@@ -1,11 +1,49 @@
-import { Container } from '@radix-ui/themes';
+import { Container, IconButton } from '@radix-ui/themes';
+import { VkIcon } from '@/ui/components/Icons';
 import { Logo } from '@/ui/components/Logo';
 import css from './Footer.module.css';
 
 export const Footer = () => (
   <div className={css.footer}>
     <Container size="4" className={css.container}>
-      <Logo size="lg" />
+      <div className={css.navigation}>
+        <div>
+          <Logo size="lg" />
+          <IconButton variant="outline">
+            <VkIcon />
+          </IconButton>
+        </div>
+        <div>
+          <p className={css.sectionName}>КОНТАКТЫ РЕДАКЦИИ</p>
+          <p className={css.sectionLink}>Главный редактор: Дегтярев А.А.</p>
+          <p className={css.sectionLink}>Эл.почта: web@obshee-delo.ru</p>
+          <p className={css.sectionLink}>Телефон: +7 (962) 950-75-61</p>
+        </div>
+
+        <div>
+          <p className={css.sectionName}>ОТЗЫВЫ</p>
+          <p className={css.sectionLink}>Письма и отзывы</p>
+          <p className={css.sectionLink}>СМИ о нас</p>
+          <p className={css.sectionLink}>Экспертные заключения</p>
+          <p className={css.sectionLink}>Наши партнеры</p>
+          <p className={css.sectionLink}>Оставить отзыв</p>
+          <p className={css.sectionLink}>Предложить идею</p>
+        </div>
+
+        <div>
+          <p className={css.sectionName}>ССЫЛКИ</p>
+          <p className={css.sectionLink}>О нас</p>
+          <p className={css.sectionLink}>Наши дела</p>
+          <p className={css.sectionLink}>Наши фильмы</p>
+          <p className={css.sectionLink}>Прими участие</p>
+          <p className={css.sectionLink}>Наши материалы</p>
+          <p className={css.sectionLink}>Карта сайта</p>
+          <p className={css.sectionLink}>Частые вопросы</p>
+          <p className={css.sectionLink}>Благотворительная акция</p>
+        </div>
+      </div>
+      <span className={css.line} />
+      <div className={css.info} />
     </Container>
   </div>
 );
