@@ -90,3 +90,7 @@
   border-color: var(--red-5);
   background-color: var(--red-6);
 }
+
+.text {
+  white-space: nowrap;
+}

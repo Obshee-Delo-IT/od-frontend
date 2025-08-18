@@ -35,7 +35,7 @@ export const ButtonGroupItem: React.FC<PropsWithChildren<ButtonGroupItemProps>> 
         })}
       >
         <NextLink href={href} className={css.link}>
-          <div>{children}</div>
+          <div className={css.text}>{children}</div>
           {!!content && <ChevronDownIcon className={css.icon} width={20} height={20} />}
         </NextLink>
       </Text>

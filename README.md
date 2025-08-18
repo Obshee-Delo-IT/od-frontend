@@ -6,6 +6,7 @@
 | ----------- | ------------------------------------ |
 | WP_USER     | username из админки wordpress        |
 | WP_PASSWORD | Сгенерированный application password |
+| WP_BASE     | url для запросов на сервер           |
 
 ## Локальная разработка
 
@@ -15,7 +16,7 @@
 
 1. Создать пароль по [инструкции](https://make.wordpress.org/core/2020/11/05/application-passwords-integration-guide/) в админке wordpress.
 2. Создать файл `.env`
-3. Добавить `.env` переменные `WP_USER` и `WP_PASSWORD`
+3. Добавить `.env` переменные `WP_USER`, `WP_PASSWORD` и `WP_BASE`
 
 ### На локальной машине
 

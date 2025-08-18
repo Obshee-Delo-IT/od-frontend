@@ -1,10 +1,8 @@
-import { Header } from '@/modules';
-import { Link } from '@/ui/components/Link';
+import { HeaderServer } from '@/modules/Header';
 
 const Home = async () => (
   <main>
-    <Header />
-    <Link href="fds">fds</Link>
+    <HeaderServer />
     <div style={{ height: '200vh' }} />
   </main>
 );

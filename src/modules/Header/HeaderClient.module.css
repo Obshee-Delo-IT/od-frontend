@@ -27,9 +27,11 @@
     left: 0;
     display: flex;
     width: 100%;
+    max-height: 95vh;
     flex-direction: column;
     padding: 0px 15px;
     background-color: var(--white);
+    overflow-y: scroll;
   }
 }
 
@@ -129,4 +131,8 @@
   @media (--mobile) {
     display: none;
   }
+}
+
+.link {
+  text-decoration: none;
 }
