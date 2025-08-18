@@ -6,14 +6,19 @@ import css from './Logo.module.css';
 
 interface LogoProps {
   size: 'sm' | 'lg';
+  className?: string;
 }
 
-export const Logo = ({ size }: LogoProps) => (
+export const Logo = ({ size, className }: LogoProps) => (
   <div
-    className={clsx(css.logo, {
-      [css.sm]: size === 'sm',
-      [css.lg]: size === 'lg',
-    })}
+    className={clsx(
+      css.logo,
+      {
+        [css.sm]: size === 'sm',
+        [css.lg]: size === 'lg',
+      },
+      className
+    )}
   >
     <div className={css.icon}>
       <Image src={LogoIcon} alt="Общее Дело" />

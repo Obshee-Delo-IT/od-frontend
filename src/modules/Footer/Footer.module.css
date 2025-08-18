@@ -5,6 +5,7 @@
 
 .navigation {
   display: flex;
+  flex-wrap: wrap;
   justify-content: space-between;
   margin-bottom: 25px;
 }
@@ -20,9 +21,40 @@
   margin: 0;
   color: var(--white);
   line-height: var(--line-height-1);
+  white-space: wrap;
 
   &:not(:last-child) {
     margin-bottom: 5px;
+  }
+}
+
+.socials {
+  margin-right: 90px;
+  @media (--small-desktop) {
+    width: 100vw;
+    margin: 0;
+    margin-bottom: 60px;
+  }
+
+  @media (--mobile) {
+    margin-bottom: 55px;
+  }
+}
+
+.contacts {
+  @media (--mobile) {
+    width: 100vw;
+    margin-bottom: 35px;
+  }
+}
+
+.logo {
+  margin-bottom: 30px;
+}
+
+.social {
+  &:not(:last-child) {
+    margin-right: 15px;
   }
 }
 

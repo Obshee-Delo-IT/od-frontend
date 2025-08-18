@@ -7,26 +7,26 @@ export const Footer = () => (
   <div className={css.footer}>
     <Container size="4" className={css.container}>
       <div className={css.navigation}>
-        <div>
-          <Logo size="lg" />
-          <IconButton variant="classic">
+        <div className={css.socials}>
+          <Logo size="lg" className={css.logo} />
+          <IconButton variant="classic" className={css.social}>
             <VkIcon />
           </IconButton>
-          <IconButton variant="classic">
+          <IconButton variant="classic" className={css.social}>
             <OdnoklassnikiIcon />
           </IconButton>
-          <IconButton variant="classic">
+          <IconButton variant="classic" className={css.social}>
             <YoutubeIcon />
           </IconButton>
         </div>
-        <div>
+        <div className={css.contacts}>
           <p className={css.sectionName}>КОНТАКТЫ РЕДАКЦИИ</p>
           <p className={css.sectionLink}>Главный редактор: Дегтярев А.А.</p>
           <p className={css.sectionLink}>Эл.почта: web@obshee-delo.ru</p>
           <p className={css.sectionLink}>Телефон: +7 (962) 950-75-61</p>
         </div>
 
-        <div>
+        <div className={css.reviews}>
           <p className={css.sectionName}>ОТЗЫВЫ</p>
           <p className={css.sectionLink}>Письма и отзывы</p>
           <p className={css.sectionLink}>СМИ о нас</p>
