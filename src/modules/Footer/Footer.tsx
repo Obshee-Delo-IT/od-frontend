@@ -30,7 +30,10 @@ export const Footer = () => (
           <p className={css.sectionName}>ОТЗЫВЫ</p>
           <p className={css.sectionLink}>Письма и отзывы</p>
           <p className={css.sectionLink}>СМИ о нас</p>
-          <p className={css.sectionLink}>Экспертные заключения</p>
+          <p className={css.sectionLink}>
+            Экспертные
+            <br className={css.break} /> заключения
+          </p>
           <p className={css.sectionLink}>Наши партнеры</p>
           <p className={css.sectionLink}>Оставить отзыв</p>
           <p className={css.sectionLink}>Предложить идею</p>
@@ -45,11 +48,36 @@ export const Footer = () => (
           <p className={css.sectionLink}>Наши материалы</p>
           <p className={css.sectionLink}>Карта сайта</p>
           <p className={css.sectionLink}>Частые вопросы</p>
-          <p className={css.sectionLink}>Благотворительная акция</p>
+          <p className={css.sectionLink}>
+            Благотворительная
+            <br className={css.break} /> акция
+          </p>
         </div>
       </div>
       <span className={css.line} />
-      <div className={css.info} />
+      <div />
+
+      <div className={css.info}>
+        <div>
+          <p>Средство массовой информации:</p>
+          <p>Сетевое издание &quot;ОБЩЕЕ ДЕЛО&quot;</p>
+          <p className={css.underlined}>
+            Зарегистрировано Роскомнадзором, свидетельство Эл № ФC77-72346 от 14 февраля 2018
+          </p>
+        </div>
+
+        <div>
+          <p>Учредитель:</p>
+          <p>Учётный номер в реестре НКО №0012011716</p>
+          <p>Общероссийская общественная организация &quot;Общее дело&quot;</p>
+          <p>ОГРН: 1127799010624</p>
+        </div>
+
+        <div>
+          <p>При перепечатывании материалов ссылка на издание обязательна. 12+</p>
+          <p className={css.underlined}>Политика конфиденциальности</p>
+        </div>
+      </div>
     </Container>
   </div>
 );
