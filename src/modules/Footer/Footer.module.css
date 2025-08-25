@@ -1,112 +1,157 @@
-.footer {
-  padding: 32px 16px;
-  background-color: var(--gray-9);
-}
-
+/* 
 .navigation {
   display: flex;
   flex-wrap: wrap;
   justify-content: space-between;
   margin-bottom: 25px;
-
+  
   @media (--small-desktop) {
     justify-content: space-around;
-  }
+    }
+    
+    @media (--mobile) {
+      justify-content: flex-start;
+      }
+      }
+      
+      .sectionName {
+        margin: 0;
+        margin-bottom: 15px;
+        color: var(--gray-3);
+        line-height: var(--line-height-1);
+        }
+        
+        .sectionLink {
+          margin: 0;
+          color: var(--white);
+          line-height: var(--line-height-1);
+          
+          &:not(:last-child) {
+            margin-bottom: 5px;
+            }
+            }
+            
+            .break {
+              display: none;
+              
+              @media (--mobile) {
+                display: block;
+                }
+                }
+                
+                .socials {
+                  margin-right: 90px;
+                  @media (--small-desktop) {
+                    width: 100vw;
+                    margin: 0;
+                    margin-bottom: 60px;
+                    }
+                    
+                    @media (--mobile) {
+                      margin-bottom: 55px;
+                      }
+                      }
+                      
+                      .contacts {
+                        @media (--mobile) {
+                          width: 100vw;
+                          margin-bottom: 35px;
+                          }
+                          }
+                          
+                          .logo {
+                            margin-bottom: 30px;
+                            }
+                            
+                            .social {
+                              &:not(:last-child) {
+                                margin-right: 15px;
+                                }
+                                }
+                                
+                                .reviews {
+                                  @media (--mobile) {
+                                    margin-right: 50px;
+                                    }
+                                    }
+                                    
+                                    .line {
+                                      display: block;
+                                      width: 100%;
+                                      height: 1px;
+                                      margin-bottom: 25px;
+                                      background-color: var(--gray-6);
+                                      }
+                                      
+                                      .underlined {
+                                        text-decoration: underline;
+                                        }
+                                        
+                                        .info {
+                                          display: grid;
+                                          color: var(--gray-4);
+                                          gap: 20px;
+                                          grid-template-columns: 25% 50% 25%;
+                                          line-height: var(--line-height-1);
+                                          
+                                          p {
+                                            margin: 0;
+                                            }
+                                            
+                                            @media (--small-desktop) {
+                                              gap: 10px;
+                                              }
+                                              
+                                              @media (--mobile) {
+                                                grid-template-columns: 1fr;
+                                                }
+                                                } */
 
-  @media (--mobile) {
-    justify-content: flex-start;
-  }
+.footer {
+  padding: 32px 16px;
+  background-color: var(--gray-9);
+  color: white;
 }
 
-.sectionName {
-  margin: 0;
-  margin-bottom: 15px;
-  color: var(--gray-3);
-  line-height: var(--line-height-1);
+.footerWrap {
+  display: flex;
+  flex-wrap: wrap;
 }
 
-.sectionLink {
-  margin: 0;
-  color: var(--white);
-  line-height: var(--line-height-1);
-
-  &:not(:last-child) {
-    margin-bottom: 5px;
-  }
+.footer aside:nth-child(1) {
+  width: 25%;
 }
 
-.break {
-  display: none;
-
-  @media (--mobile) {
-    display: block;
-  }
+.footer aside:nth-child(2) {
+  width: 25%;
 }
 
-.socials {
-  margin-right: 90px;
-  @media (--small-desktop) {
-    width: 100vw;
-    margin: 0;
-    margin-bottom: 60px;
-  }
-
-  @media (--mobile) {
-    margin-bottom: 55px;
-  }
+.footer aside:nth-child(3) {
+  width: 25%;
 }
 
-.contacts {
-  @media (--mobile) {
-    width: 100vw;
-    margin-bottom: 35px;
-  }
+.footer aside:nth-child(4) {
+  width: 25%;
 }
 
-.logo {
-  margin-bottom: 30px;
-}
-
-.social {
-  &:not(:last-child) {
-    margin-right: 15px;
-  }
-}
-
-.reviews {
-  @media (--mobile) {
-    margin-right: 50px;
-  }
-}
-
-.line {
-  display: block;
+.footer aside:nth-child(5) {
   width: 100%;
-  height: 1px;
-  margin-bottom: 25px;
-  background-color: var(--gray-6);
+
+  & hr {
+    height: 1px;
+    border: none;
+    background-color: var(--gray-6);
+  }
 }
+.footer aside:nth-child(6) {
+  width: 100%;
 
-.underlined {
-  text-decoration: underline;
-}
-
-.info {
-  display: grid;
-  color: var(--gray-4);
-  gap: 20px;
-  grid-template-columns: 25% 50% 25%;
-  line-height: var(--line-height-1);
-
-  p {
-    margin: 0;
+  & .wp-block-group {
+    display: flex;
   }
 
-  @media (--small-desktop) {
-    gap: 10px;
-  }
-
-  @media (--mobile) {
-    grid-template-columns: 1fr;
+  & .wp-block-group .wp-block-group {
+    display: flex;
+    flex-direction: column;
   }
 }
