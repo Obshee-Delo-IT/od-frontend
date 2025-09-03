@@ -30,7 +30,7 @@ const HeaderClient = ({ navItems }: HeaderClientProps) => {
 
   return (
     <div className={css.header}>
-      <Container size="4" className={clsx(css.container, css.headerDesktop)}>
+      <Container size="4" className={clsx(css.headerDesktop)}>
         <div className={css.top}>
           <Nextlink href="/test" className={css.link}>
             <Logo size="lg" />

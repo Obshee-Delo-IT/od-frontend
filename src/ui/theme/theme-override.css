@@ -97,6 +97,11 @@
   color: var(--red-8);
 }
 
+.rt-BaseButton:where(.rt-variant-classic) {
+  background: transparent;
+  box-shadow: none;
+}
+
 @media (hover: hover) {
   .rt-BaseButton:where(.rt-variant-outline):where(:hover) {
     background-color: var(--red-1);

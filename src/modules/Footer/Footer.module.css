@@ -1,0 +1,265 @@
+.footer {
+  padding: 32px 16px;
+  background-color: var(--gray-9);
+  color: white;
+}
+
+.footerWrap {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.footer aside:nth-child(1) {
+  width: 25%;
+
+  p {
+    margin: 0;
+    color: var(--white);
+    font-family: var(--font-pt-sans);
+    font-weight: 700;
+    line-height: var(--line-height-8);
+  }
+
+  @media (--small-desktop) {
+    width: 100%;
+  }
+
+  :global(.wp-block-group .wp-block-group__inner-container .wp-block-columns) {
+    display: flex;
+    align-items: center;
+  }
+
+  :global(.wp-block-group) {
+    margin-bottom: 30px;
+  }
+
+  :global(.wp-block-group .wp-block-group__inner-container .wp-block-columns .wp-block-column .wp-block-image) {
+    width: 63px;
+    height: 48px;
+    margin-right: 14px;
+
+    :global figure {
+      margin: 0;
+    }
+
+    :global img {
+      width: 100% !important;
+      height: 100% !important;
+    }
+  }
+
+  :global(.wp-block-column:nth-child(1)) {
+    flex-basis: 0 !important;
+  }
+
+  :global(.wp-block-heading) {
+    width: 120px;
+    height: 30px;
+    margin: 0;
+    background-color: red;
+
+    @media (--small-desktop) {
+      margin-bottom: 60px;
+    }
+  }
+}
+
+.footer aside:nth-child(2) {
+  width: 25%;
+
+  h3 {
+    margin: 0;
+    margin-bottom: 15px;
+    color: var(--gray-3);
+    font-family: var(--font-pt-sans);
+    font-size: var(--font-size-3);
+    font-weight: 400;
+    line-height: var(--line-height-1);
+  }
+
+  :global(p) {
+    margin: 0;
+    color: var(--white);
+    font-size: var(--font-size-3);
+    line-height: var(--line-height-1);
+
+    &:not(:last-child) {
+      margin-bottom: 5px;
+    }
+  }
+
+  @media (--small-desktop) {
+    width: 33%;
+  }
+
+  @media (--mobile) {
+    width: 100%;
+    margin-bottom: 40px;
+  }
+}
+
+.footer aside:nth-child(3) {
+  width: 25%;
+
+  h2 {
+    margin: 0;
+    margin-bottom: 15px;
+    color: var(--gray-3);
+    font-family: var(--font-pt-sans);
+    font-size: var(--font-size-3);
+    font-weight: 400;
+    line-height: var(--line-height-1);
+  }
+
+  :global(a) {
+    margin: 0;
+    color: var(--white);
+    font-size: var(--font-size-3);
+    line-height: var(--line-height-1);
+    text-decoration: none;
+
+    &:not(:last-child) {
+      margin-bottom: 5px;
+    }
+  }
+
+  li {
+    list-style: none;
+  }
+
+  ul {
+    padding: 0;
+    margin: 0;
+  }
+
+  @media (--small-desktop) {
+    width: 33%;
+  }
+
+  @media (--mobile) {
+    width: 60%;
+  }
+}
+
+.footer aside:nth-child(4) {
+  width: 25%;
+
+  li {
+    list-style: none;
+  }
+
+  ul {
+    padding: 0;
+    margin: 0;
+  }
+
+  @media (--small-desktop) {
+    width: 33%;
+  }
+
+  @media (--mobile) {
+    width: 40%;
+  }
+
+  :global(h2) {
+    margin: 0;
+    margin-bottom: 15px;
+    color: var(--gray-3);
+    font-family: var(--font-pt-sans);
+    font-size: var(--font-size-3);
+    font-weight: 400;
+    line-height: var(--line-height-1);
+  }
+
+  :global(a) {
+    margin: 0;
+    color: var(--white);
+    font-size: var(--font-size-3);
+    line-height: var(--line-height-1);
+    text-decoration: none;
+
+    &:not(:last-child) {
+      margin-bottom: 5px;
+    }
+  }
+}
+
+.footer aside:nth-child(5) {
+  width: 100%;
+
+  hr {
+    height: 1px;
+    border: none;
+    margin: 24px 0;
+    background-color: var(--gray-6);
+  }
+}
+
+.footer aside:nth-child(6) {
+  color: var(--gray-4);
+
+  p {
+    margin: 0;
+  }
+
+  b {
+    font-weight: 400;
+  }
+
+  a {
+    color: var(--gray-4);
+    text-decoration: none;
+  }
+
+  :global(.wp-block-group:nth-child(1)) {
+    display: flex;
+
+    :global(.wp-block-group) {
+      width: 25%;
+    }
+
+    @media (--mobile) {
+      flex-wrap: wrap;
+    }
+
+    @media (--small-desktop) {
+      justify-content: space-between;
+    }
+  }
+
+  p:nth-child(1) {
+    width: 30%;
+    margin-right: 30px;
+
+    @media (--mobile) {
+      width: 100%;
+      margin-bottom: 24px;
+    }
+  }
+
+  p:nth-child(2) {
+    width: 30%;
+    margin-right: 20%;
+
+    @media (--mobile) {
+      width: 100%;
+      margin-right: 0;
+      margin-bottom: 24px;
+    }
+
+    @media (--small-desktop) {
+      margin-right: 0;
+    }
+  }
+
+  :global(.wp-block-group .wp-block-group) {
+    a {
+      text-decoration: underline;
+    }
+
+    p {
+      width: 100%;
+      margin: 0;
+    }
+  }
+}
