@@ -1,112 +1,3 @@
-/* 
-.navigation {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: space-between;
-  margin-bottom: 25px;
-  
-  @media (--small-desktop) {
-    justify-content: space-around;
-    }
-    
-    @media (--mobile) {
-      justify-content: flex-start;
-      }
-      }
-      
-      .sectionName {
-        margin: 0;
-        margin-bottom: 15px;
-        color: var(--gray-3);
-        line-height: var(--line-height-1);
-        }
-        
-        .sectionLink {
-          margin: 0;
-          color: var(--white);
-          line-height: var(--line-height-1);
-          
-          &:not(:last-child) {
-            margin-bottom: 5px;
-            }
-            }
-            
-            .break {
-              display: none;
-              
-              @media (--mobile) {
-                display: block;
-                }
-                }
-                
-                .socials {
-                  margin-right: 90px;
-                  @media (--small-desktop) {
-                    width: 100vw;
-                    margin: 0;
-                    margin-bottom: 60px;
-                    }
-                    
-                    @media (--mobile) {
-                      margin-bottom: 55px;
-                      }
-                      }
-                      
-                      .contacts {
-                        @media (--mobile) {
-                          width: 100vw;
-                          margin-bottom: 35px;
-                          }
-                          }
-                          
-                          .logo {
-                            margin-bottom: 30px;
-                            }
-                            
-                            .social {
-                              &:not(:last-child) {
-                                margin-right: 15px;
-                                }
-                                }
-                                
-                                .reviews {
-                                  @media (--mobile) {
-                                    margin-right: 50px;
-                                    }
-                                    }
-                                    
-                                    .line {
-                                      display: block;
-                                      width: 100%;
-                                      height: 1px;
-                                      margin-bottom: 25px;
-                                      background-color: var(--gray-6);
-                                      }
-                                      
-                                      .underlined {
-                                        text-decoration: underline;
-                                        }
-                                        
-                                        .info {
-                                          display: grid;
-                                          color: var(--gray-4);
-                                          gap: 20px;
-                                          grid-template-columns: 25% 50% 25%;
-                                          line-height: var(--line-height-1);
-                                          
-                                          p {
-                                            margin: 0;
-                                            }
-                                            
-                                            @media (--small-desktop) {
-                                              gap: 10px;
-                                              }
-                                              
-                                              @media (--mobile) {
-                                                grid-template-columns: 1fr;
-                                                }
-                                                } */
-
 .footer {
   padding: 32px 16px;
   background-color: var(--gray-9);
@@ -317,6 +208,10 @@
     @media (--mobile) {
       flex-wrap: wrap;
     }
+
+    @media (--small-desktop) {
+      justify-content: space-between;
+    }
   }
 
   :global(p) {
@@ -350,6 +245,10 @@
       width: 100%;
       margin-right: 0;
       margin-bottom: 24px;
+    }
+
+    @media (--small-desktop) {
+      margin-right: 0;
     }
   }
 
