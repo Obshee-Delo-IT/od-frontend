@@ -53,10 +53,34 @@
   }
 
   :global(.wp-block-heading) {
-    width: 120px;
-    height: 30px;
+    display: flex;
     margin: 0;
-    background-color: red;
+
+    :global(.cmsms-icon-vkontakte) {
+      display: block;
+      width: 30px;
+      height: 30px;
+      margin-right: 15px;
+      background-image: url(../../ui/assets/icons/vk.svg);
+      background-repeat: no-repeat;
+    }
+
+    :global(.cmsms-icon-odnoklassniki) {
+      display: block;
+      width: 30px;
+      height: 30px;
+      margin-right: 15px;
+      background-image: url(../../ui/assets/icons/odnoklassniki.svg);
+      background-repeat: no-repeat;
+    }
+
+    :global(.cmsms-icon-youtube-2) {
+      display: block;
+      width: 30px;
+      height: 30px;
+      background-image: url(../../ui/assets/icons/youtube.svg);
+      background-repeat: no-repeat;
+    }
 
     @media (--small-desktop) {
       margin-bottom: 60px;
@@ -231,6 +255,10 @@
     width: 30%;
     margin-right: 30px;
 
+    @media (--small-desktop) {
+      margin-right: 0;
+    }
+
     @media (--mobile) {
       width: 100%;
       margin-bottom: 24px;
@@ -239,7 +267,7 @@
 
   p:nth-child(2) {
     width: 30%;
-    margin-right: 20%;
+    margin-right: 15%;
 
     @media (--mobile) {
       width: 100%;
