@@ -31,6 +31,7 @@
     "@radix-ui/react-navigation-menu": "1.2.11",
     "@radix-ui/themes": "3.2.1",
     "clsx": "2.1.1",
+    "embla-carousel-react": "^8.6.0",
     "html-react-parser": "^5.2.6",
     "nanoid": "5.1.5",
     "next": "15.3.5",
