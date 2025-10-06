@@ -25,6 +25,15 @@ const nextConfig: NextConfig = {
 
     return config;
   },
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'od-dev.tmweb.ru',
+        pathname: '/**',
+      },
+    ],
+  },
 };
 
 export default nextConfig;
