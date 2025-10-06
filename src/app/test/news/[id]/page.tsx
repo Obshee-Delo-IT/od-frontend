@@ -28,7 +28,13 @@ const Page = async ({ params }: { params: Promise<{ id: string }> }) => {
         );
       }
       if (domNode instanceof Element && domNode.name === 'figure') {
-        return <Carousel images={images} />;
+        return (
+          <>
+            <div className={css.carousel}>
+              <Carousel images={images} />
+            </div>
+          </>
+        );
       }
     },
   };

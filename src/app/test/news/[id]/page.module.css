@@ -1,4 +1,6 @@
 .news {
+  padding: 0 100px;
+
   :global(.wp-block-gallery) {
     display: flex;
   }
@@ -16,9 +18,9 @@
     text-transform: uppercase;
   }
 
-  p {
+  p,
+  div {
     margin: 0;
-    margin-bottom: 80px;
     color: var(--gray-7);
     font-size: var(--font-size-5);
     line-height: var(--line-height-8);
@@ -29,4 +31,8 @@
     color: var(--gray-6);
     font-size: var(--font-size-3);
   }
+}
+
+.carousel {
+  padding: 20px 0px 5px 0px;
 }

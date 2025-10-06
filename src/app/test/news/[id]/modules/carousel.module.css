@@ -15,7 +15,7 @@
   position: relative;
   width: 380px;
   height: 360px;
-  flex: 0 0 30%;
+  flex: 0 0 33%;
   padding: 0 20px;
 
   img {
@@ -31,33 +31,20 @@
 .next {
   position: absolute;
   top: 50%;
-  padding: 8px 12px;
-  border: none;
-  background: rgba(0, 0, 0, 0.5);
-  color: white;
+  width: 32px;
+  height: 32px;
+  padding: 8px;
+  border: 1px solid var(--gray-7);
+  border-radius: var(--radius-full);
+  background-color: var(--gray-2);
+  color: var(--gray-7);
   cursor: pointer;
   transform: translateY(-50%);
 }
 
 .prev {
-  left: 10px;
-  display: flex;
-  width: 32px;
-  height: 32px;
-  align-items: center;
-  border: 1px solid var(--gray-7);
-  border-radius: var(--radius-full);
-  background-color: var(--gray-2);
-  color: var(--gray-7);
+  left: -16px !important;
 }
 .next {
-  right: 10px;
-  display: flex;
-  width: 32px;
-  height: 32px;
-  align-items: center;
-  border: 1px solid var(--gray-7);
-  border-radius: var(--radius-full);
-  background-color: var(--gray-2);
-  color: var(--gray-7);
+  right: -16px !important;
 }
