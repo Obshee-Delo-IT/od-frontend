@@ -1,7 +1,10 @@
+import '@/ui/styles/global.css';
 import { PT_Sans as PTSans, PT_Sans_Narrow as PtSansNarrow } from 'next/font/google';
+import { Footer } from '@/modules/Footer';
+import { HeaderServer } from '@/modules/Header';
+import { Container } from '@/ui/components/Container';
 import { RadixProvider } from '@/ui/theme';
 import type { Metadata } from 'next';
-import '@/ui/styles/global.css';
 
 // TODO: install local fonts
 const ptSans = PTSans({
@@ -28,7 +31,11 @@ const RootLayout = ({
 }>) => (
   <html lang="ru" className="rt-reset">
     <body className={`${ptSansNarrow.variable} ${ptSans.variable}`}>
-      <RadixProvider>{children}</RadixProvider>
+      <RadixProvider>
+        <HeaderServer />
+        <Container>{children}</Container>
+        <Footer />
+      </RadixProvider>
     </body>
   </html>
 );

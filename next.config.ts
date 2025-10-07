@@ -26,13 +26,7 @@ const nextConfig: NextConfig = {
     return config;
   },
   images: {
-    remotePatterns: [
-      {
-        protocol: 'https',
-        hostname: 'od-dev.tmweb.ru',
-        pathname: '/**',
-      },
-    ],
+    remotePatterns: [new URL('/**', process.env.WP_BASE)],
   },
 };
 

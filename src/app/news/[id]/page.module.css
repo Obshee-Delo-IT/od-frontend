@@ -1,6 +1,4 @@
 .news {
-  padding: 0 100px;
-
   :global(.wp-block-gallery) {
     display: flex;
   }

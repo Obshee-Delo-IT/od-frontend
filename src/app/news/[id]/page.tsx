@@ -1,7 +1,5 @@
 import parse, { DOMNode, domToReact, Element } from 'html-react-parser';
 import { Fragment } from 'react';
-import { Footer } from '@/modules/Footer';
-import { HeaderClient } from '@/modules/Header/HeaderClient';
 import { fetchNews } from '@/shared/api';
 import { Carousel } from './modules';
 import css from './page.module.css';
@@ -40,13 +38,9 @@ const Page = async ({ params }: { params: Promise<{ id: string }> }) => {
   };
 
   return (
-    <>
-      <HeaderClient />
-      <div className={css.news}>
-        <Fragment key={id}>{parse(newsBody.content.rendered, options)}</Fragment>
-      </div>
-      <Footer />
-    </>
+    <div className={css.news}>
+      <Fragment key={id}>{parse(newsBody.content.rendered, options)}</Fragment>
+    </div>
   );
 };
 
