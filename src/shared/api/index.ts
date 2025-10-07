@@ -1,4 +1,4 @@
 export { fetchMenuItems } from './fetchMenuItems';
 export { fetchMenus } from './fetchMenus';
 export { fetchFooter } from './fetchFooter';
-export { fetchNews } from './fetchNews';
+export { fetchNews, cachedFetchNews } from './fetchNews';

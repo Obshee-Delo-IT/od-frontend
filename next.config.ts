@@ -26,7 +26,7 @@ const nextConfig: NextConfig = {
     return config;
   },
   images: {
-    remotePatterns: [new URL('/**', process.env.WP_BASE)],
+    remotePatterns: [new URL('/**', process.env.WP_BASE), new URL('/**', 'https://xn----9sbkcac6brh7h.xn--p1ai')],
   },
 };
 
