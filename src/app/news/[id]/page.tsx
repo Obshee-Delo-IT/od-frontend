@@ -1,6 +1,7 @@
 import parse from 'html-react-parser';
 import { Metadata } from 'next';
 import { cachedFetchNews } from '@/shared/api/fetchNews';
+import { Box } from '@/ui/components/Box';
 import { Breadcrumbs } from '@/ui/components/Breadcrumbs/Breadcrumbs';
 import { WithGutenberg } from '@/ui/components/WithGutenberg';
 import css from './page.module.css';
@@ -34,7 +35,15 @@ const Page = async ({ params }: { params: Promise<{ id: string }> }) => {
 
   return (
     <div className={css.container}>
-      <Breadcrumbs items={breadcrumbItems} />
+      <Box
+        mb={{
+          mobile: 24,
+          smallDesktop: 24,
+          desktop: 20,
+        }}
+      >
+        <Breadcrumbs items={breadcrumbItems} />
+      </Box>
       <WithGutenberg key={id}>{parse(data.content.rendered)}</WithGutenberg>
     </div>
   );

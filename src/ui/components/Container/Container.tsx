@@ -2,11 +2,11 @@ import { PropsWithChildren } from 'react';
 import css from './Container.module.css';
 
 interface ContainerProps {
-  tag?: keyof HTMLElementTagNameMap;
+  as?: keyof HTMLElementTagNameMap;
 }
 
-export const Container: React.FC<PropsWithChildren<ContainerProps>> = ({ children, tag = 'main' }) => {
-  const Tag = tag;
+export const Container: React.FC<PropsWithChildren<ContainerProps>> = ({ children, as = 'main' }) => {
+  const Tag = as;
 
   return <Tag className={css.container}>{children}</Tag>;
 };
