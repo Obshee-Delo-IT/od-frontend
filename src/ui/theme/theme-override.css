@@ -199,6 +199,10 @@
   font-size: var(--font-size-3);
 }
 
+.rt-TextFieldRoot:where(.rt-variant-surface) {
+  background-color: transparent;
+}
+
 .rt-BaseButton:active {
   outline: none;
 }
