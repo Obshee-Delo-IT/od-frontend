@@ -1,0 +1,1 @@
+export { WithGutenberg } from './WithGutenberg';

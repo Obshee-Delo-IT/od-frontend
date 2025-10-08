@@ -2,6 +2,7 @@ import parse, { DOMNode, domToReact, Element } from 'html-react-parser';
 import { Metadata } from 'next';
 import { Fragment } from 'react';
 import { cachedFetchNews } from '@/shared/api/fetchNews';
+import { WithGutenberg } from '@/ui/components/WithGutenberg';
 import css from './page.module.css';
 
 export const dynamicParams = true;
@@ -54,7 +55,7 @@ const Page = async ({ params }: { params: Promise<{ id: string }> }) => {
 
   return (
     <div className={css.news}>
-      <Fragment key={id}>{parse(data.content.rendered, options)}</Fragment>
+      <WithGutenberg key={id}>{parse(data.content.rendered, options)}</WithGutenberg>
     </div>
   );
 };
