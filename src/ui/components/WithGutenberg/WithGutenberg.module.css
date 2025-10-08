@@ -4,5 +4,7 @@
     @nested-import '@wordpress/block-library/build-style/style.css';
     @nested-import '@wordpress/block-library/build-style/theme.css';
     @nested-import '../../styles/gutenberg.css';
+    @nested-import './Carousel/carousel.css';
+    @nested-import './Carousel/custom-carousel.css';
   }
 }
