@@ -45,7 +45,6 @@ const parseCarouselAttributes = (carouselBlock: Element): CarouselBlockAttribute
 
 const createSwiperConfig = (carouselBlock: Element, attributes: CarouselBlockAttributes): SwiperOptions => ({
   modules: [Navigation, Pagination, Autoplay],
-  width: 1200,
   slidesPerView: 'auto',
   slidesPerGroup: 1,
   spaceBetween: 40,
@@ -68,8 +67,8 @@ const createSwiperConfig = (carouselBlock: Element, attributes: CarouselBlockAtt
     : false,
   breakpoints: {
     900: {
-      slidesPerView: 'auto',
-      slidesPerGroup: attributes.slidesPerGroup,
+      slidesPerView: attributes.slidesPerView || 3,
+      slidesPerGroup: attributes.slidesPerGroup || 1,
     },
   },
   resizeObserver: true,

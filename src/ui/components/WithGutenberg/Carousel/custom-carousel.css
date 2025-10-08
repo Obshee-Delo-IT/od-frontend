@@ -3,11 +3,14 @@
   border-radius: 12px;
 
   @media (--desktop) {
-    max-width: 360px;
     max-height: 360px;
   }
 
   @media (--small-desktop) {
+    max-height: 320px;
+  }
+
+  @media (--mobile) {
     max-width: 320px;
   }
 }
@@ -17,6 +20,14 @@
   border-radius: 12px;
   object-fit: contain;
   object-position: center;
+
+  @media (--desktop) {
+    max-height: 360px;
+  }
+
+  @media (--small-desktop) {
+    max-height: 320px;
+  }
 }
 
 .wp-block-cb-carousel-v2 .cb-button-next,
