@@ -1,0 +1,1 @@
+export { SimilarNews } from './SimilarNews';

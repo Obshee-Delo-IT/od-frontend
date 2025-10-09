@@ -1,6 +1,7 @@
 import parse, { DOMNode, domToReact, Element } from 'html-react-parser';
 import { Fragment } from 'react';
 import { extractImages } from '@/app/news/[id]/utils';
+import { SimilarNews } from '@/modules/SimilarNews';
 import { fetchNews } from '@/shared/api';
 import { Carousel } from './modules';
 import css from './page.module.css';
@@ -41,6 +42,7 @@ const Page = async ({ params }: { params: Promise<{ id: string }> }) => {
     <>
       <div className={css.news}>
         <Fragment key={id}>{parse(newsBody.content.rendered, options)}</Fragment>
+        <SimilarNews />
       </div>
     </>
   );
