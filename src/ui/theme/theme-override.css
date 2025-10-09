@@ -77,6 +77,22 @@
   --container-2: 100%;
   --container-3: 860px;
   --container-4: 1240px;
+
+  --wp--custom--carousel-block--navigation-sides-offset: 0px;
+  --wp--custom--carousel-block--navigation-color: var(--gray-7);
+  --wp--custom--carousel-block--navigation-alignfull-color: var(--gray-7);
+  --wp--custom--carousel-block--pagination-top: auto;
+  --wp--custom--carousel-block--pagination-bullet-size: 8px;
+  --wp--custom--carousel-block--pagination-bullet-color: var(--gray-5);
+  --wp--custom--carousel-block--pagination-bullet-active-color: var(--red-7);
+  --wp--custom--carousel-block--pagination-bullet-opacity: 1;
+  --wp--custom--carousel-block--pagination-bullet-active-opacity: 1;
+  --wp--custom--carousel-block--pagination-bullet-horizontal-gap: 12px;
+  --wp--custom--carousel-block--pagination-bullet-vertical-gap: 0;
+  --wp--custom--carousel-block--image-margin-top: 0;
+  --wp--custom--carousel-block--image-margin-bottom: 0;
+  --wp--custom--carousel-block--cover-margin-top: 0;
+  --wp--custom--carousel-block--cover-margin-bottom: 0;
 }
 
 .rt-BaseButton:where(.rt-variant-solid) {

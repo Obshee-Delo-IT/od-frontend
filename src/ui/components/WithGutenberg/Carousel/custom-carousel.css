@@ -1,0 +1,71 @@
+.wp-block-cb-carousel-v2 .swiper-slide {
+  overflow: hidden;
+  border-radius: 12px;
+
+  @media (--desktop) {
+    max-height: 360px;
+  }
+
+  @media (--small-desktop) {
+    max-height: 320px;
+  }
+
+  @media (--mobile) {
+    max-width: 320px;
+  }
+}
+
+.wp-block-cb-carousel-v2 .swiper-slide img,
+.wp-block-cb-carousel-v2 .swiper-slide figure {
+  border-radius: 12px;
+  object-fit: contain;
+  object-position: center;
+
+  @media (--desktop) {
+    max-height: 360px;
+  }
+
+  @media (--small-desktop) {
+    max-height: 320px;
+  }
+}
+
+.wp-block-cb-carousel-v2 .cb-button-next,
+.wp-block-cb-carousel-v2 .cb-button-prev {
+  display: flex;
+  min-width: 32px;
+  max-width: 32px;
+  min-height: 32px;
+  max-height: 32px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--wp--custom--carousel-block--navigation-color);
+  border-radius: 50%;
+  background-color: var(--gray-2);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.wp-block-cb-carousel-v2 .cb-button-next:hover,
+.wp-block-cb-carousel-v2 .cb-button-prev:hover {
+  background-color: var(--gray-4);
+}
+
+.wp-block-cb-carousel-v2 .cb-pagination .cb-pagination-bullet {
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.wp-block-cb-carousel-v2 .cb-button-next::after,
+.wp-block-cb-carousel-v2 .cb-button-prev::after {
+  width: 16px;
+  height: 16px;
+  background: url('../../assets/icons/chevron-right.svg') no-repeat center;
+  font-size: 0;
+  line-height: 0;
+}
+
+.wp-block-cb-carousel-v2 .cb-button-prev::after {
+  transform: rotate(180deg);
+}
