@@ -1,6 +1,6 @@
 import clsx from 'clsx';
 import React from 'react';
-import styles from './Box.module.css';
+import css from './Box.module.css';
 
 type SpacingValue = 0 | 4 | 8 | 12 | 16 | 20 | 24 | 32 | 40 | 48 | 56 | 64;
 
@@ -46,13 +46,13 @@ const getSpacingClass = (
   const prefix = `${type}${direction}`;
 
   if (typeof spacing === 'number') {
-    return styles[`${prefix}-${spacing}`];
+    return css[`${prefix}-${spacing}`];
   }
 
   return clsx(
-    spacing.mobile !== undefined && styles[`${prefix}-mobile-${spacing.mobile}`],
-    spacing.smallDesktop !== undefined && styles[`${prefix}-smallDesktop-${spacing.smallDesktop}`],
-    spacing.desktop !== undefined && styles[`${prefix}-desktop-${spacing.desktop}`]
+    spacing.mobile !== undefined && css[`${prefix}-mobile-${spacing.mobile}`],
+    spacing.smallDesktop !== undefined && css[`${prefix}-smallDesktop-${spacing.smallDesktop}`],
+    spacing.desktop !== undefined && css[`${prefix}-desktop-${spacing.desktop}`]
   );
 };
 

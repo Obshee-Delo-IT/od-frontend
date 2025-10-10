@@ -27,11 +27,11 @@ export const Breadcrumbs: React.FC<BreadcrumbsProps> = ({
         <Fragment key={index}>
           <>
             {item.href ? (
-              <Link href={item.href} size="3" color="gray">
+              <Link href={item.href} size="3" color="lightgrey">
                 {item.label}
               </Link>
             ) : (
-              <Text size="3" weight={isLast ? 'bold' : 'regular'} aria-current="page">
+              <Text size="3" color="gray" weight={isLast ? 'bold' : 'regular'} aria-current="page">
                 {item.label}
               </Text>
             )}

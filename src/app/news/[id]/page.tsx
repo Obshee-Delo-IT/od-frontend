@@ -3,7 +3,7 @@ import { Metadata } from 'next';
 import { cachedFetchNews } from '@/shared/api/fetchNews';
 import { Box } from '@/ui/components/Box';
 import { Breadcrumbs } from '@/ui/components/Breadcrumbs/Breadcrumbs';
-import { WithGutenberg } from '@/ui/components/WithGutenberg';
+import { GutenbergProvider } from '@/ui/theme';
 import css from './page.module.css';
 
 export const dynamicParams = true;
@@ -44,7 +44,7 @@ const Page = async ({ params }: { params: Promise<{ id: string }> }) => {
       >
         <Breadcrumbs items={breadcrumbItems} />
       </Box>
-      <WithGutenberg key={id}>{parse(data.content.rendered)}</WithGutenberg>
+      <GutenbergProvider>{parse(data.content.rendered)}</GutenbergProvider>
     </div>
   );
 };
