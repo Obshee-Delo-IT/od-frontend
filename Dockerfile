@@ -23,10 +23,10 @@ RUN pnpm build
 
 FROM base AS runner
 WORKDIR /app
-RUN addgroup --system --gid 1001 nodejs && adduser --system --uid 1001 nodejs
-COPY --from=builder /app/public ./public
+RUN addgroup --system --gid 1001 nodejs && adduser --system --uid 1001 nextjs
+COPY --from=builder --chown=nextjs:nodejs /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
-USER nodejs
+USER nextjs
 ENV HOSTNAME="0.0.0.0"
 CMD ["node", "server.js"]
