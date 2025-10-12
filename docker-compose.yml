@@ -1,14 +1,4 @@
 services:
-  frontend:
-    container_name: od-frontend
-    build:
-      target: runner
-      context: .
-    restart: always
-    ports:
-      - 3000:3000
-    env_file:
-      - .env
   frontend-local:
     extends:
       service: frontend

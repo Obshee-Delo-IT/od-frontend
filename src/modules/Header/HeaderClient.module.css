@@ -109,13 +109,13 @@
 
 .searchBtn {
   @media (--mobile) {
-    margin-right: 8px;
+    margin-right: 8px !important;
   }
 }
 
 .headerDesktop {
   @media (--mobile) {
-    display: none;
+    display: none !important;
   }
 }
 

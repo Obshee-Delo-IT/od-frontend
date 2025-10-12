@@ -7,6 +7,7 @@ module.exports = {
       },
     ],
     'postcss-flexbugs-fixes',
+    'postcss-nested-import',
     'postcss-nested',
     [
       'postcss-preset-env',

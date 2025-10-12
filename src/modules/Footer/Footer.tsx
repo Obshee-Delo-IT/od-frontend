@@ -14,7 +14,7 @@ export const Footer = async () => {
   const footerBody = await footerResponse.json();
 
   return (
-    <div className={css.footer} id="footer">
+    <footer className={css.footer} id="footer">
       <Container size="4" className={css.container}>
         <div className={css.footerWrap}>
           {footerBody.map((block: FooterBlock) => (
@@ -22,6 +22,6 @@ export const Footer = async () => {
           ))}
         </div>
       </Container>
-    </div>
+    </footer>
   );
 };

@@ -15,3 +15,15 @@
 .whiteLink:active {
   color: var(--gray-4);
 }
+
+.lightgrey {
+  color: var(--gray-6);
+}
+
+.lightgrey:hover {
+  color: var(--gray-7);
+}
+
+.lightgrey:active {
+  color: var(--gray-8);
+}
