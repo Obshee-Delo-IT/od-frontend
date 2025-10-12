@@ -1,0 +1,1 @@
+export { parsePost } from './parsePost';

@@ -1,10 +1,12 @@
-import parse from 'html-react-parser';
+import { Text } from '@radix-ui/themes';
+import dayjs from 'dayjs';
 import { Metadata } from 'next';
+import { SimilarNews } from '@/modules/News/SimilarNews';
+import { parsePost } from '@/modules/News/utils';
 import { cachedFetchNews } from '@/shared/api/fetchNews';
 import { Box } from '@/ui/components/Box';
 import { Breadcrumbs } from '@/ui/components/Breadcrumbs/Breadcrumbs';
 import { GutenbergProvider } from '@/ui/theme';
-import css from './page.module.css';
 
 export const dynamicParams = true;
 
@@ -33,8 +35,22 @@ const Page = async ({ params }: { params: Promise<{ id: string }> }) => {
     { label: data.title.rendered },
   ];
 
+  const parsed = parsePost(data.content.rendered);
+  const date = dayjs(data.date).format('DD.MM.YYYY');
+
   return (
-    <div className={css.container}>
+    <Box
+      pt={{
+        mobile: 8,
+        smallDesktop: 8,
+        desktop: 20,
+      }}
+      pb={{
+        mobile: 32,
+        smallDesktop: 32,
+        desktop: 64,
+      }}
+    >
       <Box
         mb={{
           mobile: 24,
@@ -44,8 +60,48 @@ const Page = async ({ params }: { params: Promise<{ id: string }> }) => {
       >
         <Breadcrumbs items={breadcrumbItems} />
       </Box>
-      <GutenbergProvider>{parse(data.content.rendered)}</GutenbergProvider>
-    </div>
+      <GutenbergProvider>
+        <Box
+          mb={{
+            mobile: 20,
+            smallDesktop: 24,
+            desktop: 32,
+          }}
+        >
+          {parsed.header}
+        </Box>
+        <Box
+          mb={{
+            mobile: 40,
+            smallDesktop: 32,
+            desktop: 32,
+          }}
+        >
+          <Text size="3" color="gray">
+            {date}
+          </Text>
+        </Box>
+
+        <Box
+          display="flex"
+          flexDirection={{
+            mobile: 'column',
+          }}
+          gap={{
+            mobile: 48,
+            smallDesktop: 40,
+            desktop: 40,
+          }}
+        >
+          <Box as="section">{parsed.body}</Box>
+          <Box as="aside" position="relative">
+            <Box position="sticky" top={8}>
+              <SimilarNews />
+            </Box>
+          </Box>
+        </Box>
+      </GutenbergProvider>
+    </Box>
   );
 };
 
