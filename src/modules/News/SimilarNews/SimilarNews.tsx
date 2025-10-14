@@ -1,6 +1,6 @@
 import css from './SimilarNews.module.css';
 
-export const SimilarNews = () => (
+export const SimilarNews = async () => (
   <div className={css.container}>
     <div className={css.header}>
       <p className={css.title}>Похожие новости</p>
