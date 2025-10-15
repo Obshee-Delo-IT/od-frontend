@@ -14,8 +14,8 @@
 
 .title {
   color: var(--gray-9) !important;
-  font-size: var(--font-size-5);
-  font-weight: 700;
+  font-size: var(--font-size-5) !important;
+  font-weight: 700 !important;
 }
 
 .link {

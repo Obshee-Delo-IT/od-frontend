@@ -5,6 +5,6 @@ interface fetchSimilarNewsProps {
   region: number;
 }
 
-export const fetchSimilarNews = ({ category, region }: fetchSimilarNewsProps) => {
-  customFetch(`/wp/v2/posts?categories=${category}&categories=${region}`);
+export const fetchSimilarNews = async ({ category, region }: fetchSimilarNewsProps) => {
+  customFetch(`/wp-json/wp/v2/posts?categories=${category}&categories=${region}`);
 };
