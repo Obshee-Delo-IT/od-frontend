@@ -1,8 +1,8 @@
 import { Text } from '@radix-ui/themes';
 import clsx from 'clsx';
 import Image from 'next/image';
+import LogoIcon from '@/shared/ui/assets/icons/logo.webp';
 import css from './Logo.module.css';
-import LogoIcon from '@/ui/assets/icons/logo.webp';
 
 interface LogoProps {
   size: 'sm' | 'lg';
