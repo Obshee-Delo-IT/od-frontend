@@ -16,7 +16,7 @@ const findCarouselOrGallery = (children: DOMNode[]) => {
   return { carousel: isElement(carousel) ? carousel : null, gallery: isElement(gallery) ? gallery : null };
 };
 
-export const parsePost = (data: string): PostContent => {
+export const parsePost = (data = ''): PostContent => {
   let header: string | JSX.Element | JSX.Element[] = '';
 
   const body = parse(data, {

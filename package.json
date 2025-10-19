@@ -11,7 +11,8 @@
     "format": "prettier --write .",
     "prepare": "husky",
     "type-check": "tsc --noEmit",
-    "lint:styles": "stylelint \"**/*.css\" --fix --mw 0"
+    "lint:styles": "stylelint \"**/*.css\" --fix --mw 0",
+    "generate:types": "openapi-typescript"
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx}": [
@@ -33,14 +34,15 @@
     "@radix-ui/themes": "3.2.1",
     "@wordpress/block-library": "9.32.0",
     "clsx": "2.1.1",
-    "dayjs": "^1.11.18",
+    "dayjs": "1.11.18",
     "html-react-parser": "5.2.6",
     "nanoid": "5.1.5",
     "next": "15.3.5",
     "normalize.css": "8.0.1",
     "react": "19.1.0",
     "react-dom": "19.1.0",
-    "swiper": "11.2.6"
+    "swiper": "11.2.6",
+    "openapi-fetch": "0.15.0"
   },
   "devDependencies": {
     "@csstools/postcss-global-data": "^3.0.0",
@@ -60,6 +62,7 @@
     "eslint-plugin-react-hooks": "5.2.0",
     "husky": "9.1.7",
     "lint-staged": "16.1.2",
+    "openapi-typescript": "7.10.1",
     "postcss": "8.5.6",
     "postcss-discard-comments": "7.0.4",
     "postcss-flexbugs-fixes": "5.0.2",
