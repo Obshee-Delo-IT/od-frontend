@@ -1,0 +1,14 @@
+.clickableImage {
+  cursor: pointer;
+  transition: opacity 200ms ease;
+}
+
+.clickableImage:hover {
+  opacity: 0.9;
+}
+
+.imageWrapper {
+  position: relative;
+  width: 90vw;
+  height: 90vh;
+}

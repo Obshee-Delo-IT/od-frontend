@@ -1,6 +1,7 @@
 import { Text } from '@radix-ui/themes';
 import dayjs from 'dayjs';
 import { Metadata } from 'next';
+import { ImagePreviewClient } from '@/modules/News/ImagePreview';
 import { SimilarNews } from '@/modules/News/SimilarNews';
 import { parsePost } from '@/modules/News/utils';
 import { cachedFetchNews } from '@/shared/api/fetchNews';
@@ -68,7 +69,7 @@ const Page = async ({ params }: { params: Promise<{ id: string }> }) => {
             desktop: 32,
           }}
         >
-          {parsed.header}
+          <ImagePreviewClient>{parsed.header}</ImagePreviewClient>
         </Box>
         <Box
           mb={{
@@ -93,7 +94,9 @@ const Page = async ({ params }: { params: Promise<{ id: string }> }) => {
             desktop: 40,
           }}
         >
-          <Box as="section">{parsed.body}</Box>
+          <ImagePreviewClient>
+            <Box as="section">{parsed.body}</Box>
+          </ImagePreviewClient>
           <Box as="aside" position="relative">
             <Box position="sticky" top={8}>
               <SimilarNews />

@@ -32,6 +32,7 @@
     "@radix-ui/react-accordion": "1.2.11",
     "@radix-ui/react-navigation-menu": "1.2.11",
     "@radix-ui/themes": "3.2.1",
+    "@uidotdev/usehooks": "^2.4.1",
     "@wordpress/block-library": "9.32.0",
     "clsx": "2.1.1",
     "dayjs": "1.11.18",
@@ -39,10 +40,10 @@
     "nanoid": "5.1.5",
     "next": "15.3.5",
     "normalize.css": "8.0.1",
+    "openapi-fetch": "0.15.0",
     "react": "19.1.0",
     "react-dom": "19.1.0",
-    "swiper": "11.2.6",
-    "openapi-fetch": "0.15.0"
+    "swiper": "11.2.6"
   },
   "devDependencies": {
     "@csstools/postcss-global-data": "^3.0.0",
