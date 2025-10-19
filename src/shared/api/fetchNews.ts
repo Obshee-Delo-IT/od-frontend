@@ -1,9 +1,15 @@
 import { cache } from 'react';
-import { customFetch } from '@/lib/customFetch';
+import { client } from './httpClient';
 
 export const fetchNews = async (id: string) => {
-  const response = await customFetch(`/wp-json/wp/v2/posts/${id}`);
-  const data = await response.json();
+  const { data } = await client.GET(`/wp/v2/posts/{id}`, {
+    params: {
+      path: {
+        id,
+      },
+    },
+  });
+
   return data;
 };
 

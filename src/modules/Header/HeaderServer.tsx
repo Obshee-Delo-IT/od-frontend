@@ -1,15 +1,14 @@
 import { fetchMenuItems, fetchMenus } from '@/shared/api';
 import { HeaderClient } from './HeaderClient';
+import { SourceNavItem } from './types';
 import { toNavItems } from './utils/toNavItems';
 
 const HeaderServer = async () => {
-  const menuIdResponse = await fetchMenus({ slug: 'main-navigation' });
-  const menuIdBody = await menuIdResponse.json();
-  const menuId = menuIdBody[0].id;
+  const { data: menuIdBody } = await fetchMenus({ slug: 'main-navigation' });
+  const menuId = menuIdBody?.[0]?.id;
 
-  const menuItemsResponse = await fetchMenuItems({ menuId: menuId });
-  const menuItemsBody = await menuItemsResponse.json();
-  const menuItems = toNavItems(menuItemsBody);
+  const { data } = await fetchMenuItems({ menus: [menuId!] });
+  const menuItems = toNavItems(data as SourceNavItem[]);
 
   return <HeaderClient navItems={menuItems} />;
 };

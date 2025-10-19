@@ -4,9 +4,9 @@ import { Metadata } from 'next';
 import { SimilarNews } from '@/modules/News/SimilarNews';
 import { parsePost } from '@/modules/News/utils';
 import { cachedFetchNews } from '@/shared/api/fetchNews';
-import { Box } from '@/ui/components/Box';
-import { Breadcrumbs } from '@/ui/components/Breadcrumbs/Breadcrumbs';
-import { GutenbergProvider } from '@/ui/theme';
+import { Box } from '@/shared/ui/components/Box';
+import { Breadcrumbs } from '@/shared/ui/components/Breadcrumbs';
+import { GutenbergProvider } from '@/shared/ui/theme';
 
 export const dynamicParams = true;
 
@@ -32,11 +32,11 @@ const Page = async ({ params }: { params: Promise<{ id: string }> }) => {
   const breadcrumbItems = [
     { label: 'Главная', href: '/' },
     { label: 'Новости', href: '/news' },
-    { label: data.title.rendered },
+    { label: data?.title?.rendered ?? '' },
   ];
 
-  const parsed = parsePost(data.content.rendered);
-  const date = dayjs(data.date).format('DD.MM.YYYY');
+  const parsed = parsePost(data?.content?.rendered);
+  const date = dayjs(data?.date).format('DD.MM.YYYY');
 
   return (
     <Box

@@ -11,7 +11,8 @@
     "format": "prettier --write .",
     "prepare": "husky",
     "type-check": "tsc --noEmit",
-    "lint:styles": "stylelint \"**/*.css\" --fix --mw 0"
+    "lint:styles": "stylelint \"**/*.css\" --fix --mw 0",
+    "generate:types": "openapi-typescript"
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx}": [
@@ -60,6 +61,8 @@
     "eslint-plugin-react-hooks": "5.2.0",
     "husky": "9.1.7",
     "lint-staged": "16.1.2",
+    "openapi-fetch": "^0.15.0",
+    "openapi-typescript": "^7.10.1",
     "postcss": "8.5.6",
     "postcss-discard-comments": "7.0.4",
     "postcss-flexbugs-fixes": "5.0.2",

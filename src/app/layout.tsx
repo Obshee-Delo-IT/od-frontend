@@ -2,8 +2,8 @@ import '@/ui/styles/global.css';
 import { PT_Sans as PTSans, PT_Sans_Narrow as PtSansNarrow } from 'next/font/google';
 import { Footer } from '@/modules/Footer';
 import { HeaderServer } from '@/modules/Header';
-import { Container } from '@/ui/components/Container';
-import { RadixProvider } from '@/ui/theme';
+import { Container } from '@/shared/ui/components/Container';
+import { RadixProvider } from '@/shared/ui/theme';
 import type { Metadata } from 'next';
 
 // TODO: install local fonts

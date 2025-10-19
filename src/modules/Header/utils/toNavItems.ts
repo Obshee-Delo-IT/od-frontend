@@ -2,7 +2,7 @@ import { NavItem, SourceNavItem } from '../types';
 import { mapWpMenuItemToNavItem } from './mapWpMenuItemToNavItem';
 import { sortNavItems } from './sortNavItems';
 
-export const toNavItems = (wpItems: SourceNavItem[]): NavItem[] => {
+export const toNavItems = (wpItems: SourceNavItem[] = []): NavItem[] => {
   const map = new Map();
   sortNavItems(wpItems).forEach((item) => {
     const mappedItem = mapWpMenuItemToNavItem(item);
