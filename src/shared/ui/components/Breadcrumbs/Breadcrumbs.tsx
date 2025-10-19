@@ -1,8 +1,8 @@
 import { Text } from '@radix-ui/themes';
 import { Fragment } from 'react';
+import ChevronRight from '@/shared/ui/assets/icons/chevron-right.svg';
 import css from './Breadcrumbs.module.css';
 import { Link } from '../Link';
-import ChevronRight from '@/ui/assets/icons/chevron-right.svg';
 
 export interface BreadcrumbItem {
   label: string;

@@ -9,9 +9,9 @@ import {
 import { Text } from '@radix-ui/themes';
 import clsx from 'clsx';
 import { ReactNode } from 'react';
+import ChevronDownIcon from '@/shared/ui/assets/icons/chevron-down.svg';
 import css from './Accordion.module.css';
 import { Link } from '../Link';
-import ChevronDownIcon from '@/ui/assets/icons/chevron-down.svg';
 
 interface AccordionItemData {
   value: string | number;

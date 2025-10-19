@@ -1,4 +1,4 @@
-import '@/ui/styles/global.css';
+import '@/shared/ui/styles/global.css';
 import { PT_Sans as PTSans, PT_Sans_Narrow as PtSansNarrow } from 'next/font/google';
 import { Footer } from '@/modules/Footer';
 import { HeaderServer } from '@/modules/Header';

@@ -8,8 +8,8 @@ import { Text } from '@radix-ui/themes';
 import clsx from 'clsx';
 import NextLink from 'next/link';
 import { PropsWithChildren, ReactNode } from 'react';
+import ChevronDownIcon from '@/shared/ui/assets/icons/chevron-down.svg';
 import css from './ButtonGroupItem.module.css';
-import ChevronDownIcon from '@/ui/assets/icons/chevron-down.svg';
 
 interface ButtonGroupItemProps {
   active?: boolean;

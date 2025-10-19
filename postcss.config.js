@@ -3,7 +3,7 @@ module.exports = {
     [
       '@csstools/postcss-global-data',
       {
-        files: ['./src/ui/styles/media.css'],
+        files: ['./src/shared/ui/styles/media.css'],
       },
     ],
     'postcss-flexbugs-fixes',
