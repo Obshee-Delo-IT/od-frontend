@@ -1,6 +1,6 @@
 /* stylelint-disable at-rule-no-unknown */
 .gutenberg {
-  :global {
+  & :global(:not(.gutenbergExclude) *) {
     @nested-import './gutenberg.css';
     @nested-import './Carousel/carousel.css';
     @nested-import './Carousel/custom-carousel.css';

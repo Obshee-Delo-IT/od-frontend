@@ -175,6 +175,10 @@
   color: var(--gray-9);
 }
 
+.rt-Text:where(rt-r-size-3[data-accent-color='gray']) {
+  color: var(--gray-6);
+}
+
 .rt-Text:where(.rt-r-size-9),
 .rt-Heading:where(.rt-r-size-9) {
   font-family: 'PT Sans Narrow', 'PT Sans', 'Helvetica Neue', Helvetica, Arial, sans-serif;

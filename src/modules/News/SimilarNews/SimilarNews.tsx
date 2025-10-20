@@ -1,41 +1,41 @@
-// import { fetchSimilarNews } from '@/shared/api/fetchSimilarNews';
+import dayjs from 'dayjs';
+import { fetchSimilarNews } from '@/shared/api/fetchSimilarNews';
+import { GutenbergExcludeProvider } from '@/ui/theme/gutenberg/gutenberg-provider';
 import css from './SimilarNews.module.css';
 
-// interface SimilarNewsProps {
-//   category: number;
-//   region: number;
-// }
+interface SimilarNewsProps {
+  category: number;
+  region: number;
+}
 
-export const SimilarNews = async () => (
-  // { category, region }: SimilarNewsProps
+export const SimilarNews = async ({ category, region }: SimilarNewsProps) => {
+  const similar = await fetchSimilarNews({ category: category, region: region });
 
-  // const similar = await fetchSimilarNews({ category: category, region: region });
+  return (
+    <>
+      <GutenbergExcludeProvider>
+        <div className={css.container}>
+          <div className={css.header}>
+            <p className={css.title}>Похожие новости</p>
+            <p className={css.link}>Все статьи</p>
+          </div>
 
-  <>
-    <div className={css.container}>
-      <div className={css.header}>
-        <p className={css.title}>Похожие новости</p>
-        <p className={css.link}>Все статьи</p>
-      </div>
+          {similar.map((el) => {
+            const date = dayjs(el.date).format('DD.MM.YYYY');
 
-      <div className={css.news}>
-        <div className={css.newsItem}>
-          <p className={css.date}>01.01.2023</p>
-          <p className={css.newsName}>На страже здоровья детства и учителей</p>
+            return (
+              <div className={css.news} key={el.id}>
+                <div className={css.newsItem}>
+                  <p className={css.date}>{date}</p>
+                  <a href={el.link} className={css.newsName}>
+                    {el.title.rendered}
+                  </a>
+                </div>
+              </div>
+            );
+          })}
         </div>
-        <div className={css.newsItem}>
-          <p className={css.date}>01.01.2023</p>
-          <p className={css.newsName}>На страже здоровья детства и учителей</p>
-        </div>
-        <div className={css.newsItem}>
-          <p className={css.date}>01.01.2023</p>
-          <p className={css.newsName}>На страже здоровья детства и учителей</p>
-        </div>
-        <div className={css.newsItem}>
-          <p className={css.date}>01.01.2023</p>
-          <p className={css.newsName}>На страже здоровья детства и учителей</p>
-        </div>
-      </div>
-    </div>
-  </>
-);
+      </GutenbergExcludeProvider>
+    </>
+  );
+};
