@@ -1,12 +1,13 @@
 import { Text } from '@radix-ui/themes';
 import dayjs from 'dayjs';
 import { Metadata } from 'next';
+import { ImagePreviewClient } from '@/modules/News/ImagePreview';
 import { SimilarNews } from '@/modules/News/SimilarNews';
 import { parsePost } from '@/modules/News/utils';
 import { cachedFetchNews } from '@/shared/api/fetchNews';
-import { Box } from '@/ui/components/Box';
-import { Breadcrumbs } from '@/ui/components/Breadcrumbs/Breadcrumbs';
-import { GutenbergProvider } from '@/ui/theme';
+import { Box } from '@/shared/ui/components/Box';
+import { Breadcrumbs } from '@/shared/ui/components/Breadcrumbs';
+import { GutenbergProvider } from '@/shared/ui/theme';
 
 export const dynamicParams = true;
 
@@ -34,11 +35,11 @@ const Page = async ({ params }: { params: Promise<{ id: string }> }) => {
   const breadcrumbItems = [
     { label: 'Главная', href: '/' },
     { label: 'Новости', href: '/news' },
-    { label: data.title.rendered },
+    { label: data?.title?.rendered ?? '' },
   ];
 
-  const parsed = parsePost(data.content.rendered);
-  const date = dayjs(data.date).format('DD.MM.YYYY');
+  const parsed = parsePost(data?.content?.rendered);
+  const date = dayjs(data?.date).format('DD.MM.YYYY');
 
   return (
     <Box
@@ -70,7 +71,7 @@ const Page = async ({ params }: { params: Promise<{ id: string }> }) => {
             desktop: 32,
           }}
         >
-          {parsed.header}
+          <ImagePreviewClient>{parsed.header}</ImagePreviewClient>
         </Box>
         <Box
           mb={{
@@ -95,7 +96,9 @@ const Page = async ({ params }: { params: Promise<{ id: string }> }) => {
             desktop: 40,
           }}
         >
-          <Box as="section">{parsed.body}</Box>
+          <ImagePreviewClient>
+            <Box as="section">{parsed.body}</Box>
+          </ImagePreviewClient>
           <Box as="aside" position="relative">
             <Box position="sticky" top={8}>
               <SimilarNews category={category} region={region} />

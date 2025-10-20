@@ -1,17 +1,16 @@
 'use client';
 
-import { Button, Container, IconButton } from '@radix-ui/themes';
+import { Button, Container, IconButton, Link } from '@radix-ui/themes';
 import clsx from 'clsx';
 import Nextlink from 'next/link';
 import { useEffect, useState } from 'react';
-import { Accordion } from '@/ui/components/Accordion';
-import { ButtonGroup } from '@/ui/components/ButtonGroup';
-import { CrossIcon, MenuIcon, SearchIcon } from '@/ui/components/Icons';
-import { Input } from '@/ui/components/input';
-import { Link } from '@/ui/components/Link';
+import { Accordion } from '@/shared/ui/components/Accordion';
+import { ButtonGroup } from '@/shared/ui/components/ButtonGroup';
+import { SearchIcon, CrossIcon, MenuIcon } from '@/shared/ui/components/Icons';
+import { Input } from '@/shared/ui/components/input';
+import { Logo } from '@/shared/ui/components/Logo';
 import css from './HeaderClient.module.css';
 import { NavItem } from './types';
-import { Logo } from '../../ui/components/Logo';
 
 interface HeaderClientProps {
   navItems?: NavItem[];

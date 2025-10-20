@@ -1,8 +1,9 @@
-import { customFetch } from '@/lib/customFetch';
+import { paths } from '@/types/generated/wp-json-openapi';
+import { client } from './httpClient';
 
-interface FetchMenuItemsProps {
-  menuId: number;
-}
-
-export const fetchMenuItems = ({ menuId }: FetchMenuItemsProps) =>
-  customFetch(`/wp-json/wp/v2/menu-items/?menus=${menuId}`);
+export const fetchMenuItems = (query: paths['/wp/v2/menu-items']['get']['parameters']['query']) =>
+  client.GET('/wp/v2/menu-items', {
+    params: {
+      query,
+    },
+  });

@@ -1,3 +1,10 @@
-import { customFetch } from '@/lib/customFetch';
+import { client } from './httpClient';
 
-export const fetchFooter = () => customFetch(`/wp-json/wp/v2/widgets?sidebar=sidebar_bottom`);
+export const fetchFooter = () =>
+  client.GET('/wp/v2/widgets', {
+    params: {
+      query: {
+        sidebar: 'sidebar_bottom',
+      },
+    },
+  });

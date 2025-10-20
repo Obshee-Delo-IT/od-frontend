@@ -61,7 +61,7 @@
       width: 30px;
       height: 30px;
       margin-right: 15px;
-      background-image: url(../../ui/assets/icons/vk.svg);
+      background-image: url(../../shared/ui/assets/icons/vk.svg);
       background-repeat: no-repeat;
     }
 
@@ -70,7 +70,7 @@
       width: 30px;
       height: 30px;
       margin-right: 15px;
-      background-image: url(../../ui/assets/icons/odnoklassniki.svg);
+      background-image: url(../../shared/ui/assets/icons/odnoklassniki.svg);
       background-repeat: no-repeat;
     }
 
@@ -78,7 +78,7 @@
       display: block;
       width: 30px;
       height: 30px;
-      background-image: url(../../ui/assets/icons/youtube.svg);
+      background-image: url(../../shared/ui/assets/icons/youtube.svg);
       background-repeat: no-repeat;
     }
 
