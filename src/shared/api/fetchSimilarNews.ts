@@ -1,4 +1,4 @@
-import { customFetch } from '@/lib/customFetch';
+import { client } from './httpClient';
 
 interface fetchSimilarNewsProps {
   category: number;
@@ -6,4 +6,8 @@ interface fetchSimilarNewsProps {
 }
 
 export const fetchSimilarNews = async ({ category, region }: fetchSimilarNewsProps) =>
-  (await customFetch(`/wp-json/wp/v2/posts?categories=${category}&categories=${region}`)).json();
+  client.GET('/wp/v2/posts', {
+    params: {
+      query: { categories: [category, region] },
+    },
+  });

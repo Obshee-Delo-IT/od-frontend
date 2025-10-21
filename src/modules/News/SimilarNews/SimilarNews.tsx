@@ -1,6 +1,5 @@
 import dayjs from 'dayjs';
 import { fetchSimilarNews } from '@/shared/api/fetchSimilarNews';
-import { GutenbergExcludeProvider } from '@/ui/theme/gutenberg/gutenberg-provider';
 import css from './SimilarNews.module.css';
 
 interface SimilarNewsProps {
@@ -9,33 +8,31 @@ interface SimilarNewsProps {
 }
 
 export const SimilarNews = async ({ category, region }: SimilarNewsProps) => {
-  const similar = await fetchSimilarNews({ category: category, region: region });
+  const { data } = await fetchSimilarNews({ category: category, region: region });
 
   return (
     <>
-      <GutenbergExcludeProvider>
-        <div className={css.container}>
-          <div className={css.header}>
-            <p className={css.title}>Похожие новости</p>
-            <p className={css.link}>Все статьи</p>
-          </div>
-
-          {similar.map((el) => {
-            const date = dayjs(el.date).format('DD.MM.YYYY');
-
-            return (
-              <div className={css.news} key={el.id}>
-                <div className={css.newsItem}>
-                  <p className={css.date}>{date}</p>
-                  <a href={el.link} className={css.newsName}>
-                    {el.title.rendered}
-                  </a>
-                </div>
-              </div>
-            );
-          })}
+      <div className={css.container}>
+        <div className={css.header}>
+          <p className={css.title}>Похожие новости</p>
+          <p className={css.link}>Все статьи</p>
         </div>
-      </GutenbergExcludeProvider>
+
+        {data?.map((el) => {
+          const date = dayjs(el.date).format('DD.MM.YYYY');
+
+          return (
+            <div className={css.news} key={el.id}>
+              <div className={css.newsItem}>
+                <p className={css.date}>{date}</p>
+                <a href={el.link} className={css.newsName}>
+                  {el.title.rendered}
+                </a>
+              </div>
+            </div>
+          );
+        })}
+      </div>
     </>
   );
 };
