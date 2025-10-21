@@ -26,7 +26,7 @@ export const SimilarNews = async ({ category, region }: SimilarNewsProps) => {
               <div className={css.newsItem}>
                 <p className={css.date}>{date}</p>
                 <a href={el.link} className={css.newsName}>
-                  {el.title.rendered}
+                  {el.title?.rendered}
                 </a>
               </div>
             </div>

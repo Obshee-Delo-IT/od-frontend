@@ -30,7 +30,7 @@ const Page = async ({ params }: { params: Promise<{ id: string }> }) => {
   const { id } = await params;
   const data = await cachedFetchNews(id);
 
-  const [category, region] = data?.categories;
+  const [category, region] = data?.categories ?? [];
 
   const breadcrumbItems = [
     { label: 'Главная', href: '/' },
