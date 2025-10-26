@@ -1,6 +1,7 @@
 import { Text } from '@radix-ui/themes';
 import dayjs from 'dayjs';
 import { Metadata } from 'next';
+import { SubscribeToNews } from '@/modules/News';
 import { ImagePreviewClient } from '@/modules/News/ImagePreview';
 import { SimilarNews } from '@/modules/News/SimilarNews';
 import { parsePost } from '@/modules/News/utils';
@@ -100,6 +101,7 @@ const Page = async ({ params }: { params: Promise<{ id: string }> }) => {
           <Box as="aside" position="relative">
             <Box position="sticky" top={8}>
               <SimilarNews />
+              <SubscribeToNews variant="small" />
             </Box>
           </Box>
         </Box>
