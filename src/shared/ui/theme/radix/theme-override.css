@@ -173,7 +173,8 @@
   color: var(--red-8);
 }
 
-.rt-Text:where([data-accent-color='gray']) {
+.rt-Text:where([data-accent-color='gray']),
+.rt-Heading:where([data-accent-color='gray']) {
   color: var(--gray-6);
 }
 

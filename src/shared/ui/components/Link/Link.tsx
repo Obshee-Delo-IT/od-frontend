@@ -5,7 +5,7 @@ import { PropsWithChildren, ReactNode } from 'react';
 import css from './Link.module.css';
 
 interface LinkProps extends Omit<NextLinkProps, 'passHref'>, Omit<RadixLinkProps, 'href' | 'color' | 'asChild'> {
-  color?: 'red' | 'gray' | 'white' | 'lightgrey';
+  color?: 'red' | 'gray' | 'white' | 'lightgrey' | 'darkgrey';
   leftIcon?: ReactNode;
   rightIcon?: ReactNode;
 }
@@ -29,6 +29,8 @@ export const Link: React.FC<PropsWithChildren<LinkProps>> = ({
       className={clsx(css.link, {
         [css.whiteLink]: color === 'white',
         [css.lightgrey]: color === 'lightgrey',
+        [css.darkgrey]: color === 'darkgrey',
+        [css.inlineFlex]: leftIcon || rightIcon,
       })}
       asChild
       {...props}
