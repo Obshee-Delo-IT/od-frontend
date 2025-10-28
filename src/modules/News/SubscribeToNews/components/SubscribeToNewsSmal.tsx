@@ -15,7 +15,10 @@ export const SubscribeToNewsSmall = () => (
       <Box display="inline-flex" alignItems="center" gap={12}>
         <Checkbox id="subscribe-to-news-check" />
         <Text as="label" htmlFor="subscribe-to-news-check" size="3">
-          <span>Я согласен на</span> <Link href={PERSONAL_DATA_LINK}>обработку персональных данных</Link>
+          <span>Я согласен на</span>{' '}
+          <Link underline="always" href={PERSONAL_DATA_LINK}>
+            обработку персональных данных
+          </Link>
         </Text>
       </Box>
     </Box>
