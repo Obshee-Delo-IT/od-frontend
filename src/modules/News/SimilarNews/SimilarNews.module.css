@@ -1,5 +1,5 @@
 .container {
-  width: 387px;
+  width: 100%;
   padding: 20px;
   border-radius: var(--radius-4);
   background-color: var(--white);
@@ -28,8 +28,11 @@
 }
 
 .container .newsItem {
-  border-bottom: 1px solid var(--gray-4);
-  margin-bottom: 24px;
+  &:not(:last-child) {
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--gray-4);
+    margin-bottom: 24px;
+  }
 
   & .date {
     margin-bottom: 8px;

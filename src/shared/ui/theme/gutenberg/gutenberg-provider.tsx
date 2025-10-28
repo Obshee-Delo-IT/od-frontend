@@ -1,19 +1,22 @@
-import { PropsWithChildren } from 'react';
 import { GutenbergCarouselAdapter } from './Carousel/CarouselAdapter';
 import css from './gutenberg-provider.module.css';
+import { Box } from '../../components/Box';
+import { BoxProps } from '../../components/Box/Box';
+
+type GutenbergProviderProps<T extends keyof HTMLElementTagNameMap = 'div'> = Omit<BoxProps<T>, 'className'>;
 
 /**
  * Custom component that encapsulates gutenberg styles
  *
  * @see /ui/styles/gutenberg.css
  */
-export const GutenbergProvider = ({ children }: PropsWithChildren) => (
-  <div className={css.gutenberg}>
+export const GutenbergProvider = <T extends keyof HTMLElementTagNameMap = 'div'>({
+  children,
+  as,
+  ...props
+}: GutenbergProviderProps<T>) => (
+  <Box className={css.gutenberg} as={as} {...props}>
     {children}
     <GutenbergCarouselAdapter />
-  </div>
-);
-
-export const GutenbergExcludeProvider = ({ children }: PropsWithChildren) => (
-  <div className="gutenbergExclude">{children}</div>
+  </Box>
 );

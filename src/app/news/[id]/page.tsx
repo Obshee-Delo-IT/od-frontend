@@ -1,6 +1,7 @@
 import { Text } from '@radix-ui/themes';
 import dayjs from 'dayjs';
 import { Metadata } from 'next';
+import { SubscribeToNews } from '@/modules/News';
 import { ImagePreviewClient } from '@/modules/News/ImagePreview';
 import { SimilarNews } from '@/modules/News/SimilarNews';
 import { parsePost } from '@/modules/News/utils';
@@ -8,6 +9,7 @@ import { cachedFetchNews } from '@/shared/api/fetchNews';
 import { Box } from '@/shared/ui/components/Box';
 import { Breadcrumbs } from '@/shared/ui/components/Breadcrumbs';
 import { GutenbergProvider } from '@/shared/ui/theme';
+import css from './NewsPage.module.css';
 
 export const dynamicParams = true;
 
@@ -63,49 +65,50 @@ const Page = async ({ params }: { params: Promise<{ id: string }> }) => {
       >
         <Breadcrumbs items={breadcrumbItems} />
       </Box>
-      <GutenbergProvider>
-        <Box
-          mb={{
-            mobile: 20,
-            smallDesktop: 24,
-            desktop: 32,
-          }}
-        >
-          <ImagePreviewClient>{parsed.header}</ImagePreviewClient>
-        </Box>
-        <Box
-          mb={{
-            mobile: 40,
-            smallDesktop: 32,
-            desktop: 32,
-          }}
-        >
-          <Text size="3" color="gray">
-            {date}
-          </Text>
-        </Box>
+      <Box
+        mb={{
+          mobile: 20,
+          smallDesktop: 24,
+          desktop: 32,
+        }}
+      >
+        <ImagePreviewClient>
+          <GutenbergProvider>{parsed.header}</GutenbergProvider>
+        </ImagePreviewClient>
+      </Box>
+      <Box
+        mb={{
+          mobile: 40,
+          smallDesktop: 32,
+          desktop: 32,
+        }}
+      >
+        <Text size="3" color="gray">
+          {date}
+        </Text>
+      </Box>
 
-        <Box
-          display="flex"
-          flexDirection={{
-            mobile: 'column',
-          }}
-          gap={{
-            mobile: 48,
-            smallDesktop: 40,
-            desktop: 40,
-          }}
-        >
-          <ImagePreviewClient>
-            <Box as="section">{parsed.body}</Box>
-          </ImagePreviewClient>
-          <Box as="aside" position="relative">
-            <Box position="sticky" top={8}>
-              <SimilarNews category={category} region={region} />
-            </Box>
+      <Box
+        display="flex"
+        flexDirection={{
+          smallDesktop: 'column',
+        }}
+        gap={{
+          mobile: 48,
+          smallDesktop: 40,
+          desktop: 40,
+        }}
+      >
+        <ImagePreviewClient>
+          <GutenbergProvider as="section">{parsed.body}</GutenbergProvider>
+        </ImagePreviewClient>
+        <Box as="aside" position="relative" className={css.aside}>
+          <Box display="flex" flexDirection="column" position="sticky" top={32} gap={20}>
+            <SimilarNews category={category} region={region} />
+            <SubscribeToNews variant="small" />
           </Box>
         </Box>
-      </GutenbergProvider>
+      </Box>
     </Box>
   );
 };

@@ -67,7 +67,7 @@ type BoxOwnProps<T extends keyof HTMLElementTagNameMap> = {
   right?: Coordinate;
 };
 
-type BoxProps<T extends keyof HTMLElementTagNameMap = 'div'> = BoxOwnProps<T> &
+export type BoxProps<T extends keyof HTMLElementTagNameMap = 'div'> = BoxOwnProps<T> &
   Omit<React.ComponentPropsWithoutRef<T>, keyof BoxOwnProps<T>>;
 
 const getSpacingClass = (

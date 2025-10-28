@@ -1,7 +1,11 @@
 .link {
-  display: inline-flex;
+  display: inline;
   align-items: center;
   gap: 10px;
+}
+
+.inlineFlex {
+  display: inline-flex;
 }
 
 .whiteLink {
@@ -26,4 +30,16 @@
 
 .lightgrey:active {
   color: var(--gray-8);
+}
+
+.darkgrey {
+  color: var(--gray-9);
+}
+
+.darkgrey:hover {
+  color: var(--red-10);
+}
+
+.darkgrey:active {
+  color: var(--red-8);
 }
