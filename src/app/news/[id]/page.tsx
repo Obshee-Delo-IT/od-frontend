@@ -30,6 +30,8 @@ const Page = async ({ params }: { params: Promise<{ id: string }> }) => {
   const { id } = await params;
   const data = await cachedFetchNews(id);
 
+  const [category, region] = data?.categories ?? [];
+
   const breadcrumbItems = [
     { label: 'Главная', href: '/' },
     { label: 'Новости', href: '/news' },
@@ -99,7 +101,7 @@ const Page = async ({ params }: { params: Promise<{ id: string }> }) => {
           </ImagePreviewClient>
           <Box as="aside" position="relative">
             <Box position="sticky" top={8}>
-              <SimilarNews />
+              <SimilarNews category={category} region={region} />
             </Box>
           </Box>
         </Box>
