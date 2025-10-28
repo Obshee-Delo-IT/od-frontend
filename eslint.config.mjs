@@ -77,7 +77,6 @@ const eslintConfig = [
       'import/no-default-export': 'off',
       'no-plusplus': 'error',
       curly: ['error', 'all'],
-      camelcase: 'error',
       'no-console': 'warn',
       'arrow-body-style': ['error', 'as-needed'],
       '@typescript-eslint/no-unused-vars': [
