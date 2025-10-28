@@ -254,3 +254,16 @@ th {
 :where(.wp-block-post-template.is-layout-grid) {
   gap: 1.25em;
 }
+
+.wp-block-group h2 {
+  text-transform: lowercase;
+
+  &::first-letter {
+    text-transform: uppercase;
+  }
+}
+
+.wp-block-columns p {
+  color: var(--gray-7);
+  font-size: var(--font-size-3);
+}

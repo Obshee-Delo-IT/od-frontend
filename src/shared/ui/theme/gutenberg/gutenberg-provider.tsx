@@ -13,3 +13,7 @@ export const GutenbergProvider = ({ children }: PropsWithChildren) => (
     <GutenbergCarouselAdapter />
   </div>
 );
+
+export const GutenbergExcludeProvider = ({ children }: PropsWithChildren) => (
+  <div className="gutenbergExclude">{children}</div>
+);
