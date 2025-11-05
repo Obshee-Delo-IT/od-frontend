@@ -68,6 +68,7 @@ ol,
 .wp-block-list {
   padding-left: 1.5em;
   margin: 0 0 1em;
+  color: var(--gray-7);
   font-family: var(--default-font-family);
   font-size: var(--font-size-3);
   font-weight: 400;
@@ -263,7 +264,18 @@ th {
   }
 }
 
-.wp-block-columns p {
+.wp-block-columns p,
+pre {
   color: var(--gray-7);
   font-size: var(--font-size-3);
+}
+
+.wp-block-columns blockquote {
+  border: none;
+  color: var(--gray-7);
+
+  & p,
+  cite {
+    color: var(--gray-7);
+  }
 }
