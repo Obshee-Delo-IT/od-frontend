@@ -1,0 +1,8 @@
+/* stylelint-disable at-rule-no-unknown */
+.gutenberg {
+  @nested-import './gutenberg.css';
+  @nested-import './Carousel/carousel.css';
+  @nested-import './Carousel/custom-carousel.css';
+  @nested-import '@wordpress/block-library/build-style/style.css';
+  @nested-import '@wordpress/block-library/build-style/theme.css';
+}
