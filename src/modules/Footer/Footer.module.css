@@ -38,11 +38,11 @@
     height: 48px;
     margin-right: 14px;
 
-    :global figure {
+    :global(figure) {
       margin: 0;
     }
 
-    :global img {
+    :global(img) {
       width: 100% !important;
       height: 100% !important;
     }

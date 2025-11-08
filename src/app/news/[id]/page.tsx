@@ -6,12 +6,30 @@ import { ImagePreviewClient } from '@/modules/News/ImagePreview';
 import { SimilarNews } from '@/modules/News/SimilarNews';
 import { parsePost } from '@/modules/News/utils';
 import { cachedFetchNews } from '@/shared/api/fetchNews';
+import { client } from '@/shared/api/httpClient';
 import { Box } from '@/shared/ui/components/Box';
 import { Breadcrumbs } from '@/shared/ui/components/Breadcrumbs';
 import { GutenbergProvider } from '@/shared/ui/theme';
 import css from './NewsPage.module.css';
 
 export const dynamicParams = true;
+export const revalidate = 3600;
+
+export async function generateStaticParams() {
+  const postsResponse = await client.GET('/wp/v2/posts', {
+    params: {
+      query: {
+        per_page: 20,
+      },
+    },
+  });
+
+  if (!postsResponse.data) {
+    return [];
+  }
+
+  return postsResponse.data?.map(({ id }) => ({ id: String(id) }));
+}
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const { id } = await params;

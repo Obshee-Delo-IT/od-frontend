@@ -1,7 +1,8 @@
 import { GutenbergCarouselAdapter } from './Carousel/CarouselAdapter';
-import css from './gutenberg-provider.module.css';
 import { Box } from '../../components/Box';
 import { BoxProps } from '../../components/Box/Box';
+
+import './gutenberg-provider.css';
 
 type GutenbergProviderProps<T extends keyof HTMLElementTagNameMap = 'div'> = Omit<BoxProps<T>, 'className'>;
 
@@ -15,7 +16,7 @@ export const GutenbergProvider = <T extends keyof HTMLElementTagNameMap = 'div'>
   as,
   ...props
 }: GutenbergProviderProps<T>) => (
-  <Box className={css.gutenberg} as={as} {...props}>
+  <Box className="gutenberg" as={as} {...props}>
     {children}
     <GutenbergCarouselAdapter />
   </Box>
