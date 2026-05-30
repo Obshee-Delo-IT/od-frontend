@@ -49,3 +49,10 @@ CLAUDE.md
 #ide
 /.zed
 /.vscode
+
+# local scout / scratch artefacts
+.mcp.json
+/figma-snaps/
+/*.png
+/*.jpeg
+/*.jpg

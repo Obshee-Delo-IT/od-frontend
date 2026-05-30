@@ -1,0 +1,58 @@
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 45px;
+
+  @media (--mobile) {
+    gap: 25px;
+  }
+}
+
+.heading {
+  margin: 0;
+  color: var(--gray-9);
+  font-family: var(--font-pt-sans-narrow), 'PT Sans Narrow', sans-serif;
+  font-size: 48px;
+  font-weight: 700;
+  line-height: 120%;
+
+  @media (--mobile) {
+    font-size: 32px;
+  }
+}
+
+.filmCard {
+  display: flex;
+  flex-direction: column;
+  color: inherit;
+  gap: 12px;
+  text-decoration: none;
+}
+
+.thumb {
+  position: relative;
+  overflow: hidden;
+  border-radius: 12px;
+  aspect-ratio: 397 / 266;
+  background: var(--gray-3);
+}
+
+.thumbImage {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  inset: 0;
+  object-fit: cover;
+}
+
+.filmTitle {
+  color: var(--gray-9);
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 130%;
+}
+
+.cta {
+  display: flex;
+  justify-content: center;
+}

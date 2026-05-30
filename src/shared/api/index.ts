@@ -2,3 +2,7 @@ export { fetchMenuItems } from './fetchMenuItems';
 export { fetchMenus } from './fetchMenus';
 export { fetchFooter } from './fetchFooter';
 export { fetchNews, cachedFetchNews } from './fetchNews';
+export { fetchFilms } from './fetchFilms';
+export type { FilmSummary } from './fetchFilms';
+export { fetchLatestNews } from './fetchLatestNews';
+export type { NewsSummary } from './fetchLatestNews';
