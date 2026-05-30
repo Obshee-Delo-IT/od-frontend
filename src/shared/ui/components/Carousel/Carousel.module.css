@@ -1,0 +1,90 @@
+.root {
+  position: relative;
+}
+
+.viewport {
+  overflow: hidden;
+}
+
+.container {
+  display: flex;
+  gap: 24px;
+}
+
+.slide {
+  min-width: 0;
+  flex: 0 0 var(--slide-basis, 33.333%);
+}
+
+.controls {
+  position: absolute;
+  display: flex;
+  justify-content: space-between;
+  inset: 50% 0 auto;
+  pointer-events: none;
+  transform: translateY(-50%);
+}
+
+.button {
+  display: inline-flex;
+  width: 40px;
+  height: 40px;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 1px solid var(--gray-6);
+  border-radius: 50%;
+  background-color: var(--white);
+  color: var(--gray-12);
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+.button:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+
+.button:hover:not(:disabled) {
+  background-color: var(--gray-3);
+}
+
+.prev {
+  transform: translateX(-50%);
+}
+
+.next {
+  transform: translateX(50%);
+}
+
+.dots {
+  display: flex;
+  justify-content: center;
+  margin-top: 24px;
+  gap: 8px;
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background-color: var(--gray-6);
+  cursor: pointer;
+  transition: background-color 150ms ease;
+}
+
+.dotActive {
+  background-color: var(--accent-9);
+}
+
+@media (--mobile) {
+  .slide {
+    flex-basis: 85%;
+  }
+
+  .controls {
+    display: none;
+  }
+}

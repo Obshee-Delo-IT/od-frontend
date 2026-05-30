@@ -11,6 +11,35 @@ if (typeof globalThis.ResizeObserver === 'undefined') {
   };
 }
 
+// jsdom doesn't ship IntersectionObserver, which Embla uses for slide visibility.
+if (typeof globalThis.IntersectionObserver === 'undefined') {
+  globalThis.IntersectionObserver = class {
+    root = null;
+    rootMargin = '';
+    thresholds = [];
+    observe() {}
+    unobserve() {}
+    disconnect() {}
+    takeRecords() {
+      return [];
+    }
+  } as unknown as typeof IntersectionObserver;
+}
+
+// jsdom doesn't ship matchMedia, which Embla Carousel reads on init.
+if (typeof window !== 'undefined' && !window.matchMedia) {
+  window.matchMedia = (query: string) => ({
+    matches: false,
+    media: query,
+    onchange: null,
+    addListener: () => {},
+    removeListener: () => {},
+    addEventListener: () => {},
+    removeEventListener: () => {},
+    dispatchEvent: () => false,
+  });
+}
+
 afterEach(() => {
   cleanup();
 });

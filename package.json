@@ -39,6 +39,7 @@
     "@wordpress/block-library": "9.32.0",
     "clsx": "2.1.1",
     "dayjs": "1.11.18",
+    "embla-carousel-react": "^8.6.0",
     "html-react-parser": "5.2.6",
     "nanoid": "5.1.5",
     "next": "16.0.1",
