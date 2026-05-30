@@ -1,0 +1,46 @@
+.root {
+  overflow: hidden;
+  border-radius: var(--radius-4);
+  background-color: var(--white);
+}
+
+.cover {
+  position: relative;
+  width: 40%;
+  min-height: 260px;
+  flex-shrink: 0;
+  background-color: var(--gray-3);
+}
+
+.body {
+  padding: 24px;
+}
+
+.title {
+  color: var(--gray-12);
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1.25;
+  text-decoration: none;
+}
+
+.title:hover {
+  color: var(--accent-9);
+}
+
+.excerpt {
+  color: var(--gray-11);
+  font-size: 18px;
+  line-height: 1.5;
+}
+
+@media (--mobile) {
+  .root {
+    flex-direction: column;
+  }
+
+  .cover {
+    width: 100%;
+    min-height: 220px;
+  }
+}
