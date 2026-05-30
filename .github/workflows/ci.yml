@@ -9,6 +9,12 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
+# Opt JavaScript actions into the Node 24 runtime ahead of the
+# 2026-06-16 default flip. Drop this once all `actions/*` versions
+# we pin natively run on Node 24.
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   ci:
     name: lint · type-check · test · build
