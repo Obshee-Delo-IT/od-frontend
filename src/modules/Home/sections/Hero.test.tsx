@@ -1,0 +1,21 @@
+import { Theme } from '@radix-ui/themes';
+import { render, screen } from '@testing-library/react';
+import { describe, expect, it } from 'vitest';
+import { Hero } from './Hero';
+
+const renderInTheme = (ui: React.ReactElement) => render(<Theme accentColor="red">{ui}</Theme>);
+
+describe('<Hero />', () => {
+  it('renders the H1 heading with the canonical title', () => {
+    renderInTheme(<Hero />);
+
+    expect(screen.getByRole('heading', { level: 1, name: 'Здоровая Россия — общее дело' })).toBeInTheDocument();
+  });
+
+  it('renders both hero CTAs', () => {
+    renderInTheme(<Hero />);
+
+    expect(screen.getByRole('button', { name: 'Оказать помощь' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Прими участие' })).toBeInTheDocument();
+  });
+});
