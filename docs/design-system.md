@@ -2,7 +2,7 @@
 
 This is a working map between the **Figma `👉 UI` page** (the canonical design system) and the **repo's `src/shared/`** implementation. It is intentionally narrative — it captures what is built, what is not, and where the two have drifted.
 
-Last verified against Figma: 2026-05-29.
+Last verified against Figma: 2026-05-30 (via the `figma-mcp-go` MCP — gives variables, paints, text/effect styles, and component sets at fidelity the prior `TalkToFigma` scout couldn't reach).
 
 ---
 
@@ -10,13 +10,13 @@ Last verified against Figma: 2026-05-29.
 
 | Side | Location |
 | --- | --- |
-| Source of truth | Figma file, page **`👉 UI`** (`1297:4635`). The main `design` page hosts page mocks that consume these components. |
+| Source of truth | Figma file «Общее дело редизайн (Copy)», page **`👉 UI`** (`1297:4635`). The sibling `design` page hosts page mocks that consume these components (see [`page-mocks.md`](./page-mocks.md)). |
 | Tokens (runtime) | `src/shared/ui/theme/radix/theme-override.css` — CSS custom properties on `:root` + `.radix-themes`. |
 | Theme entry | `src/shared/ui/theme/radix/radix-provider.tsx` — wraps the app in a Radix `<Theme accentColor="red" radius="full">` and imports both `@radix-ui/themes/styles.css` and the override file. |
-| Breakpoint media | `src/shared/ui/styles/media.css` (`@custom-media` rules: `--mobile <900`, `--small-desktop <1440`, `--desktop ≥1440`). Auto-injected globally by `@csstools/postcss-global-data`. |
+| Breakpoint media | `src/shared/ui/styles/media.css` (`@custom-media` rules). Auto-injected globally by `@csstools/postcss-global-data`. |
 | Global resets | `src/shared/ui/styles/global.css` — pulls `normalize.css`, `swiper/swiper-bundle.css`, and a `box-sizing: border-box` reset. |
 | Component primitives | `src/shared/ui/components/<Name>/` — each component is a tiny wrapper over a Radix Themes / Radix Primitives component. |
-| Icons | `src/shared/ui/assets/icons/*.svg` imported as React components via `@svgr/webpack` (configured under `turbopack.rules` in `next.config.ts`) and re-exported with consistent prop typing from `src/shared/ui/components/Icons/`. |
+| Icons | `src/shared/ui/assets/icons/*.svg` imported as React components via `@svgr/webpack` (configured under `turbopack.rules` in `next.config.ts`) and re-exported with typed wrappers from `src/shared/ui/components/Icons/`. |
 
 **Implementation pattern.** The project does **not** ship its own primitive library. Radix Themes is the primitive layer; the design system lives entirely in (a) the `theme-override.css` variable overrides and (b) thin `src/shared/ui/components/*` wrappers that compose Radix pieces with project conventions (icons, label/message slots, color enums, Next.js Link routing, etc.). When you change a token in `theme-override.css`, every Radix component picks it up automatically.
 
@@ -24,39 +24,108 @@ Last verified against Figma: 2026-05-29.
 
 ## 2. Tokens
 
+The Figma file has **two layers** of design tokens:
+
+1. **Variables** (Figma Variables / `boundVariables`) — the canonical token system. Lives in collection `UI` (`VariableCollectionId:838:1702`) with **Light + Dark** modes (only Light is meaningfully filled today; Dark is partly aliased to a different library). Variables cover spacing, radius, border-width, and a full color system across five scales (brand red, gray, Warning, Danger, Success — each 1–10).
+2. **Paint / Text / Effect styles** — the older named-role styles (`1_main_black`, `2_main_red`, `text/3/bold`, `shadow/sm` …). These are what most components actually reference. Variables exist behind them but components don't all bind to them yet.
+
+For repo-side consumption, both layers collapse into CSS custom properties in `theme-override.css`. The repo override is built around the Radix scale (`--red-1..10`, `--gray-1..10`), which happens to mirror the Figma variable scales closely — though the values diverge in places.
+
 ### 2.1 Colors
 
-Figma defines **five** named color styles. The repo defines a **fuller scale** (1–10 for red and gray) plus auxiliary `--white` and `--danger-*`. The two are *not* a 1-to-1 mapping; the Figma styles describe semantic roles, the repo defines a scale that Radix expects.
+#### Figma variables — full scale (resolved hex, Light mode)
 
-| Figma style | Hex | Closest repo var | Notes |
+| Scale | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `color/brand/red` | `#FFEAEA` | `#FFCFCF` | `#FFB2B2` | `#FF8686` | `#F55555` | `#D83030` | `#BE1710` | `#AE0A04` | `#8A0707` | `#5C0202` |
+| `color/gray` | `#F9FAFB` | `#F2F4F7` | `#E4E7EC` | `#CED2DA` | `#97A1AF` | `#637083` | `#414E62` | `#344051` | `#202B37` | `#141C24` |
+| `color/Warning` | `#FE… ` orange-yellow scale | … | | | | | | | | |
+| `color/Danger` | red-tinted neutrals | … | | | | | | | | |
+| `color/Success` | green scale | … | | | | | | | | |
+
+Warning/Danger/Success scales are present but **no current component on the UI page references them** — they're available for future system messages / status UI.
+
+#### Figma paint styles — the "named roles" components actually use
+
+| Figma style | Hex | Maps to which scale value | Notes |
 | --- | --- | --- | --- |
-| `1_main_black` | `#151313` | (no exact match — `--gray-10` is `#141c24`) | Used for body text in mocks; in repo, body text falls back to Radix defaults that resolve to the gray scale. Pure-near-black is **not** explicit in the override. |
-| `2_main_red` | `#F4322A` | (no exact match — `--red-5` is `#f55555`, `--red-6` is `#d83030`) | The Figma token reads brighter than any single repo red step, but a side-by-side visual check confirmed the rendered CTA red matches the design — Radix's solid-button stack composes `--red-8` (`#ae0a04`) with the accent overlay and ends up on the brand red. **Not a real drift**; just verify with Design if a near-pixel-match is ever required. |
-| `3_gray` | `#6C6C6C` | `--gray-6` (`#637083`) | Used for secondary text. Repo uses Radix `<Text color="gray">` which resolves to `--gray-6` via the override (`.rt-Text[data-accent-color='gray']`). |
-| `4_line_gray` | `#BDBDBD` | `--gray-4` (`#ced2da`) | Used for borders/dividers. No direct rule wires it up — borders in the repo lean on Radix defaults. |
-| `white` | `#FFFFFF` | `--white` (`#fff`) | Match. |
+| `1_main_black` | `#151313` | between `gray/10` (`#141C24`) and pure black | Used for body text. **Repo does not wire this up explicitly** — Radix `<Text>` defaults to the gray scale; if Design wants the exact `#151313`, we need to add a rule. |
+| `2_main_red` | `#F4322A` | `brand/red/5` (`#F55555`) is closest | **Not what header / buttons actually render with.** The CTA chrome on `header-v2` and the canonical `Button` Contained variant both fill with **`#AE0A04` = `brand/red/8`**, not this token. The token is a brighter accent — used in scattered titling / illustrations. The button red is darker. |
+| `3_gray` | `#6C6C6C` | between `gray/5` and `gray/6` | Secondary text. Repo `<Text color="gray">` resolves to `--gray-6` (`#637083`) — close. |
+| `4_line_gray` | `#BDBDBD` | between `gray/4` (`#CED2DA`) and `gray/5` (`#97A1AF`) | Borders / dividers — **not referenced by any rule in the override**. Borders in the repo lean on Radix defaults. |
+| `white` | `#FFFFFF` | — | Match. |
 
-Repo also defines (in `theme-override.css`):
+#### Repo CSS variables
 
-- `--color-background: var(--gray-2)` (page background — set on `html, body` in `global.css`)
-- `--red-1` through `--red-10` (the full Radix scale, custom values)
-- `--gray-1` through `--gray-10` (custom Radix scale)
-- `--danger-1`, `--danger-9` (Radix's danger-color hook)
+In `theme-override.css`:
+
+- `--color-background: var(--gray-2)` (page background, applied to `html, body`)
+- `--red-1`..`--red-10` — custom values overriding Radix defaults
+- `--gray-1`..`--gray-10` — custom values overriding Radix defaults
+- `--danger-1`, `--danger-9`
+- `--white: #fff`
 - Cursor overrides for Radix interactive elements (`--cursor-button: pointer`, etc.)
 
-### 2.2 Typography
+The repo `--red-N` numbers roughly track Figma's `brand/red/N` scale but are not byte-identical. Critically, the visible button red **does** match: both resolve to `#AE0A04` at the Contained-Large state.
 
-**Repo fonts** are loaded via `next/font/google` in `app/layout.tsx`:
+#### What the old docs got wrong
+
+- The previous version flagged `2_main_red` (`#F4322A`) as Figma's "real" brand red and treated the rendered repo button as drift. Actually: the canonical Button uses `brand/red/8` (`#AE0A04`) directly via Radix's solid variant. `2_main_red` is a separate brighter accent. **Not a drift; just two different reds with overlapping intent.**
+
+### 2.2 Spacing
+
+Figma variables `spacing/0..9`:
+
+| Token | Value (px) |
+| --- | --- |
+| `spacing/0` | 0 |
+| `spacing/1` | 5 |
+| `spacing/2` | 10 |
+| `spacing/3` | 15 |
+| `spacing/4` | 20 |
+| `spacing/5` | 25 |
+| `spacing/6` | 35 |
+| `spacing/7` | 45 |
+| `spacing/8` | 65 |
+| `spacing/9` | 80 |
+
+A **multiples-of-5** scale that compresses at the small end and stretches at the large end (no even 30/40/50/60/70).
+
+**Repo `Box` spacing scale (`src/shared/ui/components/Box/`): `0, 4, 8, 12, 16, 20, 24, 32, 40, 48, 56, 64`** — a **multiples-of-4** scale.
+
+**These don't overlap cleanly.** Real drift. Designers' Figma spacing values won't map to `Box` props 1:1. When implementing, round to the nearest `Box` step (e.g. Figma `spacing/3` = 15 → `Box p="16"`; `spacing/6` = 35 → either 32 or 40). Note in the implementation plan for a future Design conversation: rebase `Box` on multiples-of-5 to match Figma, or accept the rounding cost.
+
+### 2.3 Radius
+
+Figma variables `radius/*`:
+
+| Token | Value (px) | Used by |
+| --- | --- | --- |
+| `radius/1` | 4 | Checkbox base (16×16, `cornerRadius:4`) |
+| `radius/2` | 6 | `_Button Groups Base`, Dropdown, Pagination cells (`cornerRadius:6`) |
+| `radius/3` | 8 | Tab cell wrapper, Links variants (`cornerRadius:8`) |
+| `radius/4` | 12 | (not actively used yet) |
+| `radius/round` | 999 | **Button** (`cornerRadius:9999`), Input Field (`cornerRadius:999`), Carousel arrow buttons (`cornerRadius:999`) |
+
+**Confirms the old "button corner radius drift" question is resolved.** The canonical `Button` is pill (`cornerRadius:9999`); the repo Theme is `radius="full"`. **They match.** The earlier docs cited an older Button master (`1321:5304`) with `cornerRadius:5` — that frame is superseded by `1297:4792` and should be ignored.
+
+### 2.4 Border width
+
+Figma variables `border-width/*`: `0, 1, 2, 4, 8`. No repo variable mirror — borders in the override use raw pixel values inline. Low priority to systematize.
+
+### 2.5 Typography
+
+**Repo fonts** loaded via `next/font/google` in `app/layout.tsx`:
 
 - `PT Sans` (regular 400, bold 700) → `--font-pt-sans`
 - `PT Sans Narrow` (bold 700) → `--font-pt-sans-narrow`
-- `--default-font-family` is overridden to `'PT Sans', 'Helvetica Neue', …`.
-- `PT Sans Narrow` is opted into for `--font-size-9` (largest scale) via a Radix selector override: `.rt-Text.rt-r-size-9`.
+- `--default-font-family` overrides Radix's default to `'PT Sans', 'Helvetica Neue', …`.
+- `PT Sans Narrow` opted into for `--font-size-9` (the largest) via Radix selector `.rt-Text.rt-r-size-9`.
 
 **Figma typography** has two parallel families:
 
-1. **Inter** (legacy — likely from an earlier draft): `H1_Inter_Semi-Bold_32`, `H2_…_Medium_24`, `H3_…_Medium_18`, `Body_…_Regular_16`, `Body2_…_Regular_14`. **The repo does not use Inter.** Treat these styles as deprecated unless Design says otherwise.
-2. **PT Sans scale** (current): `text/1/regular` … `text/9/bold`. This matches the Radix `--font-size-N` scale exactly:
+1. **Inter** (legacy / orphan): `H1_Inter_Semi-Bold_32`, `H2_…_Medium_24`, `H3_…_Medium_18`, `Body_…_Regular_16`, `Body2_…_Regular_14`. **The repo does not use Inter.** A few places in the page mocks still bind to these (e.g. the breadcrumb separator label in the `page header` component uses Inter Regular 15 / `#6C6C6C`). Treat as deprecated; flag for cleanup.
+2. **PT Sans scale** (current): `text/1/regular` … `text/9/bold`. Maps to the Radix `--font-size-N` scale:
 
 | Figma style | Size | Family | Repo `--font-size-N` |
 | --- | --- | --- | --- |
@@ -74,134 +143,170 @@ Line heights are mostly 140% (`--line-height-1..6`), tightening to 120%/130%/120
 
 **How to consume in code.** Always go through Radix `<Text>` / `<Heading>` with `size="1".."9"`. Do not hard-code font sizes — they resolve to `var(--font-size-N)` and stay in sync if the override changes.
 
-### 2.3 Effects (shadows)
+### 2.6 Effects (shadows)
 
 | Figma style | Repo var | Value |
 | --- | --- | --- |
 | `shadow/sm` | `--shadow-sm` | `0px 2px 10px 0px rgba(0, 0, 0, 0.07)` |
-| `shadow/lg` | `--shadow-lg` | `0px 10px 20px -15px rgba(14, 18, 22, 0.2)` |
+| `shadow/lg` | `--shadow-lg` | `0px 10px 20px -15px rgba(14, 18, 22, 0.2)` + a second `0px 10px 38px -10px rgba(13, 18, 22, 0.35)` layer in Figma. The repo override is the first layer only — second layer not wired up. Minor drift; usually invisible. |
 
-Match by name. The numeric values in the override are the source of truth — if Figma's shadow specs change, sync them here.
+### 2.7 Containers
 
-### 2.4 Containers
-
-Repo-only — Figma doesn't expose container widths as styles, but the page mocks imply them:
+Repo-only:
 
 - `--container-1: 100%`
 - `--container-2: 100%`
 - `--container-3: 860px`
 - `--container-4: 1240px`
 
-Used by Radix's `<Container size="N">`. The repo also has a custom `<Container>` (`src/shared/ui/components/Container/`) that's a plain wrapper for `<main>` with a class — distinct from Radix's, easy to confuse.
+The `header-v2` nav row is exactly 1240px wide — matches `--container-4`. The page header's content frame is also 1240px (with 100/100 side padding inside a 1440-wide frame). So `--container-4` is the canonical content-column at the 1440 breakpoint.
 
-### 2.5 Breakpoints
+There are **two** `Container` components in this codebase, easy to confuse:
+- `<Container>` from `@radix-ui/themes` — uses `--container-N` widths above.
+- `<Container>` from `src/shared/ui/components/Container/` — a plain `<main>` wrapper with a `.container` class. Distinct from Radix's.
 
-Defined in `src/shared/ui/styles/media.css` as `@custom-media`:
+### 2.8 Breakpoints — the system is 4-tier, not 3-tier
+
+Current `media.css`:
 
 - `--mobile (width < 900px)`
 - `--small-desktop (width < 1440px)`
 - `--desktop (width >= 1440px)`
 
-Globally available via `@csstools/postcss-global-data` (PostCSS config). The `Box` primitive (see §4.1) accepts responsive props keyed on these same names.
+Figma reality (from the explicit `1200` and `900` demo frames inside the `navigation` UI frame, plus `header-v2` at 1440 and `header-mob` at 360):
 
-### 2.6 Spacing scale
+| Width range | Header layout | Side padding | Nav font |
+| --- | --- | --- | --- |
+| ≥ 1440 (`header-v2`) | full 1240 nav row | 100 / 100 | `text/3/regular` (16) |
+| 1200–1439 | full nav row, slightly compressed | 100 / 100 | `text/2/regular` (14) |
+| 900–1199 | full nav row, slightly compressed | **20 / 20** (sharp drop) | `text/2/regular` (14) |
+| < 900 (`header-mob`) | compact 48-tall bar with logo + search icon + menu icon | 16 | — |
 
-**Repo-only** — Figma doesn't expose spacing as styles. The `Box` primitive constrains spacing to a 12-step scale: `0, 4, 8, 12, 16, 20, 24, 32, 40, 48, 56, 64`. Page mocks use values within this scale; using `Box` props automatically keeps you compliant.
+This is **real drift** — `media.css` needs an intermediate breakpoint (e.g. `--tablet (900px–1200px)`). Renaming/restructuring `--small-desktop` is the cleanest path.
 
 ---
 
 ## 3. Component inventory
 
-Status legend: ✅ implemented, ⚠️ partial / drift, ❌ not built.
+Status legend: ✅ implemented, ⚠️ partial / drift, ❌ not built (Figma exists, repo missing).
 
-### 3.1 Components present on the Figma `👉 UI` page
+### 3.1 Tokens and primitives
 
-| Figma frame | ID | Status | Repo location | Notes |
+| Figma frame | ID | Status | Notes |
+| --- | --- | --- | --- |
+| `color` | `1298:5540` | ⚠️ partial | Paint styles wired up; full variable scales (Warning/Danger/Success, brand/red/1-10 numerics) are not. Adopt as needed. |
+| `effect` | `1326:310` | ✅ | `--shadow-sm`, `--shadow-lg` wired. `--shadow-lg` is single-layer in code vs two-layer in Figma — minor cosmetic drift. |
+| `Typography` | `1320:5044` | ✅ | PT Sans scale aligned to Radix `--font-size-N`. Inter family is orphaned legacy. |
+| `icon` (sheets) | `1320:5066`, `1326:6821` | ✅ | 21 SVGs in `assets/icons/` + typed wrappers in `Icons/`. Some social icons (`tg`, `Email`, `Phone Call`, `User`, `Bookmark`, `Location Point`, `Internet`) are on the Figma sheet but not yet in the repo set. |
+
+### 3.2 Components defined on the `👉 UI` page
+
+| Figma component | ID | Variants | Status | Notes |
 | --- | --- | --- | --- | --- |
-| `color` | `1298:5540` | ✅ tokens | `theme-override.css` | Drift on `2_main_red` and `1_main_black` — see §2.1. |
-| `effect` | `1326:310` | ✅ tokens | `theme-override.css` (`--shadow-sm`, `--shadow-lg`) | Match by name. |
-| `Typography` | `1320:5044` | ✅ tokens | `theme-override.css` font-size/line-height/letter-spacing scales + PT Sans loader in `app/layout.tsx` | Inter styles in Figma are legacy/unused. |
-| `icon` | `1320:5066`, `1326:6821` | ✅ | `src/shared/ui/assets/icons/*.svg` + `src/shared/ui/components/Icons/*.tsx` | 21 SVGs in place; each has a typed React-component wrapper. Two `icon` frames in Figma — likely a sheet + a single-icon spec. Worth confirming all Figma icons exist as SVGs (current set: add-outlined, arrow-right, chevron up/down/left/right, circle-play, cross, cross-circle-filled, download, exclamation-outlined, hexagon, info, info-outlined, menu, search, warning, vk, odnoklassniki, youtube, logo.webp). |
-| `button` | `1300:4731`, `1321:5303` | ⚠️ | (no project Button wrapper) | The repo uses Radix `<Button>` inline. Custom variant CSS lives in `theme-override.css` (`.rt-BaseButton.rt-variant-solid`/`outline`/`classic`/`soft`/`ghost`/`surface`, plus padding tweaks for `rt-r-size-2`/`rt-r-size-3`). No dedicated wrapper component — `solid`/`outline`/`soft`/`ghost`/`surface` are all themed and ready to use, but project conventions for "which variant for which intent" are not documented here yet. The two button frames in Figma likely correspond to (a) the canonical Button + Links variants and (b) a smaller-scope spec — both with corner radius 5; the repo uses `radius="full"` on the Theme provider. **Mismatch:** Figma buttons have `cornerRadius: 5`, repo Theme is `radius="full"` (pill). Confirm with Design. |
-| `icon-button` | `1327:14974` | ❌ | (Radix has `<IconButton>` primitive, used inline; no wrapper) | `theme-override.css` zeroes its padding (`.rt-IconButton { padding: 0 }`). No component wrapper, no documented variants. |
-| `button-groups` | `1326:16966` | ✅ | `src/shared/ui/components/ButtonGroup/` | Built on Radix `<NavigationMenu>` primitives (not Radix Themes). Supports a flat `items[]` with optional `content` for sub-menus (rendered via `ButtonGroupSubMenu`). |
-| `input` | `1321:5552` | ✅ | `src/shared/ui/components/input/` (lowercase dir) | Wrapper around Radix `<TextField.Root>` adding: `label`, `message`, `leftIcon`/`rightIcon`, `error`, and a `color: 'gray' | 'red'` enum. `--text-field-height: 48px` and `border-radius: var(--radius-full)` set in `theme-override.css`. Note: the import path is `@/shared/ui/components/input` (lowercase) — odd but it's how it's exported. |
-| `dropdown` | `1321:5794` | ❌ | — | Not built. Radix primitives (`@radix-ui/react-dropdown-menu`) are not yet pulled in. |
-| `pagination` | `1321:5809` | ❌ | — | Not built. No usage site yet either (no `/news` index page, no listings). |
-| `Carousel` | `1326:2019` | ⚠️ | `swiper` is in deps (`11.2.6`) and `swiper-bundle.css` is imported globally; WP post bodies render carousels via `wp-block-cb-carousel-v2` and styled by `@wordpress/block-library` CSS through `<GutenbergProvider>`. No project `Carousel/` component exists. | The "current" carousel is WordPress-driven inside post content, not a reusable shared component. The Figma `Carousel` frame implies a standalone version that hasn't been built. |
-| `checkbox` | `1321:6119` | ❌ | — | Not built. |
-| `breadcrumbs` | `1321:5852` | ✅ | `src/shared/ui/components/Breadcrumbs/` | Uses internal `<Link>` (which composes Next.js + Radix Link) and a `<ChevronRight>` icon as default separator. Accepts `items: { label, href? }[]` — last item rendered as bold gray text. |
-| `tabs` | `1321:4794` | ❌ | — | Not built. |
-| `navigation` | `1327:13588` | ✅ | `src/modules/Header/` | Server/client split: `HeaderServer.tsx` fetches the `main-navigation` menu via WP and maps it through `toNavItems`, then renders `HeaderClient.tsx`. Sticky-scroll variant exists in Figma (`header-scroll`) — confirm coverage. |
-| `page header` | `1335:7813` | ❌ | — | Page hero / banner block. Not built. |
+| `Button` (canonical) | `1297:4792` (set) | 3 Variant × 3 Size × 3 State = 27 | ❌ no wrapper | **Geometry confirmed:** `cornerRadius:9999`, fill `#AE0A04` (brand/red/8), padding 12/24, label `text/4/regular` (PT Sans 18). Variants: `Contained`, `Outline`, `white`. Sizes: `Large`, `Small`, `Extra Small`. States: `Default`, `Hover`, `Disabled`. The `white` variant is the donation CTA on the red header. |
+| `Links` (text-link buttons) | `1330:36653` (set) | 3 Size × 3 Color × 4 State = 36 | ⚠️ | Existing `src/shared/ui/components/Link/` covers the cases but with a different prop shape (`color: red | gray | white | lightgrey | darkgrey`). The Figma colors are `Primary`, `red`, `white` — close but not identical. Worth aligning the enum. |
+| `Button` (legacy) | `1321:5304` (set) | 2 | superseded | Old master with `cornerRadius:5`. Ignore — replaced by `1297:4792`. |
+| `_Button Groups Base` (nav) | `1326:17229` (set) | 3 (Default / Hover / Active) | ✅ via `ButtonGroup` | The horizontal nav-link cell. `cornerRadius:6`, padding 10/20, `text/3/regular`, fill transparent (hover/active: `brand/red/6` = `#D83030`). |
+| `_Button Groups Base` (tabs) | `1321:5108` (set) | 12 | ❌ | A different tab cell. `cornerRadius:8`. Two color variants × two sizes × three states. Wraps in a white rounded container (`Frame 33786`). Used in `page header` block. |
+| `Icon Button` | `1327:14092` (set) | 2 Radius × 2 Variant × 3 State = 12 | ❌ | 32×32, `cornerRadius:8` (Curved) or `cornerRadius:999` (Circle), Outline or Contained, three states. Currently the repo uses Radix `<IconButton>` inline with `theme-override` zero-padding. |
+| `Input Field` | `1326:490` (set) | 5 State × 2 Error × 2 Color = 16 (subset realized) | ✅ via `input/` | **Pill input** (`cornerRadius:999`), white fill, gray-4 stroke, padding 10/20/10/15. Optional `Label content` (text/2/regular gray-8) above, optional `Hint message` below, optional Info Outline trailing icon. Two colors: `Default` (gray border) and `White/red` (white on red — used in `header-v2` search). Repo `input/` wrapper supports `color: 'gray' | 'red'` already. |
+| `Dropdown Menu` | `1324:4234` (set) | 5 | ❌ | `cornerRadius:6` (not pill — distinct from Input), padding 8/12/8/8, gray-4 stroke, chevron trailing. With label above. |
+| `_Dropdown List Item` | `1324:15694` (set) | 2 | ❌ | The menu row inside an opened dropdown. |
+| `Checkbox` | `1323:257` (set) | 2 Checked × 3 State × 2 Label = 12 | ❌ | 16×16 base, `cornerRadius:4`, gray-4 stroke, white fill. Optional Label slot. |
+| `Breadcrumbs` | `1321:5894` (set) | 3 (Number of Links = 2/3/4) | ✅ via `Breadcrumbs/` | Existing component covers it. |
+| `header-v2` | `1229:4371` | (component, not set) | ⚠️ | **Now a real component, not a loose frame.** Full composition: top row (logo lockup + "Поиск по сайту" Input + "Оказать помощь" white Button) + nav row (8 menu items as `_Button Groups Base` instances: ГЛАВНАЯ / О НАС / ПРОГРАММЫ / ВИДЕО / ПРИМИ УЧАСТИЕ / МАТЕРИАЛЫ / ОБЩЕЕ ДЕЛО-ПРО / КОНТАКТЫ). Fill `brand/red/8` (`#AE0A04`). Active nav item highlighted with `brand/red/6` (`#D83030`). Existing `modules/Header` is on older `header` / `header-scroll` components — **needs migration**. |
+| `header-mob` | `1248:4486` | component | ❌ | 360×48 compact bar: logo (scaled) + search Icon Button + menu Icon Button. No mobile header in repo today. |
+| `footer` | `838:1631` | component | ⚠️ | Existing `modules/Footer` likely consumes an older variant. Structure: logo + social icons row (VK / OK / YouTube) + "КОНТАКТЫ РЕДАКЦИИ" column (chief editor, email, phone) + "ОТЗЫВЫ" column (6 link buttons) + "ССЫЛКИ" column (9 link buttons) + bottom legal block (СМИ registration + ОГРН + 12+ + privacy link). Fill `gray-9` (`#202B37`), text mostly `gray-3`/white. |
+| `footer-mob` | `1261:7985` | component | ❌ | 360-wide stacked layout. |
+| `page header` | `1335:7682` (set, 1 variant) | 1 | ❌ | **It's not a hero — it's the entire top-of-page block.** Composition: header-v2 (instance) + breadcrumbs row + page heading "Header" (`text/9/bold` = PT Sans Narrow Bold 48, fill `brand/red/7` `#BE1710`) + tabs row (6 `_Button Groups Base (tabs)` instances inside a 5-padded white rounded wrapper). So implementing `<PageHeader>` means composing 4 sub-components, not just a banner block. |
+| `Frame 33810` | `1525:15287` (set) | 1 | ? | Adjacent to `page header` in the UI page; unknown role. Worth a glance when D3/D6 starts. |
+| `Pagination Web` | `1326:2018` | component | ❌ | Desktop pagination. 36×36 cells, `cornerRadius:6`. Prev/next chevrons (white fill, gray-2 stroke) flank a center group of number cells (active: brand/red/8 fill + white bold text; idle: white fill + gray-8 text) plus `...` ellipsis. Frame padding 35-top/80-bottom. |
+| `_Paginations Fields Base` | `1326:760` (set) | 10 | ❌ | The cell — 4 Type (Number/Next/Previous/Dots) × variants for state. |
+| `Frame 33811` | `1567:12545` | component | ❌ | Mobile pagination variant. |
+| ` Carousel` (frame) | `1326:2019` | — | ❌ | **Only carousel _chrome_ is designed**, not the slider container. Two pieces: |
+| ↳ `_Carousel Button Base` | `1326:2082` (set) | 2 (Chevron Left / Right) | ❌ | 32×32 circular nav arrows, `cornerRadius:999`, fill `gray-2`, stroke `gray-8` (or the listed `#414E62`), chevron icon inside. |
+| ↳ `_Carousel Page Indicator Base/Small/Dot` | `1326:2122` | component | ❌ | 6 8×8 dots, active = `brand/red/7` (`#BE1710`), idle = `gray-5` (`#97A1AF`). |
+| `Status` (tracking) | `1350:13908` (set) | 7 (What × Status) | n/a | **Workflow component, not UI.** Tags screens on the `design` page as Design/Text/Dev done/in-progress/not-started. Read it as Design's signal of which mocks are ready. Ignore when building. |
 
-### 3.2 Components present in the repo but **not** on the `👉 UI` page
-
-These are practical primitives added during build-out that the design system page hasn't formalized. If/when Design wants to spec them, they'll need a Figma entry.
+### 3.3 Repo components not on the `👉 UI` page
 
 | Repo component | Location | What it does |
 | --- | --- | --- |
-| `Box` | `src/shared/ui/components/Box/` | Layout primitive with responsive object props (`{ mobile, smallDesktop, desktop }`) for padding (`p/pt/pr/pb/pl/px/py`), margin (`m*`), display, flex (direction/wrap/justify/align), position, top/right/bottom/left. Spacing values constrained to `0/4/8/12/16/20/24/32/40/48/56/64`. **The single most-used layout tool in the codebase** — prefer it over ad-hoc CSS for spacing shells. |
-| `Container` | `src/shared/ui/components/Container/` | Simple `<main>` (or chosen `as`) wrapper with a `.container` class. Distinct from Radix's `<Container>`. |
-| `Link` | `src/shared/ui/components/Link/` | Composes Next.js `<Link>` + Radix `<Link>` + project color enum (`red | gray | white | lightgrey | darkgrey`) + optional left/right icons. **Use this instead of either Next.js or Radix Link directly.** |
-| `Logo` | `src/shared/ui/components/Logo/` | Brand logo rendered with the `logo.webp` asset. |
-| `Modal` | `src/shared/ui/components/Modal/` | Client-only portal-based modal with `useClickAway` + Escape-to-close + `overflow:hidden` body lock. Not built on Radix Dialog — intentional or pre-Radix? Worth revisiting if Radix Dialog would do the job. |
-| `Accordion` | `src/shared/ui/components/Accordion/` | Wrapper over `@radix-ui/react-accordion` (the primitive, not Themes) accepting `items: { value, href?, text?, content? }[]`. Trigger is a `<Text>` or `<Link>` depending on `href`; chevron icon flips via CSS. Supports both single- and multi-open modes via Radix's union type. |
-| `Icons/*` | `src/shared/ui/components/Icons/` | Typed wrappers around each SVG with consistent prop signature. Source of truth for the icon set — adding an icon means dropping the SVG into `assets/icons/` and exporting a wrapper here. |
+| `Box` | `src/shared/ui/components/Box/` | Responsive layout primitive. **Spacing scale is multiples-of-4 (0/4/8/…/64) while Figma's `spacing/*` variables are multiples-of-5 (0/5/10/…/80) — round when implementing.** |
+| `Container` | `src/shared/ui/components/Container/` | Plain `<main>`-or-similar wrapper. Distinct from Radix's `<Container>`. |
+| `Link` | `src/shared/ui/components/Link/` | Composes Next.js `<Link>` + Radix `<Link>` + project color enum. Covers but does not strictly mirror the Figma `Links` component matrix. |
+| `Logo` | `src/shared/ui/components/Logo/` | Brand logo rendered with `logo.webp`. |
+| `Modal` | `src/shared/ui/components/Modal/` | Custom portal-based modal — `useClickAway` + Escape + body-scroll lock. Not on Radix Dialog. Worth revisiting if Radix Dialog covers the use cases. |
+| `Accordion` | `src/shared/ui/components/Accordion/` | Wrapper over `@radix-ui/react-accordion` primitive. Used for FAQ. |
+| `Icons/*` | `src/shared/ui/components/Icons/` | Typed wrappers around each SVG. Adding an icon = drop SVG into `assets/icons/` + export wrapper here. |
 
 ---
 
-## 4. Operating notes for future work
+## 4. Operating notes
 
 ### 4.1 When you reach for a new visual primitive
 
 1. Check `src/shared/ui/components/` first.
 2. If nothing fits, use Radix Themes / Radix Primitives directly — but if you find yourself styling the Radix component the same way twice, lift it into `src/shared/ui/components/<Name>/`.
-3. Never hard-code colors, font sizes, shadows, or line heights — go through the `--*` custom properties in `theme-override.css`. If a value isn't there, add it (and note it here).
+3. Never hard-code colors, font sizes, shadows, or line heights — go through the `--*` custom properties. If a value isn't there, add it (and note it here).
 
 ### 4.2 When Figma changes
 
-The high-leverage edits are in `theme-override.css`. The rest of the system inherits automatically because every component is themed through Radix variables. Specifically:
+The high-leverage edits are in `theme-override.css`. Every Radix component re-themes automatically:
 
 - **Color change** → update the corresponding `--red-N` / `--gray-N` / `--white` value.
 - **New type size** → add `--font-size-N` (and matching `--line-height-N` / `--letter-spacing-N`).
 - **Shadow change** → update `--shadow-sm` / `--shadow-lg` directly.
+- **Spacing or radius scale change** → both currently live behind hard-coded numbers in components and the `Box` constraint set. There's no central spacing var to flip; updating means editing each call-site.
 
-### 4.3 Open questions / known drift
+### 4.3 Open questions to raise with Design (none are blockers)
 
-Mostly small things to flag with Design over time — none are blocking implementation:
-
-- **Brand red.** Figma's `2_main_red` token is `#F4322A` and the repo's solid button composes from `--red-8` (`#ae0a04`); the rendered CTA visually matches the design, so the token-level numbers diverging is **not a real drift**. Note for future designer review only.
-- **Button corner radius.** Figma button frames carry `cornerRadius: 5`. Repo Theme is `radius="full"` (pill). Probably an intentional global decision — confirm.
-- **Inter typography.** The five `H1_Inter_*` / `Body_Inter_*` Figma styles look orphaned. Safe to delete from Figma?
-- **`1_main_black` for body.** Nothing in the override sets a pure-near-black for body text — Radix defaults resolve text to gray-12 (via Radix's own scale). If Design intends `#151313` as the literal body color, we need to wire it up.
-- **`4_line_gray` borders.** Not referenced anywhere in the override. If used in mocks, callers currently get Radix defaults instead.
+- **`2_main_red` vs `brand/red/8` reds.** Two reds exist in the system (`#F4322A` and `#AE0A04`). Buttons / header / titles use `brand/red/8`. Where is `2_main_red` (`#F4322A`) actually meant to render? If not anywhere, drop the paint style.
+- **`1_main_black` for body.** Nothing wires up `#151313` as body text. Confirm Design intended this and add a rule, or drop the style.
+- **`4_line_gray` for borders.** Same — unused in the override.
+- **Inter typography styles.** Most are orphaned; one place still binds (breadcrumb separator label in `page header`). Confirm cleanup.
+- **Spacing scale mismatch.** Figma uses multiples of 5 (`5/10/15/20/25/35/45/65/80`); repo `Box` uses multiples of 4. Pick one — round in-implementation, or rebase `Box`.
+- **Single tracking footer column heading style.** Footer uses Inter Regular 15 on one label and PT Sans elsewhere — confirm.
 
 ### 4.4 Components that are obvious next builds
 
-If a sprint targeted "complete the design system", the unbuilt items in order of likely demand:
+Sequenced by demand from `page-mocks.md`:
 
-1. `Button` wrapper (variant intent map: primary / secondary / link / icon-only)
-2. `IconButton` wrapper
-3. `Checkbox` (forms work)
-4. `Dropdown` (forms / select menus)
-5. `Tabs`
-6. `Pagination` (needed before `/news` index can ship)
-7. Standalone `Carousel` (separate from WP block carousel)
-8. `PageHeader` (hero block — needed for every non-news page in the mocks)
+1. `Button` wrapper — every page uses it.
+2. `IconButton` wrapper — carousel chrome + mobile header.
+3. `PageHeader` (header-v2 + breadcrumbs + heading + tabs composition) — every non-news page.
+4. `Pagination` — `/news` index + every `Материалы/social-*` listing.
+5. `Tabs` — Materials sub-section switcher; participation-form role tabs; PageHeader's own tabs row.
+6. `Dropdown` / `Select` — video filter.
+7. `Checkbox` — forms (contact, participation, filter).
+8. Standalone `Carousel` — home / about / project sections. Figma only provides the chrome (arrow buttons + dot indicator); the slider container itself we build (likely via Swiper, already in deps).
+9. Promote `header-v2` + `header-mob` to live `modules/Header` — current implementation is on older masters.
+10. Promote `footer` + `footer-mob` to live `modules/Footer` — same.
 
 ---
 
 ## 5. Reading the Figma file
 
-Useful node IDs for fast navigation (paste into Figma's URL bar after `?node-id=`):
+Useful node IDs (paste after `?node-id=` in the Figma URL):
 
-- Page `👉 UI` — `1297:4635`
-- color — `1298:5540` · effect — `1326:310` · Typography — `1320:5044`
-- button — `1300:4731` and `1321:5303` · icon-button — `1327:14974` · button-groups — `1326:16966`
-- input — `1321:5552` · dropdown — `1321:5794` · checkbox — `1321:6119`
-- breadcrumbs — `1321:5852` · tabs — `1321:4794` · pagination — `1321:5809`
-- navigation — `1327:13588` · page header — `1335:7813` · Carousel — `1326:2019`
-- icon sheets — `1320:5066`, `1326:6821`
+**`👉 UI` page**
+- Page root — `1297:4635`
+- color — `1298:5540` · effect — `1326:310` · Typography — `1320:5044` · icon sheets — `1320:5066`, `1326:6821`
+- button (canonical) — `1300:4731` (frame), `1297:4792` (set) · button (legacy) — `1321:5303`
+- icon-button — `1327:14974` (frame), `1327:14092` (set)
+- button-groups (nav) — `1326:16966` (frame), `1326:17229` (set)
+- tabs — `1321:4794` (frame), `1321:5108` (set)
+- input — `1321:5552` (frame), `1326:490` (set)
+- dropdown — `1321:5794` (frame), `1324:4234` (set)
+- checkbox — `1321:6119` (frame), `1323:257` (set)
+- breadcrumbs — `1321:5852` (frame), `1321:5894` (set)
+- navigation — `1327:13588` (frame, contains responsive demos at 1440/1200/900)
+- header-v2 — `1229:4371` (component) · header-mob — `1248:4486` (component)
+- footer — `838:1631` (component) · footer-mob — `1261:7985` (component)
+- page header — `1335:7813` (frame), `1335:7682` (set)
+- pagination — `1321:5809` (frame), `1326:2018` (Web component), `1326:760` (cell set), `1567:12545` (mob)
+- Carousel — `1326:2019` (frame), `1326:2082` (button set), `1326:2122` (indicator)
+- Links — `1330:36653` (set)
+- Status (tracking) — `1350:13908` (set)
 
-The page-mock canvas lives on the sibling `design` page (id `168:717`) — frames named `Главная` and `Стань волонтером` (multiple iterations each), plus section pins for о нас / проекты / видео / контакты / новости / Ответы на частые вопросы / Материалы / главная.
+**`design` page (mocks live here — see [`page-mocks.md`](./page-mocks.md))** — page id `168:717`.

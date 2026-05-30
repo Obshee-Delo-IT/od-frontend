@@ -194,22 +194,60 @@ wp-optimize 3.5.0                       wysija-newsletters 2.21
 
 ## 6. API surface used by this repo
 
-Currently consumed (from `src/shared/api/`):
+### 6.1 Currently consumed (from `src/shared/api/`)
+
 - `GET /wp/v2/posts` — news listings
 - `GET /wp/v2/posts/{id}` — news detail
 - `GET /wp/v2/menus?slug=main-navigation` — main navigation menu (provided by a plugin, since core REST doesn't ship menus)
 - `GET /wp/v2/menu-items?menus={id}` — menu item nodes
 - Footer fetcher (see `src/shared/api/fetchFooter.ts`)
 
-Available but unused — relevant to upcoming work:
-- `GET /wp/v2/project` + `GET /wp/v2/project/{id}` + `GET /wp/v2/pj-categs` / `pj-tags` — projects + taxonomies
+### 6.2 Available but unused — relevant to upcoming work
+
 - `GET /wp/v2/profile` + `GET /wp/v2/profile/{id}` + `GET /wp/v2/pl-categs` — team members
-- `GET /wp/v2/owl-carousel` + `GET /wp/v2/Carousel` — owl-carousel slides + taxonomy
 - `GET /wp/v2/pages` — generic pages (about, FAQ, contacts, materials landing — depending on how content is organised)
+- `GET /wp/v2/search` — generic site-wide search (see §6.3 for the design decision)
+- `GET /wp/v2/settings` — site metadata (`.description` is the line under the logo)
+- `GET /wp/v2/widgets?sidebar=sidebar_bottom` + `GET /wp/v2/sidebars/{id}` — widget-based footer (see §6.3)
+- `GET /wp/v2/tags?search=...` + `GET /wp/v2/posts?tags={id}` — curated post lists by tag (see §6.3)
 - `POST /contact-form-7/v1/contact-forms/{id}/feedback` — form submissions (CF7)
 - `POST /wp/v2/...` for write operations (requires the same Basic auth currently used)
 - `/graphql` — full GraphQL endpoint (alternative)
 - `/wp-json-openapi` — OpenAPI 3 schema source for type generation (`pnpm generate:types`)
+
+**Not** to be used (going away with WP cleanup — see §4.3):
+- `GET /wp/v2/project` etc. — 21 Lorem-ipsum drafts, deleted with `cmsms-content-composer`
+- `GET /wp/v2/owl-carousel` etc. — UI plugin, dropped
+
+### 6.3 Canonical fetching patterns (from GitHub issues)
+
+These patterns are pre-designed by the WP-side engineer (issues #8, #9, #45, #50). They are the **assumed approach** for upcoming D-series work unless a future ADR overrides.
+
+**Site name beneath the logo.** `GET /wp/v2/settings` → `.description`. Cheap, cacheable; share with the header fetcher.
+
+**Header navigation (menu).** Already wired. Hierarchy rule: `parent === 0` = root; nested items reference their parent by id. `menu_order` is a depth-first walk over the tree — usable as the canonical sort. GraphQL was tried and is **buggy** for nested menus (returns null `childItems` past one level) — REST is the right call here. Source: #8.
+
+**Footer = widgets in `sidebar_bottom`.** `GET /wp/v2/widgets?sidebar=sidebar_bottom` returns an array of widgets in order, each carrying its own `rendered` HTML. The order in the array is authoritative — no need to call `/sidebars/sidebar_bottom` first unless we want the explicit list of widget ids for a separate cache key. Render each `widget.rendered` through the same `html-react-parser` path that news bodies use. Source: #8.
+
+**Search (header).** `GET /wp/v2/search?search=...`. This is the standard WP REST search endpoint — fast enough for the org's content volume (~500–1000 URLs per the live sitemap). Defer Algolia/Meilisearch/Yandex Search unless relevance becomes a problem. Source: #8.
+
+**Films list.** `GET /wp/v2/posts?format=video` — uses WP's built-in `post_format` taxonomy, no custom CPT. The 5-category split on the live site (full films / animated / clips / shorts / "famous people") layers on top via `categories` query params, same pattern as news regions below. Source: #8.
+
+**News listings.** Two modes, switched by config (single env var or feature flag):
+- **Default (latest):** `GET /wp/v2/posts` — what the home news grid (§7 in the home composition) ships with day-one.
+- **Curated home block:** `GET /wp/v2/tags?search=главная` → take the returned tag id → `GET /wp/v2/posts?tags={id}`. Reason for the toggle: editors may forget to tag, and summer historically has few items, so the curated mode silently falls back to "latest" if zero curated items.
+
+The single-news endpoint is `GET /wp/v2/posts/{id}` (already wired — see `cachedFetchNews`). Source: #8, #45.
+
+**"Popular news" = same-region news, not a popularity plugin.** Each post returns `categories: [47, 137, …]` where one is the topic (e.g. `47 = новости`) and the rest are regional tags (e.g. `137 = владимирская область`). Related-posts query: `GET /wp/v2/posts?categories=47&categories=137`. The label «популярное» should be **config-driven** — if a real popularity plugin (`wp-postviews`, etc.) is installed later, the fetcher swaps in place without rewriting the UI. Source: #50.
+
+**"Sections" / custom homepage content (hero, statistics, banners).** _Unresolved._ Issue #9 is `in progress` and weighs four options:
+1. **JSON / HTML files dropped into `wp-content`** — simplest, fastest. No webhook capability but acceptable for rarely-changed content (hero copy, statistics numbers, footer text).
+2. **Widgets** (Arsennikum's leading candidate) — editable via the WP admin without publishing technical "posts". Each section becomes a widget that returns rendered HTML, same pattern as footer.
+3. **ACF custom fields on a single "site config" page** — adds typed fields, surfaces as a JSON section in REST. Requires keeping that page published and filtering it out of `/wp/v2/posts` results.
+4. **Custom REST endpoints** in the theme's `functions.php`. Maximum control, more code.
+
+**Working assumption pending resolution:** widgets for most one-off blocks (matches the footer pattern, no plugin dependency, no FSE/theme switch needed). Revisit when D1 hero/banner/statistics issues (#33, #34, #36) start, since each can be implemented either way.
 
 ---
 

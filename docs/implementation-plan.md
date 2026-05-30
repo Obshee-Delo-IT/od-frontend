@@ -44,7 +44,10 @@ The redesign is replacing an existing site. Key facts harvested from a live read
 
 Resolve the things that will bite every later workstream.
 
-- _Note (not an action task): designer-confirmation list_ — button `cornerRadius: 5` vs `radius="full"`, role of `1_main_black` and `4_line_gray`, fate of orphan Inter type styles. Brand red token mismatch was checked visually and is **not** a real drift; the rendered CTA matches the design. Keep these as questions to raise opportunistically with Design, not blockers. See [`design-system.md` §4.3](./design-system.md#43-open-questions--known-drift).
+- _Note (not an action task): designer-confirmation list_ — role of paint styles `1_main_black` / `4_line_gray` (neither is wired into the override), role of `2_main_red` (`#F4322A` — a brighter accent that doesn't render in any current component; the canonical button red is `brand/red/8` `#AE0A04`), fate of orphan Inter type styles, footer column heading bound to Inter 15. The button corner-radius question is **resolved** — canonical Figma Button is `cornerRadius:9999` (pill), repo Theme is `radius="full"` (pill); they match. The old "5px" reading came from a superseded master (`1321:5304`). See [`design-system.md` §4.3](./design-system.md#43-open-questions-to-raise-with-design-none-are-blockers).
+- [ ] **A1b. Foundation drift to fix (real drift, not designer judgement).** Two structural mismatches between Figma's token system and the repo, surfaced by the deeper scout:
+  - **Breakpoint system is 4-tier in Figma, 3-tier in code.** Figma's `navigation` UI frame ships `header-v2` at 1440 + responsive demos at 1200 and 900, plus `header-mob` < 900. Repo `media.css` only has `--mobile <900 / --small-desktop <1440 / --desktop ≥1440` — no intermediate at 1200. Add `--tablet` (or rename `--small-desktop` to cover 900–1200 and add `--small-desktop` for 1200–1440). Affects every responsive component. **Block-1 work.**
+  - **Spacing scale: multiples of 4 vs 5.** Figma `spacing/*` variables are `0/5/10/15/20/25/35/45/65/80` (multiples of 5). Repo `Box` is `0/4/8/12/16/20/24/32/40/48/56/64` (multiples of 4). Either rebase `Box` on multiples of 5, or accept that implementers round Figma values to the nearest `Box` step. Either way, document the decision. Not blocking but compounds over time.
 - [ ] **A2. Decide hosting / deploy story.** Single VPS via `docker-compose-prod.yaml`? Kubernetes? Vercel? **Foreign hosting is acceptable** — the site only serves public content, so 152-FZ data-localisation doesn't apply at the hosting layer (it applies only to where form submissions land — see B6). This decision affects ISR survival (per-replica vs shared cache), where build runs, secrets management, and the shape of CI/CD.
 - [x] **A3. CI pipeline.** Deploy is wired via the Coolify GitHub app (triggers on push), so CI/CD's deploy half is already solved. `.github/workflows/ci.yml` runs `pnpm lint`, `pnpm type-check`, `pnpm test`, `pnpm build` on `pull_request` (any base) **and** on `push` to `main`. Concurrency cancels in-flight PR runs (latest commit wins) but lets every main-branch commit complete (so each deploy has its own pass/fail). pnpm pinned to 11.3.0 matching the Dockerfile; Node read from `.nvmrc`; JavaScript actions opted into the Node 24 runtime via `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24=true` ahead of the 2026-06-16 default flip. The build runs **without** WP secrets in CI — `httpClient` and `next.config.ts` detect missing/empty `WP_BASE`/`WP_USER`/`WP_PASSWORD` and substitute a stub fetch that returns `[]`, so compilation + RSC boundaries are still validated end-to-end. Real-data builds remain Coolify's job, where the secrets live. The `lint · type-check · test · build` check is wired as a required status check on `main` via a Rulesets entry, so Coolify never auto-deploys a red commit.
 - [ ] **A4. Observability baseline.** Analytics: **Yandex Metrica only** — Google Analytics is excluded under current Russian regulations. Wire Metrica into `app/layout.tsx`, gated behind a 152-FZ-compliant consent banner (see F6). **Error tracking is deferred** for this iteration — rely on Next.js standalone-server stdout/stderr captured by the hosting platform until traffic justifies a dedicated tool. Revisit once the site is live.
@@ -74,7 +77,7 @@ The repo currently consumes `/wp/v2/posts`, `/wp/v2/menus`, `/wp/v2/menu-items`,
   10. **Decide on wp-graphql** — keep if we commit to GraphQL anywhere, drop otherwise.
   End state: **~5 active plugins** (CF7, wp-openapi, wp-optimize, query-monitor, + leyka/wp-graphql if kept, + ACF if structured fields are wanted). Removing clearfy-pro also kills the WP-CLI redirect gotcha entirely.
 - [ ] **B6. Forms submission backend.** The live site has **no embedded forms** — contact is a directory, participation routes to email, reviews go offsite. Every form in the Figma redesign (`contact-page`, the participation scratch, "subscribe to news") is **net-new**. **Submission target is settled**: data lands in the existing RU-hosted WordPress backend (which already holds the rest of the org's content under 152-FZ), via either a WP plugin endpoint (Contact Form 7 / Gravity Forms / WPForms) or a custom `app/api/*` route that proxies to WP REST. Spam protection: **Yandex SmartCaptcha** (not reCAPTCHA — same regulatory bucket as GA). Email notifications go out via WP's existing mail configuration; no separate transactional provider needed unless WP isn't set up for it.
-- [ ] **B7. Search.** Live site doesn't have one. Redesign header carries a `SearchIcon`. Treat as **out of scope** unless Design explicitly confirms — and if it goes in, decide WP REST search vs external (Algolia / Meilisearch / Yandex Search API).
+- [ ] **B7. Search.** Live site doesn't have one. **Redesign confirms it as in-scope** — the canonical `header-v2` component on the UI page embeds a styled `Input Field` (`cornerRadius:999`, white-on-red variant) with placeholder "Поиск по сайту", not a bare icon as previously assumed. So search is part of the header design, not a maybe. Endpoint is settled: `GET /wp/v2/search?search=...` (WP REST's generic search endpoint — see [`wp-backend.md` §6.3](./wp-backend.md#63-canonical-fetching-patterns-from-github-issues) and issue #8). For ~500–1000 URLs that's sufficient at launch; defer Algolia / Meilisearch / Yandex Search unless relevance becomes a problem.
 
 ---
 
@@ -82,16 +85,17 @@ The repo currently consumes `/wp/v2/posts`, `/wp/v2/menus`, `/wp/v2/menu-items`,
 
 Build out the primitives that all subsequent pages will compose. Order roughly matches dependency from [`page-mocks.md` §4.4](./page-mocks.md#44-suggested-build-order).
 
-- [ ] **C1. `Button` wrapper.** Today every site uses Radix `<Button>` inline. Add `src/shared/ui/components/Button/` mapping intent (primary / secondary / link / ghost) → Radix variant + size. Flag the Figma `cornerRadius: 5` vs `radius="full"` question with Design when implementing — not a blocker, just confirm before locking it in.
-- [ ] **C2. `IconButton` wrapper.** Same pattern.
-- [ ] **C3. `PageHeader` (hero) component.** Used on every non-news page; missing today.
-- [ ] **C4. `Pagination`.** Blocks `/news` index and every `Материалы` listing.
-- [ ] **C5. `Tabs`.** Materials sub-section switcher; participation-form role tabs.
-- [ ] **C6. `Dropdown` / `Select`.** Video filter.
-- [ ] **C7. `Checkbox`.** Forms — contact, participation, filter.
-- [ ] **C8. Standalone `Carousel`.** The repo has Swiper in deps but consumes it indirectly via WP block CSS. Need a reusable shared component for home/about/project carousels.
-- [ ] **C9. Promote `header-v2` once Design finalises it.** Currently a frame, not a component — and the live `modules/Header` is on the older `header` / `header-scroll`. Plan for a clean swap.
+- [ ] **C1. `Button` wrapper.** Today every site uses Radix `<Button>` inline. Add `src/shared/ui/components/Button/` mapping intent → Radix variant + size. **Figma matrix confirmed**: 3 Variant (`Contained` / `Outline` / `white`) × 3 Size (`Large` / `Small` / `Extra Small`) × 3 State (`Default` / `Hover` / `Disabled`) = 27 cells. Canonical Contained/Large: `cornerRadius:9999`, fill `#AE0A04`, padding 12/24, label `text/4/regular`. The `white` variant is the donation CTA on the red header. No corner-radius decision needed — pill matches.
+- [ ] **C2. `IconButton` wrapper.** Figma matrix: 2 Radius (Curved 8px / Circle) × 2 Variant (Outline / Contained) × 3 State = 12 cells. 32×32 base. Used for header-mob search/menu and carousel arrow buttons (circle variant).
+- [ ] **C3. `PageHeader` composition.** **Reframed from "hero" to "top-of-page block".** Figma's `page header` component (`1335:7682`) is not a banner — it composes header-v2 (instance) + breadcrumbs row + page heading (`text/9/bold`, PT Sans Narrow Bold 48, fill `brand/red/7`) + tabs row. Build as a layout shell (`<PageHeader>`) that slots in the four sub-parts, where the tabs row is optional. Used on every non-news page.
+- [ ] **C4. `Pagination`.** Figma component fully spec'd (`1326:2018`): 36×36 cells, `cornerRadius:6`, prev/next chevrons + numbered cells + `...` ellipsis. Active cell: `brand/red/8` fill + white bold text. Mobile variant exists (`1567:12545`). Blocks `/news` index and every `Материалы` listing.
+- [ ] **C5. `Tabs`.** Figma uses a separate `_Button Groups Base (tabs)` set (`1321:5108`, 12 variants, `cornerRadius:8`) inside a white 5-padded rounded wrapper. Distinct from the nav `_Button Groups Base`. Materials sub-section switcher; participation-form role tabs; PageHeader's own tabs row.
+- [ ] **C6. `Dropdown` / `Select`.** Figma `Dropdown Menu` (`1324:4234`, 5 variants), `cornerRadius:6` (not pill — distinct from Input), gray-4 stroke, chevron trailing. Used by video-filter.
+- [ ] **C7. `Checkbox`.** Figma `Checkbox` (`1323:257`, 12 variants). 16×16 base, `cornerRadius:4`, gray-4 stroke. Used by contact / participation / filter forms.
+- [ ] **C8. Standalone `Carousel`.** Figma provides only the **chrome**: `_Carousel Button Base` (32×32 circle arrows, `cornerRadius:999`) and `_Carousel Page Indicator Base/Small/Dot` (8×8 dots, active `brand/red/7`, idle gray-5). The slider container itself is unspecified — build via Swiper (already in deps). Needed for home / about / project sections.
+- [ ] **C9. Promote `header-v2` + `header-mob` + `footer` + `footer-mob` to live `modules/`.** All four are now real Figma COMPONENTS (`1229:4371`, `1248:4486`, `838:1631`, `1261:7985`). Existing `modules/Header` consumes older `header` / `header-scroll` masters; `modules/Footer` likely the same. Plan a clean swap. **header-v2 includes a styled search Input** — see B7. **header-mob is a separate 48-tall component**, not a CSS-responsive version — affects how the swap is structured.
 - [ ] **C10. Modal review.** Current `Modal` is a custom portal — fine but inconsistent with the otherwise-Radix stack. Decide whether to migrate to `@radix-ui/react-dialog` for accessibility / focus-trap parity.
+- [ ] **C11. `Link` wrapper alignment.** Figma `Links` set (`1330:36653`) is 3 Size × 3 Color (`Primary` / `red` / `white`) × 4 State = 36 cells. Existing `src/shared/ui/components/Link/` covers cases with a different colour enum (`red | gray | white | lightgrey | darkgrey`). Align the enum names + size+state variants to the Figma matrix so calls match the design spec.
 
 ---
 
@@ -99,14 +103,14 @@ Build out the primitives that all subsequent pages will compose. Order roughly m
 
 Each item is "build the route + connect it to WP + ship desktop + mobile". Order is the suggested build order from page-mocks.
 
-- [ ] **D1. Home (`app/page.tsx`)** — frame `1622:10641` (desktop), `1356:15986` (mobile). Highest priority since `/` currently has no handler.
-- [ ] **D2. News index (`app/news/page.tsx`)** — frame `753:418`. Closes the dangling news flow.
-- [ ] **D3. About (`app/about/`)** — Figma mocks cover index + `team`, `team-2`, `documents`, `story`, `letters`, `charter`, `certificate` (~6 routes). Live site has 11 sub-pages (adds `smi`, `nashi_partnery`, `experts-review`, `reviews`, `ostavit-otziv`, `statistics`). Resolve scope with Design before committing — the gap is meaningful.
-- [ ] **D4. Contacts (`app/contacts/`)** — landing + form page. Depends on B6 (forms backend) and C7 (checkbox).
-- [ ] **D5. FAQ (`app/faq/`)** — frame `1569:13336`, uses existing `Accordion`. Near-trivial once content is wired.
-- [ ] **D6. Projects / Программы (`app/projects/`)** — index + per-project pages. Note label drift: live site labels this **«ПРОГРАММЫ»**, Figma has **«проекты»**. Confirm canonical label. Hard-coded vs CMS-driven: live site presents these as static programme pages, suggesting hard-coded entries are fine.
-- [ ] **D7. Video / Фильмы (`app/video/`)** — index + filter + player + download flow. Live site confirms 5 sub-categories (full films, animated, clips, shorts, famous people) — that's the filter taxonomy. Depends on C6 (dropdown), C7 (checkbox), C4 (pagination), and the download-asset strategy.
-- [ ] **D8. Materials (`app/materials/`)** — biggest section. Live site confirms taxonomy: methodical guides, printed (DVDs / books / bookmarks / flyers / car stickers), social advertising (posters / billboards / stickers / LED clips / audio clips), articles. ~14 sub-pages, asset volumes up to 88 items per page. Build last; depends on C4 (pagination), C5 (tabs), and a clear asset-hosting story (see Workstream E).
+- [ ] **D1. Home (`app/page.tsx`)** — three responsive variants on the `design` page: `home` 1440 (`889:3761`, canonical desktop, header-v2 + footer INSTANCEs), `home` 900 (`1622:10641`, small-desktop, hand-laid header/footer not yet promoted to components), `home-mob` (`1356:15986`, with header-mob + footer-mob INSTANCEs), plus `главная` (`3612:11235`) as an exploration board. Highest priority since `/` currently has no handler. **Composition is captured in [`page-mocks.md` §2.1](./page-mocks.md#21-home-top-level-frames-no-section-wrapper)** — nine sections that are identical across breakpoints: hero composite → 4-card identity row → three carousels (one with CTA, two link-card) → narrow promo block → 4-card news grid → newsletter signup. Pulls in nearly every primitive (Button, IconButton, Carousel chrome, Input Field, Checkbox, Links, News Card pattern). Co-evolves with C1, C2, C3, C7, C8. Suggested approach: build sections inline first, lift to shared primitives on the second use (News Card and NewsletterSignup are the obvious lifts — they recur in D2/D4/D7/D8). **GitHub issues:** the home is pre-decomposed into per-section sub-issues — #33 Hero, #34 Statistics (4-card identity), #35 Films carousel, #36 Banner (narrow promo), #37 Programs carousel, #38 Articles (news grid), #39 Subscribe markup. #32 (open) tracks the "how do we fetch sections" decision — see [`wp-backend.md` §6.3](./wp-backend.md#63-canonical-fetching-patterns-from-github-issues) (working assumption: widgets).
+- [ ] **D2. News index (`app/news/page.tsx`)** — frame `753:418` (3064×1440). Six rows × three news cards (`Frame 33827/28/29`, 387×328 with `Frame 170/171/172` title overlay — the **same News Card primitive** that home §7 and contacts socials grid use, so D1 extracts it first), `Frame 33788` pagination strip below, newsletter `Frame 33837` at the bottom. Closes the dangling news flow. Depends on C4 (Pagination). **GitHub:** newsletter integration is #54 (open); the markup-only side is #66/#39 (closed/open).
+- [ ] **D3. About (`app/about/`)** — Figma mocks: `about` (`706:70`), `about-learn-more` (`706:1257`), `team-1` (`706:1584`), `team-2` (`708:3736`), `documents` (`706:3499`), `story` (`706:3568`), `Letters-of-appreciation` (`706:3602`), `charter` (`706:3695`), `Certificate` (`760:1662`) — 9 desktop frames, most with mobile variants. Live site has 11 sub-pages (adds `smi`, `nashi_partnery`, `experts-review`, `reviews`, `ostavit-otziv`, `statistics`). Resolve scope with Design before committing — the gap is meaningful.
+- [ ] **D4. Contacts (`app/contacts/`)** — `contact` (`754:587`, 2649×1440 — accordion of contacts) + `contact-page` (`754:675`, 1963×1440 — structured with page-header banner and a "Наши социальные сети" 3-card grid reusing the News Card primitive). The contact accordion uses the same `Frame 33976/77` expand/collapse pattern as FAQ. Depends on B6 (forms backend) and C7 (checkbox); existing `Accordion` primitive likely needs an `Add Circle` expand-icon variant to match Figma.
+- [ ] **D5. FAQ (`app/faq/`)** — frame `FAQs` `1569:13336` (2649×1440). Long single-column accordion (~13 items, `Frame 33985-97` alternating 48/70-tall collapsed/expanded). Uses existing `Accordion` + the same `Add Circle` expand-icon variant from D4. Near-trivial once content is wired.
+- [ ] **D6. Projects / Программы (`app/projects/`)** — index `projects` (`706:1775`, no breadcrumbs in header) + per-project: `project-1` (`759:845`), `project-2` (`759:1379`), `project-3` (`759:1117`), plus the long-form `article` (`778:1766`) and mobile `article-mob` (`1567:11148`). Each project detail uses a tab strip (`Frame 33787` ~572×198 — depends on C5) + a 3-card "project items" grid (`Frame 251` etc. with `Frame 151` content). Note label drift: live site labels this **«ПРОГРАММЫ»**, Figma has **«проекты»**. Confirm canonical label. Hard-coded vs CMS-driven: live site presents these as static programme pages, suggesting hard-coded entries are fine.
+- [ ] **D7. Video / Фильмы (`app/video/`)** — index `video` (`706:3315`, 2940×1440) + `video-filter` (`1554:17574`, 2968×1440, adds top-of-page `Dropdown Menu`) + player `video-page` (`1566:10433`, 3072×1440, has 3-card "related" carousel + share block) + mobile `video-page-mob` (`1567:10735` and `1567:11844`) + "Скачать фильм" download (`1581:10334`). Each video card carries its own social-share row (vk / logo-youtube / rutube — `Frame 33967`). Live site confirms 5 sub-categories (full films, animated, clips, shorts, famous people) — that's the filter taxonomy. Depends on C4 (pagination), C5 (tabs — mobile tabs `Frame 33812/33813`), C6 (dropdown), C7 (checkbox in the newsletter footer), and the download-asset strategy.
+- [ ] **D8. Materials (`app/materials/`)** — biggest section. Confirmed Figma page templates: `article` (`1012:10934`), `article-content` (`966:8461`), `ads` (`778:2206`), `handbooks` (`779:4133`), `books` (`966:6650`), `disks` (`966:8062`), `printing` (`966:2949`), `flyers` (`966:7747`), `social-ads` (`966:8538`), `social-posters` (`998:9524`), `social-sticker` (`1013:11191`), `social-banners` (`1009:10590`), `social-video` (`1012:11084`), `social-audio` (`1009:10756`), `car sticker` (`966:8388`). Live site confirms taxonomy: methodical guides, printed (DVDs / books / bookmarks / flyers / car stickers), social advertising (posters / billboards / stickers / LED clips / audio clips), articles. ~14 sub-pages, asset volumes up to 88 items per page (social-posters). Build last; depends on C4 (pagination), C5 (tabs — top-of-page material-type switcher), and a clear asset-hosting story (see Workstream E).
 - [ ] **D9. Volunteer / participation page** — the loose `1101:*` scratch in Figma. Confirm with Design whether this is still in scope and where it lives (`/volunteer`? `/participation`? part of `/about`?).
 
 ---
@@ -154,11 +158,12 @@ To execute any of this efficiently, the following access would unblock work that
 These are real decisions that need a human (Design / PM / org leadership) before the corresponding work can land. Not exhaustive — more will surface as each workstream starts.
 
 ### Design / scope
-- Brand red drift (`#F4322A` Figma vs `--red-8 #ae0a04` code) — which is canonical?
-- Button corner radius: Figma `5px` vs Theme `radius="full"`. Pill or rounded?
-- Are the Inter typography styles on the `👉 UI` page deprecated or in use somewhere I haven't found?
+- **Two reds in the paint-style set.** `2_main_red` is `#F4322A` (brighter accent); `brand/red/8` is `#AE0A04` (canonical CTA / header fill). Where does `2_main_red` actually render? If nowhere, drop the style.
+- **`1_main_black` (`#151313`) and `4_line_gray` (`#BDBDBD`)** — neither is wired into the override; body text falls through to Radix gray-12 and borders to Radix defaults. Confirm Design intends these as canonical, then wire up; or drop the styles.
+- **Spacing scale.** Figma `spacing/*` variables are multiples of 5 (`0/5/10/15/20/25/35/45/65/80`); repo `Box` is multiples of 4 (`0/4/8/12/…/64`). Rebase `Box`, or round in-implementation? Pick one (covered as A1b).
+- **Breakpoint set.** Figma headers ship at 1440 / 1200 / 900 / mobile (4 tiers); repo `media.css` has 3 tiers. Add an intermediate breakpoint (covered as A1b).
+- Are the Inter typography styles on the `👉 UI` page deprecated or in use somewhere I haven't found? (One known still-bound place: the breadcrumb separator label in `page header` uses Inter Regular 15.)
 - For pages without an explicit `-mob` Figma frame, is it responsive-only or are mobile mocks coming?
-- `header-v2` (loose frame) — when does it replace the current `header` / `header-scroll`?
 - Status of the loose "Стань волонтером" iterations and the `1101:*` participation-form scratch — still in scope?
 
 ### Content modelling
@@ -184,16 +189,41 @@ These are real decisions that need a human (Design / PM / org leadership) before
 
 ---
 
+## Tracked elsewhere (GitHub issues — not workstream items)
+
+These are real and worth fixing but live in the issue tracker, not the plan. Listed here so they're not invisible when prioritising. Pulled 2026-05-30.
+
+### Known bugs (against the already-built news flow)
+- **#55** wrong text color on news page
+- **#64** carousel image close zone too narrow — clicks on the overlay outside the image don't dismiss
+- **#65** `border-radius` missing on some images inside `GutenbergProvider`
+- **#67** carousel init still uses script injection via `CarouselAdapter.ts`; should swap inside `parsePost.tsx`
+
+### Tech debt (cross-cutting)
+- **#26** Pino + next-logger for structured server logging
+- **#27** swap `next/font/google` → `next/font/local` (offline-friendly, avoids Google fetch at build)
+- **#28** Storybook for UI components
+- **#68** GitHub integration polish — commit-format hook, PR↔issue auto-linking, issue templates
+
+### Pre-decomposed D-series sub-issues
+Workstream D entries above cite the GitHub sub-issues they decompose into. Most-relevant set: **D1** → #32 (sections-fetch research) + #33–#39 (per-section markup); **D2** → #54 (newsletter integration).
+
+---
+
 ## Rough sequencing (not commitments)
 
 If I had to draw a line through this:
 
-1. **Block 1 (parallelisable)**: A2, A3, A4, B1 (decide remaining CPTs), B8 (start the WP cleanup — mu-plugin for CPTs first) — unblock everyone. (A1 is downgraded from a decision step to a designer-confirmation note — not on the critical path.)
-2. **Block 2**: B2, B3, B4, C1, C2, C3, **B8 finish** (delete trashed plugins, swap theme) — primitives + reliable data path on a clean WP.
-3. **Block 3**: D1, D2, C4 — ship the most-visible routes.
-4. **Block 4**: D3, D5, D6, C5, C8 — fill in the static-ish sections (D3/D6 unblocked by B8).
-5. **Block 5**: B6, D4, C7 — forms-dependent.
+1. **Block 1 (parallelisable)**: A1b (breakpoint + spacing decisions — affects every responsive component), A2, A3, A4, B1 (decide remaining CPTs), B8 (start the WP cleanup — mu-plugin for CPTs first) — unblock everyone. (A1 is downgraded from a decision step to a designer-confirmation note — not on the critical path.)
+2. **Block 2**: B2, B3, B4, C1, C2, C3, C7, C8, C9 (header-v2 / footer promotion), **B8 finish** (delete trashed plugins, swap theme) — primitives + reliable data path on a clean WP. C7 + C8 move up from Block 4/5 because **D1 needs them** (newsletter Checkbox in home §8; Carousel chrome in home §3/§5/§6).
+3. **Block 3**: D1, D2, C4, C11 (Link wrapper alignment) — ship the most-visible routes. D1 extracts the News Card + NewsletterSignup primitives reused by D2/D4/D7/D8.
+4. **Block 4**: D3, D5, D6, C5 — fill in the static-ish sections (D3/D6 unblocked by B8). C5 (Tabs) lands here because D6 project-detail and D5 PageHeader-tabs both need it.
+5. **Block 5**: B6, D4 — forms-dependent (Checkbox already done in Block 2).
 6. **Block 6**: E1–E4, C6, D7, D8 — the media-heavy long tail.
 7. **Continuous from Block 1**: F1–F6 — quality concerns.
+
+**Why A1b leads.** The breakpoint and spacing decisions affect every later component — implementing C1 (Button) without the spacing-scale call means refactoring later; building D1 (Home) on a 3-tier system means rebuilding when 1200 lands.
+
+**Why C7 + C8 moved up.** The new home composition scout (page-mocks §2.1) shows D1 consumes Carousel chrome three times and a Checkbox in the newsletter signup. Pushing those primitives to Block 4/5 forces D1 to either stub them or build them out-of-sequence — cleaner to land them with the other Block 2 primitives.
 
 Sequencing assumes one or two people; with more headcount, Workstreams C, D, and the media/asset E chain parallelise cleanly once Block 1 is done.
