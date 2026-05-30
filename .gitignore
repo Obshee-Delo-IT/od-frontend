@@ -12,6 +12,9 @@
 
 # testing
 /coverage
+/test-results
+/playwright-report
+/playwright/.cache
 
 # next.js
 /.next/
@@ -53,6 +56,7 @@ CLAUDE.md
 # local scout / scratch artefacts
 .mcp.json
 /figma-snaps/
+/smoke/
 /*.png
 /*.jpeg
 /*.jpg

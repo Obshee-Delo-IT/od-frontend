@@ -1,7 +1,17 @@
 .root {
   display: flex;
+  overflow: hidden;
+  width: 100%;
   flex-direction: column;
   gap: 25px;
+}
+
+.root :global(.swiper) {
+  width: 100%;
+}
+
+.root :global(.swiper-slide) {
+  height: auto;
 }
 
 .controls {
