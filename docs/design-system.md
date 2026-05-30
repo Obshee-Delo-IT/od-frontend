@@ -31,7 +31,7 @@ Figma defines **five** named color styles. The repo defines a **fuller scale** (
 | Figma style | Hex | Closest repo var | Notes |
 | --- | --- | --- | --- |
 | `1_main_black` | `#151313` | (no exact match — `--gray-10` is `#141c24`) | Used for body text in mocks; in repo, body text falls back to Radix defaults that resolve to the gray scale. Pure-near-black is **not** explicit in the override. |
-| `2_main_red` | `#F4322A` | (no exact match — `--red-5` is `#f55555`, `--red-6` is `#d83030`) | The Figma red is brighter than any repo red step. The brand red in code is **`--red-8` (`#ae0a04`)**, used as the default solid button background via `.rt-BaseButton.rt-variant-solid` and `Theme accentColor="red"`. Drift worth flagging — see open questions. |
+| `2_main_red` | `#F4322A` | (no exact match — `--red-5` is `#f55555`, `--red-6` is `#d83030`) | The Figma token reads brighter than any single repo red step, but a side-by-side visual check confirmed the rendered CTA red matches the design — Radix's solid-button stack composes `--red-8` (`#ae0a04`) with the accent overlay and ends up on the brand red. **Not a real drift**; just verify with Design if a near-pixel-match is ever required. |
 | `3_gray` | `#6C6C6C` | `--gray-6` (`#637083`) | Used for secondary text. Repo uses Radix `<Text color="gray">` which resolves to `--gray-6` via the override (`.rt-Text[data-accent-color='gray']`). |
 | `4_line_gray` | `#BDBDBD` | `--gray-4` (`#ced2da`) | Used for borders/dividers. No direct rule wires it up — borders in the repo lean on Radix defaults. |
 | `white` | `#FFFFFF` | `--white` (`#fff`) | Match. |
@@ -169,9 +169,9 @@ The high-leverage edits are in `theme-override.css`. The rest of the system inhe
 
 ### 4.3 Open questions / known drift
 
-These are real mismatches between Figma and code worth confirming with Design before treating one or the other as correct:
+Mostly small things to flag with Design over time — none are blocking implementation:
 
-- **Brand red.** Figma's `2_main_red` is `#F4322A`. The repo's solid button uses `--red-8` = `#ae0a04` (much darker). Which is canonical?
+- **Brand red.** Figma's `2_main_red` token is `#F4322A` and the repo's solid button composes from `--red-8` (`#ae0a04`); the rendered CTA visually matches the design, so the token-level numbers diverging is **not a real drift**. Note for future designer review only.
 - **Button corner radius.** Figma button frames carry `cornerRadius: 5`. Repo Theme is `radius="full"` (pill). Probably an intentional global decision — confirm.
 - **Inter typography.** The five `H1_Inter_*` / `Body_Inter_*` Figma styles look orphaned. Safe to delete from Figma?
 - **`1_main_black` for body.** Nothing in the override sets a pure-near-black for body text — Radix defaults resolve text to gray-12 (via Radix's own scale). If Design intends `#151313` as the literal body color, we need to wire it up.

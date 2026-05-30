@@ -44,7 +44,7 @@ The redesign is replacing an existing site. Key facts harvested from a live read
 
 Resolve the things that will bite every later workstream.
 
-- [ ] **A1. Reconcile design-system drift with Design** — brand red (`#F4322A` vs `--red-8 #ae0a04`), button `cornerRadius: 5` vs `radius="full"`, role of `1_main_black` and `4_line_gray`, fate of orphan Inter type styles. See [`design-system.md` §4.3](./design-system.md#43-open-questions--known-drift).
+- _Note (not an action task): designer-confirmation list_ — button `cornerRadius: 5` vs `radius="full"`, role of `1_main_black` and `4_line_gray`, fate of orphan Inter type styles. Brand red token mismatch was checked visually and is **not** a real drift; the rendered CTA matches the design. Keep these as questions to raise opportunistically with Design, not blockers. See [`design-system.md` §4.3](./design-system.md#43-open-questions--known-drift).
 - [ ] **A2. Decide hosting / deploy story.** Single VPS via `docker-compose-prod.yaml`? Kubernetes? Vercel? **Foreign hosting is acceptable** — the site only serves public content, so 152-FZ data-localisation doesn't apply at the hosting layer (it applies only to where form submissions land — see B6). This decision affects ISR survival (per-replica vs shared cache), where build runs, secrets management, and the shape of CI/CD.
 - [x] **A3. CI pipeline.** Deploy is wired via the Coolify GitHub app (triggers on push), so CI/CD's deploy half is already solved. `.github/workflows/ci.yml` runs `pnpm lint`, `pnpm type-check`, `pnpm test`, `pnpm build` on `pull_request` (any base) **and** on `push` to `main`. Concurrency cancels in-flight PR runs (latest commit wins) but lets every main-branch commit complete (so each deploy has its own pass/fail). pnpm pinned to 11.3.0 matching the Dockerfile; Node read from `.nvmrc`; JavaScript actions opted into the Node 24 runtime via `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24=true` ahead of the 2026-06-16 default flip. The build runs **without** WP secrets in CI — `httpClient` and `next.config.ts` detect missing/empty `WP_BASE`/`WP_USER`/`WP_PASSWORD` and substitute a stub fetch that returns `[]`, so compilation + RSC boundaries are still validated end-to-end. Real-data builds remain Coolify's job, where the secrets live. The `lint · type-check · test · build` check is wired as a required status check on `main` via a Rulesets entry, so Coolify never auto-deploys a red commit.
 - [ ] **A4. Observability baseline.** Analytics: **Yandex Metrica only** — Google Analytics is excluded under current Russian regulations. Wire Metrica into `app/layout.tsx`, gated behind a 152-FZ-compliant consent banner (see F6). **Error tracking is deferred** for this iteration — rely on Next.js standalone-server stdout/stderr captured by the hosting platform until traffic justifies a dedicated tool. Revisit once the site is live.
@@ -82,7 +82,7 @@ The repo currently consumes `/wp/v2/posts`, `/wp/v2/menus`, `/wp/v2/menu-items`,
 
 Build out the primitives that all subsequent pages will compose. Order roughly matches dependency from [`page-mocks.md` §4.4](./page-mocks.md#44-suggested-build-order).
 
-- [ ] **C1. `Button` wrapper.** Today every site uses Radix `<Button>` inline. Add `src/shared/ui/components/Button/` mapping intent (primary / secondary / link / ghost) → Radix variant + size, encoding the Figma `cornerRadius: 5` once A1 is resolved.
+- [ ] **C1. `Button` wrapper.** Today every site uses Radix `<Button>` inline. Add `src/shared/ui/components/Button/` mapping intent (primary / secondary / link / ghost) → Radix variant + size. Flag the Figma `cornerRadius: 5` vs `radius="full"` question with Design when implementing — not a blocker, just confirm before locking it in.
 - [ ] **C2. `IconButton` wrapper.** Same pattern.
 - [ ] **C3. `PageHeader` (hero) component.** Used on every non-news page; missing today.
 - [ ] **C4. `Pagination`.** Blocks `/news` index and every `Материалы` listing.
@@ -188,7 +188,7 @@ These are real decisions that need a human (Design / PM / org leadership) before
 
 If I had to draw a line through this:
 
-1. **Block 1 (parallelisable)**: A1, A2, A3, A4, B1 (decide remaining CPTs), B8 (start the WP cleanup — mu-plugin for CPTs first) — unblock everyone.
+1. **Block 1 (parallelisable)**: A2, A3, A4, B1 (decide remaining CPTs), B8 (start the WP cleanup — mu-plugin for CPTs first) — unblock everyone. (A1 is downgraded from a decision step to a designer-confirmation note — not on the critical path.)
 2. **Block 2**: B2, B3, B4, C1, C2, C3, **B8 finish** (delete trashed plugins, swap theme) — primitives + reliable data path on a clean WP.
 3. **Block 3**: D1, D2, C4 — ship the most-visible routes.
 4. **Block 4**: D3, D5, D6, C5, C8 — fill in the static-ish sections (D3/D6 unblocked by B8).
