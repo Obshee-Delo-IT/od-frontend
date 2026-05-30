@@ -15,8 +15,8 @@ if (!hasWpConfig) {
 const stubFetch: typeof fetch = async () =>
   new Response('[]', { status: 200, headers: { 'Content-Type': 'application/json' } });
 
-const baseUrl = `${WP_BASE ?? 'http://wp.invalid'}/wp-json`;
-const auth = 'Basic ' + btoa(`${WP_USER ?? ''}:${WP_PASSWORD ?? ''}`);
+const baseUrl = `${WP_BASE || 'http://wp.invalid'}/wp-json`;
+const auth = 'Basic ' + btoa(`${WP_USER || ''}:${WP_PASSWORD || ''}`);
 
 const authMiddleware: Middleware = {
   onRequest: ({ request }) => {
