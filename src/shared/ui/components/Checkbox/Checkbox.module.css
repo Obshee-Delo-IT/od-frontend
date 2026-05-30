@@ -1,0 +1,13 @@
+.row {
+  align-items: flex-start;
+}
+
+.checkbox {
+  cursor: var(--cursor-checkbox);
+}
+
+.label {
+  color: var(--gray-7);
+  cursor: var(--cursor-checkbox);
+  line-height: 20px;
+}
