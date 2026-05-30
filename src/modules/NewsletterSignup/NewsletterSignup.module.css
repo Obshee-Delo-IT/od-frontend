@@ -1,0 +1,53 @@
+.root {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.card {
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  padding: 45px 25px;
+  border-radius: 12px;
+  background: var(--white);
+  gap: 25px;
+
+  @media (--mobile) {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 25px 20px;
+  }
+}
+
+.title {
+  margin: 0;
+  color: var(--red-8);
+}
+
+.form {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+
+  @media (--mobile) {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+
+.fields {
+  display: flex;
+  min-width: 320px;
+  flex: 1;
+  flex-direction: column;
+  gap: 8px;
+
+  @media (--mobile) {
+    min-width: 0;
+  }
+}
+
+.submit {
+  flex-shrink: 0;
+}
