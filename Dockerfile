@@ -3,7 +3,7 @@ ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
 RUN apk update
 RUN apk add --no-cache libc6-compat
-RUN corepack enable pnpm && corepack use pnpm@10.12.1
+RUN corepack enable pnpm && corepack use pnpm@11.3.0
 
 FROM base AS deps
 WORKDIR /app
