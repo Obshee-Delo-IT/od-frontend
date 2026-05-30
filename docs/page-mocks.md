@@ -11,7 +11,7 @@ Last verified against Figma: 2026-05-30 (deep scout via the `figma-mcp-go` MCP o
 The `design` page (id `168:717`) is one of three pages in this Figma file (alongside `👉 UI` and `draft`). Top-level structure as confirmed by the scout:
 
 1. **7 `SECTION` containers**, one per site section (`о нас`, `проекты`, `видео`, `контакты`, `новости`, `Ответы на частые вопросы`, `Материалы`). These are the canonical home for page mocks — anything that ships should live inside a section.
-2. **Top-level home frames** — outside any section: `home` (1440-wide desktop `889:3761`), `home` (900-wide responsive variant `1622:10641`), `home-mob` (`1356:15986`), and `главная` (`3612:11235`, a much larger multi-screen exploration). The home page never made it into its own SECTION; treat these four frames as its canonical mocks.
+2. **Top-level home frames** — outside any section: `home` (1440-wide desktop `3614:91040`), `home` (900-wide responsive variant `1622:10641`), `home-mob` (`1356:15986`), and `главная` (`3612:11235`, a much larger multi-screen exploration). The home page never made it into its own SECTION; treat these four frames as its canonical mocks. The 1440 desktop frame was re-pasted on 2026-05-30 (previous id `889:3761` is still on canvas but parked at x=60811 off the working area — ignore it).
 3. **Loose legacy frames** (~30+) — earlier iterations, exploration scratch, an older component library that predates the `👉 UI` page. Treat as non-canonical.
 
 `SECTION` nodes also contain `Status` instances — green / yellow pills from a Figma tracking template (Inter, white-on-fill — see [`design-system.md` §3.2](./design-system.md#32-components-defined-on-the--ui-page)). These are **workflow annotations, not UI**: ignore them when building.
@@ -30,7 +30,7 @@ Three responsive variants plus a multi-screen exploration — all live as top-le
 
 | Frame | ID | Width × height | Header | Footer | Notes |
 | --- | --- | --- | --- | --- | --- |
-| `home` (desktop) | `889:3761` | 1440 × 5139 | `header-v2` INSTANCE (`1229:5885`) | `footer` INSTANCE (`889:5199`) | **Canonical desktop target.** Consumes design-system components cleanly. |
+| `home` (desktop) | `3614:91040` | 1440 × 5139 | `header-v2` INSTANCE | `footer` INSTANCE | **Canonical desktop target.** Consumes design-system components cleanly. Re-pasted 2026-05-30 (superseded `889:3761`); inner sub-frame numeric IDs all changed too — anchor by Figma frame NAME (`Frame 33799`, `Frame 33808`, etc.), not by ID. |
 | `home` (responsive) | `1622:10641` | 900 × 4803 | inline `900` frame (`1622:12252`), not a component | inline `footer-900` frame (`1622:12335`) | 900-wide breakpoint demo. Header + footer are hand-laid frames here — not yet promoted to the `header-v2 (1200)` / `footer (1200)` components Design has on the `👉 UI` `navigation` frame. |
 | `home-mob` | `1356:15986` | 360 × 9221 | `header-mob` INSTANCE (`1356:15987`) | `footer-mob` INSTANCE (`1356:17651`) | Canonical mobile target. |
 | `главная` (multi-screen flow) | `3612:11235` | 6684 × 11531 | — | — | Exploration board containing earlier card variants, the `Status` workflow component, and bits that didn't ship to the three canonical frames. Reference only. |
@@ -191,7 +191,7 @@ The `design` page has top-level frames outside the 7 sections. Some are canonica
 
 | Frame | ID | Notes |
 | --- | --- | --- |
-| `home` (1440 desktop) | `889:3761` | See §2.1 — canonical desktop home. |
+| `home` (1440 desktop) | `3614:91040` | See §2.1 — canonical desktop home (re-pasted 2026-05-30; old `889:3761` is parked off-canvas). |
 | `home` (900 responsive) | `1622:10641` | See §2.1 — small-desktop. |
 | `home-mob` | `1356:15986` | See §2.1 — mobile. |
 | `главная` (multi-screen) | `3612:11235` | See §2.1 — exploration of home variants and card states. |
@@ -313,7 +313,7 @@ Paste after `?node-id=` in the Figma URL.
 - Материалы — `1227:4302`
 
 **Home (top-level, no SECTION)**
-- `home` 1440 — `889:3761`
+- `home` 1440 — `3614:91040` (re-pasted 2026-05-30; old `889:3761` parked off-canvas)
 - `home` 900 — `1622:10641`
 - `home-mob` — `1356:15986`
 - `главная` (multi-screen exploration) — `3612:11235`
