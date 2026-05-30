@@ -12,7 +12,10 @@
     "prepare": "husky",
     "type-check": "tsc --noEmit",
     "lint:styles": "stylelint \"**/*.css\" --fix --mw 0",
-    "generate:types": "openapi-typescript"
+    "generate:types": "openapi-typescript",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage"
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx}": [
@@ -84,7 +87,6 @@
     "stylelint-order": "7.0.0",
     "typescript": "5.8.3",
     "vite-plugin-svgr": "^5.2.0",
-    "vite-tsconfig-paths": "^6.1.1",
     "vitest": "^4.1.7"
   }
 }
