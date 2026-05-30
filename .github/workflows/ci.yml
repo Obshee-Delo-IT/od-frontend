@@ -32,6 +32,9 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Generate Next route types
+        run: pnpm next typegen
+
       - name: Lint
         run: pnpm lint
 
