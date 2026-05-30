@@ -49,7 +49,7 @@ const HomePage = async () => {
         films={films.map((film) => ({
           id: film.id,
           title: film.title,
-          href: film.link,
+          href: `/news/${film.id}`,
           thumbnailUrl: film.thumbnailUrl,
         }))}
       />

@@ -15,8 +15,11 @@ if (!hasWpConfig) {
 const stubFetch: typeof fetch = async () =>
   new Response('[]', { status: 200, headers: { 'Content-Type': 'application/json' } });
 
-const baseUrl = `${WP_BASE || 'http://wp.invalid'}/wp-json`;
+const wpOrigin = WP_BASE || 'http://wp.invalid';
+const baseUrl = `${wpOrigin}/wp-json`;
 const auth = 'Basic ' + btoa(`${WP_USER || ''}:${WP_PASSWORD || ''}`);
+
+export const wpBaseUrl = wpOrigin;
 
 const authMiddleware: Middleware = {
   onRequest: ({ request }) => {
@@ -38,3 +41,18 @@ client.use(authMiddleware);
 client.use(errorThrowingMiddleware);
 
 export { client };
+
+export const wpFetch = async (path: string, init?: RequestInit): Promise<Response> => {
+  if (!hasWpConfig) {
+    return new Response('[]', { status: 200, headers: { 'Content-Type': 'application/json' } });
+  }
+  const url = path.startsWith('http') ? path : `${baseUrl}${path}`;
+  return fetch(url, {
+    ...init,
+    headers: {
+      Authorization: auth,
+      Accept: 'application/json',
+      ...init?.headers,
+    },
+  });
+};
