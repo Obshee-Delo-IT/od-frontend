@@ -1,0 +1,50 @@
+.root {
+  position: relative;
+  display: flex;
+  overflow: hidden;
+  min-height: 480px;
+  align-items: flex-end;
+  padding: 48px;
+  border-radius: var(--radius-5);
+  background: linear-gradient(135deg, var(--accent-3), var(--accent-5));
+}
+
+.body {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  max-width: 560px;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.title {
+  margin: 0;
+  color: var(--gray-12);
+  font-size: 40px;
+  font-weight: 700;
+  line-height: 1.15;
+}
+
+.subtitle {
+  color: var(--gray-11);
+  font-size: 18px;
+  line-height: 1.5;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+@media (--mobile) {
+  .root {
+    min-height: 360px;
+    padding: 24px;
+  }
+
+  .title {
+    font-size: 28px;
+  }
+}
