@@ -1,10 +1,10 @@
 import { Text } from '@radix-ui/themes';
 import dayjs from 'dayjs';
 import { Metadata } from 'next';
-import { SubscribeToNews } from '@/modules/News';
 import { ImagePreviewClient } from '@/modules/News/ImagePreview';
 import { SimilarNews } from '@/modules/News/SimilarNews';
 import { parsePost } from '@/modules/News/utils';
+import { SubscribeForm } from '@/modules/Subscribe';
 import { cachedFetchNews } from '@/shared/api/fetchNews';
 import { client } from '@/shared/api/httpClient';
 import { Box } from '@/shared/ui/components/Box';
@@ -123,7 +123,7 @@ const Page = async ({ params }: { params: Promise<{ id: string }> }) => {
         <Box as="aside" position="relative" className={css.aside}>
           <Box display="flex" flexDirection="column" position="sticky" top={32} gap={20}>
             <SimilarNews category={category} region={region} />
-            <SubscribeToNews variant="small" />
+            <SubscribeForm variant="small" />
           </Box>
         </Box>
       </Box>

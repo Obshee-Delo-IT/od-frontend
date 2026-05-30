@@ -1,0 +1,23 @@
+.root {
+  align-items: center;
+  text-align: center;
+}
+
+.row {
+  width: 100%;
+  max-width: 480px;
+}
+
+.email {
+  flex: 1;
+}
+
+@media (--mobile) {
+  .row {
+    flex-direction: column;
+  }
+
+  .email {
+    width: 100%;
+  }
+}
