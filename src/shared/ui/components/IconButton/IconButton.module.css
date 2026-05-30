@@ -1,0 +1,13 @@
+.iconButton {
+  width: 32px;
+  height: 32px;
+  cursor: var(--cursor-button);
+}
+
+.radius-curved {
+  border-radius: 8px;
+}
+
+.radius-circle {
+  border-radius: 999px;
+}
