@@ -45,8 +45,7 @@ jobs:
         run: pnpm test
 
       - name: Build
-        env:
-          WP_BASE: ${{ secrets.WP_BASE }}
-          WP_USER: ${{ secrets.WP_USER }}
-          WP_PASSWORD: ${{ secrets.WP_PASSWORD }}
+        # No WP_* env here on purpose — Coolify owns the real deploy
+        # secrets. The httpClient stub kicks in when env is missing so
+        # the build still validates compilation + RSC boundaries.
         run: pnpm build
