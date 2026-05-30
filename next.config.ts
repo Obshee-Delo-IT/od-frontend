@@ -35,7 +35,10 @@ const nextConfig: NextConfig = {
   },
 
   images: {
-    remotePatterns: [new URL('/**', process.env.WP_BASE), new URL('/**', 'https://xn----9sbkcac6brh7h.xn--p1ai')],
+    remotePatterns: [
+      new URL('/**', process.env.WP_BASE || 'https://wp.invalid'),
+      new URL('/**', 'https://xn----9sbkcac6brh7h.xn--p1ai'),
+    ],
   },
   reactCompiler: true,
 };
