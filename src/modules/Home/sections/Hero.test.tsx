@@ -12,10 +12,16 @@ describe('<Hero />', () => {
     expect(screen.getByRole('heading', { level: 1, name: 'Здоровая Россия — общее дело' })).toBeInTheDocument();
   });
 
-  it('renders both hero CTAs', () => {
+  it('renders both hero CTAs as links to their destinations', () => {
     renderInTheme(<Hero />);
 
-    expect(screen.getByRole('button', { name: 'Оказать помощь' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Прими участие' })).toBeInTheDocument();
+    const donate = screen.getByRole('link', { name: 'Оказать помощь' });
+    expect(donate).toHaveAttribute('href', 'https://xn--d1aadek5agm.xn----9sbkcac6brh7h.xn--p1ai/');
+    expect(donate).toHaveAttribute('rel', 'noopener noreferrer');
+
+    expect(screen.getByRole('link', { name: 'Прими участие' })).toHaveAttribute(
+      'href',
+      'https://obshee-delo.ru/get-involved/'
+    );
   });
 });

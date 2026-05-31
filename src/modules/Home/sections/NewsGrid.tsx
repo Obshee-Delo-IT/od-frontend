@@ -1,4 +1,5 @@
 import { Heading } from '@radix-ui/themes';
+import NextLink from 'next/link';
 import { Button } from '@/shared/ui/components/Button';
 import { NewsCard } from '@/shared/ui/components/NewsCard';
 import css from './NewsGrid.module.css';
@@ -36,8 +37,8 @@ export const NewsGrid: React.FC<NewsGridProps> = ({ items }) => (
     </div>
 
     <div className={css.cta}>
-      <Button variant="outline" size="large">
-        Посмотреть все
+      <Button variant="outline" size="large" asChild>
+        <NextLink href="/news">Посмотреть все</NextLink>
       </Button>
     </div>
   </section>

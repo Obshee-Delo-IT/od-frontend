@@ -51,7 +51,8 @@
   }
 }
 
-.actions > button {
+/* `*` not `button`: the CTAs render as <a> (Radix Button asChild). */
+.actions > * {
   @media (--mobile) {
     width: 100%;
   }
@@ -110,8 +111,14 @@
   object-fit: cover;
 }
 
+/* No slot in the desktop/small-desktop mosaic (areas run b–j); shown only
+   in the mobile scroll strip, which lays out every tile. */
 .tile[data-tile='1'] {
-  grid-area: a;
+  display: none;
+
+  @media (--mobile) {
+    display: block;
+  }
 }
 
 .tile[data-tile='2'] {
@@ -140,6 +147,16 @@
 
 .tile[data-tile='8'] {
   grid-area: h;
+
+  /* The small-desktop mosaic drops to 3 columns (areas b–g, i, j) and has no
+     `h` slot — hide tile 8 there so it doesn't leak as a 0-height phantom. */
+  @media (--small-desktop) {
+    display: none;
+  }
+
+  @media (--mobile) {
+    display: block;
+  }
 }
 
 .tile[data-tile='9'] {

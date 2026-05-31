@@ -1,6 +1,7 @@
 'use client';
 
 import { Heading } from '@radix-ui/themes';
+import NextLink from 'next/link';
 import { Button } from '@/shared/ui/components/Button';
 import { Carousel } from '@/shared/ui/components/Carousel';
 import css from './FilmsCarousel.module.css';
@@ -45,8 +46,8 @@ export const FilmsCarousel: React.FC<FilmsCarouselProps> = ({ films }) => (
     />
 
     <div className={css.cta}>
-      <Button variant="outline" size="large">
-        Посмотреть все
+      <Button variant="outline" size="large" asChild>
+        <NextLink href="/video">Посмотреть все</NextLink>
       </Button>
     </div>
   </section>

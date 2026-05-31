@@ -13,12 +13,16 @@ export const Hero: React.FC = () => (
         Здоровая Россия — общее дело
       </Heading>
       <div className={css.actions}>
-        <Button variant="contained" size="large">
-          Оказать помощь
+        <Button variant="contained" size="large" asChild>
+          <a href="https://xn--d1aadek5agm.xn----9sbkcac6brh7h.xn--p1ai/" target="_blank" rel="noopener noreferrer">
+            Оказать помощь
+          </a>
         </Button>
-        <Button variant="outline" size="large">
-          <AddOutlinedIcon size={20} aria-hidden="true" />
-          Прими участие
+        <Button variant="outline" size="large" asChild>
+          <a href="https://obshee-delo.ru/get-involved/" target="_blank" rel="noopener noreferrer">
+            <AddOutlinedIcon size={20} aria-hidden="true" />
+            Прими участие
+          </a>
         </Button>
       </div>
     </div>
