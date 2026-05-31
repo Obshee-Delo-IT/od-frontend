@@ -1,7 +1,7 @@
 'use client';
 
 import clsx from 'clsx';
-import { useId, useRef } from 'react';
+import { useId, useRef, useState } from 'react';
 import { A11y, Navigation, Pagination } from 'swiper/modules';
 import { Swiper, SwiperProps, SwiperSlide } from 'swiper/react';
 import { IconButton } from '@/shared/ui/components/IconButton';
@@ -32,6 +32,11 @@ export const Carousel: React.FC<CarouselProps> = ({
 }) => {
   const swiperRef = useRef<SwiperType | null>(null);
   const paginationId = `carousel-pagination-${useId().replace(/:/g, '')}`;
+  const [navState, setNavState] = useState({ isBeginning: true, isEnd: false, isLocked: false });
+
+  const syncNav = (swiper: SwiperType) => {
+    setNavState({ isBeginning: swiper.isBeginning, isEnd: swiper.isEnd, isLocked: swiper.isLocked });
+  };
 
   return (
     <div aria-roledescription="carousel" aria-label={ariaLabel} className={clsx(css.root, className)}>
@@ -52,7 +57,13 @@ export const Carousel: React.FC<CarouselProps> = ({
         }
         onSwiper={(swiper) => {
           swiperRef.current = swiper;
+          syncNav(swiper);
         }}
+        onSlideChange={syncNav}
+        onResize={syncNav}
+        onBreakpoint={syncNav}
+        onLock={syncNav}
+        onUnlock={syncNav}
         a11y={{ containerRoleDescriptionMessage: 'carousel', itemRoleDescriptionMessage: 'slide' }}
       >
         {items.map((item, idx) => (
@@ -60,12 +71,13 @@ export const Carousel: React.FC<CarouselProps> = ({
         ))}
       </Swiper>
 
-      <div className={css.controls}>
+      <div className={css.controls} data-locked={navState.isLocked || undefined}>
         {showNavigation && (
           <IconButton
             aria-label="Предыдущий слайд"
             radius="circle"
             variant="outline"
+            disabled={navState.isBeginning}
             onClick={() => swiperRef.current?.slidePrev()}
             className={css.navButton}
           >
@@ -78,6 +90,7 @@ export const Carousel: React.FC<CarouselProps> = ({
             aria-label="Следующий слайд"
             radius="circle"
             variant="outline"
+            disabled={navState.isEnd}
             onClick={() => swiperRef.current?.slideNext()}
             className={css.navButton}
           >

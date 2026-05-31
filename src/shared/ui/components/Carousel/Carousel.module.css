@@ -21,6 +21,11 @@
   gap: 24px;
 }
 
+/* all slides fit (single page) — no navigation needed */
+.controls[data-locked] {
+  display: none;
+}
+
 .navButton {
   flex-shrink: 0;
 }
