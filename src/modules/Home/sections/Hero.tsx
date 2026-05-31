@@ -1,7 +1,10 @@
 import { Heading } from '@radix-ui/themes';
+import Image from 'next/image';
 import { Button } from '@/shared/ui/components/Button';
 import { AddOutlinedIcon } from '@/shared/ui/components/Icons';
 import css from './Hero.module.css';
+
+const TILES = Array.from({ length: 10 }, (_, i) => i + 1);
 
 export const Hero: React.FC = () => (
   <section className={css.hero} aria-labelledby="hero-heading">
@@ -20,8 +23,10 @@ export const Hero: React.FC = () => (
       </div>
     </div>
     <div className={css.mosaic} aria-hidden="true">
-      {Array.from({ length: 10 }).map((_, i) => (
-        <div key={i} className={css.tile} data-tile={i + 1} />
+      {TILES.map((n) => (
+        <div key={n} className={css.tile} data-tile={n}>
+          <Image src={`/figma/hero-photos/${n}.png`} alt="" fill sizes="222px" className={css.tileImage} />
+        </div>
       ))}
     </div>
   </section>

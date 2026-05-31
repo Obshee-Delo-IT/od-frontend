@@ -13,6 +13,6 @@ export const NarrowPromo: React.FC = () => (
         Подробнее
       </Button>
     </div>
-    <div className={css.illustration} aria-hidden="true" />
+    <div className={css.decoration} aria-hidden="true" />
   </section>
 );

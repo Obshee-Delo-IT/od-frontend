@@ -2,6 +2,7 @@
   position: relative;
   display: flex;
   overflow: hidden;
+  min-height: 389px;
   align-items: center;
   justify-content: space-between;
   padding: 88px 60px;
@@ -10,10 +11,12 @@
   gap: 32px;
 
   @media (--small-desktop) {
+    min-height: 320px;
     padding: 56px 40px;
   }
 
   @media (--mobile) {
+    min-height: 0;
     padding: 32px 20px;
   }
 }
@@ -45,19 +48,20 @@
   }
 }
 
-.illustration {
+.decoration {
   position: absolute;
   z-index: 0;
+  top: 0;
   right: 0;
   bottom: 0;
-  width: 564px;
-  height: 308px;
-  background: radial-gradient(circle at 70% 50%, rgba(255, 255, 255, 0.18), transparent 60%);
-  opacity: 0.6;
+  width: 56.45%;
+  background-image: url('/figma/promo-decoration.png');
+  background-position: left center;
+  background-repeat: no-repeat;
+  background-size: cover;
   pointer-events: none;
 
   @media (--mobile) {
-    width: 200px;
-    height: 200px;
+    display: none;
   }
 }

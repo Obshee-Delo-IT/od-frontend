@@ -32,9 +32,18 @@
 }
 
 .illustration {
+  display: flex;
+  overflow: hidden;
   height: 200px;
-  border-radius: 8px;
-  background: var(--gray-3);
+  align-items: center;
+  justify-content: center;
+}
+
+.illustration svg {
+  width: auto;
+  max-width: 100%;
+  height: auto;
+  max-height: 100%;
 }
 
 .body {

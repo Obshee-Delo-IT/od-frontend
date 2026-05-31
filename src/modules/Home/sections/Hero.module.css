@@ -69,10 +69,15 @@
 }
 
 .tile {
+  position: relative;
   overflow: hidden;
   border-radius: 12px;
   aspect-ratio: 222 / 163;
   background: var(--gray-3);
+}
+
+.tileImage {
+  object-fit: cover;
 }
 
 .tile[data-tile='1'] {
