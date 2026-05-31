@@ -29,12 +29,50 @@
   display: none;
 
   @media (--mobile) {
+    position: relative;
     display: block;
     width: calc(100% + 40px);
     margin: -32px -20px 0;
     aspect-ratio: 328 / 184;
     background: url('/figma/promo-decoration-mobile.svg') center / cover no-repeat;
   }
+}
+
+.dateDesktop {
+  position: absolute;
+  z-index: 1;
+  right: 50px;
+  bottom: 28px;
+  color: #787171;
+  font-family: var(--font-pt-sans), 'PT Sans', sans-serif;
+  font-size: 20px;
+  font-weight: 400;
+  line-height: 1;
+  pointer-events: none;
+  white-space: nowrap;
+
+  @media (--small-desktop) {
+    right: 40px;
+    bottom: 24px;
+    font-size: 16px;
+  }
+
+  @media (--mobile) {
+    display: none;
+  }
+}
+
+.dateMobile {
+  position: absolute;
+  right: 5%;
+  bottom: 7%;
+  color: #787171;
+  font-family: var(--font-pt-sans), 'PT Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 1;
+  pointer-events: none;
+  white-space: nowrap;
 }
 
 .content {
