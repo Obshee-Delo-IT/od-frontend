@@ -1,20 +1,18 @@
 .hero {
   display: grid;
   align-items: center;
-  padding: 65px 80px;
-  border-radius: 16px;
-  background: var(--red-3);
+  padding: 65px 0;
   gap: 40px;
   grid-template-columns: minmax(0, 552px) minmax(0, 1fr);
 
   @media (--small-desktop) {
-    padding: 48px 40px;
+    padding: 48px 0;
     gap: 32px;
     grid-template-columns: 1fr;
   }
 
   @media (--mobile) {
-    padding: 32px 24px;
+    padding: 24px 0;
   }
 }
 
@@ -74,8 +72,7 @@
   overflow: hidden;
   border-radius: 12px;
   aspect-ratio: 222 / 163;
-  background: var(--white);
-  opacity: 0.85;
+  background: var(--gray-3);
 }
 
 .tile[data-tile='1'] {
