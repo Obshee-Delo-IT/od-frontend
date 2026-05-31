@@ -36,7 +36,7 @@
   }
 
   @media (--mobile) {
-    font-size: 40px;
+    font-size: 48px;
   }
 }
 
@@ -44,6 +44,17 @@
   display: flex;
   flex-wrap: wrap;
   gap: 16px;
+
+  @media (--mobile) {
+    flex-direction: column;
+    flex-wrap: nowrap;
+  }
+}
+
+.actions > button {
+  @media (--mobile) {
+    width: 100%;
+  }
 }
 
 .mosaic {
@@ -64,6 +75,20 @@
   }
 
   @media (--mobile) {
+    display: flex;
+    order: -1;
+    gap: 16px;
+    grid-template-areas: none;
+    grid-template-columns: none;
+    -webkit-overflow-scrolling: touch;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+  }
+}
+
+.mosaic::-webkit-scrollbar {
+  @media (--mobile) {
     display: none;
   }
 }
@@ -74,6 +99,11 @@
   border-radius: 12px;
   aspect-ratio: 222 / 163;
   background: var(--gray-3);
+
+  @media (--mobile) {
+    flex: 0 0 222px;
+    scroll-snap-align: start;
+  }
 }
 
 .tileImage {
