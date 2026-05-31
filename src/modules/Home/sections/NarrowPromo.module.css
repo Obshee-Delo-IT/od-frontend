@@ -7,7 +7,7 @@
   justify-content: flex-start;
   padding: 88px 60px;
   border-radius: 16px;
-  background: #6531ff url('/figma/promo-decoration.png') center / cover no-repeat;
+  background: #6531ff url('/figma/promo-decoration.svg') center / cover no-repeat;
   gap: 32px;
 
   @media (--small-desktop) {
