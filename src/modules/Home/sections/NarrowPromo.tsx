@@ -18,8 +18,10 @@ export const NarrowPromo: React.FC = () => (
         <br />
         проектов
       </h2>
-      <Button variant="white" size="large">
-        Подробнее
+      <Button variant="white" size="large" asChild>
+        <a href="https://od-pro.ru/" target="_blank" rel="noopener noreferrer">
+          Подробнее
+        </a>
       </Button>
     </div>
     <span className={css.dateDesktop}>{PROMO_DATE}</span>

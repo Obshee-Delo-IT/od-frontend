@@ -22,6 +22,7 @@
 }
 
 .card {
+  position: relative;
   display: flex;
   height: 100%;
   flex-direction: column;
@@ -29,6 +30,13 @@
   border-radius: 12px;
   background: var(--white);
   gap: 25px;
+}
+
+/* stretch the "Подробнее" link over the whole card so it's all clickable */
+.card a::after {
+  position: absolute;
+  content: '';
+  inset: 0;
 }
 
 .illustration {

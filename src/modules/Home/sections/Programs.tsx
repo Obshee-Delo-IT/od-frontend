@@ -44,7 +44,13 @@ export const Programs: React.FC<ProgramsProps> = ({ programs }) => (
             </div>
             <div className={css.body}>
               <h3 className={css.title}>{program.title}</h3>
-              <Link href={program.href} color="red" underline="always" size="3">
+              <Link
+                href={program.href}
+                color="red"
+                underline="always"
+                size="3"
+                aria-label={`${program.title} — подробнее`}
+              >
                 Подробнее
               </Link>
             </div>

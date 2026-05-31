@@ -46,7 +46,13 @@ export const Directions: React.FC<DirectionsProps> = ({ directions }) => (
             </div>
             <div className={css.body}>
               <h3 className={css.title}>{direction.title}</h3>
-              <Link href={direction.href} color="red" underline="always" size="3">
+              <Link
+                href={direction.href}
+                color="red"
+                underline="always"
+                size="3"
+                aria-label={`${direction.title} — подробнее`}
+              >
                 Подробнее
               </Link>
             </div>
