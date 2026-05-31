@@ -29,7 +29,16 @@
   padding: 25px;
   border-radius: 12px;
   background: var(--white);
+  cursor: pointer;
   gap: 25px;
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.card:hover {
+  box-shadow: var(--shadow-sm);
+  transform: translateY(-2px);
 }
 
 /* stretch the "Подробнее" link over the whole card so it's all clickable */
