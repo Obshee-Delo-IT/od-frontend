@@ -4,11 +4,13 @@ import { Heading } from '@radix-ui/themes';
 import Direction1 from '@/shared/ui/assets/illustrations/direction-1.svg';
 import Direction2 from '@/shared/ui/assets/illustrations/direction-2.svg';
 import Direction3 from '@/shared/ui/assets/illustrations/direction-3.svg';
+import Direction4 from '@/shared/ui/assets/illustrations/direction-4.svg';
+import Direction5 from '@/shared/ui/assets/illustrations/direction-5.svg';
 import { Carousel } from '@/shared/ui/components/Carousel';
 import { Link } from '@/shared/ui/components/Link';
 import css from './Directions.module.css';
 
-const ILLUSTRATIONS = [Direction1, Direction2, Direction3] as const;
+const ILLUSTRATIONS = [Direction1, Direction2, Direction3, Direction4, Direction5] as const;
 
 export interface DirectionCardData {
   id: string | number;

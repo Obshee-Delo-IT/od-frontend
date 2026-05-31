@@ -30,6 +30,8 @@ const DIRECTIONS: DirectionCardData[] = [
   { id: 1, title: 'Бизнес-клуб', href: '/projects/business-club' },
   { id: 2, title: 'Общее дело ПРО', href: 'https://od-pro.ru' },
   { id: 3, title: 'ОД ИТ', href: '/projects/od-it' },
+  { id: 4, title: 'Наставничество', href: '/projects/mentorship' },
+  { id: 5, title: 'Видеоматериалы', href: '/video' },
 ];
 
 const PROGRAMS: ProgramCardData[] = [
