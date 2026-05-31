@@ -5,9 +5,13 @@ export const NarrowPromo: React.FC = () => (
   <section className={css.banner} aria-labelledby="promo-heading">
     <div className={css.content}>
       <h2 id="promo-heading" className={css.title}>
-        Прими участие в международном
+        Прими участие в
         <br />
-        конкурсе социальных проектов
+        международном
+        <br />
+        конкурсе социальных
+        <br />
+        проектов
       </h2>
       <Button variant="white" size="large">
         Подробнее
