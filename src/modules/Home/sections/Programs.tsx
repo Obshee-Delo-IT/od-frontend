@@ -1,5 +1,3 @@
-'use client';
-
 import { Heading } from '@radix-ui/themes';
 import Program1 from '@/shared/ui/assets/illustrations/program-1.svg';
 import Program2 from '@/shared/ui/assets/illustrations/program-2.svg';

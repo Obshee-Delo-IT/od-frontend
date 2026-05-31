@@ -21,4 +21,10 @@ describe('<NewsletterSignup />', () => {
     await user.click(screen.getByRole('checkbox'));
     expect(submit).toBeEnabled();
   });
+
+  it('gives the email field an accessible name', () => {
+    renderInTheme(<NewsletterSignup />);
+
+    expect(screen.getByRole('textbox', { name: 'Адрес электронной почты' })).toBeInTheDocument();
+  });
 });

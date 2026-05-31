@@ -10,6 +10,12 @@ vi.mock('swiper/react', () => ({
   SwiperSlide: ({ children }: { children?: ReactNode }) => createElement('div', null, children),
 }));
 
+// next/image needs the Next runtime; render a plain <img> passing src/alt through.
+vi.mock('next/image', () => ({
+  default: ({ src, alt, fill: _fill, sizes: _sizes, ...rest }: Record<string, unknown>) =>
+    createElement('img', { src, alt, ...rest }),
+}));
+
 import { FilmsCarousel } from './FilmsCarousel';
 
 const renderInTheme = (ui: React.ReactElement) => render(<Theme accentColor="red">{ui}</Theme>);

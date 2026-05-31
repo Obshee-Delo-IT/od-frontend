@@ -45,6 +45,7 @@ export const NewsletterSignup: React.FC<NewsletterSignupProps> = ({
             type="email"
             color="gray"
             placeholder={placeholder}
+            aria-label={placeholder}
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required

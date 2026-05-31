@@ -1,6 +1,5 @@
-'use client';
-
 import { Heading } from '@radix-ui/themes';
+import Image from 'next/image';
 import NextLink from 'next/link';
 import { Button } from '@/shared/ui/components/Button';
 import { Carousel } from '@/shared/ui/components/Carousel';
@@ -36,8 +35,13 @@ export const FilmsCarousel: React.FC<FilmsCarouselProps> = ({ films }) => (
         <a key={film.id} href={film.href} className={css.filmCard}>
           <div className={css.thumb}>
             {film.thumbnailUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={film.thumbnailUrl} alt="" className={css.thumbImage} />
+              <Image
+                src={film.thumbnailUrl}
+                alt=""
+                fill
+                sizes="(max-width: 900px) 90vw, (max-width: 1280px) 45vw, 397px"
+                className={css.thumbImage}
+              />
             ) : null}
           </div>
           <span className={css.filmTitle}>{film.title}</span>

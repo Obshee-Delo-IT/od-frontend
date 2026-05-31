@@ -1,5 +1,3 @@
-'use client';
-
 import { Heading } from '@radix-ui/themes';
 import Direction1 from '@/shared/ui/assets/illustrations/direction-1.svg';
 import Direction2 from '@/shared/ui/assets/illustrations/direction-2.svg';
