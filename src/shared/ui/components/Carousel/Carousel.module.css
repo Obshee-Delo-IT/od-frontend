@@ -25,10 +25,15 @@
   flex-shrink: 0;
 }
 
+/* swiper-bundle.css styles .swiper-pagination as position:absolute /
+   width:100%; !important keeps the dots inline between the nav buttons */
 .pagination {
+  position: static !important;
   display: flex;
+  width: auto !important;
   align-items: center;
   justify-content: center;
+  margin: 0 !important;
   gap: 12px;
 }
 
@@ -44,4 +49,9 @@
 
 .bulletActive {
   background: var(--red-7);
+}
+
+/* a single page produces one bullet — not worth showing */
+.bullet:only-child {
+  display: none;
 }

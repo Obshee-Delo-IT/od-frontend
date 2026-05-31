@@ -1,7 +1,7 @@
 'use client';
 
 import clsx from 'clsx';
-import { useRef } from 'react';
+import { useId, useRef } from 'react';
 import { A11y, Navigation, Pagination } from 'swiper/modules';
 import { Swiper, SwiperProps, SwiperSlide } from 'swiper/react';
 import { IconButton } from '@/shared/ui/components/IconButton';
@@ -31,6 +31,7 @@ export const Carousel: React.FC<CarouselProps> = ({
   className,
 }) => {
   const swiperRef = useRef<SwiperType | null>(null);
+  const paginationId = `carousel-pagination-${useId().replace(/:/g, '')}`;
 
   return (
     <div aria-roledescription="carousel" aria-label={ariaLabel} className={clsx(css.root, className)}>
@@ -42,7 +43,7 @@ export const Carousel: React.FC<CarouselProps> = ({
         pagination={
           showPagination
             ? {
-                el: `.${css.pagination}`,
+                el: `#${paginationId}`,
                 clickable: true,
                 bulletClass: css.bullet,
                 bulletActiveClass: css.bulletActive,
@@ -71,7 +72,7 @@ export const Carousel: React.FC<CarouselProps> = ({
             <ChevronLeftIcon size={16} />
           </IconButton>
         )}
-        {showPagination && <div className={css.pagination} />}
+        {showPagination && <div id={paginationId} className={css.pagination} />}
         {showNavigation && (
           <IconButton
             aria-label="Следующий слайд"
