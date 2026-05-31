@@ -17,8 +17,23 @@
 
   @media (--mobile) {
     min-height: 0;
+    flex-direction: column;
+    align-items: stretch;
     padding: 32px 20px;
     background-image: none;
+    gap: 24px;
+  }
+}
+
+.mobileDecoration {
+  display: none;
+
+  @media (--mobile) {
+    display: block;
+    width: calc(100% + 40px);
+    margin: -32px -20px 0;
+    aspect-ratio: 328 / 184;
+    background: url('/figma/promo-decoration-mobile.svg') center / cover no-repeat;
   }
 }
 
