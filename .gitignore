@@ -56,6 +56,7 @@ CLAUDE.md
 # local scout / scratch artefacts
 .mcp.json
 /figma-snaps/
+/figma-export/
 /smoke/
 /*.png
 /*.jpeg

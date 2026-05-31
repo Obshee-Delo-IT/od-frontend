@@ -13,6 +13,5 @@ export const NarrowPromo: React.FC = () => (
         Подробнее
       </Button>
     </div>
-    <div className={css.decoration} aria-hidden="true" />
   </section>
 );

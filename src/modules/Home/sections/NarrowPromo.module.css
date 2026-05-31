@@ -4,10 +4,10 @@
   overflow: hidden;
   min-height: 389px;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
   padding: 88px 60px;
   border-radius: 16px;
-  background: #6531ff;
+  background: #6531ff url('/figma/promo-decoration.png') center / cover no-repeat;
   gap: 32px;
 
   @media (--small-desktop) {
@@ -18,6 +18,7 @@
   @media (--mobile) {
     min-height: 0;
     padding: 32px 20px;
+    background-image: none;
   }
 }
 
@@ -27,6 +28,7 @@
   display: flex;
   max-width: 462px;
   flex-direction: column;
+  align-items: flex-start;
   gap: 32px;
 
   @media (--mobile) {
@@ -48,20 +50,3 @@
   }
 }
 
-.decoration {
-  position: absolute;
-  z-index: 0;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  width: 56.45%;
-  background-image: url('/figma/promo-decoration.png');
-  background-position: left center;
-  background-repeat: no-repeat;
-  background-size: cover;
-  pointer-events: none;
-
-  @media (--mobile) {
-    display: none;
-  }
-}
