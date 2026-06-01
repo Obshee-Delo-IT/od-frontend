@@ -28,9 +28,9 @@ describe('<NewsGrid />', () => {
     expect(screen.getByRole('link', { name: /Article 2/ })).toHaveAttribute('href', '/news/2');
   });
 
-  it('links the "Посмотреть все" CTA to the news index', () => {
+  it('links the "Все новости" CTA to the news index', () => {
     renderInTheme(<NewsGrid items={[{ id: 1, title: 'Article 1', href: '/news/1' }]} />);
 
-    expect(screen.getByRole('link', { name: 'Посмотреть все' })).toHaveAttribute('href', '/news');
+    expect(screen.getByRole('link', { name: 'Все новости' })).toHaveAttribute('href', '/news');
   });
 });

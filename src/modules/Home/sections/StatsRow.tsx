@@ -14,17 +14,19 @@ const STATS: Stat[] = [
 ];
 
 export const StatsRow: React.FC = () => (
-  <section className={css.row} aria-label="Статистика организации">
-    {STATS.map((stat) => (
-      <article key={stat.label} className={css.card}>
-        <div className={css.number}>
-          <span className={css.value}>{stat.value}</span>
-          <span className={css.plus} data-accent={stat.accent}>
-            +
-          </span>
-        </div>
-        <p className={css.label}>{stat.label}</p>
-      </article>
-    ))}
+  <section aria-label="Статистика организации">
+    <ul className={css.row}>
+      {STATS.map((stat) => (
+        <li key={stat.label} className={css.card}>
+          <div className={css.number}>
+            <span className={css.value}>{stat.value}</span>
+            <span className={css.plus} data-accent={stat.accent}>
+              +
+            </span>
+          </div>
+          <p className={css.label}>{stat.label}</p>
+        </li>
+      ))}
+    </ul>
   </section>
 );

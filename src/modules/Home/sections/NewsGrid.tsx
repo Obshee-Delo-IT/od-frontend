@@ -38,7 +38,7 @@ export const NewsGrid: React.FC<NewsGridProps> = ({ items }) => (
 
     <div className={css.cta}>
       <Button variant="outline" size="large" asChild>
-        <NextLink href="/news">Посмотреть все</NextLink>
+        <NextLink href="/news">Все новости</NextLink>
       </Button>
     </div>
   </section>

@@ -32,7 +32,7 @@ export const FilmsCarousel: React.FC<FilmsCarouselProps> = ({ films }) => (
         1280: { slidesPerView: 3, spaceBetween: 24 },
       }}
       items={films.map((film) => (
-        <a key={film.id} href={film.href} className={css.filmCard}>
+        <NextLink key={film.id} href={film.href} className={css.filmCard}>
           <div className={css.thumb}>
             {film.thumbnailUrl ? (
               <Image
@@ -45,13 +45,13 @@ export const FilmsCarousel: React.FC<FilmsCarouselProps> = ({ films }) => (
             ) : null}
           </div>
           <span className={css.filmTitle}>{film.title}</span>
-        </a>
+        </NextLink>
       ))}
     />
 
     <div className={css.cta}>
       <Button variant="outline" size="large" asChild>
-        <NextLink href="/video">Посмотреть все</NextLink>
+        <NextLink href="/video">Узнать больше</NextLink>
       </Button>
     </div>
   </section>

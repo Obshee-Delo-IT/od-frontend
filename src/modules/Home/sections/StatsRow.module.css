@@ -1,7 +1,10 @@
 .row {
   display: grid;
+  padding: 0;
+  margin: 0;
   gap: 40px;
   grid-template-columns: repeat(4, minmax(0, 1fr));
+  list-style: none;
 
   @media (--mobile) {
     gap: 16px;
