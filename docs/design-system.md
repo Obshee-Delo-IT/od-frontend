@@ -68,6 +68,10 @@ In `theme-override.css`:
 
 The repo `--red-N` numbers roughly track Figma's `brand/red/N` scale but are not byte-identical. Critically, the visible button red **does** match: both resolve to `#AE0A04` at the Contained-Large state.
 
+#### Un-tokenized colors in shipped code
+
+The home **StatsRow** "+" accents render four hard-coded hexes — `#42C880` (green), `#C383D9` (purple), `#FFC33F` (yellow), `#6692FD` (blue) — that map to **no token**. Only `red`/`gray` (+ `white`/`danger`) are ported to `theme-override.css`; Figma has `Warning` (yellow-ish) and `Success` (green) scales but **no purple or blue scale at all**. Until Design confirms a palette these stay as literals (the one place in the home page that violates the "never hard-code colors" rule below). Tracked in [`questions-for-designer.md`](./questions-for-designer.md) §1.
+
 #### What the old docs got wrong
 
 - The previous version flagged `2_main_red` (`#F4322A`) as Figma's "real" brand red and treated the rendered repo button as drift. Actually: the canonical Button uses `brand/red/8` (`#AE0A04`) directly via Radix's solid variant. `2_main_red` is a separate brighter accent. **Not a drift; just two different reds with overlapping intent.**
