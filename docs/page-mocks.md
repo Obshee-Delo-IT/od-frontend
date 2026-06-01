@@ -48,7 +48,7 @@ All three responsive variants share the same nine-section stack. This is the bui
 | 4 | `Frame 33817` | Narrow quote / promo block with single `Button` | `Button` |
 | 5 | `Frame 33824` (carousel #2) | 3-card link-card carousel — Illustration + `Links` per card; chevron arrows at edges + dot indicator | `Carousel` chrome, `Links` |
 | 6 | `Frame 33825` (carousel #3) | Same pattern as carousel #2, different content set | `Carousel` chrome, `Links` |
-| 7 | `Frame 33833` | 4-card news grid (`Frame 33827/28/29/30`, each with `Frame 170/171/172/173` 90-tall title overlay) + "Все новости" button | `Button`, news card pattern |
+| 7 | `Frame 33833` | News section — **2 rows, not a flat grid**: one **featured** item on top (`Frame 33826` = image left 597×324 + date/title/**excerpt** right) then a row of **4 compact cards** (`Frame 33827/28/29/30`, image 280×216 + date + 2-line title below, in `Frame 170/171/172/173`) + CTA below (frame text is «Посмотреть все»; repo ships «Все новости»). **5 items total.** | `Button`, news card pattern |
 | 8 | `Frame 33837` | Newsletter signup: `Frame 33835` = `Input Field` (email) + `Button` ("Подписаться") + `Checkbox` (consent below) | `Input Field`, `Button`, `Checkbox` |
 | 9 | footer (per breakpoint) | bottom chrome | `footer` / `footer-900` / `footer-mob` |
 
