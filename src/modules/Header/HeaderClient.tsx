@@ -16,6 +16,9 @@ interface HeaderClientProps {
   navItems?: NavItem[];
 }
 
+// Same donation destination as the home Hero CTA.
+const DONATE_URL = 'https://xn--d1aadek5agm.xn----9sbkcac6brh7h.xn--p1ai/';
+
 const HeaderClient = ({ navItems }: HeaderClientProps) => {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -31,7 +34,7 @@ const HeaderClient = ({ navItems }: HeaderClientProps) => {
     <div className={css.header}>
       <Container size="4" className={clsx(css.headerDesktop)}>
         <div className={css.top}>
-          <Nextlink href="/test" className={css.link}>
+          <Nextlink href="/" className={css.link}>
             <Logo size="lg" />
           </Nextlink>
           <div className={css.searchBar}>
@@ -39,7 +42,9 @@ const HeaderClient = ({ navItems }: HeaderClientProps) => {
               <Input color="red" id="headerSearch" placeholder="Поиск по сайту" rightIcon={<SearchIcon />} />
             </div>
             <Button asChild size="4" variant="outline">
-              <Nextlink href="/test">Оказать помощь</Nextlink>
+              <Nextlink href={DONATE_URL} target="_blank" rel="noopener noreferrer">
+                Оказать помощь
+              </Nextlink>
             </Button>
           </div>
         </div>
@@ -49,7 +54,7 @@ const HeaderClient = ({ navItems }: HeaderClientProps) => {
       </Container>
       <Container size="4" className={clsx(css.container)}>
         <div className={css.headerMobile}>
-          <Nextlink href="/test" className={css.link}>
+          <Nextlink href="/" className={css.link}>
             <Logo size="sm" />
           </Nextlink>
           <div className={css.mobileButtons}>
@@ -103,7 +108,9 @@ const HeaderClient = ({ navItems }: HeaderClientProps) => {
             })}
             <div className={css.menuMobile_button}>
               <Button asChild size="3">
-                <Nextlink href="/test">Оказать помощь</Nextlink>
+                <Nextlink href={DONATE_URL} target="_blank" rel="noopener noreferrer">
+                  Оказать помощь
+                </Nextlink>
               </Button>
             </div>
           </div>
