@@ -54,7 +54,9 @@ All three responsive variants share the same nine-section stack. This is the bui
 
 The card frame names (`Frame 33808`, `Frame 33815`, etc.) recur identically across breakpoints — useful as anchors when comparing 1440 ↔ 900 ↔ 360.
 
-**Repo:** ❌ no `app/page.tsx`. The root URL has no handler. Highest-priority gap given that the home is the entry point for every other section.
+> **Directions/Programs card counts — not a frame discrepancy.** The home carousels ship **5 direction cards** and **3 program cards**. The canonical `home` frame visually shows only 3 direction cards because Figma clips whatever overflows the frame width — the extra direction cards sit just outside the frame bounds. **5 directions is correct**; don't "fix" the code down to 3 to match the visible frame.
+
+**Repo:** ✅ shipped (D1, signed off 2026-06-01). Async RSC at `app/page.tsx`, `revalidate=3600`. See [`implementation-plan.md` §D1](./implementation-plan.md) for the build/review history and [`questions-for-designer.md`](./questions-for-designer.md) for open design questions.
 
 ### 2.2 о нас — About (SECTION `1227:4296`, 27 children)
 
