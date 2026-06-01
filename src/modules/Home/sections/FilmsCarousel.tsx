@@ -51,7 +51,7 @@ export const FilmsCarousel: React.FC<FilmsCarouselProps> = ({ films }) => (
 
     <div className={css.cta}>
       <Button variant="outline" size="large" asChild>
-        <NextLink href="/video">Узнать больше</NextLink>
+        <NextLink href="/video">Все фильмы</NextLink>
       </Button>
     </div>
   </section>

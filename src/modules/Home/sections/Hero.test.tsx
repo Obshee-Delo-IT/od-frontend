@@ -19,9 +19,6 @@ describe('<Hero />', () => {
     expect(donate).toHaveAttribute('href', 'https://xn--d1aadek5agm.xn----9sbkcac6brh7h.xn--p1ai/');
     expect(donate).toHaveAttribute('rel', 'noopener noreferrer');
 
-    expect(screen.getByRole('link', { name: 'Прими участие' })).toHaveAttribute(
-      'href',
-      'https://obshee-delo.ru/get-involved/'
-    );
+    expect(screen.getByRole('link', { name: 'Прими участие' })).toHaveAttribute('href', '/get-involved');
   });
 });

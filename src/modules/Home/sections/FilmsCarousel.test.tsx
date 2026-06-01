@@ -50,17 +50,17 @@ describe('<FilmsCarousel />', () => {
     expect(withoutThumb.querySelector('img')).toBeNull();
   });
 
-  it('links the "Узнать больше" CTA to the video index', () => {
+  it('links the "Все фильмы" CTA to the video index', () => {
     renderInTheme(<FilmsCarousel films={FILMS} />);
 
-    expect(screen.getByRole('link', { name: 'Узнать больше' })).toHaveAttribute('href', '/video');
+    expect(screen.getByRole('link', { name: 'Все фильмы' })).toHaveAttribute('href', '/video');
   });
 
   it('still renders heading and CTA when there are no films', () => {
     renderInTheme(<FilmsCarousel films={[]} />);
 
     expect(screen.getByRole('heading', { level: 2, name: 'Наши фильмы, мультфильмы и ролики' })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Узнать больше' })).toHaveAttribute('href', '/video');
+    expect(screen.getByRole('link', { name: 'Все фильмы' })).toHaveAttribute('href', '/video');
     expect(screen.queryByRole('link', { name: 'Спасибо за жизнь' })).not.toBeInTheDocument();
   });
 });

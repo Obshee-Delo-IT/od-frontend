@@ -1,5 +1,6 @@
 import { Heading } from '@radix-ui/themes';
 import Image from 'next/image';
+import NextLink from 'next/link';
 import { Button } from '@/shared/ui/components/Button';
 import { AddOutlinedIcon } from '@/shared/ui/components/Icons';
 import css from './Hero.module.css';
@@ -19,10 +20,10 @@ export const Hero: React.FC = () => (
           </a>
         </Button>
         <Button variant="outline" size="large" asChild>
-          <a href="https://obshee-delo.ru/get-involved/" target="_blank" rel="noopener noreferrer">
+          <NextLink href="/get-involved">
             <AddOutlinedIcon size={20} aria-hidden="true" />
             Прими участие
-          </a>
+          </NextLink>
         </Button>
       </div>
     </div>
