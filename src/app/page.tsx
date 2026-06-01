@@ -41,7 +41,7 @@ const PROGRAMS: ProgramCardData[] = [
 ];
 
 const HomePage = async () => {
-  const [films, news] = await Promise.all([fetchFilms(6), fetchLatestNews(4)]);
+  const [films, news] = await Promise.all([fetchFilms(6), fetchLatestNews(5)]);
 
   return (
     <Box display="flex" flexDirection="column" gap={48} py={48}>
@@ -66,6 +66,7 @@ const HomePage = async () => {
           date: post.date ? dayjs(post.date).format('DD.MM.YYYY') : undefined,
           imageSrc: post.thumbnailUrl,
           imageAlt: post.title,
+          excerpt: post.excerpt ?? undefined,
         }))}
       />
       <NewsletterSignup variant="card" />
