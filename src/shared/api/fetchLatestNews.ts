@@ -1,6 +1,6 @@
 import { extractFirstImage } from './extractFirstImage';
 import { wpBaseUrl, wpFetch } from './httpClient';
-import { toFullSizeImageUrl } from './imageUrl';
+import { resolveMediaUrl } from './mediaUrl';
 import { buildNewsPreview } from './newsPreview';
 
 export interface NewsSummary {
@@ -29,16 +29,18 @@ export const fetchLatestNews = async (limit = 4): Promise<NewsSummary[]> => {
     return [];
   }
   const data = (await res.json()) as RawPost[];
-  return data.map((post, index) => ({
-    id: post.id ?? 0,
-    title: post.title?.rendered ?? '',
-    link: post.link ?? '#',
-    date: post.date ?? null,
-    thumbnailUrl: toFullSizeImageUrl(
-      post._embedded?.['wp:featuredmedia']?.[0]?.source_url ?? extractFirstImage(post.content?.rendered, wpBaseUrl)
-    ),
-    // Only the lead item is shown as the featured card with a text preview;
-    // the rest are compact cards (date + title only), so skip the work.
-    excerpt: index === 0 ? buildNewsPreview(post.excerpt?.rendered, post.content?.rendered) : null,
-  }));
+  return Promise.all(
+    data.map(async (post, index) => ({
+      id: post.id ?? 0,
+      title: post.title?.rendered ?? '',
+      link: post.link ?? '#',
+      date: post.date ?? null,
+      thumbnailUrl: await resolveMediaUrl(
+        post._embedded?.['wp:featuredmedia']?.[0]?.source_url ?? extractFirstImage(post.content?.rendered, wpBaseUrl)
+      ),
+      // Only the lead item is shown as the featured card with a text preview;
+      // the rest are compact cards (date + title only), so skip the work.
+      excerpt: index === 0 ? buildNewsPreview(post.excerpt?.rendered, post.content?.rendered) : null,
+    }))
+  );
 };
