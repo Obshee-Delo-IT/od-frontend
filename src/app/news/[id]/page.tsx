@@ -4,7 +4,7 @@ import { Metadata } from 'next';
 import { SubscribeToNews } from '@/modules/News';
 import { ImagePreviewClient } from '@/modules/News/ImagePreview';
 import { SimilarNews } from '@/modules/News/SimilarNews';
-import { parsePost } from '@/modules/News/utils';
+import { parsePost, resolveContentImages } from '@/modules/News/utils';
 import { cachedFetchNews } from '@/shared/api/fetchNews';
 import { client } from '@/shared/api/httpClient';
 import { Box } from '@/shared/ui/components/Box';
@@ -58,7 +58,7 @@ const Page = async ({ params }: { params: Promise<{ id: string }> }) => {
     { label: data?.title?.rendered ?? '' },
   ];
 
-  const parsed = parsePost(data?.content?.rendered);
+  const parsed = parsePost(await resolveContentImages(data?.content?.rendered));
   const date = dayjs(data?.date).format('DD.MM.YYYY');
 
   return (

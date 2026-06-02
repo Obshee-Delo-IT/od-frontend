@@ -1,16 +1,17 @@
 import { toFullSizeImageUrl } from './imageUrl';
+import { getWpMediaCdn } from './mediaCdn';
 
 const stripTrailingSlash = (value?: string | null): string => (value ? value.replace(/\/+$/, '') : '');
 
 /**
  * Map a WordPress-origin media URL to its CDN (object-storage) equivalent.
- * Returns null when no CDN is configured (`WP_MEDIA_CDN`) or the URL isn't
+ * Returns null when the CDN is disabled (`WP_MEDIA_CDN=""`) or the URL isn't
  * under the WP origin, so callers fall back to the original URL. Pure (no I/O)
  * and reads env per call so it stays testable.
  */
 export const toCdnUrl = (wpUrl: string): string | null => {
   const wpOrigin = stripTrailingSlash(process.env.WP_BASE);
-  const cdnBase = stripTrailingSlash(process.env.WP_MEDIA_CDN);
+  const cdnBase = stripTrailingSlash(getWpMediaCdn());
   if (!cdnBase || !wpOrigin || !wpUrl.startsWith(`${wpOrigin}/`)) {
     return null;
   }

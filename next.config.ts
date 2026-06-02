@@ -1,4 +1,7 @@
+import { getWpMediaCdn } from './src/shared/api/mediaCdn';
 import type { NextConfig } from 'next';
+
+const mediaCdn = getWpMediaCdn();
 
 const nextConfig: NextConfig = {
   output: 'standalone',
@@ -38,8 +41,9 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       new URL('/**', process.env.WP_BASE || 'https://wp.invalid'),
       new URL('/**', 'https://xn----9sbkcac6brh7h.xn--p1ai'),
-      // Media offloaded to object storage (see resolveMediaUrl); optional.
-      ...(process.env.WP_MEDIA_CDN ? [new URL('/**', process.env.WP_MEDIA_CDN)] : []),
+      // Media offloaded to object storage (see resolveMediaUrl). Defaulted in
+      // mediaCdn.ts so the host is always allowlisted; disable with WP_MEDIA_CDN="".
+      ...(mediaCdn ? [new URL('/**', mediaCdn)] : []),
     ],
     // Keep optimized images cached for a day. Re-uploads get a new filename
     // (new URL → new cache key) so this doesn't stale edits; on expiry Next
