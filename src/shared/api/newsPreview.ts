@@ -1,0 +1,57 @@
+const NAMED_ENTITIES: Record<string, string> = {
+  '&nbsp;': ' ',
+  '&amp;': '&',
+  '&lt;': '<',
+  '&gt;': '>',
+  '&quot;': '"',
+  '&apos;': "'",
+  '&laquo;': '«',
+  '&raquo;': '»',
+  '&mdash;': '—',
+  '&ndash;': '–',
+  '&hellip;': '…',
+};
+
+const MAX_PREVIEW = 300;
+
+/**
+ * Reduce a fragment of WordPress-rendered HTML to plain text: drop
+ * `<style>`/`<script>` blocks (WP post content often opens with an inline
+ * style block), strip remaining tags, decode entities, collapse whitespace.
+ */
+export const stripHtml = (html?: string | null): string => {
+  if (!html) {
+    return '';
+  }
+  return html
+    .replace(/<(style|script)\b[^>]*>[\s\S]*?<\/\1>/gi, '')
+    .replace(/<[^>]*>/g, '')
+    .replace(/&#(\d+);/g, (_, code) => String.fromCodePoint(Number(code)))
+    .replace(/&[a-z]+;/gi, (entity) => NAMED_ENTITIES[entity.toLowerCase()] ?? '')
+    .replace(/\s+/g, ' ')
+    .trim();
+};
+
+/**
+ * Build the text preview for a news item: prefer WP's `excerpt.rendered`,
+ * fall back to a truncated `content.rendered` when the excerpt is empty
+ * (common for posts with no manual excerpt). Returns null when neither
+ * yields text.
+ */
+export const buildNewsPreview = (excerptHtml?: string | null, contentHtml?: string | null): string | null => {
+  const excerpt = stripHtml(excerptHtml);
+  if (excerpt) {
+    return excerpt;
+  }
+  const content = stripHtml(contentHtml);
+  if (!content) {
+    return null;
+  }
+  if (content.length <= MAX_PREVIEW) {
+    return content;
+  }
+  return `${content
+    .slice(0, MAX_PREVIEW)
+    .replace(/\s+\S*$/, '')
+    .trimEnd()}…`;
+};
