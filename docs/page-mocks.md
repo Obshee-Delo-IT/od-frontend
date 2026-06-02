@@ -142,7 +142,7 @@ Plus 3 `Status` badges.
 
 **Repo:** ⚠️ partial.
 - ✅ `app/news/[id]/page.tsx` exists — handles the article variants. Currently uses `parsePost` to extract the first carousel/gallery from WP post HTML as a header (see `src/modules/News/utils/parsePost.tsx`). The two "images" and "video" article variants probably both serve from this route depending on WP content.
-- ❌ `app/news/page.tsx` (news index `753:418`) is **not built**. Without it, there's no listing page; users can only reach an article via direct URL or external link.
+- ✅ `app/news/page.tsx` (news index `753:418`) shipped 2026-06-03 — breadcrumbs + `НОВОСТИ` heading + `Все / Наши дела / Статьи` filter chips (`?category=`) + 3-col `NewsCard` grid (15/page) + `Pagination` (`?page=`, real `X-WP-TotalPages`) + `NewsletterSignup`. Data via `fetchNewsList`. See implementation-plan D2 / C4.
 - ❌ The "Скачать фильм" download flow is not built either.
 
 ### 2.7 Ответы на частые вопросы — FAQ (SECTION `1227:4301`, 2 children, ~34 frames deep)
@@ -252,9 +252,9 @@ This is likely the body of a future `/participation` or `/volunteer` route. Plau
 
 | Designed | Built |
 | --- | --- |
-| ~30+ distinct page mocks across 7 sections + home, most with mobile variants | **1 route**: `app/news/[id]/page.tsx` |
+| ~30+ distinct page mocks across 7 sections + home, most with mobile variants | **3 routes**: `app/page.tsx` (home, D1), `app/news/page.tsx` (news index, D2), `app/news/[id]/page.tsx` (article detail) |
 
-The repo is at the very start of build-out — only the news article detail is wired. Everything else in §2 is still a Figma-only proposal.
+The repo is early in build-out — home, the news index, and the news article detail are wired. Everything else in §2 is still a Figma-only proposal.
 
 ### 4.2 Mobile variants
 
@@ -268,23 +268,23 @@ Probably means responsive-only (single design that adapts) for the latter set, b
 
 ### 4.3 Component dependencies
 
-Components missing from the repo that block specific mocks (all spec'd in Figma — see [`design-system.md` §3](./design-system.md#3-component-inventory)):
+Components that block specific mocks (all spec'd in Figma — see [`design-system.md` §3](./design-system.md#3-component-inventory)). ✅ rows shipped with D1 (2026-05-30 … 06-01) or D2 (2026-06-03); the rest are still missing:
 
-| Missing component | Blocks |
-| --- | --- |
-| `Pagination` (Figma `Pagination Web` `1326:2018`) | `news` index, all `Материалы/social-*` listings |
-| `Tabs` (Figma `_Button Groups Base (tabs)` `1321:5108`) | `Материалы` (tabs between material types), participation form (role switcher), `PageHeader`'s own tabs row, project-detail tab strip (`Frame 33787`) |
-| `Dropdown` (Figma `Dropdown Menu` `1324:4234`) | `video-filter` (top-of-page filter) |
-| `Checkbox` (Figma `Checkbox` `1323:257`) | `video-filter`, contact form, participation form, every newsletter signup (home §8 etc.) |
-| Standalone `Carousel` | **Home §3 / §5 / §6** (three carousels), several about/project pages. Figma supplies only the chrome (`_Carousel Button Base` + `_Carousel Page Indicator Base/Small/Dot`); the slider container is up to us (Swiper is already a dep). |
-| `PageHeader` (composition, not a hero) | Every non-news non-index page (project-1/2/3, article, video-page, contact-page, FAQ, all about sub-pages). Composes header-v2 + breadcrumbs + heading + optional tabs row — see [`design-system.md` §3.2](./design-system.md#32-components-defined-on-the--ui-page). |
-| `Button` wrapper | Everywhere — currently Radix `<Button>` inline. Figma matrix: 27 cells (3 Variant × 3 Size × 3 State). |
-| `IconButton` wrapper | Header-mob search/menu, carousel controls. Figma matrix: 12 cells (2 Radius × 2 Variant × 3 State). |
-| Header swap (header-v2 + header-mob) | Live `modules/Header` is on older `header` / `header-scroll`. The new components include a styled search Input — see plan B7. |
-| Footer swap (footer + footer-mob) | Live `modules/Footer` is on older masters. |
-| News Card (extract from home §7 / news index / contacts socials grid) | Home, news index, contacts. Card is `Frame 33827/28/29(/30)` (387×328 desktop) with `Frame 170/171/172(/173)` title overlay — same primitive in three places. |
-| Accordion item with `Add Circle` expand icon | FAQ, contacts index — `Frame 33976/77/78/85-97` use the same expand/collapse pattern. The repo already has a Radix-based `Accordion`; spec just needs aligning. |
-| Newsletter signup block | Home §8, every catalog page (`Frame 33837`). Re-uses `Input Field` + `Button` + `Checkbox` primitives — likely a `<NewsletterSignup>` shared module. |
+| Component | Blocks | Status |
+| --- | --- | --- |
+| `Pagination` (Figma `Pagination Web` `1326:2018`) | `news` index, all `Материалы/social-*` listings | ✅ D2 — `src/shared/ui/components/Pagination/` (40×40/r8; reconcile to 36×36/r6 spec — see plan C4) |
+| `Tabs` (Figma `_Button Groups Base (tabs)` `1321:5108`) | `Материалы` (tabs between material types), participation form (role switcher), `PageHeader`'s own tabs row, project-detail tab strip (`Frame 33787`) | ❌ missing |
+| `Dropdown` (Figma `Dropdown Menu` `1324:4234`) | `video-filter` (top-of-page filter) | ❌ missing |
+| `Checkbox` (Figma `Checkbox` `1323:257`) | `video-filter`, contact form, participation form, every newsletter signup (home §8 etc.) | ✅ D1 — `src/shared/ui/components/Checkbox/` |
+| Standalone `Carousel` | **Home §3 / §5 / §6** (three carousels), several about/project pages. Figma supplies only the chrome (`_Carousel Button Base` + `_Carousel Page Indicator Base/Small/Dot`); the slider container is up to us (Swiper is already a dep). | ✅ D1 — `src/shared/ui/components/Carousel/` |
+| `PageHeader` (composition, not a hero) | Every non-news non-index page (project-1/2/3, article, video-page, contact-page, FAQ, all about sub-pages). Composes header-v2 + breadcrumbs + heading + optional tabs row — see [`design-system.md` §3.2](./design-system.md#32-components-defined-on-the--ui-page). | ❌ missing |
+| `Button` wrapper | Everywhere — currently Radix `<Button>` inline. Figma matrix: 27 cells (3 Variant × 3 Size × 3 State). | ✅ D1 — `src/shared/ui/components/Button/` |
+| `IconButton` wrapper | Header-mob search/menu, carousel controls. Figma matrix: 12 cells (2 Radius × 2 Variant × 3 State). | ✅ D1 — `src/shared/ui/components/IconButton/` |
+| Header swap (header-v2 + header-mob) | Live `modules/Header` is on older `header` / `header-scroll`. The new components include a styled search Input — see plan B7. | ❌ missing |
+| Footer swap (footer + footer-mob) | Live `modules/Footer` is on older masters. | ❌ missing |
+| News Card (extract from home §7 / news index / contacts socials grid) | Home, news index, contacts. Card is `Frame 33827/28/29(/30)` (387×328 desktop) with `Frame 170/171/172(/173)` title overlay — same primitive in three places. | ✅ D1 — `src/shared/ui/components/NewsCard/` (reused by D2) |
+| Accordion item with `Add Circle` expand icon | FAQ, contacts index — `Frame 33976/77/78/85-97` use the same expand/collapse pattern. The repo already has a Radix-based `Accordion`; spec just needs aligning. | ⚠️ `Accordion` exists; needs `Add Circle` variant |
+| Newsletter signup block | Home §8, every catalog page (`Frame 33837`). Re-uses `Input Field` + `Button` + `Checkbox` primitives — likely a `<NewsletterSignup>` shared module. | ✅ D1 — `src/modules/NewsletterSignup/` (reused by D2) |
 
 ### 4.4 Suggested build order
 

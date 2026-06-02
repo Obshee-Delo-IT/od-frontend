@@ -6,4 +6,6 @@ export { fetchFilms } from './fetchFilms';
 export type { FilmSummary } from './fetchFilms';
 export { fetchLatestNews } from './fetchLatestNews';
 export type { NewsSummary } from './fetchLatestNews';
+export { fetchNewsList } from './fetchNewsList';
+export type { NewsListResult, FetchNewsListParams } from './fetchNewsList';
 export { resolveMediaUrl } from './mediaUrl';
