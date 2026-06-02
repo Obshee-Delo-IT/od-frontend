@@ -1,25 +1,29 @@
+/* Surfaceless card: rounded image + text directly on the page background
+   (matches Figma — no white card surface). Lift + shadow-on-media on hover,
+   consistent with the featured news card and the film cards. */
 .card {
   display: flex;
-  overflow: hidden;
   flex-direction: column;
-  border-radius: 12px;
-  background: var(--white);
   color: inherit;
+  gap: 16px;
   text-decoration: none;
-  transition:
-    transform 0.15s ease,
-    box-shadow 0.15s ease;
+  transition: transform 0.15s ease;
 }
 
 .card:hover {
-  box-shadow: var(--shadow-sm);
   transform: translateY(-2px);
 }
 
 .media {
   position: relative;
-  aspect-ratio: 387 / 238;
+  overflow: hidden;
+  border-radius: 12px;
+  aspect-ratio: 280 / 216;
   background: var(--gray-3);
+}
+
+.card:hover .media {
+  box-shadow: var(--shadow-sm);
 }
 
 .image {
@@ -29,7 +33,6 @@
 .body {
   display: flex;
   flex-direction: column;
-  padding: 16px 20px 20px;
   gap: 8px;
 }
 
