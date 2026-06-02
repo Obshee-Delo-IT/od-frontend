@@ -1,25 +1,155 @@
+/* Layered hero: a full-bleed band of photos drifts right-to-left behind the
+   copy and dissolves into the page background under the title (a left-edge
+   mask). Mirrors the Figma, where the photo group overflows the right frame
+   edge and the title sits over a page-bg gradient. */
 .hero {
-  display: grid;
+  position: relative;
+  display: flex;
+  min-height: 537px;
   align-items: center;
-  padding: 65px 0;
-  gap: 40px;
-  grid-template-columns: minmax(0, 552px) minmax(0, 1fr);
+  padding: 40px 0;
+  isolation: isolate;
 
   @media (--small-desktop) {
-    padding: 48px 0;
-    gap: 32px;
-    grid-template-columns: 1fr;
+    min-height: 470px;
+    padding: 32px 0;
   }
 
   @media (--mobile) {
-    padding: 24px 0;
+    min-height: 0;
+    flex-direction: column;
+    align-items: stretch;
+    padding: 0;
+    gap: 32px;
   }
 }
 
-.copy {
+/* Photo band — absolutely positioned behind the copy, bled to the right
+   viewport edge (`right: calc(50% - 50vw)` lands the right edge exactly on the
+   viewport edge, so it never adds a horizontal scrollbar). The mask fades the
+   photos to transparent on the left, where the title reads on the page bg. */
+.photos {
+  position: absolute;
+  z-index: 0;
+  top: 0;
+  right: calc(50% - 50vw);
+  bottom: 0;
+  left: 0;
   display: flex;
+  overflow: hidden;
+  flex-direction: column;
+  justify-content: center;
+  gap: 24px;
+  -webkit-mask-image: linear-gradient(to right, transparent 0, transparent 460px, #000 640px);
+  mask-image: linear-gradient(to right, transparent 0, transparent 460px, #000 640px);
+
+  @media (--small-desktop) {
+    -webkit-mask-image: linear-gradient(to right, transparent 0, transparent 300px, #000 460px);
+    mask-image: linear-gradient(to right, transparent 0, transparent 300px, #000 460px);
+  }
+
+  /* Mobile: a single in-flow strip above the copy. Both edges fade so photos
+     ease in from the right and dissolve on the left as the row scrolls. */
+  @media (--mobile) {
+    position: relative;
+    top: auto;
+    bottom: auto;
+    left: auto;
+    gap: 0;
+    -webkit-mask-image: linear-gradient(to right, transparent 0, #000 24px, #000 calc(100% - 96px), transparent 100%);
+    mask-image: linear-gradient(to right, transparent 0, #000 24px, #000 calc(100% - 96px), transparent 100%);
+  }
+}
+
+.row {
+  overflow: hidden;
+
+  /* Only the first row shows on mobile (single moving line). */
+  @media (--mobile) {
+    &[data-row='1'],
+    &[data-row='2'] {
+      display: none;
+    }
+  }
+}
+
+/* The track holds two copies of the row's tiles; translating it by exactly one
+   copy's width (-50%) wraps seamlessly. Each tile carries its own trailing gap
+   (margin-right) so the wrap-around spacing stays uniform. */
+.track {
+  display: flex;
+  width: max-content;
+  animation: marquee var(--dur, 60s) linear infinite;
+}
+
+.row[data-row='0'] .track {
+  --dur: 64s;
+}
+
+.row[data-row='1'] .track {
+  --dur: 52s;
+}
+
+.row[data-row='2'] .track {
+  --dur: 72s;
+}
+
+@keyframes marquee {
+  from {
+    transform: translateX(0);
+  }
+
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .track {
+    animation: none;
+  }
+}
+
+.tile {
+  position: relative;
+  overflow: hidden;
+  flex: 0 0 222px;
+  border-radius: 12px;
+  margin-right: 24px;
+  aspect-ratio: 222 / 163;
+  background: var(--gray-3);
+
+  @media (--small-desktop) {
+    flex-basis: 200px;
+  }
+
+  @media (--mobile) {
+    flex-basis: 180px;
+    margin-right: 16px;
+  }
+}
+
+.tileImage {
+  object-fit: cover;
+}
+
+.copy {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  max-width: 552px;
   flex-direction: column;
   gap: 40px;
+
+  @media (--small-desktop) {
+    max-width: 460px;
+    gap: 32px;
+  }
+
+  @media (--mobile) {
+    max-width: none;
+    gap: 24px;
+  }
 }
 
 .heading {
@@ -30,6 +160,7 @@
   font-weight: 700;
   letter-spacing: 0.02em;
   line-height: 110%;
+  text-transform: uppercase;
 
   @media (--small-desktop) {
     font-size: 64px;
@@ -56,113 +187,4 @@
   @media (--mobile) {
     width: 100%;
   }
-}
-
-.mosaic {
-  display: grid;
-  gap: 24px;
-  grid-template-areas:
-    '. b c d'
-    'e f g h'
-    '. i j .';
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-
-  @media (--small-desktop) {
-    grid-template-areas:
-      'b c d'
-      'e f g'
-      '. i j';
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-
-  @media (--mobile) {
-    display: flex;
-    order: -1;
-    gap: 16px;
-    grid-template-areas: none;
-    grid-template-columns: none;
-    -webkit-overflow-scrolling: touch;
-    overflow-x: auto;
-    scroll-snap-type: x mandatory;
-    scrollbar-width: none;
-  }
-}
-
-.mosaic::-webkit-scrollbar {
-  @media (--mobile) {
-    display: none;
-  }
-}
-
-.tile {
-  position: relative;
-  overflow: hidden;
-  border-radius: 12px;
-  aspect-ratio: 222 / 163;
-  background: var(--gray-3);
-
-  @media (--mobile) {
-    flex: 0 0 222px;
-    scroll-snap-align: start;
-  }
-}
-
-.tileImage {
-  object-fit: cover;
-}
-
-/* No slot in the desktop/small-desktop mosaic (areas run b–j); shown only
-   in the mobile scroll strip, which lays out every tile. */
-.tile[data-tile='1'] {
-  display: none;
-
-  @media (--mobile) {
-    display: block;
-  }
-}
-
-.tile[data-tile='2'] {
-  grid-area: b;
-}
-
-.tile[data-tile='3'] {
-  grid-area: c;
-}
-
-.tile[data-tile='4'] {
-  grid-area: d;
-}
-
-.tile[data-tile='5'] {
-  grid-area: e;
-}
-
-.tile[data-tile='6'] {
-  grid-area: f;
-}
-
-.tile[data-tile='7'] {
-  grid-area: g;
-}
-
-.tile[data-tile='8'] {
-  grid-area: h;
-
-  /* The small-desktop mosaic drops to 3 columns (areas b–g, i, j) and has no
-     `h` slot — hide tile 8 there so it doesn't leak as a 0-height phantom. */
-  @media (--small-desktop) {
-    display: none;
-  }
-
-  @media (--mobile) {
-    display: block;
-  }
-}
-
-.tile[data-tile='9'] {
-  grid-area: i;
-}
-
-.tile[data-tile='10'] {
-  grid-area: j;
 }

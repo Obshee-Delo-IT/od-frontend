@@ -7,7 +7,14 @@
   box-sizing: border-box;
 }
 
+/* `overflow-x: clip` keeps full-bleed sections (e.g. the hero photo band, which
+   bleeds to the viewport edge with `calc(50% - 50vw)`) from adding an ~8px
+   horizontal scroll equal to the vertical scrollbar width. `clip` (not `hidden`)
+   keeps `overflow-y: visible`, so the viewport never becomes a horizontal scroll
+   container and `position: sticky`/`fixed` descendants stay intact. Both `html`
+   and `body` are set — `html` is the viewport scroller. */
 html,
 body {
   background-color: var(--color-background);
+  overflow-x: clip;
 }

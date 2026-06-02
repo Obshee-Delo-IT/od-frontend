@@ -21,4 +21,12 @@ describe('<Hero />', () => {
 
     expect(screen.getByRole('link', { name: 'Прими участие' })).toHaveAttribute('href', '/get-involved');
   });
+
+  it('keeps the decorative photo band out of the accessibility tree', () => {
+    renderInTheme(<Hero />);
+
+    // The marquee photos are presentational (alt="" + aria-hidden), so they
+    // must expose no accessible image roles.
+    expect(screen.queryAllByRole('img')).toHaveLength(0);
+  });
 });

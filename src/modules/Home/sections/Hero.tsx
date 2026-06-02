@@ -5,10 +5,49 @@ import { Button } from '@/shared/ui/components/Button';
 import { AddOutlinedIcon } from '@/shared/ui/components/Icons';
 import css from './Hero.module.css';
 
-const TILES = Array.from({ length: 10 }, (_, i) => i + 1);
+// Three marquee rows, each with its own distinct set of photos (matching the
+// Figma layout: 3 / 4 / 3 tiles across the top / middle / bottom rows). Each
+// row's set is repeated across the track so the right-to-left scroll loops
+// seamlessly — see TRACK_COPIES and the `-50%` translate in the CSS.
+const ROWS = [
+  [1, 2, 3],
+  [4, 5, 6, 7],
+  [8, 9, 10],
+];
+
+// The track holds 4 copies of the row's set; the animation translates by 50%
+// (two copies), so the second half is an exact duplicate of the first and the
+// wrap is seamless. Four copies also guarantee the track overflows the widest
+// viewport for the shorter (3-photo) rows.
+const TRACK_COPIES = 4;
+
+const PhotoTile: React.FC<{ photo: number }> = ({ photo }) => (
+  <div className={css.tile}>
+    <Image
+      src={`/figma/hero-photos/${photo}.png`}
+      alt=""
+      fill
+      sizes="(max-width: 900px) 180px, (max-width: 1440px) 200px, 222px"
+      className={css.tileImage}
+    />
+  </div>
+);
 
 export const Hero: React.FC = () => (
   <section className={css.hero} aria-labelledby="hero-heading">
+    <div className={css.photos} aria-hidden="true">
+      {ROWS.map((row, rowIndex) => (
+        <div key={rowIndex} className={css.row} data-row={rowIndex}>
+          <div className={css.track}>
+            {Array.from({ length: TRACK_COPIES }, () => row)
+              .flat()
+              .map((photo, i) => (
+                <PhotoTile key={`${rowIndex}-${i}`} photo={photo} />
+              ))}
+          </div>
+        </div>
+      ))}
+    </div>
     <div className={css.copy}>
       <Heading as="h1" id="hero-heading" className={css.heading}>
         Здоровая Россия — общее дело
@@ -26,13 +65,6 @@ export const Hero: React.FC = () => (
           </NextLink>
         </Button>
       </div>
-    </div>
-    <div className={css.mosaic} aria-hidden="true">
-      {TILES.map((n) => (
-        <div key={n} className={css.tile} data-tile={n}>
-          <Image src={`/figma/hero-photos/${n}.png`} alt="" fill sizes="222px" className={css.tileImage} />
-        </div>
-      ))}
     </div>
   </section>
 );
