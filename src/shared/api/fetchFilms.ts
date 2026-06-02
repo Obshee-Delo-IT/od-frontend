@@ -1,5 +1,6 @@
 import { extractFirstImage } from './extractFirstImage';
 import { wpBaseUrl, wpFetch } from './httpClient';
+import { toFullSizeImageUrl } from './imageUrl';
 
 export interface FilmSummary {
   id: number;
@@ -27,7 +28,8 @@ export const fetchFilms = async (limit = 6): Promise<FilmSummary[]> => {
     id: post.id ?? 0,
     title: post.title?.rendered ?? '',
     link: post.link ?? '#',
-    thumbnailUrl:
-      post._embedded?.['wp:featuredmedia']?.[0]?.source_url ?? extractFirstImage(post.content?.rendered, wpBaseUrl),
+    thumbnailUrl: toFullSizeImageUrl(
+      post._embedded?.['wp:featuredmedia']?.[0]?.source_url ?? extractFirstImage(post.content?.rendered, wpBaseUrl)
+    ),
   }));
 };

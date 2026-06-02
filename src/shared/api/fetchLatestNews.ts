@@ -1,5 +1,6 @@
 import { extractFirstImage } from './extractFirstImage';
 import { wpBaseUrl, wpFetch } from './httpClient';
+import { toFullSizeImageUrl } from './imageUrl';
 import { buildNewsPreview } from './newsPreview';
 
 export interface NewsSummary {
@@ -33,8 +34,9 @@ export const fetchLatestNews = async (limit = 4): Promise<NewsSummary[]> => {
     title: post.title?.rendered ?? '',
     link: post.link ?? '#',
     date: post.date ?? null,
-    thumbnailUrl:
-      post._embedded?.['wp:featuredmedia']?.[0]?.source_url ?? extractFirstImage(post.content?.rendered, wpBaseUrl),
+    thumbnailUrl: toFullSizeImageUrl(
+      post._embedded?.['wp:featuredmedia']?.[0]?.source_url ?? extractFirstImage(post.content?.rendered, wpBaseUrl)
+    ),
     // Only the lead item is shown as the featured card with a text preview;
     // the rest are compact cards (date + title only), so skip the work.
     excerpt: index === 0 ? buildNewsPreview(post.excerpt?.rendered, post.content?.rendered) : null,
