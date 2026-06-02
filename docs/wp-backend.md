@@ -249,6 +249,28 @@ The single-news endpoint is `GET /wp/v2/posts/{id}` (already wired — see `cach
 
 **Working assumption pending resolution:** widgets for most one-off blocks (matches the footer pattern, no plugin dependency, no FSE/theme switch needed). Revisit when D1 hero/banner/statistics issues (#33, #34, #36) start, since each can be implemented either way.
 
+### 6.4 Media images — object-storage offload + the resolution pipeline
+
+WordPress uploads on od-dev are **offloaded to a Yandex object-storage bucket** (`https://obshee-delo.website.yandexcloud.net`). The origin keeps the canonical URLs and **301-redirects** offloaded files to the bucket. Consequences the frontend has to handle:
+
+- **The origin is slow and intermittently 500s.** A cold image fetch through the origin redirect is ~1.3s and sometimes fails outright; hitting the bucket directly is ~0.8s and reliable.
+- **Only full-size originals are reliably on the bucket.** WordPress's resized variants (`name-WIDTHxHEIGHT.ext` — `-150x150`, `-300x169`, …) frequently **500 / 404**. The REST API and post-body HTML still reference those variants (in `_embedded` `source_url`, and `content.rendered` `<img src>` / `srcset`), so never use a sized URL as-is.
+- **The bucket 301s missing keys** (to an error page) rather than 404ing — so an existence probe must count only a direct HEAD `200` as "present".
+- **Not every file is offloaded.** Recently published media (e.g. the latest news) can live only on the WP origin until the offload job runs.
+
+The resolution pipeline (all under `src/shared/api/`, applied at fetch/render time so the client only ever receives a good URL):
+
+| Helper | Job |
+| --- | --- |
+| `imageUrl.ts` → `toFullSizeImageUrl` | strip the `-WxH` suffix to the full-size original (leaves `-scaled` alone) |
+| `mediaCdn.ts` → `getWpMediaCdn` / `DEFAULT_WP_MEDIA_CDN` | committed CDN base; `WP_MEDIA_CDN` env overrides it, `""` disables. Also feeds `next.config.ts` `images.remotePatterns` so the host is always allowlisted |
+| `mediaUrl.ts` → `resolveMediaUrl` | full-size **and** CDN-when-the-object-exists (cached HEAD, 200-only), else WP origin. Used by `fetchFilms` / `fetchLatestNews` |
+| `src/modules/News/utils/resolveContentImages.ts` | runs every news-body `<img>` through `resolveMediaUrl` and strips `srcset` / `sizes`; applied in the news route before `parsePost` |
+
+`next/image` then resizes the full-size source and caches the result (`images.minimumCacheTTL` = 1 day; re-uploads get a new filename → new cache key, and expiry is served stale-while-revalidate). Two images stay low-quality for reasons outside the frontend: one source is missing from the bucket entirely, and a featured-news post's only image is a 599×599 original.
+
+If the WP side later makes the origin reliable or returns CDN URLs directly in the API, set `WP_MEDIA_CDN=""` to disable the rewrite.
+
 ---
 
 ## 7. Known gotchas
@@ -259,6 +281,7 @@ The single-news endpoint is `GET /wp/v2/posts/{id}` (already wired — see `cach
 - **The `welfare-ver-1-0-9 /` theme directory has a trailing space in its name.** Tab-complete will trip on it — quote it explicitly.
 - **`debug.log.tar.gz`, `strace.log`, `1bcf68f1e3f797e17efd6e50a618ffcf.txt`, `u0137327_od_rf.sql`** — assorted debug / dump artefacts sit at the docroot of od-dev. Treat as secret-bearing; don't read.
 - **WP-OpenAPI maintenance:** the plugin is one-author and infrequently updated. If a future WP-core change breaks it, options are (a) hand-write types, (b) switch to wp-graphql + a code-gen GraphQL client, (c) fork the plugin.
+- **Media is offloaded to a Yandex bucket; the origin 301s to it, is slow + flaky, and resized image variants (`-WxH`) often 500.** Always resolve images to full-size + CDN via `resolveMediaUrl` / `resolveContentImages` — see §6.4. (This media 301 is the offload plugin, distinct from the clearfy-pro redirect above.)
 
 ---
 
