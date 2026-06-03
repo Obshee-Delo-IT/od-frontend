@@ -181,7 +181,7 @@ A media-asset catalog. Many sub-frames have dozens of children each — these ar
 
 Plus 7 `Status` badges.
 
-**Repo:** ❌ none. This section has the largest design surface and likely the heaviest CMS / media integration. Unbuilt components blocking it: `Pagination`, `Carousel` (standalone), `Tabs` (probably for switching between material types).
+**Repo:** ❌ none. This section has the largest design surface and likely the heaviest CMS / media integration. Component prerequisites are now all built (`Pagination` ✅ C4, `Carousel` ✅ C8, `Tabs` ✅ C5 — for switching between material types); what remains blocking is the asset-hosting story (Workstream E) and the CMS taxonomy.
 
 ---
 
@@ -273,11 +273,11 @@ Components that block specific mocks (all spec'd in Figma — see [`design-syste
 | Component | Blocks | Status |
 | --- | --- | --- |
 | `Pagination` (Figma `Pagination Web` `1326:2018`) | `news` index, all `Материалы/social-*` listings | ✅ D2 — `src/shared/ui/components/Pagination/` (40×40/r8; reconcile to 36×36/r6 spec — see plan C4) |
-| `Tabs` (Figma `_Button Groups Base (tabs)` `1321:5108`) | `Материалы` (tabs between material types), participation form (role switcher), `PageHeader`'s own tabs row, project-detail tab strip (`Frame 33787`) | ❌ missing |
+| `Tabs` (Figma `_Button Groups Base (tabs)` `1321:5108`) | `Материалы` (tabs between material types), participation form (role switcher), `PageHeader`'s own tabs row, project-detail tab strip (`Frame 33787`) | ✅ C5 — `src/shared/ui/components/Tabs/` (link-based, large/small, active=`--red-8`; interactive client variant for the participation form still TODO — see plan C5) |
 | `Dropdown` (Figma `Dropdown Menu` `1324:4234`) | `video-filter` (top-of-page filter) | ❌ missing |
 | `Checkbox` (Figma `Checkbox` `1323:257`) | `video-filter`, contact form, participation form, every newsletter signup (home §8 etc.) | ✅ D1 — `src/shared/ui/components/Checkbox/` |
 | Standalone `Carousel` | **Home §3 / §5 / §6** (three carousels), several about/project pages. Figma supplies only the chrome (`_Carousel Button Base` + `_Carousel Page Indicator Base/Small/Dot`); the slider container is up to us (Swiper is already a dep). | ✅ D1 — `src/shared/ui/components/Carousel/` |
-| `PageHeader` (composition, not a hero) | Every non-news non-index page (project-1/2/3, article, video-page, contact-page, FAQ, all about sub-pages). Composes header-v2 + breadcrumbs + heading + optional tabs row — see [`design-system.md` §3.2](./design-system.md#32-components-defined-on-the--ui-page). | ❌ missing |
+| `PageHeader` (composition, not a hero) | Every non-news non-index page (project-1/2/3, article, video-page, contact-page, FAQ, all about sub-pages). Composes header-v2 + breadcrumbs + heading + optional tabs row — see [`design-system.md` §3.2](./design-system.md#32-components-defined-on-the--ui-page). | ✅ C3 — `src/shared/ui/components/PageHeader/` (breadcrumbs + red uppercase H1 + optional `tabs` slot; header-v2 is the global layout Header, not re-rendered; `/news` refactored onto it) |
 | `Button` wrapper | Everywhere — currently Radix `<Button>` inline. Figma matrix: 27 cells (3 Variant × 3 Size × 3 State). | ✅ D1 — `src/shared/ui/components/Button/` |
 | `IconButton` wrapper | Header-mob search/menu, carousel controls. Figma matrix: 12 cells (2 Radius × 2 Variant × 3 State). | ✅ D1 — `src/shared/ui/components/IconButton/` |
 | Header swap (header-v2 + header-mob) | Live `modules/Header` is on older `header` / `header-scroll`. The new components include a styled search Input — see plan B7. | ❌ missing |

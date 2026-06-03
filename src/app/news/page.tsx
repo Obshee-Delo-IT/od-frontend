@@ -1,12 +1,11 @@
-import { Heading } from '@radix-ui/themes';
 import dayjs from 'dayjs';
 import 'dayjs/locale/ru';
 import { NewsFilter, type NewsFilterOption } from '@/modules/News';
 import { NewsletterSignup } from '@/modules/NewsletterSignup';
 import { fetchNewsList } from '@/shared/api';
 import { Box } from '@/shared/ui/components/Box';
-import { Breadcrumbs } from '@/shared/ui/components/Breadcrumbs';
 import { NewsCard } from '@/shared/ui/components/NewsCard';
+import { PageHeader } from '@/shared/ui/components/PageHeader';
 import { Pagination } from '@/shared/ui/components/Pagination';
 import css from './NewsListPage.module.css';
 import type { Metadata } from 'next';
@@ -73,11 +72,7 @@ const Page = async ({ searchParams }: NewsPageProps) => {
 
   return (
     <Box display="flex" flexDirection="column" gap={40} py={48}>
-      <Breadcrumbs items={breadcrumbItems} />
-
-      <Heading as="h1" className={css.heading}>
-        Новости
-      </Heading>
+      <PageHeader title="Новости" breadcrumbs={breadcrumbItems} />
 
       <NewsFilter
         options={FILTER_OPTIONS}

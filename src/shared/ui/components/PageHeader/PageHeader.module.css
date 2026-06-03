@@ -1,0 +1,20 @@
+.root {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* Figma text/9/bold — PT Sans Narrow Bold 48, brand red, uppercase. */
+.title {
+  margin: 0;
+  color: var(--red-8);
+  font-family: var(--font-pt-sans-narrow), 'PT Sans Narrow', sans-serif;
+  font-size: 48px;
+  font-weight: 700;
+  line-height: 120%;
+  text-transform: uppercase;
+
+  @media (--mobile) {
+    font-size: 32px;
+  }
+}
