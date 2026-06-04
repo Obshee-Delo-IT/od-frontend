@@ -1,0 +1,23 @@
+.root {
+  width: 100%;
+}
+
+/* Desktop: the «Подобрать фильм по теме» dropdown, capped to a sensible width. */
+.desktop {
+  max-width: 360px;
+}
+
+.mobile {
+  display: none;
+}
+
+@media (--mobile) {
+  .desktop {
+    display: none;
+  }
+
+  .mobile {
+    display: block;
+    overflow-x: auto;
+  }
+}

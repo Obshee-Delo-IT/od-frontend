@@ -16,3 +16,4 @@ export { CrossCircleFilledIcon } from './CrossCircleFilledIcon';
 export { VkIcon } from './VkIcon';
 export { OdnoklassnikiIcon } from './OdnoklassnikiIcon';
 export { YoutubeIcon } from './YoutubeIcon';
+export { RutubeIcon } from './RutubeIcon';

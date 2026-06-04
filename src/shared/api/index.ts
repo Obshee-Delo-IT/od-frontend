@@ -8,4 +8,12 @@ export { fetchLatestNews } from './fetchLatestNews';
 export type { NewsSummary } from './fetchLatestNews';
 export { fetchNewsList } from './fetchNewsList';
 export type { NewsListResult, FetchNewsListParams } from './fetchNewsList';
+export { fetchVideoList } from './fetchVideoList';
+export type {
+  VideoListResult,
+  FetchVideoListParams,
+  VideoSummary,
+  VideoDownload,
+  VideoShareLinks,
+} from './fetchVideoList';
 export { resolveMediaUrl } from './mediaUrl';
