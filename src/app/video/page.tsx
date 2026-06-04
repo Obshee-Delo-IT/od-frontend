@@ -1,5 +1,3 @@
-import dayjs from 'dayjs';
-import 'dayjs/locale/ru';
 import { NewsletterSignup } from '@/modules/NewsletterSignup';
 import { VideoCard, VideoFilter, type VideoFilterOption } from '@/modules/Video';
 import { fetchVideoList } from '@/shared/api';
@@ -10,8 +8,6 @@ import css from './VideoPage.module.css';
 import type { Metadata } from 'next';
 
 export const revalidate = 3600;
-
-dayjs.locale('ru');
 
 const PER_PAGE = 10;
 
@@ -90,11 +86,11 @@ const Page = async ({ searchParams }: VideoPageProps) => {
             <VideoCard
               key={film.id}
               title={film.title}
-              date={film.date ? dayjs(film.date).format('DD.MM.YYYY') : undefined}
+              href={film.link}
               imageSrc={film.thumbnailUrl}
               imageAlt={film.title}
-              excerpt={film.excerpt}
-              watchUrl={film.watchUrl}
+              description={film.excerpt}
+              trailerUrl={film.trailerUrl}
               downloadFull={film.downloadFull}
               downloadShort={film.downloadShort}
               share={film.share}

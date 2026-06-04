@@ -1,13 +1,7 @@
 .list {
   display: flex;
   flex-direction: column;
-  gap: 32px;
-}
-
-/* Drop the trailing divider so the list doesn't end on a hairline. */
-.list > :last-child {
-  padding-bottom: 0;
-  border-bottom: none;
+  gap: 24px;
 }
 
 .empty {

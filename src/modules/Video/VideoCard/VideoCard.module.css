@@ -1,128 +1,40 @@
-/* Horizontal film card: poster · body · share column. Surfaceless, separated
-   by a hairline divider (the list renders a stack of these). */
+/* Figma `Frame 21`: white surface card, r12, three columns
+   (poster + share · title/description/actions · downloads). */
 .card {
   display: flex;
   align-items: flex-start;
-  padding-bottom: 32px;
-  border-bottom: 1px solid var(--gray-4);
-  gap: 24px;
-}
-
-.posterLink {
-  flex: 0 0 auto;
-  text-decoration: none;
-}
-
-.media {
-  position: relative;
-  overflow: hidden;
-  width: 320px;
+  padding: 24px 24px 32px;
   border-radius: 12px;
-  aspect-ratio: 320 / 200;
-  background: var(--gray-3);
+  background-color: var(--white);
+  box-shadow: var(--shadow-sm);
+  gap: 40px;
 }
 
-.posterLink:hover .media {
-  box-shadow: var(--shadow-sm);
+/* ── Left column: poster + share row ─────────────────────────── */
+.left {
+  display: flex;
+  flex: 0 0 368px;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.poster {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  width: 100%;
+  border-radius: 8px;
+  aspect-ratio: 368 / 207;
+  background-color: var(--gray-3);
 }
 
 .image {
   object-fit: cover;
 }
 
-.body {
-  display: flex;
-  min-width: 0;
-  flex: 1 1 auto;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.heading {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.date {
-  color: var(--gray-6);
-  line-height: 140%;
-}
-
-.title {
-  margin: 0;
-  color: var(--gray-9);
-  line-height: 130%;
-}
-
-.excerpt {
-  margin: 0;
-  color: var(--gray-8);
-  line-height: 140%;
-}
-
-/* Download block — bold label + one or two outline link-buttons. */
-.downloads {
-  display: flex;
-  flex-direction: column;
-  margin-top: auto;
-  gap: 12px;
-}
-
-.downloadsLabel {
-  color: var(--gray-9);
-  font-size: 16px;
-  line-height: 140%;
-}
-
-.downloadButtons {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-}
-
-.downloadButton {
-  display: inline-flex;
-  align-items: center;
-  padding: 10px 16px;
-  border-radius: 8px;
-  background-color: var(--white);
-  box-shadow: inset 0 0 0 1px var(--gray-4);
-  color: var(--gray-9);
-  gap: 10px;
-  text-decoration: none;
-  transition: background-color 0.15s ease;
-}
-
-.downloadButton:hover {
-  background-color: var(--red-1);
-}
-
-.downloadButton svg {
-  flex: 0 0 auto;
-  color: var(--red-8);
-}
-
-.downloadText {
-  display: flex;
-  flex-direction: column;
-  line-height: 130%;
-}
-
-.downloadTitle {
-  font-weight: 700;
-}
-
-.downloadMeta {
-  color: var(--gray-7);
-  font-size: 14px;
-}
-
-/* Share column — VK / YouTube / Rutube, icon tile + label. */
 .share {
   display: flex;
-  flex: 0 0 auto;
-  gap: 16px;
+  gap: 15px;
 }
 
 .shareItem {
@@ -156,17 +68,90 @@
   text-align: center;
 }
 
+/* ── Centre column: title · description · actions ────────────── */
+.main {
+  display: flex;
+  min-width: 0;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.title {
+  margin: 0;
+  color: var(--gray-9);
+  font-family: var(--font-pt-sans);
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 130%;
+}
+
+.description {
+  display: -webkit-box;
+  overflow: hidden;
+  margin: 0;
+  -webkit-box-orient: vertical;
+  color: var(--gray-7);
+  font-size: 18px;
+  -webkit-line-clamp: 5;
+  line-height: 140%;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  margin-top: auto;
+  gap: 12px;
+}
+
+/* ── Right column: download pills ────────────────────────────── */
+.downloads {
+  display: flex;
+  flex: 0 0 218px;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.downloadsLabel {
+  color: var(--gray-9);
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 140%;
+}
+
+/* Pill buttons — full-radius outline (reuses the outline Button tokens). */
+.pill {
+  border-radius: 9999px;
+  gap: 8px;
+}
+
+.downloadPill {
+  width: 100%;
+  height: auto;
+  min-height: 32px;
+  justify-content: space-between;
+  padding: 6px 16px;
+}
+
+.downloadText {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 @media (--mobile) {
   .card {
     flex-direction: column;
-    gap: 16px;
+    gap: 20px;
   }
 
-  .media {
+  .left,
+  .downloads {
     width: 100%;
+    flex-basis: auto;
   }
 
-  .share {
-    align-self: flex-start;
+  .poster {
+    max-width: 368px;
   }
 }

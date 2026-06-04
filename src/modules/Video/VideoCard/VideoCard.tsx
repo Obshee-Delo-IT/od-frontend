@@ -2,18 +2,26 @@ import { Heading, Text } from '@radix-ui/themes';
 import clsx from 'clsx';
 import Image from 'next/image';
 import NextLink from 'next/link';
-import { DownloadIcon, RutubeIcon, VkIcon, YoutubeIcon } from '@/shared/ui/components/Icons';
+import { Button } from '@/shared/ui/components/Button';
+import {
+  ArrowRightIcon,
+  CirclePlayIcon,
+  DownloadIcon,
+  RutubeIcon,
+  VkIcon,
+  YoutubeIcon,
+} from '@/shared/ui/components/Icons';
 import css from './VideoCard.module.css';
 import type { VideoDownload, VideoShareLinks } from '@/shared/api';
 
 export interface VideoCardProps {
   title: string;
-  date?: string;
+  /** Detail/permalink — wraps the poster and the «О фильме» button. */
+  href: string;
   imageSrc?: string | null;
   imageAlt?: string;
-  excerpt?: string | null;
-  /** «Смотреть онлайн» destination — wraps the poster when present. */
-  watchUrl?: string | null;
+  description?: string | null;
+  trailerUrl?: string | null;
   downloadFull?: VideoDownload | null;
   downloadShort?: VideoDownload | null;
   share?: VideoShareLinks;
@@ -26,109 +34,110 @@ const SHARE_PLATFORMS = [
   { key: 'rutube', label: 'Rutube', Icon: RutubeIcon },
 ] as const;
 
-const formatMeta = ({ duration, size }: VideoDownload): string | null =>
-  [duration, size].filter(Boolean).join(' · ') || null;
+/** «Полн. версия • 54 мин» — quality prefix plus the free-text duration when set. */
+const downloadLabel = (prefix: string, { duration }: VideoDownload): string =>
+  duration ? `${prefix} • ${duration}` : prefix;
 
 /**
- * Horizontal film card for the `/video` catalogue: poster, title/excerpt, the
- * two optional download cuts (full / short) and a social-share row. Every
- * affordance renders only when its underlying field is non-empty — most films
- * currently expose just a full-version download.
+ * Horizontal film card for the `/video` catalogue (Figma `Frame 21`): a white
+ * surface holding the poster + social-share row (left), the title/description
+ * and «О фильме» / «Трейлер» actions (centre), and the download pills (right).
+ * Trailer, downloads and share links render only when their field is set — most
+ * films currently expose just a full-version download.
  */
 export const VideoCard: React.FC<VideoCardProps> = ({
   title,
-  date,
+  href,
   imageSrc,
   imageAlt = '',
-  excerpt,
-  watchUrl,
+  description,
+  trailerUrl,
   downloadFull,
   downloadShort,
   share,
   className,
 }) => {
-  const downloads = [downloadFull, downloadShort].filter((d): d is VideoDownload => Boolean(d));
+  const downloads = [
+    downloadFull && { prefix: 'Полн. версия', download: downloadFull },
+    downloadShort && { prefix: 'Сокр. версия', download: downloadShort },
+  ].filter((d): d is { prefix: string; download: VideoDownload } => Boolean(d));
   const shareLinks = SHARE_PLATFORMS.map((p) => ({ ...p, href: share?.[p.key] ?? null })).filter((p) => p.href);
-
-  const poster = (
-    <div className={css.media}>
-      {imageSrc ? (
-        <Image src={imageSrc} alt={imageAlt} fill className={css.image} sizes="(max-width: 900px) 100vw, 320px" />
-      ) : null}
-    </div>
-  );
 
   return (
     <article className={clsx(css.card, className)}>
-      {watchUrl ? (
-        <NextLink href={watchUrl} className={css.posterLink} aria-label={`Смотреть «${title}»`}>
-          {poster}
+      <div className={css.left}>
+        <NextLink href={href} className={css.poster} aria-label={title}>
+          {imageSrc ? (
+            <Image src={imageSrc} alt={imageAlt} fill className={css.image} sizes="(max-width: 900px) 100vw, 368px" />
+          ) : null}
         </NextLink>
-      ) : (
-        poster
-      )}
 
-      <div className={css.body}>
-        <div className={css.heading}>
-          {date ? (
-            <Text as="div" size="2" color="gray" className={css.date}>
-              {date}
-            </Text>
-          ) : null}
-          <Heading as="h3" size="5" weight="bold" className={css.title}>
-            {title}
-          </Heading>
-          {excerpt ? (
-            <Text as="p" size="3" className={css.excerpt}>
-              {excerpt}
-            </Text>
-          ) : null}
-        </div>
-
-        {downloads.length > 0 ? (
-          <div className={css.downloads}>
-            <Text as="div" weight="bold" className={css.downloadsLabel}>
-              Скачать фильм бесплатно
-            </Text>
-            <div className={css.downloadButtons}>
-              {downloads.map((download, index) => {
-                const meta = formatMeta(download);
-                return (
-                  <NextLink
-                    key={download.url}
-                    href={download.url}
-                    className={css.downloadButton}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    <DownloadIcon size={20} />
-                    <span className={css.downloadText}>
-                      <span className={css.downloadTitle}>{index === 0 ? 'Полная версия' : 'Короткая версия'}</span>
-                      {meta ? <span className={css.downloadMeta}>{meta}</span> : null}
-                    </span>
-                  </NextLink>
-                );
-              })}
-            </div>
+        {shareLinks.length > 0 ? (
+          <div className={css.share}>
+            {shareLinks.map(({ key, label, Icon, href: shareHref }) => (
+              <NextLink
+                key={key}
+                href={shareHref as string}
+                className={css.shareItem}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <span className={css.shareTile}>
+                  <Icon size={28} />
+                </span>
+                <span className={css.shareLabel}>{label}</span>
+              </NextLink>
+            ))}
           </div>
         ) : null}
       </div>
 
-      {shareLinks.length > 0 ? (
-        <div className={css.share}>
-          {shareLinks.map(({ key, label, Icon, href }) => (
-            <NextLink
-              key={key}
-              href={href as string}
-              className={css.shareItem}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <span className={css.shareTile}>
-                <Icon size={28} />
-              </span>
-              <span className={css.shareLabel}>{label}</span>
+      <div className={css.main}>
+        <Heading as="h3" className={css.title}>
+          {title}
+        </Heading>
+        {description ? (
+          <Text as="p" className={css.description}>
+            {description}
+          </Text>
+        ) : null}
+
+        <div className={css.actions}>
+          <Button variant="outline" size="small" asChild className={css.pill}>
+            <NextLink href={href}>
+              О фильме
+              <ArrowRightIcon size={20} aria-hidden="true" />
             </NextLink>
+          </Button>
+          {trailerUrl ? (
+            <Button variant="outline" size="small" asChild className={css.pill}>
+              <NextLink href={trailerUrl} target="_blank" rel="noopener noreferrer">
+                Трейлер
+                <CirclePlayIcon size={20} aria-hidden="true" />
+              </NextLink>
+            </Button>
+          ) : null}
+        </div>
+      </div>
+
+      {downloads.length > 0 ? (
+        <div className={css.downloads}>
+          <Text as="div" className={css.downloadsLabel}>
+            Скачать фильм бесплатно
+          </Text>
+          {downloads.map(({ prefix, download }) => (
+            <Button
+              key={download.url}
+              variant="outline"
+              size="small"
+              asChild
+              className={clsx(css.pill, css.downloadPill)}
+            >
+              <NextLink href={download.url} target="_blank" rel="noopener noreferrer">
+                <span className={css.downloadText}>{downloadLabel(prefix, download)}</span>
+                <DownloadIcon size={20} aria-hidden="true" />
+              </NextLink>
+            </Button>
           ))}
         </div>
       ) : null}
