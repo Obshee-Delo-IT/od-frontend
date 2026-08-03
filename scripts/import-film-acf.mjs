@@ -20,6 +20,36 @@ import { ACF_FIELDS, readEnv, wpFetch } from './lib/wp.mjs';
 
 const CLEAR_TOKEN = '-';
 
+/**
+ * od-dev is slow and intermittently answers with a 503 HTML error page, which
+ * would otherwise blow up `res.json()` mid-run. Retry, and hand back an error
+ * instead of throwing so one bad post can't abort the other 98.
+ */
+const requestJson = async (env, path, init, attempts = 3) => {
+  let lastError = 'unknown error';
+  for (let attempt = 1; attempt <= attempts; attempt += 1) {
+    try {
+      const res = await wpFetch(env, path, init);
+      const body = await res.text();
+      if (!res.ok) {
+        lastError = `HTTP ${res.status}: ${body.slice(0, 120).replace(/\s+/g, ' ')}`;
+      } else {
+        try {
+          return { data: JSON.parse(body) };
+        } catch {
+          lastError = `non-JSON response: ${body.slice(0, 120).replace(/\s+/g, ' ')}`;
+        }
+      }
+    } catch (error) {
+      lastError = error.message;
+    }
+    if (attempt < attempts) {
+      await new Promise((resolve) => setTimeout(resolve, 500 * attempt));
+    }
+  }
+  return { error: lastError };
+};
+
 const parseArgs = (argv) => {
   const args = { in: '.scratch/film-worksheet.csv', delimiter: ',', apply: false, only: null };
   for (let i = 0; i < argv.length; i += 1) {
@@ -59,13 +89,13 @@ const main = async () => {
   for (const row of targets) {
     const id = row.id.trim();
 
-    const res = await wpFetch(env, `/wp/v2/posts/${id}?_fields=id,title,acf`);
-    if (!res.ok) {
-      console.log(`✗ ${id} — could not read post (${res.status})`);
+    const read = await requestJson(env, `/wp/v2/posts/${id}?_fields=id,title,acf`);
+    if (read.error) {
+      console.log(`✗ ${id} — could not read post (${read.error})`);
       failed += 1;
       continue;
     }
-    const post = await res.json();
+    const post = read.data;
     const live = post.acf ?? {};
 
     const patch = {};
@@ -96,15 +126,20 @@ const main = async () => {
       continue;
     }
 
-    const write = await wpFetch(env, `/wp/v2/posts/${id}`, { method: 'POST', body: JSON.stringify({ acf: patch }) });
-    if (!write.ok) {
-      console.log(`  ✗ write failed (${write.status}): ${(await write.text()).slice(0, 200)}`);
+    // A write is not safe to retry blindly, but ACF writes are idempotent —
+    // the same patch applied twice lands the same values.
+    const write = await requestJson(env, `/wp/v2/posts/${id}`, {
+      method: 'POST',
+      body: JSON.stringify({ acf: patch }),
+    });
+    if (write.error) {
+      console.log(`  ✗ write failed (${write.error})`);
       failed += 1;
       continue;
     }
 
     // ACF silently drops values for fields it doesn't recognise, so confirm.
-    const saved = (await write.json()).acf ?? {};
+    const saved = write.data.acf ?? {};
     const rejected = Object.keys(patch).filter((field) => String(saved[field] ?? '').trim() !== patch[field]);
     if (rejected.length > 0) {
       console.log(`  ✗ not persisted: ${rejected.join(', ')}`);
