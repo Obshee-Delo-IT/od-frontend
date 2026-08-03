@@ -19,7 +19,8 @@
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "film:export": "node --env-file=.env scripts/export-film-worksheet.mjs",
-    "film:import": "node --env-file=.env scripts/import-film-acf.mjs"
+    "film:import": "node --env-file=.env scripts/import-film-acf.mjs",
+    "film:covers": "node --env-file=.env scripts/upload-film-covers.mjs"
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx}": [

@@ -79,8 +79,19 @@ const main = async () => {
     throw new Error(`No rows found in ${args.in} — wrong --delimiter?`);
   }
 
-  const targets = records.filter((row) => /^\d+$/.test(row.id?.trim() ?? '') && (!args.only || args.only.has(row.id.trim())));
-  console.log(`${args.apply ? 'APPLY' : 'DRY RUN'} — ${targets.length} rows from ${args.in}\n`);
+  const hasId = (row) => /^\d+$/.test(row.id?.trim() ?? '');
+  const targets = records.filter((row) => hasId(row) && (!args.only || args.only.has(row.id.trim())));
+  console.log(`${args.apply ? 'APPLY' : 'DRY RUN'} — ${targets.length} rows from ${args.in}`);
+
+  // Rows carrying data but no post id (e.g. films that only exist on prod) are
+  // skipped rather than silently dropped — they're the reason to re-run this
+  // sheet on another environment.
+  const withoutId = records.filter((row) => !hasId(row));
+  if (withoutId.length > 0) {
+    console.log(`\n${withoutId.length} row(s) skipped — no post id, fill one in to import:`);
+    withoutId.forEach((row) => console.log(`    ${row.title || '(untitled)'}`));
+  }
+  console.log('');
 
   let changedPosts = 0;
   let changedFields = 0;
