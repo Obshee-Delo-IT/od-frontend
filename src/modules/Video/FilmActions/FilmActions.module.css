@@ -1,0 +1,99 @@
+/* White action strip attached to the bottom of the player card. */
+.root {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 12px 20px 20px;
+  gap: 24px 40px;
+
+  @media (--mobile) {
+    flex-direction: column;
+    align-items: center;
+    padding: 16px;
+  }
+}
+
+.watch,
+.downloads {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+
+  @media (--mobile) {
+    width: 100%;
+    align-items: center;
+  }
+}
+
+/* Pinned right even when the share group is absent (space-between can't). */
+.downloads {
+  width: 347px;
+  margin-left: auto;
+
+  @media (--mobile) {
+    width: 100%;
+    margin-left: 0;
+  }
+}
+
+.label {
+  color: var(--gray-9);
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 140%;
+}
+
+/* Thin full-width download pills (Figma: 28px tall, duration after a «•»). */
+.pills {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.pill {
+  width: 100%;
+  height: 28px;
+  justify-content: center;
+  padding: 4px 16px;
+  border-radius: 9999px;
+  font-size: 16px;
+  gap: 10px;
+}
+
+.shareRow {
+  display: flex;
+  gap: 15px;
+}
+
+.shareItem {
+  display: flex;
+  width: 58px;
+  flex-direction: column;
+  align-items: center;
+  color: var(--gray-9);
+  gap: 8px;
+  text-decoration: none;
+}
+
+.shareTile {
+  display: flex;
+  width: 40px;
+  height: 40px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  background-color: var(--gray-2);
+  transition: background-color 0.15s ease;
+}
+
+.shareItem:hover .shareTile {
+  background-color: var(--gray-3);
+}
+
+.shareLabel {
+  font-size: 14px;
+  line-height: 140%;
+  text-align: center;
+}

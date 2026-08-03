@@ -1,0 +1,92 @@
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 44px;
+
+  @media (--mobile) {
+    gap: 24px;
+  }
+}
+
+/* Figma text/8/bold — PT Sans Bold 32 (28 on mobile), unlike the Narrow
+   section headings elsewhere. */
+.heading {
+  margin: 0;
+  color: var(--gray-9);
+  font-family: var(--font-pt-sans), 'PT Sans', sans-serif;
+  font-size: 32px;
+  font-weight: 700;
+  line-height: 130%;
+
+  @media (--mobile) {
+    font-size: 28px;
+  }
+}
+
+.filmCard {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.thumb {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  border-radius: 12px;
+  aspect-ratio: 16 / 9;
+  background: var(--gray-3);
+  transition: box-shadow 0.15s ease;
+}
+
+.thumb:hover {
+  box-shadow: var(--shadow-sm);
+}
+
+.thumbImage {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  inset: 0;
+  object-fit: cover;
+}
+
+.meta {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.filmTitle {
+  color: var(--gray-9);
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 130%;
+  text-decoration: none;
+}
+
+.filmTitle:hover {
+  text-decoration: underline;
+}
+
+.shareRow {
+  display: flex;
+  flex-shrink: 0;
+  gap: 6px;
+}
+
+.shareTile {
+  display: flex;
+  width: 28px;
+  height: 28px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  background-color: var(--white);
+  transition: background-color 0.15s ease;
+}
+
+.shareTile:hover {
+  background-color: var(--gray-3);
+}

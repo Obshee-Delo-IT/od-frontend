@@ -86,13 +86,12 @@ const Page = async ({ searchParams }: VideoPageProps) => {
             <VideoCard
               key={film.id}
               title={film.title}
-              href={film.link}
+              href={`/video/${film.id}`}
               imageSrc={film.thumbnailUrl}
               imageAlt={film.title}
               description={film.excerpt}
               trailerUrl={film.trailerUrl}
-              downloadFull={film.downloadFull}
-              downloadShort={film.downloadShort}
+              downloads={film.downloads}
               share={film.share}
             />
           ))}

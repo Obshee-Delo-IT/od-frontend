@@ -1,0 +1,29 @@
+/* Figma Frame 33945: white surface, r12, 20px padding, poster + pill. */
+.card {
+  display: flex;
+  flex-direction: column;
+  padding: 20px;
+  border-radius: 12px;
+  background-color: var(--white);
+  box-shadow: var(--shadow-sm);
+  gap: 20px;
+}
+
+.posterFrame {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  border-radius: 12px;
+  aspect-ratio: 347 / 517;
+  background-color: var(--gray-3);
+}
+
+.poster {
+  object-fit: cover;
+}
+
+.download {
+  width: 100%;
+  border-radius: 9999px;
+  gap: 10px;
+}

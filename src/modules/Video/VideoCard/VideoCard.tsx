@@ -3,14 +3,8 @@ import clsx from 'clsx';
 import Image from 'next/image';
 import NextLink from 'next/link';
 import { Button } from '@/shared/ui/components/Button';
-import {
-  ArrowRightIcon,
-  CirclePlayIcon,
-  DownloadIcon,
-  RutubeIcon,
-  VkIcon,
-  YoutubeIcon,
-} from '@/shared/ui/components/Icons';
+import { ArrowRightIcon, CirclePlayIcon, DownloadIcon } from '@/shared/ui/components/Icons';
+import { resolveShareLinks } from '../sharePlatforms';
 import css from './VideoCard.module.css';
 import type { VideoDownload, VideoShareLinks } from '@/shared/api';
 
@@ -22,21 +16,10 @@ export interface VideoCardProps {
   imageAlt?: string;
   description?: string | null;
   trailerUrl?: string | null;
-  downloadFull?: VideoDownload | null;
-  downloadShort?: VideoDownload | null;
+  downloads?: VideoDownload[];
   share?: VideoShareLinks;
   className?: string;
 }
-
-const SHARE_PLATFORMS = [
-  { key: 'vk', label: 'VK Видео', Icon: VkIcon },
-  { key: 'youtube', label: 'YouTube', Icon: YoutubeIcon },
-  { key: 'rutube', label: 'Rutube', Icon: RutubeIcon },
-] as const;
-
-/** «Полн. версия • 54 мин» — quality prefix plus the free-text duration when set. */
-const downloadLabel = (prefix: string, { duration }: VideoDownload): string =>
-  duration ? `${prefix} • ${duration}` : prefix;
 
 /**
  * Horizontal film card for the `/video` catalogue (Figma `Frame 21`): a white
@@ -52,16 +35,11 @@ export const VideoCard: React.FC<VideoCardProps> = ({
   imageAlt = '',
   description,
   trailerUrl,
-  downloadFull,
-  downloadShort,
+  downloads = [],
   share,
   className,
 }) => {
-  const downloads = [
-    downloadFull && { prefix: 'Полн. версия', download: downloadFull },
-    downloadShort && { prefix: 'Сокр. версия', download: downloadShort },
-  ].filter((d): d is { prefix: string; download: VideoDownload } => Boolean(d));
-  const shareLinks = SHARE_PLATFORMS.map((p) => ({ ...p, href: share?.[p.key] ?? null })).filter((p) => p.href);
+  const shareLinks = resolveShareLinks(share);
 
   return (
     <article className={clsx(css.card, className)}>
@@ -74,16 +52,10 @@ export const VideoCard: React.FC<VideoCardProps> = ({
 
         {shareLinks.length > 0 ? (
           <div className={css.share}>
-            {shareLinks.map(({ key, label, Icon, href: shareHref }) => (
-              <NextLink
-                key={key}
-                href={shareHref as string}
-                className={css.shareItem}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
+            {shareLinks.map(({ key, label, logo, iconSize, href: shareHref }) => (
+              <NextLink key={key} href={shareHref} className={css.shareItem} target="_blank" rel="noopener noreferrer">
                 <span className={css.shareTile}>
-                  <Icon size={28} />
+                  <Image src={logo} alt="" width={iconSize} height={iconSize} />
                 </span>
                 <span className={css.shareLabel}>{label}</span>
               </NextLink>
@@ -125,16 +97,10 @@ export const VideoCard: React.FC<VideoCardProps> = ({
           <Text as="div" className={css.downloadsLabel}>
             Скачать фильм бесплатно
           </Text>
-          {downloads.map(({ prefix, download }) => (
-            <Button
-              key={download.url}
-              variant="outline"
-              size="small"
-              asChild
-              className={clsx(css.pill, css.downloadPill)}
-            >
-              <NextLink href={download.url} target="_blank" rel="noopener noreferrer">
-                <span className={css.downloadText}>{downloadLabel(prefix, download)}</span>
+          {downloads.map(({ url, label }) => (
+            <Button key={url} variant="outline" size="small" asChild className={clsx(css.pill, css.downloadPill)}>
+              <NextLink href={url} target="_blank" rel="noopener noreferrer">
+                <span className={css.downloadText}>{label}</span>
                 <DownloadIcon size={20} aria-hidden="true" />
               </NextLink>
             </Button>

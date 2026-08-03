@@ -6,12 +6,12 @@ import { VideoCard } from './VideoCard';
 const renderWithTheme = (ui: React.ReactNode) => render(<Theme>{ui}</Theme>);
 
 describe('<VideoCard />', () => {
-  it('renders the title, the «О фильме» link and a present download with its duration', () => {
+  it('renders the title, the «О фильме» link and a present download with its label', () => {
     renderWithTheme(
       <VideoCard
         title="Наркотики"
         href="https://wp.test/films/narkotiki"
-        downloadFull={{ url: 'https://disk.yandex.ru/i/full', duration: '30 мин', size: '872 Мб' }}
+        downloads={[{ url: 'https://disk.yandex.ru/i/full', label: 'Полн. версия • 30 мин • 872 Мб' }]}
       />
     );
 

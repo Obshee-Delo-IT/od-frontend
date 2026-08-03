@@ -1,0 +1,10 @@
+.content.collapsed {
+  overflow: hidden;
+  /* Fade the cut-off line so the clamp reads as «continues below». */
+  mask-image: linear-gradient(to bottom, black calc(100% - 64px), transparent);
+}
+
+.toggle {
+  border-radius: 9999px;
+  margin-top: 24px;
+}

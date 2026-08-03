@@ -35,15 +35,15 @@ describe('fetchVideoList', () => {
             acf: {
               watch_url: '',
               trailer_url: '',
-              download_full_url: 'https://disk.yandex.ru/i/full',
-              download_full_duration: '30 мин',
-              download_full_size: '872 Мб',
-              download_short_url: 'https://disk.yandex.ru/i/short',
-              download_short_duration: '23 мин',
-              download_short_size: '350 Мб',
+              download_1_url: 'https://disk.yandex.ru/i/full',
+              download_1_label: 'Полн. версия • 30 мин • 872 Мб',
+              download_2_url: 'https://disk.yandex.ru/i/short',
+              download_2_label: 'Сокр. версия • 23 мин • 350 Мб',
               share_vk: 'https://vk.com/x',
               share_youtube: '',
               share_rutube: '',
+              poster_image_url: 'https://wp.test/uploads/плакат.jpg',
+              poster_download_url: 'https://disk.yandex.ru/d/poster',
             },
           },
         ],
@@ -60,9 +60,13 @@ describe('fetchVideoList', () => {
     expect(film.id).toBe(71561);
     expect(film.categories).toEqual([581, 52]);
     expect(film.watchUrl).toBeNull();
-    expect(film.downloadFull).toEqual({ url: 'https://disk.yandex.ru/i/full', duration: '30 мин', size: '872 Мб' });
-    expect(film.downloadShort).toEqual({ url: 'https://disk.yandex.ru/i/short', duration: '23 мин', size: '350 Мб' });
+    expect(film.downloads).toEqual([
+      { url: 'https://disk.yandex.ru/i/full', label: 'Полн. версия • 30 мин • 872 Мб' },
+      { url: 'https://disk.yandex.ru/i/short', label: 'Сокр. версия • 23 мин • 350 Мб' },
+    ]);
     expect(film.share).toEqual({ vk: 'https://vk.com/x', youtube: null, rutube: null });
+    expect(film.posterImageUrl).toBe('https://wp.test/uploads/плакат.jpg');
+    expect(film.posterDownloadUrl).toBe('https://disk.yandex.ru/d/poster');
 
     const requestedPath = wpFetch.mock.calls[0][0] as string;
     expect(requestedPath).toContain('format=video');
@@ -70,14 +74,14 @@ describe('fetchVideoList', () => {
     expect(requestedPath).toContain('per_page=10');
   });
 
-  it('leaves a download null when its url is empty', async () => {
+  it('skips empty download slots and falls back to a generic label when a slot has no label', async () => {
     wpFetch.mockResolvedValue(
       makeResponse(
         [
           {
             id: 1,
             title: { rendered: 'Фильм' },
-            acf: { download_full_url: 'https://disk.yandex.ru/i/full', download_short_url: '' },
+            acf: { download_1_url: 'https://disk.yandex.ru/i/full', download_1_label: '', download_2_url: '' },
           },
         ],
         { 'x-wp-total': '1', 'x-wp-totalpages': '1' }
@@ -85,8 +89,7 @@ describe('fetchVideoList', () => {
     );
 
     const [film] = (await fetchVideoList()).items;
-    expect(film.downloadFull).not.toBeNull();
-    expect(film.downloadShort).toBeNull();
+    expect(film.downloads).toEqual([{ url: 'https://disk.yandex.ru/i/full', label: 'Скачать фильм' }]);
   });
 
   it('passes the category filter through to the query', async () => {

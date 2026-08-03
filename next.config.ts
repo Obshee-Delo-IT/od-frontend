@@ -51,6 +51,14 @@ const nextConfig: NextConfig = {
     minimumCacheTTL: 86400,
   },
   reactCompiler: true,
+
+  // od-dev WP is slow (~1.5s/request) and starts 503ing under the build's
+  // parallel prerender of ~46 ISR seed pages — retry failed pages and keep
+  // the export concurrency modest instead of failing the whole build.
+  experimental: {
+    staticGenerationRetryCount: 3,
+    staticGenerationMaxConcurrency: 4,
+  },
 };
 
 export default nextConfig;

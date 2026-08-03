@@ -1,0 +1,68 @@
+/* The player + action-strip surface (Figma: poster over a white card whose
+   visible bottom band holds the share tiles and download pills). */
+.hero {
+  overflow: hidden;
+  border-radius: 12px;
+  background-color: var(--white);
+  box-shadow: var(--shadow-sm);
+}
+
+/* Description/transcript left, poster card right (Figma Frame 33959). */
+.content {
+  display: grid;
+  align-items: start;
+  gap: 40px 42px;
+  grid-template-columns: minmax(0, 1fr) 387px;
+
+  @media (--mobile) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.main {
+  display: flex;
+  flex-direction: column;
+  gap: 25px;
+}
+
+/* Figma text/8/bold — the film title lives in the content column, not the
+   red PageHeader. */
+.title {
+  margin: 0;
+  color: var(--gray-9);
+  font-size: 32px;
+  font-weight: 700;
+  line-height: 130%;
+
+  @media (--mobile) {
+    font-size: 28px;
+  }
+}
+
+/* The «О фильме» body — rendered WordPress blocks. */
+.body {
+  color: var(--gray-8);
+  font-size: 22px;
+  line-height: 130%;
+}
+
+/* The poster/download column is lifted into the structured card, so flatten
+   the legacy 66/33 block columns into a single text flow. */
+.body :global(.wp-block-columns) {
+  display: block;
+}
+
+.body :global(.wp-block-column:empty) {
+  display: none;
+}
+
+.body h2,
+.body h3 {
+  color: var(--gray-9);
+  font-size: 32px;
+  line-height: 130%;
+
+  @media (--mobile) {
+    font-size: 28px;
+  }
+}
