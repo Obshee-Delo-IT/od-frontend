@@ -53,11 +53,12 @@ CLAUDE.md
 /.zed
 /.vscode
 
-# local scout / scratch artefacts
+# local scout / scratch artefacts — screenshots, Figma exports, visual smoke
+# runs. Everything transient goes in /.scratch/; nothing at the repo root.
 .mcp.json
-/figma-snaps/
-/figma-export/
-/smoke/
+/.scratch/
+
+# stray screenshots dropped at the root — belong in /.scratch/screenshots/
 /*.png
 /*.jpeg
 /*.jpg
