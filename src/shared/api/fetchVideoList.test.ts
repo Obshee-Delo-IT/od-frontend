@@ -100,6 +100,17 @@ describe('fetchVideoList', () => {
     expect(wpFetch.mock.calls[0][0]).toContain('categories=581');
   });
 
+  it('OR-matches a list of categories and omits the filter entirely when empty', async () => {
+    // A Response body can only be consumed once — build a fresh one per call.
+    wpFetch.mockImplementation(async () => makeResponse([], { 'x-wp-total': '0', 'x-wp-totalpages': '0' }));
+
+    await fetchVideoList({ category: [581, 580, 86, 559] });
+    expect(wpFetch.mock.calls[0][0]).toContain(`categories=${encodeURIComponent('581,580,86,559')}`);
+
+    await fetchVideoList({ category: [] });
+    expect(wpFetch.mock.calls[1][0]).not.toContain('categories=');
+  });
+
   it('returns an empty result for a non-2xx response', async () => {
     wpFetch.mockResolvedValue(new Response('Bad Request', { status: 400 }));
 

@@ -47,8 +47,12 @@ export interface VideoListResult {
 export interface FetchVideoListParams {
   page?: number;
   perPage?: number;
-  /** WP category id (child of «Видео» 85); omit for «Все». */
-  category?: number;
+  /**
+   * WP category id, or a list of them (OR-matched by WP) — the children of
+   * «Видео» 85. Omit to query every `format=video` post, which also pulls in
+   * the «Видео события» event reports.
+   */
+  category?: number | number[];
 }
 
 /** How many generic `download_N_*` slots the ACF group defines. */
@@ -148,8 +152,9 @@ export const fetchVideoList = async ({
     page: String(page),
     _embed: '1',
   });
-  if (category) {
-    query.set('categories', String(category));
+  const categories = (Array.isArray(category) ? category : [category]).filter(Boolean);
+  if (categories.length > 0) {
+    query.set('categories', categories.join(','));
   }
 
   const res = await wpFetch(`/wp/v2/posts?${query.toString()}`, { next: { revalidate: 3600 } });

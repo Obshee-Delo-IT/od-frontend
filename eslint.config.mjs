@@ -86,6 +86,14 @@ const eslintConfig = [...nextCoreWebVitals, ...nextTypescript, eslintConfigPrett
       },
     ],
   },
+}, {
+  // Standalone Node CLI scripts (film worksheet export/import): printing to the
+  // terminal is their whole job, and ESM needs the file extension on imports.
+  files: ['scripts/**/*.mjs'],
+  rules: {
+    'no-console': 'off',
+    'import/extensions': 'off',
+  },
 }];
 
 export default eslintConfig;

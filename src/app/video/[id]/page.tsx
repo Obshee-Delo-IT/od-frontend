@@ -22,12 +22,16 @@ import type { Metadata } from 'next';
 export const dynamicParams = true;
 export const revalidate = 3600;
 
-// Children of «Видео» (85) — used to pick the sub-category the related strip
-// is scoped to. Same set as the /video index filter.
-const VIDEO_CATEGORY_IDS = new Set([581, 580, 86, 559]);
+// Children of «Видео» (85) — the film catalogue. Used to pick the sub-category
+// the related strip is scoped to, and to seed SSG with real films rather than
+// the «Видео события» event reports that dominate an unfiltered query. Same set
+// as the /video index filter.
+const VIDEO_CATEGORY_IDS = [581, 580, 86, 559];
 
 export async function generateStaticParams() {
-  const res = await wpFetch('/wp/v2/posts?format=video&per_page=20&_fields=id');
+  const res = await wpFetch(
+    `/wp/v2/posts?format=video&categories=${VIDEO_CATEGORY_IDS.join(',')}&per_page=20&_fields=id`
+  );
   if (!res.ok) {
     return [];
   }
@@ -62,8 +66,12 @@ const Page = async ({ params }: { params: Promise<{ id: string }> }) => {
     notFound();
   }
 
-  const relatedCategory = film.categories.find((category) => VIDEO_CATEGORY_IDS.has(category));
-  const { items: relatedItems } = await fetchVideoList({ perPage: 4, category: relatedCategory });
+  // Same sub-category when the film has one, otherwise the catalogue at large.
+  const relatedCategory = film.categories.find((category) => VIDEO_CATEGORY_IDS.includes(category));
+  const { items: relatedItems } = await fetchVideoList({
+    perPage: 4,
+    category: relatedCategory ?? VIDEO_CATEGORY_IDS,
+  });
   const related = relatedItems
     .filter((item) => item.id !== film.id)
     .slice(0, 3)

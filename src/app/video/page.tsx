@@ -11,8 +11,7 @@ export const revalidate = 3600;
 
 const PER_PAGE = 10;
 
-// Children of the «Видео» (85) taxonomy — the category switcher set. «Все» is
-// unfiltered (every `format=video` post).
+// Children of the «Видео» (85) taxonomy — the category switcher set.
 const FILTER_OPTIONS: { label: string; value: string }[] = [
   { label: 'Все', value: 'all' },
   { label: 'Фильмы', value: 'movies' },
@@ -27,6 +26,11 @@ const CATEGORY_IDS: Record<string, number> = {
   roliki: 86,
   famous: 559,
 };
+
+// «Все» is the union of the four sub-categories, not every `format=video`
+// post: the unfiltered query is dominated by «Видео события» (52) event
+// reports, which aren't part of the film catalogue.
+const ALL_CATEGORY_IDS = Object.values(CATEGORY_IDS);
 
 export const metadata: Metadata = {
   title: 'Фильмы — ОБЩЕЕ ДЕЛО',
@@ -64,7 +68,7 @@ const Page = async ({ searchParams }: VideoPageProps) => {
   const { items, totalPages } = await fetchVideoList({
     page: currentPage,
     perPage: PER_PAGE,
-    category: activeCategory === 'all' ? undefined : CATEGORY_IDS[activeCategory],
+    category: activeCategory === 'all' ? ALL_CATEGORY_IDS : CATEGORY_IDS[activeCategory],
   });
 
   const breadcrumbItems = [{ label: 'Главная', href: '/' }, { label: 'Фильмы' }];
