@@ -1,0 +1,36 @@
+# Keep secrets and local state out of the build context. The Dockerfile does
+# `COPY . .`, so anything listed here would otherwise be baked into an image
+# layer — `.env` above all (WP application password, Kinescope API token).
+.env
+.env.*
+!.env.example
+
+# VCS / deps / build output — restored or rebuilt inside the image
+.git
+.github
+node_modules
+.next
+out
+build
+
+# Local scratch, screenshots and test artefacts
+.scratch
+test-results
+playwright-report
+coverage
+
+# Tooling and docs that never affect the runtime image
+Dockerfile
+.dockerignore
+docker-compose.yml
+docker-compose-prod.yaml
+README.md
+docs
+e2e
+scripts
+.claude
+CLAUDE.md
+.husky
+.mcp.json
+npm-debug.log
+*.tsbuildinfo
