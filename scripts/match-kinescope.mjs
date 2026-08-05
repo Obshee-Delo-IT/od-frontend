@@ -132,6 +132,15 @@ const main = async () => {
   });
   const notReady = library.filter((video) => video.status !== 'done' && video.play_link).map(describe);
 
+  // The library is a 1-to-1 import of the YouTube channel, so descriptions are
+  // the YouTube descriptions — and a marketing-retitled upload usually names the
+  // real film in its opening line («Курение. Взгляд изнутри» – это новый
+  // документальный фильм…). Too noisy to trust (the same names recur in every
+  // video's cross-promo footer), so it only ever produces suggestions.
+  const described = library
+    .filter((video) => video.status === 'done' && video.play_link && video.description)
+    .map((video) => ({ ...describe(video), minutes: Math.round((video.duration ?? 0) / 60), body: normalise(video.description) }));
+
   const usable = library
     .filter((video) => video.status === 'done' && video.play_link)
     .map((video) => ({
@@ -199,7 +208,15 @@ const main = async () => {
     }
 
     if (matches.length === 0) {
-      unmatched.push(`${id || '(no id)'} ${title}`);
+      const mentions = key.split(' ').length >= 2 ? described.filter((video) => video.body.includes(key)) : [];
+      unmatched.push(
+        `${id || '(no id)'} ${title}` +
+          (mentions.length
+            ? mentions
+                .map((v) => `\n         ? ${v.short} (${v.minutes} мин) «${v.title.slice(0, 52)}» — names this film in its description`)
+                .join('')
+            : '')
+      );
       continue;
     }
 
@@ -246,7 +263,16 @@ const main = async () => {
   report('duration mismatch — NOT written, check by hand', durationMismatch);
   report('ambiguous — NOT written, more than one candidate', ambiguous);
   report('filled but duration could not be verified (no мин in any download label)', unverified);
-  console.log(`\n${unmatched.length} film(s) with no Kinescope candidate at all.`);
+  report('film(s) with no confident candidate (`?` lines are description hints, never written)', unmatched);
+
+  // What is left over on the Kinescope side, so the remaining pairing can be
+  // done by elimination rather than by searching 261 titles by hand.
+  const claimed = new Set(body.map((row) => (row[col('kinescope_id')] ?? '').trim()).filter(Boolean));
+  const orphanFilms = usable
+    .filter((video) => !claimed.has(video.short) && !video.excluded && video.minutes >= 8)
+    .sort((a, b) => b.minutes - a.minutes);
+  console.log(`\n${orphanFilms.length} film-length video(s) (≥8 мин) in Kinescope claimed by no worksheet row:`);
+  orphanFilms.forEach((video) => console.log(`    ${video.short} ${String(video.minutes).padStart(3)} мин «${video.title.slice(0, 62)}»`));
   console.log(`\nWrote ${body.length} rows → ${out}`);
 };
 
