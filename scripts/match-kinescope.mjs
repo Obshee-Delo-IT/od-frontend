@@ -10,6 +10,15 @@
  * — because that is what `FilmPlayer` puts into `https://kinescope.io/embed/<id>`.
  * The API's `id` field is a different (UUID) identifier and must NOT be used.
  *
+ * **The YouTube bridge is the reliable signal.** The library was imported 1-to-1
+ * from YouTube, so a Kinescope title IS the source YouTube title — while the WP
+ * title is usually the plain editorial one («Докажи, что любишь» vs «ЭПИДЕМИЯ о
+ * которой ты не знал…»). So when a film has `share_youtube`, we resolve that
+ * video's title via YouTube oEmbed and match on it. Measured on od-dev: it
+ * agreed with 16 of 17 already-matched films and resolved 10 of 10 that title
+ * similarity had failed or mismatched. Fuzzy title matching runs only as the
+ * fallback for films with no YouTube link.
+ *
  * Matching is deliberately conservative — a wrong id plays the wrong film on a
  * public page:
  *  - Titles are compared casefolded, ё=е, punctuation stripped. Exact match
@@ -73,6 +82,23 @@ const fetchLibrary = async (token) => {
   }
 };
 
+/**
+ * Title of a YouTube video, via the public oEmbed endpoint (no API key needed).
+ * Returns null when the link is unusable — a private/removed video, or YouTube
+ * being unreachable, which is a live possibility from inside Russia.
+ */
+const youtubeTitle = async (url) => {
+  try {
+    const res = await fetch(`https://www.youtube.com/oembed?url=${encodeURIComponent(url)}&format=json`);
+    if (!res.ok) {
+      return null;
+    }
+    return (await res.json()).title ?? null;
+  } catch {
+    return null;
+  }
+};
+
 /** Minutes claimed by the worksheet's download labels, e.g. «Полн. версия • 35 мин». */
 const labelMinutes = (row, col) => {
   const minutes = [];
@@ -98,6 +124,14 @@ const main = async () => {
   const col = (name) => header.indexOf(name);
 
   const library = await fetchLibrary(token);
+  const describe = (video) => ({
+    short: video.play_link.split('/').pop(),
+    title: video.title ?? '',
+    key: normalise(video.title),
+    status: video.status,
+  });
+  const notReady = library.filter((video) => video.status !== 'done' && video.play_link).map(describe);
+
   const usable = library
     .filter((video) => video.status === 'done' && video.play_link)
     .map((video) => ({
@@ -114,11 +148,16 @@ const main = async () => {
   );
 
   const candidates = usable.filter((video) => !video.excluded && video.key);
+  // The YouTube bridge matches against every ready video, trailers included:
+  // the WP post's own share_youtube is authoritative about which video it is.
+  const byKey = new Map(usable.map((video) => [video.key, video]));
   const filled = [];
+  const viaYoutube = [];
   const durationMismatch = [];
   const ambiguous = [];
   const unmatched = [];
   const unverified = [];
+  const brokenInKinescope = [];
 
   for (const row of body) {
     const id = row[col('id')];
@@ -131,6 +170,29 @@ const main = async () => {
       continue; // already set — never overwrite
     }
 
+    // 1. YouTube bridge — the source title, which is what Kinescope holds.
+    const shareYoutube = (row[col('share_youtube')] ?? '').trim();
+    if (shareYoutube) {
+      const ytTitle = await youtubeTitle(shareYoutube);
+      const ytKey = normalise(ytTitle);
+      const hit =
+        byKey.get(ytKey) ??
+        (ytKey ? usable.find((video) => video.key.includes(ytKey) || ytKey.includes(video.key)) : undefined);
+      if (hit) {
+        row[col('kinescope_id')] = hit.short;
+        viaYoutube.push(`${id || '(no id)'} ${title.slice(0, 42).padEnd(44)} ${hit.short}  (${hit.minutes} мин) ← «${ytTitle.slice(0, 44)}»`);
+        continue;
+      }
+      // The source video may be in Kinescope but unplayable — say so rather
+      // than reporting «no candidate», which sends someone hunting for nothing.
+      const broken = ytKey && notReady.find((video) => video.key === ytKey);
+      if (broken) {
+        brokenInKinescope.push(`${id || '(no id)'} ${title} → ${broken.short} «${broken.title.slice(0, 50)}» (status: ${broken.status}) — re-upload in Kinescope`);
+        continue;
+      }
+    }
+
+    // 2. Fall back to comparing the WP title directly.
     let matches = candidates.filter((video) => video.key === key);
     if (matches.length === 0) {
       matches = candidates.filter((video) => video.key.includes(key) || key.includes(video.key));
@@ -178,7 +240,9 @@ const main = async () => {
     }
   };
 
-  report('kinescope_id filled', filled);
+  report('kinescope_id filled via the YouTube bridge (exact source title)', viaYoutube);
+  report('kinescope_id filled by WP-title similarity', filled);
+  report('source video found but NOT playable in Kinescope', brokenInKinescope);
   report('duration mismatch — NOT written, check by hand', durationMismatch);
   report('ambiguous — NOT written, more than one candidate', ambiguous);
   report('filled but duration could not be verified (no мин in any download label)', unverified);
