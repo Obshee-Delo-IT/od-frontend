@@ -16,11 +16,11 @@ Related: [`implementation-plan.md`](./implementation-plan.md) (task state) · [`
 | **B2** | **Content is CMSMasters shortcodes on prod, Gutenberg on od-dev.** Confirmed for `wp/v2/pages`; **unverified for posts**. | If film/news bodies are `[cmsms_*]`, then `parsePost`, `GutenbergProvider`, `extractFilmPoster` and `absolutizeWpMedia` all degrade to raw shortcode text. See §1.4 — this is the highest-risk unknown. | verify in §1 |
 | **B3** | **ACF is not installed on prod/stage.** | No `group_film_meta` ⇒ no `acf` object in REST ⇒ every film affordance disappears. | §2.2 |
 | **B4** | **Post ids are per-environment.** | The worksheet we filled holds od-dev ids; importing it into prod would write to unrelated posts. Mitigated by `pnpm film:remap` (§3.2). | §3 |
-| **B5** | **Category ids may differ.** `581/580/86/559` are hardcoded in two files. | A wrong id silently empties the catalogue and the related-films strip. | §1.3 + §4.3 |
+| **B5** | **Category ids may differ.** `581/580/86/559` are hardcoded — since 2026-08-13 in **one** file, `src/shared/config/filmCategories.ts`. | A wrong id silently empties the catalogue and the related-films strip — it answers 200, so only a count check catches it. | §1.3 + §4.3 |
 | **B6** | **Media offload origin unconfirmed for prod.** | `WP_MEDIA_CDN` defaults to the od-dev bucket; a different prod bucket breaks every image. | §1.5 + §4.1 |
 | ~~B7~~ | ~~Hosting/deploy target undecided~~ — **decided: Beget VPS + Coolify, images built in GitHub Actions → GHCR.** | Remaining work is the CI push step (§4.7), not a decision. | §4 |
 | **B8** | **Only 4 content routes are redesigned** — `/` (home), `/news` (index), `/video` (catalogue) and the post detail at `/<id>`. | Launching without the A6 legacy fallback means ~170 pages 404. **Launch gate, not a migration step** — see §6. Those ~170 pages are ~15 % of entry traffic. | A6 |
-| ~~B9~~ | ~~The redesigned routes don't match live URLs.~~ — **FIXED 2026-08-13 (A8).** `/<id>` is now served directly by `app/[...slug]/page.tsx`; `next.config.ts` carries a 16-entry `redirects()` table for the `/video/*`, `/category/video/*` and `/page/N/` families; `trailingSlash: true` matches the live URL form. | Was **59 % of all site entries**. Now a **verification** concern rather than a build one — gate 12 in §5 is what proves it. | verify in §5 |
+| ~~B9~~ | ~~The redesigned routes don't match live URLs.~~ — **FIXED 2026-08-13 (A8).** `/<id>` is now served directly by `app/[...slug]/page.tsx`; `src/shared/config/legacyRedirects.ts` (imported by `next.config.ts`) covers the `/video/*`, `/category/video/*`, `/category/*` and `/page/N/` families; `trailingSlash: true` matches the live URL form. | Was **59 % of all site entries**. Now a **verification** concern rather than a build one — gate 12 in §5 is what proves it, and it is scriptable. | verify in §5 |
 
 ---
 
@@ -177,12 +177,13 @@ pnpm generate:types && pnpm type-check
 ```
 > Note: `redocly.yml`'s `output` currently contains a stray space (`./src/types/generated /wp-json-openapi.ts`). Fix it before relying on this step.
 
-**4.3 Apply the real category ids (B5)** if §1.3 differed from od-dev. **Three places now, and they must agree** (od-dev values: Фильмы `581`, Мультфильмы `580`, Ролики `86`, Известные люди `559`):
-- `src/app/video/page.tsx` — `CATEGORY_IDS` (drives the switcher and the «Все» union)
-- `src/modules/Video/FilmPage/FilmPage.tsx` — `VIDEO_CATEGORY_IDS` (related strip; also imported by the catch-all's SSG seed)
-- `next.config.ts` — `FILM_CATEGORIES` (slug → id for the A8 legacy redirects; a stale id here sends `/video/filmy/` to an empty filter instead of 404ing, so it fails quietly)
+**4.3 Apply the real category ids (B5)** if §1.3 differed from od-dev. **One file since 2026-08-13** — `src/shared/config/filmCategories.ts`, which holds `FILM_CATEGORY_IDS` (slug → id: `movies` 581, `mult` 580, `roliki` 86, `famous` 559) and is read by the `/video` index filter, the related-films scope on a film page, the catch-all's SSG seed, and the A8 redirect table. Change the four numbers there and every consumer follows.
 
-Also check `src/app/news/page.tsx` — `CATEGORY_IDS` there holds the news chips (`47` / `578`), which are equally environment-specific.
+Two things that are *not* in that file and still need a look:
+- **`src/app/news/page.tsx`** — `CATEGORY_IDS` holds the news chips (`47` Новости / `578` Статьи), equally environment-specific.
+- **`src/shared/config/legacyRedirects.ts`** — `/category/novosti` and `/category/articles` hardcode those same two news ids in their destinations.
+
+A wrong id here **fails quietly rather than loudly**: the catalogue answers 200 with an empty or unfiltered result rather than 404ing, so §5 gates 1–2 (card counts matching WP) are what actually catch it.
 
 **4.4 Image hosts.** `WP_BASE` and `WP_MEDIA_CDN` are allowlisted automatically. The Punycode legacy domain `xn----9sbkcac6brh7h.xn--p1ai` is hardcoded and still in use (70199's poster image) — keep it until those assets are re-hosted.
 
