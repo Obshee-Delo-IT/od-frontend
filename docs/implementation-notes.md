@@ -100,7 +100,7 @@ The tail is tiny, but it is **~90 distinct slugs and open-ended** — any WP cat
 
 ## 2. Shipped — design system (C)
 
-**C1–C8 are done; C9–C11 are open** (see the plan). Per-component drift notes live in [`design-system.md` §4](./design-system.md).
+**C1–C11 are done.** Per-component drift notes live in [`design-system.md` §4](./design-system.md).
 
 - **C1. `Button`** — 2026-05-30 with D1, `src/shared/ui/components/Button/`, maps intent → Radix variant + size. Figma matrix confirmed: 3 Variant (`Contained`/`Outline`/`white`) × 3 Size × 3 State = 27 cells. Canonical Contained/Large: `cornerRadius:9999`, fill `#AE0A04`, padding 12/24, label `text/4/regular`. The `white` variant is the donation CTA on the red header. **The corner-radius question is resolved** — canonical Figma Button is pill, repo Theme is `radius="full"`; the old "5px" reading came from a superseded master (`1321:5304`).
 - **C2. `IconButton`** — 2026-05-30 with D1. 2 Radius (Curved 8px / Circle) × 2 Variant × 3 State = 12 cells, 32×32 base. Header-mob search/menu, carousel arrows.
@@ -110,6 +110,38 @@ The tail is tiny, but it is **~90 distinct slugs and open-ended** — any WP cat
 - **C6. `Dropdown`** — 2026-06-04. **Single-select** on Radix Themes `Select`, client component, controlled `value` + `onValueChange`. Faithful to Figma `Dropdown Menu` (`1324:4234`). **Deferred:** the multi-select + checkbox-list + removable-chip variant from the same set — add when Materials needs it. **Not satisfied by the header `ButtonGroupSubMenu`**, which is a Radix `NavigationMenuSub` nav-link flyout — a different component with a different role.
 - **C7. `Checkbox`** — 2026-05-30 with D1 (newsletter signup). Figma `Checkbox` (`1323:257`, 12 variants), 16×16, r4, gray-4 stroke.
 - **C8. `Carousel`** — 2026-05-30 with D1 (Swiper-backed). Figma provides only the **chrome**: `_Carousel Button Base` (32×32 circle arrows) and `_Carousel Page Indicator Base/Small/Dot` (8×8 dots, active `brand/red/7`). The slider container itself is unspecified.
+
+### C9. Header + footer promoted to the live components — 2026-08-13
+
+`header-v2` (`1229:4371`), `header-mob` (`1248:4486`), `footer` (`838:1631`) and `footer-mob` (`1261:7985`), plus two responsive frames the inventory had never recorded: `footer-1200` (`1621:15559`) and `footer-900` (`1621:15660`). Geometry per component is in [`design-system.md` §3.2](./design-system.md#32-components-defined-on-the--ui-page); what belongs here is what the build found that the mocks don't say.
+
+**Three real bugs, none of them cosmetic:**
+
+1. **Every main-nav link pointed at WordPress.** WP stores main-navigation items as absolute URLs against its own origin, and the header rendered them verbatim — so a click on «О НАС» left the frontend for `od-dev.tmweb.ru`, and would have left prod for the *old site*. `toInternalHref` strips the WP and site origins and leaves genuinely external destinations (`общеедело-про.рф`) alone. This one is worth remembering when any other WP-authored link surface lands: menus, widgets and post bodies all carry absolute URLs.
+2. **The footer's social icons never rendered anywhere.** They were painted with `background-image: url(…/vk.svg)` from the module CSS, but `@svgr/webpack` compiles every `.svg` import to a JS module, so the declaration resolved to `vk.svg.<hash>.js` and produced three blank 30px gaps — measured in the browser, and true of the production build too. They are now typed icon components swapped in while parsing the widget HTML, which also gives each link an accessible name.
+3. **The footer logo bypassed the image pipeline**, loading straight off the slow WordPress origin — the one rule CLAUDE.md states outright. It goes through `resolveContentImages` now.
+
+**The nav row does not fit below 1440 at Figma's own measurements.** Eight WordPress-authored labels plus three chevrons come to 1126px at `padding: 10px 20px`, and the 1200 tier's column is 1000 — Figma's 1200 and 900 frames both overflow their own column rather than resolve it. The repo drops the horizontal padding to 8px under `--small-desktop` (→ 934) and lets the row wrap as a safety valve: the labels are editorial, so a longer one must fall to a second line, never be clipped. With `navOverrides` hiding ОБЩЕЕДЕЛО-ПРО the live row measures 783 and wraps at no width.
+
+**The footer keeps its data path.** The content is still the `sidebar_bottom` widgets, in WordPress's order — only the presentation is the component. Raised and rejected: a typed config file. It would have read better and survived the B8 plugin purge outright, but it takes the footer links away from editors to solve a problem that doesn't exist yet, and the widget markup turned out to be clean Gutenberg (`wp-block-list`, `wp-block-heading`) with the CMSMasters classes confined to the three social anchors — which no longer render through them.
+
+**`--tablet (width < 1200px)`** landed with this (half of A1b), *added* rather than renamed so the existing max-width tiers keep nesting. Note the two thresholds differ: type steps down at 1440, padding at 1200.
+
+Still presentational: the header search field. `fetchSearch` exists (B7), a `/search/` route does not, so submitting it would only 404.
+
+### C10. `Modal` → Radix Dialog — 2026-08-13
+
+The custom portal had click-away, Escape and a body-scroll lock, but could not trap focus and left the page behind it in the accessibility tree. Both come free from Radix's Dialog — and **with no new dependency**: `@radix-ui/themes` already ships one, so the `@radix-ui/react-dialog` the plan assumed was never needed, and `@uidotdev/usehooks` (whose only consumer was `useClickAway` here) is gone.
+
+Two things the swap had to restate: Radix's content panel is a padded white card, which a lightbox is not, so its chrome is reset; and `--color-overlay` now carries the 80% scrim the old overlay painted, against Radix's 40% default. `title` is required and rendered visually hidden — a dialog with no accessible name is the one gap the library cannot fill for you.
+
+### C11. `Link` aligned to the `Links` matrix — 2026-08-13
+
+`color` is `primary | red | white` — Figma's three — plus `gray`, kept deliberately for the *separate* `_Breadcrumbs Base` component and consent copy. `lightgrey` was a duplicate of `gray`; `darkgrey` was `primary` with the wrong hover. All four states including disabled; the full matrix is in [`design-system.md` §3.2](./design-system.md#the-links-colour-matrix).
+
+**Extra Small and Small are byte-identical in the component set** (both `text/3`, 16px), so the repo keeps the Radix `size` prop rather than inventing a third step.
+
+**Every colour selector is doubled (`.link.primary`).** `theme-override.css` paints `.rt-Text:where([data-accent-color])` red-8 and every `.rt-Link:hover` red-10; `:where()` contributes nothing, so those are one class each — a lone `.primary` ties and loses on source order. It was measured rendering red-8 before the fix, which is the sort of thing only a browser tells you.
 
 ---
 
@@ -308,6 +340,43 @@ It shipped with A8 because a URL layer nothing advertises is only half a migrati
 
 ⚠️ **`SITE_URL` fails silently when unset** — it defaults to prod, so a stage tier that doesn't set it advertises **prod's** canonicals and sitemap. Visible only through a crawler. Runbook §4.1.
 
+### F6. 152-FZ compliance — the privacy page and the legacy consent, 2026-08-13
+
+The plan called for porting the live privacy text into a new route with the Google Analytics reference stripped. That framing was wrong in a useful way: **the text belongs on prod, not in this repo.** `/conf_politics/` is Tier 4 — it stays on the A6 fallback indefinitely, and the fallback serves prod's content, so prod's page *is* the deliverable. Editing it there fixes the live site today and the new site at cutover, in one write. Prod page id **36316**; before/after content and the two option backups are in `/.scratch/f6-conf-politics/`.
+
+**Already done by the owner, 2026-08-07/08** — found, not performed, during this pass: the GA tag and the VK retargeting pixel are gone from prod's HTML (each left a dated comment saying why — «передача данных за пределы РФ без необходимости»), §5.6 was rewritten to name Яндекс.Метрика only and assert that no data leaves the Russian Federation, and §§5.11/5.12/10.2/10.10/12.3 plus four cookie paragraphs were added. So the GA half of F6 was closed before this work started; what follows is the residue of that edit.
+
+**Five defects fixed** — all mechanical, none of them a rewording of anyone's legal intent:
+
+| | was | now |
+|---|---|---|
+| 1 | The cookie-retention sentence linked «целей обработки персональных данных» to **`https://nkopskov.ru/policy`** — a different NGO's policy, template residue on a registered СМИ's legal page | link removed, text kept |
+| 2 | **§12.3 sat inside section 11**, before the «Трансграничная передача» heading — numbering ran `11.1, 11.2, 12.3, 12.1, 12.2` | re-seated after §12.2 |
+| 3 | **§5.10.4 cited «п. 5.8.3»**, which does not exist — the block is numbered 5.10.x | «п. 5.10.3»; it was the document's only broken cross-reference |
+| 4 | **§14.3** gave the policy's address as `https://общее-дело.рф/conf_politics/`, which 301s | `https://obshee-delo.ru/conf_politics/`, the canonical this repo advertises |
+| 5 | Four cookie paragraphs dangled **unnumbered after §14.3** | **§15 «Файлы cookie»**, 15.1–15.4, in the document's own `<ol start="N">` style |
+
+**§1.3 «Сведения об Операторе» added** — name, ОГРН 1127799010624, ИНН 7721490700, 109443 г. Москва, Волгоградский проспект д. 135 корп. 3, web@obshee-delo.ru. Roskomnadzor practice expects the operator to be identifiable from the policy itself; every value is already published on prod's own `/rekvizit/`.
+
+**§2.3's domain list was deliberately left alone.** It omits `od-pro.ru`, which prod's own nav links to — but that host is a landing page; the contest data is collected at `reg.pro.obshee-delo.ru`, which the existing `*.obshee-delo.ru` wildcard already covers. Widening a legal scope statement to a site that collects nothing would be worse than leaving it. (Answers an open question, so it is not carried forward.)
+
+**The cookie consent is now real, and it cost nothing to build.** §15.2 claims the Operator asks for consent; prod had no banner, which made the sentence false the moment it was published. **clearfy-pro — already active — ships a cookie notice, fully configured in Russian and simply never switched on** (`clearfy_option.message_cookie` was unset). Switching it on beats writing one: no new plugin on a WP 5.5.5 install, and it is discarded with the rest of the legacy theme at cutover. The banner text gained a link to `/conf_politics/`.
+
+⚠️ **WP Rocket's "delay JavaScript execution" silently neutered it.** The notice's inline script was rewritten to `type="rocketlazyloadscript"`, so the banner stayed `translateY(150%)` off-screen until the visitor's first mousemove/scroll/touch — present in the DOM, invisible on load, and unclickable to anything that doesn't interact. Fixed by adding **`clearfy_cookie_hide`** (the cookie name, unique to that script) to `wp_rocket_settings.delay_js_exclusions`, which was empty. Verified with Playwright: banner visible before any interaction, «OK» removes it and sets a year-long `clearfy_cookie_hide=yes`. **Any inline script that must run on load needs this exclusion** — the trap applies to anything else added to the legacy site.
+
+**Rollout is lazy, by design.** WP Rocket's lifespan is **10 hours**, so `/conf_politics/` was purged by hand and every other page picks the banner up as its cache expires. A full purge would have rebuilt 3 506 cached pages for no gain.
+
+**The footer half needed verification, not building.** The СМИ registration line, ОГРН and **12+** live in od-dev widget `block-27` of `sidebar_bottom`, which C9's footer renders verbatim — so they are WordPress data and already present. Two hrefs in that widget do **not** survive the origin change, and both are recorded against F6 in the plan: the «Политика конфиденциальности» link is the absolute `https://od-dev.tmweb.ru/conf_politics/`, and the СМИ выписка PDF is a root-relative `/wp-content/uploads/…` — the file itself is on the media CDN, and only a WP origin 301s to it.
+
+**Prod facts learned the hard way** (also folded into [`wp-backend.md`](./wp-backend.md)):
+
+- **Prod's WP root is `~/public_html`**, not `~/obshee-delo.ru/` — that directory holds only a stub and verification files.
+- **Prod runs WordPress 5.5.5**, pinned by the active `wp-downgrade` plugin, against 25 plugins including `wp-rocket` 3.10.5.1 and `clearfy-pro` 3.5.3.
+- **WP-CLI needs `--skip-themes` there**, not just `--skip-plugins=clearfy-pro`: the CLI's PHP is 8.2 while the site runs older, so `welfare/functions.php:754` fatals on every command otherwise.
+- **The Yandex Metrica counter is `34478865`**, read off prod's own tag — A4 no longer has to wait for someone to look it up.
+- **od-dev's page 36316 is a *different, older document***, last touched 2017-11-18: a generic template naming «**ООО** «Общее дело»» — not even the right legal form. The current legal text exists only on prod. Anything that serves `/conf_politics/` must read the frozen copy or prod, never od-dev.
+- **Prod still loads `fonts.googleapis.com` + `fonts.gstatic.com`** on every page. That is the same cross-border request pattern GA and the VK pixel were removed for, and it is not disclosed in the policy. Not fixed here — it is legacy-theme work with a short shelf life — but it is the honest next candidate if anyone revisits prod's compliance. The app is unaffected: `next/font` self-hosts at build time.
+
 ---
 
 ## 6. Research — the live site (2026-05-29)
@@ -318,7 +387,7 @@ The redesign replaces an existing site. Facts harvested from a live read, used t
 - **No on-site search.** Header search on the redesign is **net-new**. *Since resolved as in-scope* — the canonical `header-v2` component embeds a styled search input, so it's part of the header design rather than an optional icon (B7).
 - **No language switcher.** Russian-only is permanent — no `next-intl`/`i18next`.
 - **No embedded forms anywhere.** Contact, participation, "leave a review" and "suggest an idea" all route via email or external services (`reformal.ru`). Every form in the redesign is **net-new** (B6).
-- **Analytics.** The live privacy policy names **Yandex Metrica + Google Analytics**, but **GA is no longer usable** under current Russian regulations. Redesign drops GA. The ported privacy copy must lose the GA reference — the live page is stale on this.
+- **Analytics.** The live privacy policy named **Yandex Metrica + Google Analytics**, but **GA is no longer usable** under current Russian regulations. *Since resolved* — GA and the VK pixel were removed from prod on 2026-08-07 and the policy's §5.6 now names Метрика alone (counter **34478865**); see the F6 note in §5.
 - **Foreign-service caveat — narrower than first framed.** The site serves **public content only**, so hosting, CDN, image optimisation and asset delivery can sit abroad without 152-FZ data-localisation concerns. The restrictions bite at **PII entry points and PII-touching telemetry**: analytics (→ Metrica only), captcha (→ Yandex SmartCaptcha, not reCAPTCHA), and where form data lands. Form submissions are settled: they post into the existing RU-hosted WordPress (B6).
 - **Legal posture.** Registered СМИ under Roskomnadzor (cert Эл № ФC77-72346, 14 Feb 2018), "12+" content rating — the footer must preserve both. Privacy policy is **152-FZ only; no GDPR**. Legal entity: «Общероссийская общественная организация поддержки президентских инициатив в области здоровьесбережения нации "Общее дело"», ОГРН 1127799010624.
 - **Content taxonomy is firmer than Figma suggests.** Films split into 5 sub-categories (matches `video-filter` intent); Materials into ~14 sub-pages; About has **11** sub-pages on the live site (organisation, team, activist stories, media coverage, partners, certificate, charter, expert reviews, thank-you letters, documents, statistics) — more than Figma mocks.

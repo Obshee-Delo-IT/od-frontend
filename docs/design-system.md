@@ -2,9 +2,9 @@
 
 This is a working map between the **Figma `👉 UI` page** (the canonical design system) and the **repo's `src/shared/`** implementation. It is intentionally narrative — it captures what is built, what is not, and where the two have drifted.
 
-Last verified against Figma: **2026-05-30**, via the `figma-mcp-go` MCP — it gives variables, paints, text/effect styles, and component sets at a fidelity the earlier `TalkToFigma` scout couldn't reach. (Practical technique: navigate by frame **name** down to a small sub-frame — `search_nodes` → `get_node` → `save_screenshots`; whole-page reads time out.)
+Last verified against Figma: **2026-08-13** for the header, footer and `Links` component sets (C9–C11); **2026-05-30** for everything else. Via the `figma-mcp-go` MCP — it gives variables, paints, text/effect styles, and component sets at a fidelity the earlier `TalkToFigma` scout couldn't reach. (Practical technique: navigate by frame **name** down to a small sub-frame — `search_nodes` → `get_node` → `save_screenshots`; whole-page reads time out.)
 
-Repo-side status last verified against the code: **2026-08-13**. The C1–C8 primitives that §3 once listed as missing have all shipped — see [`implementation-notes.md` §2](./implementation-notes.md#2-shipped--design-system-c) for the per-component build notes.
+Repo-side status last verified against the code: **2026-08-13**. **Workstream C is closed** — the C1–C8 primitives that §3 once listed as missing, then the header, footer, `Modal` and `Link` (C9–C11). See [`implementation-notes.md` §2](./implementation-notes.md#2-shipped--design-system-c) for the per-component build notes and the bugs the C9 measurements turned up.
 
 ---
 
@@ -300,6 +300,8 @@ The high-leverage edits are in `theme-override.css`. Every Radix component re-th
 - **Inter typography styles.** Most are orphaned; one place still binds (breadcrumb separator label in `page header`). Confirm cleanup.
 - **Spacing scale mismatch.** Figma uses multiples of 5 (`5/10/15/20/25/35/45/65/80`); repo `Box` uses multiples of 4. Pick one — round in-implementation, or rebase `Box`.
 - **Single tracking footer column heading style.** Footer uses Inter Regular 15 on one label and PT Sans elsewhere — confirm.
+- **The footer's three column headings aren't one colour.** Measured 2026-08-13: КОНТАКТЫ РЕДАКЦИИ and ОТЗЫВЫ are `gray-3` (`#E4E7EC`), ССЫЛКИ is `gray-4` (`#CED2DA`). Shipped as gray-3 for all three, on the assumption the odd one out is a slip.
+- **The nav row overflows its own column below 1440** — see [notes §2](./implementation-notes.md#c9-header--footer-promoted-to-the-live-components--2026-08-13). Shipped compressed, wrapping rather than clipping; Design should say what happens when the menu grows.
 - **`Pagination` cell geometry.** Shipped 40×40 / `cornerRadius:8` (measured off the `news` frame's instance) vs the canonical component's 36×36 / `cornerRadius:6`. Which is right?
 - **`PageHeader` heading fill.** Figma's `page header` specs `brand/red/7` (`#BE1710`); the shipped H1 uses `--red-8` (`#AE0A04`), matching the other page headings. Confirm which the system means.
 
@@ -308,7 +310,7 @@ The high-leverage edits are in `theme-override.css`. Every Radix component re-th
 The eight primitives this section used to list as "next builds" — `Button`, `IconButton`, `PageHeader`, `Pagination`, `Tabs`, `Dropdown`, `Checkbox`, `Carousel` — **all shipped between 2026-05-30 and 2026-06-04** (C1–C8). What remains, in dependency order:
 
 1. ~~**Promote `header-v2` + `header-mob` to live `modules/Header`** (C9).~~ ✅ **Shipped 2026-08-13.** Three things the measurement turned up that the mocks don't say out loud:
-   - **The nav row does not fit below 1440 at Figma's own padding.** Eight WordPress labels plus three chevrons measure 1126px at `padding: 10px 20px`, and the 1200 tier's column is 1000 — Figma's 1200 and 900 frames both overflow their own column rather than solve it. The repo drops the horizontal padding to 8px under `--small-desktop` (→ 934) and lets the row `flex-wrap` as a safety valve, because the labels are editorial: a longer one must fall to a second line, never be clipped. With `navOverrides` hiding ОБЩЕЕДЕЛО-ПРО the live row is 783 and wraps at no width.
+   - **The nav row does not fit below 1440 at Figma's own padding.** Eight WordPress labels plus three chevrons measure 1126px at `padding: 10px 20px`, and the 1200 tier's column is 1000 — Figma's 1200 and 900 frames both overflow their own column rather than solve it. The repo drops the horizontal padding to 8px under `--small-desktop` (→ 934) and lets the row `flex-wrap` as a safety valve, because the labels are editorial: a longer one must fall to a second line, never be clipped.
    - **The search field stays presentational.** `fetchSearch` (B7) exists, a `/search/` route does not, so a submit would only 404.
    - **The mobile drawer is derived, not effect-driven** — it stores the pathname it was opened at, so any navigation (link tap, back button) closes it without a `setState` in an effect.
 2. ~~**Promote `footer` + `footer-mob` to live `modules/Footer`**~~ ✅ **Shipped 2026-08-13**, as part of C9 and **without touching the data path** — the widgets stay the source. Two things it fixed:

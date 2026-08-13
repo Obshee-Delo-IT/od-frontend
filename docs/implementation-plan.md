@@ -17,7 +17,7 @@ Status legend: `[ ]` not started · `[~]` partial or blocked · `[x]` done.
 | **A2** | Hosting decided: Beget VPS + Coolify, images built in GH Actions → GHCR. `/health` + `.dockerignore` fixed. |
 | **A3** | CI runs lint · type-check · test · build on every PR and on `main`, without WP secrets. |
 | **A8** | URL compatibility — 59 % of entries. `/<id>` and `/video/<segment>/` served; the whole `/category/*` family, `/video/short/` and every `/page/N/` at one 301 each. |
-| **C1–C8** | Button · IconButton · PageHeader · Pagination · Tabs · Dropdown · Checkbox · Carousel. |
+| **C1–C11** | Button · IconButton · PageHeader · Pagination · Tabs · Dropdown · Checkbox · Carousel, then header-v2 + header-mob + footer + footer-mob · Modal on Radix Dialog · the `Links` colour matrix. **Workstream C is closed.** |
 | **D1** | Home, desktop + mobile, nine sections. |
 | **D2** | News index + post detail. |
 | **D7** | Film catalogue + film page (Kinescope player, downloads, poster card, related films). |
@@ -25,6 +25,7 @@ Status legend: `[ ]` not started · `[~]` partial or blocked · `[x]` done.
 | **B2 · B3 · B7 · B-CPT** | Data layer: type generation unblocked · cache tags on every WP request · `fetchSearch` · the `profile`/`project` recon behind D3. |
 | **E3/E4** | Downloads ride in post content; Kinescope НКО approved and embedded. |
 | **F4** | Half: sitemap (8 248 URLs), robots, `metadataBase`, self-referential canonicals. |
+| **F6** | Half: prod `/conf_politics/` is correct and cookie consent is live on the legacy site; the footer's СМИ line + 12+ verified as WordPress data. |
 
 **Researched, not built:** the live site's shape and constraints (§6 of the notes) · 91 days of Yandex Metrica traffic (§7) · the WP content model and plugin landscape ([`wp-backend.md`](./wp-backend.md)) · the Figma token and page inventories ([`design-system.md`](./design-system.md), [`page-mocks.md`](./page-mocks.md)).
 
@@ -40,7 +41,7 @@ Measured, not guessed — the derivation is [notes §7](./implementation-notes.m
 
 Rank by **entry visits** first — that's what search sends, and what the iframe degrades. Then re-read by **pageviews**, because under A6 the body is the old design and a heavily-browsed page shows a visible seam. The two rank differently often enough that ignoring the second one gets the order wrong.
 
-**Tier 0 — blocks launch regardless of traffic.** ~~A8~~ ✅ · **A6** (the mechanism everything below Tier 2 depends on) · **B-VIDEO2** (film data) · **F6**'s `/conf_politics/` privacy text (96 views, but legally required, and the stale GA reference must go) + the footer СМИ line and 12+ badge.
+**Tier 0 — blocks launch regardless of traffic.** ~~A8~~ ✅ · **A6** (the mechanism everything below Tier 2 depends on) · **B-VIDEO2** (film data) · ~~**F6**'s `/conf_politics/` privacy text + the footer СМИ line and 12+ badge~~ ✅ — both closed 2026-08-13; what remains of F6 is the app's own consent banner (with **A4**) and the per-form checkbox (with **B6**), neither of which blocks a content launch.
 
 **Tier 1 — done.** D1 Home · D2 News · D7 Video. Remaining work on these is data and URLs, not markup.
 
@@ -61,11 +62,11 @@ A redesigned route auto-shadows its fallback, so Tier 3 is reversible page-by-pa
 
 ## Workstream A — Foundations
 
-- [ ] **A1b. Foundation drift** — two structural mismatches between Figma's tokens and the repo. **Blocks nothing but compounds.**
-  - **Breakpoints are 4-tier in Figma, 3-tier in code.** Figma ships `header-v2` at 1440 + demos at 1200 and 900, plus `header-mob` < 900; `media.css` has only `--mobile <900 / --small-desktop <1440 / --desktop ≥1440`. Add a `--tablet` at 1200 (or rename). Affects every responsive component.
+- [~] **A1b. Foundation drift** — one structural mismatch left between Figma's tokens and the repo. **Blocks nothing but compounds.**
+  - ~~**Breakpoints are 4-tier in Figma, 3-tier in code.**~~ ✅ **Done with C9, 2026-08-13** — `media.css` gained `--tablet (width < 1200px)`, *added* rather than renamed so the existing max-width tiers keep nesting. Note the design's two thresholds are not the same one: nav type steps down at 1440, side padding at 1200.
   - **Spacing: multiples of 4 vs 5.** Figma `spacing/*` is `0/5/10/15/20/25/35/45/65/80`; `Box` is `0/4/8/…/64`. Rebase `Box` or accept rounding — either way, document it.
 - [~] **A3 remainder.** CI ends at `pnpm build`; the **docker build + push-to-GHCR** step is missing, and the **Dockerfile has no `ARG WP_BASE` / `ARG WP_MEDIA_CDN`** in the `builder` stage, so `--build-arg` currently reaches nothing and `next/image` would 400 on remote images. Both land together.
-- [ ] **A4. Observability.** **Yandex Metrica only** (GA is excluded under current Russian regulations). Wire into `app/layout.tsx` behind a 152-FZ consent banner (F6). **Error tracking deferred** — rely on standalone-server stdout/stderr until traffic justifies a tool.
+- [ ] **A4. Observability.** **Yandex Metrica only** (GA is excluded under current Russian regulations, and was removed from prod on 2026-08-07). **Counter id `34478865`** — prod's own, so the new site inherits the history rather than starting a fresh counter. Wire into `app/layout.tsx` behind a 152-FZ consent banner (F6); the legacy site already shows one, so the app must not ship without it. **Error tracking deferred** — rely on standalone-server stdout/stderr until traffic justifies a tool.
 - [ ] **A5. Staging environment.** A second deployed instance pointed at od-dev so Design and editors can preview. ⚠️ Must set `SITE_URL` explicitly, or it advertises prod's canonicals.
 - [ ] **A6. Legacy-page fallback — Tier 0 blocker.** Serve the ~170 not-yet-redesigned pages as their old inner content inside the new header/footer, via an **iframe through a same-origin proxy route**; replace page-by-page. Decided 2026-06-08; full architecture in [`legacy-page-fallback.md`](./legacy-page-fallback.md). **A8 already landed the catch-all** (`app/[...slug]/page.tsx`), so what's left is: the frozen copy + its chromeless template, `app/legacy/[...slug]/route.ts`, the `LegacyEmbed` client component, and a denylist. Needs `WP_LEGACY_BASE`. **Blocked on a frozen-copy host.**
 - [ ] **A7. od-stage → prod migration — Tier 0 blocker.** Procedure in [`prod-migration-runbook.md`](./prod-migration-runbook.md). **Hard blockers in severity order:** REST is disabled on prod and stage (clearfy-pro) so nothing renders at all; prod stores CMSMasters shortcodes where od-dev stores Gutenberg (verified for pages, **unverified for `format=video` posts**); ACF isn't installed there; post ids and possibly category ids differ per environment. Run the whole runbook against od-stage first.
@@ -118,11 +119,14 @@ A redesigned route auto-shadows its fallback, so Tier 3 is reversible page-by-pa
 
 ## Workstream C — Design system
 
-**C1–C8 shipped.** What's left, per [`design-system.md` §4.4](./design-system.md#44-whats-left-to-build):
+**Closed 2026-08-13.** C1–C8 shipped earlier; **C9 · C10 · C11 shipped** — header-v2 + header-mob + footer + footer-mob promoted to the live modules, `Modal` moved onto Radix Dialog, and `Link` aligned to the `Links` matrix. Detail, and the three bugs C9 turned up, in [notes §2](./implementation-notes.md#2-shipped--design-system-c).
 
-- [ ] **C9. Promote `header-v2` + `header-mob` + `footer` + `footer-mob` to live `modules/`.** All four are now real Figma COMPONENTS (`1229:4371`, `1248:4486`, `838:1631`, `1261:7985`); `modules/Header` still consumes the older `header`/`header-scroll` masters. Two structural notes: **header-v2 includes the styled search input** (B7), and **header-mob is a separate 48-tall component**, not a CSS-responsive version — that changes how the swap is structured.
-- [ ] **C10. Modal review.** The current `Modal` is a custom portal — fine, but inconsistent with the otherwise-Radix stack. Decide whether to migrate to `@radix-ui/react-dialog` for focus-trap and a11y parity.
-- [ ] **C11. `Link` wrapper alignment.** Figma `Links` (`1330:36653`) is 3 Size × 3 Color (`Primary`/`red`/`white`) × 4 State = 36 cells; the repo's colour enum is different (`red | gray | white | lightgrey | darkgrey`). Align names + variants so calls match the spec.
+What the section leaves behind, tracked with the pages that need it rather than here:
+
+- **`Tabs`, controlled variant** — a client-state sibling for D9's role tabs; today's link-based form covers every other use.
+- **`Dropdown`, multi-select** — checkbox list + removable chips, when Materials filtering lands (D8).
+- **`Accordion`, `Add Circle` expand icon** — D4 contacts and D5 FAQ both want it.
+- **The header search field is presentational** until a `/search/` route exists (B7).
 
 ---
 
@@ -153,7 +157,11 @@ A redesigned route auto-shadows its fallback, so Tier 3 is reversible page-by-pa
 - [ ] **F3. Core Web Vitals budget.** Targets (LCP ≤ 2.5s, INP ≤ 200ms, CLS ≤ 0.1) wired to CI as a gate.
 - [~] **F4. SEO.** Sitemap/robots/canonicals shipped. **Left:** JSON-LD (`NewsArticle` per post, `VideoObject` per film, `Organization` site-wide) and an OG image fallback for pages without a featured image.
 - [ ] **F5. Russian-specific polish.** Verify Cyrillic font fallbacks on Windows / older Android. Confirm typographic conventions (em-dashes, non-breaking spaces, `«…»` quotes — confirmed by the live privacy policy).
-- [ ] **F6. 152-FZ compliance — partly Tier 0.** Port the live privacy text to `/conf_politics/` but **strip the Google Analytics reference**. Cookie banner gating Metrica only; per-form consent checkbox using the existing wording («Заполняя соответствующие формы, Пользователь выражает свое согласие…»). Footer must keep the СМИ registration line and the **12+** rating. No GDPR notice.
+- [~] **F6. 152-FZ compliance.** The privacy page and the legacy site's cookie consent are done, 2026-08-13 — what changed and why is [notes §5](./implementation-notes.md#f6-152-fz-compliance--the-privacy-page-and-the-legacy-consent-2026-08-13). **What's left rides on two other items:**
+  - **Consent banner in the app**, gating Metrica only — lands with **A4** (counter **34478865**). The legacy site has one now, so shipping the app without one would make §15.2 of the published policy false again.
+  - **Per-form consent checkbox** — lands with **B6**. The wording is already in the policy, §8.2: «Заполняя соответствующие формы и/или отправляя свои персональные данные Оператору, Пользователь выражает свое согласие с данной Политикой».
+  - **Two footer hrefs come from WordPress and break on this origin** — C9 renders widget markup verbatim, and `block-27`'s «Политика конфиденциальности» is the absolute `https://od-dev.tmweb.ru/conf_politics/`, while the СМИ выписка PDF is a root-relative `/wp-content/uploads/…` that only a WP origin answers (the file itself lives on the media CDN). Fix in od-dev's widget, not in `renderFooterWidget`.
+  - No GDPR notice, and **Google Analytics does not come back** — it was removed from prod on 2026-08-07 precisely because it shipped visitor data abroad for no need.
 
 ---
 
@@ -169,7 +177,7 @@ Real decisions needing a human (Design / PM / org leadership). Questions already
 - **Two reds.** `2_main_red` is `#F4322A`; `brand/red/8` is `#AE0A04` (canonical CTA / header fill). Where does `2_main_red` render? If nowhere, drop the style.
 - **`1_main_black` (`#151313`) and `4_line_gray` (`#BDBDBD`)** — neither is wired into the override. Confirm as canonical and wire up, or drop.
 - **Spacing scale** — rebase `Box` on multiples of 5, or round in-implementation? (A1b.)
-- **Breakpoint set** — add the 1200 tier? (A1b.)
+- ~~**Breakpoint set** — add the 1200 tier?~~ ✅ Added with C9. What Design still owes an answer on: **the nav row doesn't fit its own column below 1440** — eight labels plus chevrons measure 1126px against the 1200 frame's 1000px column, and Figma's 1200 and 900 frames simply overflow. Shipped compressed (8px padding) with wrap as the fallback; if the menu grows, this needs a real answer.
 - Are the Inter type styles on the `👉 UI` page deprecated or in use? (One known binding: the breadcrumb separator label in `page header`.)
 - For pages without an explicit `-mob` frame, is it responsive-only or are mobile mocks coming?
 - Status of the «Стань волонтером» iterations and the `1101:*` scratch — still in scope? (D9.)
@@ -208,9 +216,9 @@ Each of these blocks a named item:
 
 1. **A frozen-copy host for A6** + permission to add a chromeless template and enable REST on it → sets `WP_LEGACY_BASE`. **Blocks the whole legacy fallback.**
 2. **Go-ahead to write to od-stage.** A7 cannot be rehearsed anywhere else, and prod must not be the rehearsal.
-3. **Prod/stage WP admin** to turn off clearfy-pro's REST block — runbook blocker **B1**, the single largest migration blocker.
+3. ~~**Prod/stage WP admin** to turn off clearfy-pro's REST block~~ — **not an access problem after all.** On prod the block is one stored option (`clearfy_option.disable_json_rest_api = 'on'`, read 2026-08-13), and WP-CLI over `ssh timeweb` can flip it without the admin UI. Runbook blocker **B1** is now a **decision** — it exposes prod's REST surface publicly — rather than a credential we're waiting on. Runbook §2.1.
 4. **Editorial film data** (B-VIDEO2) — one video link per film, plus posters and featured images. A content problem, but it blocks the largest traffic block on the site.
-5. **Yandex Metrica account access** (counter id + rights to install the tag) for **A4**, and sign-off on the consent-banner copy for **F6**.
+5. **Yandex Metrica account access** for **A4** — the **counter id is known (34478865**, read off prod's own tag), so what's missing is rights on the account. The consent-banner copy no longer needs sign-off: prod publishes it («Этот сайт использует cookie для хранения данных. Продолжая использовать сайт, Вы даете свое согласие на работу с этими файлами.»), so the app can reuse that wording verbatim.
 6. **Forms backend details** for **B6** — CF7 form ids, notification targets, SmartCaptcha keys.
 7. **Beget VPS / Coolify + GHCR credentials** to finish the deploy half of **A3**.
 8. *(nice-to-have)* **The `wp-block-cb-carousel-v2` plugin source** — `parsePost.tsx` special-cases its markup and nothing documents what else ships with it. Only matters if B8 step 5 gets tricky.
@@ -236,9 +244,9 @@ Real, but they live in the issue tracker. Pulled 2026-05-30.
 1. **A6** legacy fallback — the mechanism that lets Tiers 3–4 ship as-is; it only has to fill the catch-all's non-numeric branch. **Blocked on a frozen-copy host.**
 2. **B-VIDEO2** film data — protects the 44 % of the site that is video. **Blocked on editors.**
 3. **A7** / [`prod-migration-runbook.md`](./prod-migration-runbook.md) — REST on prod, ACF, the worksheet, deploy, verification gates. Re-run gate 12 there; it's A8's only carry-over.
-4. **A4 + F6** — Metrica, consent, and the corrected privacy text. Legally required, traffic-irrelevant.
+4. **A4** — Metrica (counter 34478865) behind the app's own consent banner. Legally required, traffic-irrelevant. ~~F6's privacy text~~ ✅ is done; the banner is the last Tier-0-adjacent piece, and it is A4's to carry.
 5. **Tier 2 pages** — partial D8, D4 contacts, D3's `/profile/[slug]`.
 
 Everything else is post-prod, replaced page-by-page behind the fallback.
 
-**Parallel tracks that don't block the path:** A1b (breakpoints + spacing — the earlier it lands the less rework), A3's GHCR step, B8's WP cleanup, C9–C11, F1–F3, F5.
+**Parallel tracks that don't block the path:** A1b's remaining half (the spacing scale), A3's GHCR step, B8's WP cleanup, F1–F3, F5. ~~C9–C11~~ ✅ closed 2026-08-13.
