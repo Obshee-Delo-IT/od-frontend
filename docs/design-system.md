@@ -4,7 +4,7 @@ This is a working map between the **Figma `👉 UI` page** (the canonical design
 
 Last verified against Figma: **2026-05-30**, via the `figma-mcp-go` MCP — it gives variables, paints, text/effect styles, and component sets at a fidelity the earlier `TalkToFigma` scout couldn't reach. (Practical technique: navigate by frame **name** down to a small sub-frame — `search_nodes` → `get_node` → `save_screenshots`; whole-page reads time out.)
 
-Repo-side status last verified against the code: **2026-08-13**. The C1–C8 primitives that §3 once listed as missing have all shipped — see [`implementation-plan.md` Workstream C](./implementation-plan.md) for the per-component build notes.
+Repo-side status last verified against the code: **2026-08-13**. The C1–C8 primitives that §3 once listed as missing have all shipped — see [`implementation-notes.md` §2](./implementation-notes.md#2-shipped--design-system-c) for the per-component build notes.
 
 ---
 
