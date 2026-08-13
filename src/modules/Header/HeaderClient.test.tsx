@@ -45,8 +45,14 @@ describe('<HeaderClient />', () => {
     renderHeader();
 
     const nav = screen.getByRole('navigation', { name: 'Основная навигация' });
-    expect(within(nav).getByRole('link', { name: 'ВИДЕО' }).className).toContain('baseActive');
-    expect(within(nav).getByRole('link', { name: 'ГЛАВНАЯ' }).className).not.toContain('baseActive');
+    const active = within(nav).getByRole('link', { name: 'ВИДЕО' });
+    const idle = within(nav).getByRole('link', { name: 'ГЛАВНАЯ' });
+
+    expect(active.className).toContain('baseActive');
+    expect(idle.className).not.toContain('baseActive');
+    // Colour and weight alone leave a screen reader with nothing.
+    expect(active).toHaveAttribute('aria-current', 'page');
+    expect(idle).not.toHaveAttribute('aria-current');
   });
 
   it('keeps the donation CTA on the white Figma variant and opens it in a new tab', () => {
@@ -97,5 +103,34 @@ describe('<HeaderClient />', () => {
     await user.keyboard('{Escape}');
 
     expect(screen.getByRole('button', { name: 'Открыть меню' })).toBeInTheDocument();
+  });
+
+  it('closes the drawer when a row is tapped, including the page already open', async () => {
+    const user = userEvent.setup();
+    renderHeader();
+
+    await user.click(screen.getByRole('button', { name: 'Открыть меню' }));
+
+    // ВИДЕО is the current path: nothing navigates, so a pathname-derived close
+    // would leave the sheet up with body scroll still locked.
+    const drawerRow = screen.getAllByRole('link', { name: 'ВИДЕО' }).find((el) => !el.className.includes('base'));
+    await user.click(drawerRow as HTMLElement);
+
+    expect(screen.getByRole('button', { name: 'Открыть меню' })).toBeInTheDocument();
+    expect(document.body.style.overflow).toBe('');
+  });
+
+  it('marks a current section that has children — it renders as the accordion label, not a row', async () => {
+    mocks.pathname = '/about/';
+    const user = userEvent.setup();
+    renderHeader();
+
+    await user.click(screen.getByRole('button', { name: 'Открыть меню' }));
+
+    // The desktop nav renders the same label, so pick the accordion's copy.
+    const label = screen.getAllByText('О НАС').find((el) => el.className.includes('label'));
+    expect(label?.className).toContain('labelActive');
+
+    mocks.pathname = '/video/';
   });
 });

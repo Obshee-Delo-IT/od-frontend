@@ -10,16 +10,15 @@
 }
 
 /* While the drawer is open the bar has to sit at the top of the viewport, the
-   way the open-state mock (`1336:10127`) shows it — otherwise opening the menu
-   half-way down a page leaves the ✕ off-screen. Body scroll is already locked,
-   so nothing shifts underneath. */
+   way the open-state mock (`1336:10127`) shows it. `sticky`, not `fixed`: fixed
+   takes the bar out of the flow and everything below it jumps up 48px the
+   instant the menu opens — visible right through the scrim. Sticky pins it to
+   the viewport top and leaves its 48px where they were. */
 .open {
   @media (--mobile) {
-    position: fixed;
+    position: sticky;
     z-index: 110;
     top: 0;
-    right: 0;
-    left: 0;
   }
 }
 

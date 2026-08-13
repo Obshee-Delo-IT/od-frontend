@@ -31,7 +31,17 @@ interface LinkProps extends Omit<NextLinkProps, 'passHref'>, Omit<RadixLinkProps
 }
 
 export const Link: React.FC<PropsWithChildren<LinkProps>> = ({
+  // Radix owns these: it turns them into `rt-*` classes, so they have to be set
+  // on `RadixLink` itself. They used to ride along in the rest-spread; when the
+  // spread moved to `NextLink` they type-checked at every call site and silently
+  // did nothing — `underline="always"` and `weight="bold"` both stopped working.
   size,
+  underline = 'none',
+  weight,
+  trim,
+  truncate,
+  wrap,
+  highContrast,
   color = 'red',
   children,
   leftIcon = null,
@@ -42,8 +52,13 @@ export const Link: React.FC<PropsWithChildren<LinkProps>> = ({
   ...props
 }) => (
   <RadixLink
-    underline="none"
+    underline={underline}
     size={size}
+    weight={weight}
+    trim={trim}
+    truncate={truncate}
+    wrap={wrap}
+    highContrast={highContrast}
     className={clsx(
       css.link,
       css[color],

@@ -34,7 +34,7 @@ export const ButtonGroupItem: React.FC<PropsWithChildren<ButtonGroupItemProps>> 
           [css.baseActive]: active,
         })}
       >
-        <NextLink href={href} className={css.link}>
+        <NextLink href={href} className={css.link} aria-current={active ? 'page' : undefined}>
           <div className={css.text}>{children}</div>
           {!!content && <ChevronDownIcon className={css.icon} width={20} height={20} />}
         </NextLink>

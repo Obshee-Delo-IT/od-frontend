@@ -16,8 +16,16 @@ interface ImgElementProps {
 
 export const ImagePreviewClient = ({ children }: ImagePreviewClientProps) => {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  /**
+   * The thumbnail that opened the lightbox, so closing puts focus back on it
+   * instead of dropping the reader at the top of the document. State, not a ref:
+   * it is read while rendering `<Modal>`, which `react-hooks/refs` rightly
+   * forbids for a ref.
+   */
+  const [openedFrom, setOpenedFrom] = useState<HTMLElement | null>(null);
 
-  const handleImageClick = (src: string) => {
+  const handleImageClick = (src: string, trigger: HTMLElement | null) => {
+    setOpenedFrom(trigger);
     setSelectedImage(src);
   };
 
@@ -30,14 +38,14 @@ export const ImagePreviewClient = ({ children }: ImagePreviewClientProps) => {
 
     if (element.type === 'img' && props.src) {
       return cloneElement(element, {
-        onClick: () => handleImageClick(props.src as string),
+        onClick: (e: React.MouseEvent<HTMLElement>) => handleImageClick(props.src as string, e.currentTarget),
         className: `${props.className || ''} ${css.clickableImage}`,
         role: 'button',
         tabIndex: 0,
-        onKeyDown: (e: React.KeyboardEvent) => {
+        onKeyDown: (e: React.KeyboardEvent<HTMLElement>) => {
           if (e.key === 'Enter' || e.key === ' ') {
             e.preventDefault();
-            handleImageClick(props.src as string);
+            handleImageClick(props.src as string, e.currentTarget);
           }
         },
       } as Record<string, unknown>);
@@ -73,7 +81,7 @@ export const ImagePreviewClient = ({ children }: ImagePreviewClientProps) => {
   return (
     <>
       {processedChildren}
-      <Modal isOpen={!!selectedImage} onClose={handleClose} title="Просмотр изображения">
+      <Modal isOpen={!!selectedImage} onClose={handleClose} title="Просмотр изображения" restoreFocusTo={openedFrom}>
         {selectedImage && (
           <div className={css.imageWrapper}>
             <Image src={selectedImage} alt="" fill style={{ objectFit: 'contain' }} quality={80} />

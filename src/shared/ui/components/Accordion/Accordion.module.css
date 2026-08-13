@@ -33,6 +33,12 @@
   color: var(--gray-9);
 }
 
+/* The `Links`/Active cell — same red the drawer's leaf rows use for the current
+   section (`1336:10038`). */
+.labelActive {
+  color: var(--red-8);
+}
+
 .content {
   overflow: hidden;
 }

@@ -1,19 +1,28 @@
 /* `header-mob` open state (`1336:10127`): a white sheet under the 48-tall bar,
    330 wide inside 360 → 15px of side padding, rows of 42 (10 + 22 + 10) each
-   closed by a gray-4 rule. */
+   closed by a gray-4 rule.
+
+   The sheet and its scrim are guarded with the bar they belong to. `MobileMenu`
+   renders on `isOpen` alone, so without the guard the sheet paints over the
+   desktop layout for the frame between a resize past 900 and the media-query
+   listener in `HeaderClient` closing it. */
 
 .menu {
-  position: fixed;
-  z-index: 100;
-  top: 48px;
-  left: 0;
-  display: flex;
-  width: 100%;
-  max-height: calc(100dvh - 48px);
-  flex-direction: column;
-  padding: 0 15px;
-  background-color: var(--white);
-  overflow-y: auto;
+  display: none;
+
+  @media (--mobile) {
+    position: fixed;
+    z-index: 100;
+    top: 48px;
+    left: 0;
+    display: flex;
+    width: 100%;
+    max-height: calc(100dvh - 48px);
+    flex-direction: column;
+    padding: 0 15px;
+    background-color: var(--white);
+    overflow-y: auto;
+  }
 }
 
 .row {
@@ -42,9 +51,14 @@
 }
 
 .overlay {
-  position: fixed;
-  z-index: 90;
-  backdrop-filter: blur(2px);
-  background: rgb(0 0 0 / 40%);
-  inset: 48px 0 0 0;
+  display: none;
+
+  @media (--mobile) {
+    position: fixed;
+    z-index: 90;
+    display: block;
+    backdrop-filter: blur(2px);
+    background: rgb(0 0 0 / 40%);
+    inset: 48px 0 0 0;
+  }
 }

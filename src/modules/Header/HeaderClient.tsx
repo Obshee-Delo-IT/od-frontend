@@ -78,8 +78,25 @@ const HeaderClient = ({ navItems }: HeaderClientProps) => {
       }
     };
 
+    /**
+     * The drawer belongs to `header-mob`; the desktop bar has no button to close
+     * it with. Widening past the mobile tier while it is open would otherwise
+     * leave a white sheet over the page — and, worse, the scroll lock on with no
+     * way to release it.
+     */
+    const leftMobile = window.matchMedia('(min-width: 900px)');
+    const closeOnWiden = (event: MediaQueryListEvent) => {
+      if (event.matches) {
+        setOpenedAt(null);
+      }
+    };
+
     document.addEventListener('keydown', closeOnEscape);
-    return () => document.removeEventListener('keydown', closeOnEscape);
+    leftMobile.addEventListener('change', closeOnWiden);
+    return () => {
+      document.removeEventListener('keydown', closeOnEscape);
+      leftMobile.removeEventListener('change', closeOnWiden);
+    };
   }, [isOpen]);
 
   return (

@@ -1,6 +1,7 @@
 import { Theme } from '@radix-ui/themes';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { useRef, useState } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { Modal } from './Modal';
 
@@ -45,6 +46,34 @@ describe('<Modal />', () => {
     await user.keyboard('{Escape}');
 
     expect(onClose).toHaveBeenCalledOnce();
+  });
+
+  it('hands focus back to whatever opened it', async () => {
+    const user = userEvent.setup();
+
+    // Mirrors ImagePreview: the opener is remembered, then handed back on close.
+    const Harness = () => {
+      const [open, setOpen] = useState(true);
+      const trigger = useRef<HTMLButtonElement>(null);
+
+      return (
+        <Theme accentColor="red">
+          <button type="button" ref={trigger} onClick={() => setOpen(true)}>
+            Миниатюра
+          </button>
+          <Modal isOpen={open} onClose={() => setOpen(false)} title="Просмотр" restoreFocusTo={trigger.current}>
+            <span>Содержимое</span>
+          </Modal>
+        </Theme>
+      );
+    };
+
+    render(<Harness />);
+    await user.keyboard('{Escape}');
+
+    // Radix's own close handler focuses its Dialog.Trigger, of which this dialog
+    // has none — without `restoreFocusTo` focus lands on <body>.
+    expect(await screen.findByRole('button', { name: 'Миниатюра' })).toHaveFocus();
   });
 
   it('takes focus and hides the rest of the page from assistive tech', async () => {
