@@ -23,9 +23,13 @@ export const proxy = (request: NextRequest) => {
     return NextResponse.next();
   }
 
-  // 308 rather than 307: these moves are permanent, and unlike 301 it forbids
-  // the method rewrite that would turn a POST into a GET.
-  return NextResponse.redirect(new URL(destination, request.url), 308);
+  // 301, not 308. Both mean «moved permanently» and Google treats them as
+  // equivalent, but Yandex — the engine most of this audience arrives from —
+  // documents 301 and 302 only, and has never confirmed it consolidates
+  // signals across a 308. Every URL in this table is a plain GET arriving from
+  // search, so the one thing 308 buys over 301 (no POST→GET rewrite) is worth
+  // nothing here.
+  return NextResponse.redirect(new URL(destination, request.url), 301);
 };
 
 export const config = {

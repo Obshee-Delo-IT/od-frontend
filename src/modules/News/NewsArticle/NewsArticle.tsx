@@ -1,6 +1,8 @@
 import { Text } from '@radix-ui/themes';
 import dayjs from 'dayjs';
 import { cachedFetchNews } from '@/shared/api/fetchNews';
+import { buildNewsPreview } from '@/shared/api/newsPreview';
+import { canonicalUrl } from '@/shared/config/site';
 import { Box } from '@/shared/ui/components/Box';
 import { Breadcrumbs } from '@/shared/ui/components/Breadcrumbs';
 import { GutenbergProvider } from '@/shared/ui/theme';
@@ -16,15 +18,36 @@ export interface NewsArticleProps {
   id: string;
 }
 
-export const newsMetadata = (post: Awaited<ReturnType<typeof cachedFetchNews>>): Metadata => ({
-  title: post?.title?.rendered,
-  openGraph: {
-    type: 'website',
-    countryName: 'Russia',
-    title: post?.title?.rendered,
-    locale: 'ru-RU',
-  },
-});
+/**
+ * `id` is passed in rather than read off the post because the canonical URL is
+ * the legacy `/<id>/` this route was reached by — the same address the sitemap
+ * publishes and `/news/<id>` redirects to.
+ */
+export const newsMetadata = (post: Awaited<ReturnType<typeof cachedFetchNews>>, id: string): Metadata => {
+  const title = post?.title?.rendered;
+  // Same source as the film page: WP's excerpt, stripped of markup, falling
+  // back to the body for the many posts that have no manual excerpt.
+  const description = buildNewsPreview(post?.excerpt?.rendered, post?.content?.rendered) ?? undefined;
+  const url = canonicalUrl(`/${id}/`);
+
+  return {
+    title,
+    description,
+    alternates: { canonical: url },
+    openGraph: {
+      type: 'article',
+      url,
+      countryName: 'Russia',
+      // Open Graph wants the underscore form; `ru-RU` is silently ignored.
+      locale: 'ru_RU',
+      title,
+      description,
+      // WP omits the zone designator on its GMT timestamps.
+      publishedTime: post?.date_gmt ? `${post.date_gmt}Z` : undefined,
+      modifiedTime: post?.modified_gmt ? `${post.modified_gmt}Z` : undefined,
+    },
+  };
+};
 
 /**
  * The news/article detail page. Lives in the module rather than in `app/`

@@ -3,6 +3,7 @@ import 'dayjs/locale/ru';
 import { NewsFilter, type NewsFilterOption } from '@/modules/News';
 import { NewsletterSignup } from '@/modules/NewsletterSignup';
 import { fetchNewsList } from '@/shared/api';
+import { canonicalUrl } from '@/shared/config/site';
 import { Box } from '@/shared/ui/components/Box';
 import { NewsCard } from '@/shared/ui/components/NewsCard';
 import { PageHeader } from '@/shared/ui/components/PageHeader';
@@ -29,10 +30,7 @@ const CATEGORY_IDS: Record<string, number> = {
   articles: 578,
 };
 
-export const metadata: Metadata = {
-  title: 'Новости — ОБЩЕЕ ДЕЛО',
-  description: 'Новости и статьи общероссийской общественной организации «Общее дело»',
-};
+const DESCRIPTION = 'Новости и статьи общероссийской общественной организации «Общее дело»';
 
 interface NewsPageProps {
   searchParams: Promise<{ category?: string | string[]; page?: string | string[] }>;
@@ -53,14 +51,45 @@ const buildHref = ({ category, page }: { category: string | null; page: number }
   return qs ? `/news?${qs}` : '/news';
 };
 
+/**
+ * The *effective* filter and page — an unknown category or a junk page number
+ * falls back to the unfiltered first page. Shared with `generateMetadata` so
+ * the canonical always describes what was actually rendered: `?category=47`
+ * (where the legacy redirects still point) canonicalises to plain `/news/`
+ * rather than advertising a filter that isn't applied.
+ */
+const resolveParams = ({ category, page }: Awaited<NewsPageProps['searchParams']>) => {
+  const categoryParam = firstParam(category);
+  const pageParam = Number(firstParam(page));
+  return {
+    activeCategory: categoryParam && categoryParam in CATEGORY_IDS ? categoryParam : null,
+    currentPage: Number.isFinite(pageParam) && pageParam > 1 ? Math.floor(pageParam) : 1,
+  };
+};
+
+/**
+ * Every filtered and paginated variant self-canonicalises. Collapsing them onto
+ * `/news/` instead would drop pages 2+ out of the index entirely, and they are
+ * the only path to older posts for a crawler that doesn't read the sitemap.
+ */
+export const generateMetadata = async ({ searchParams }: NewsPageProps): Promise<Metadata> => {
+  const { activeCategory, currentPage } = resolveParams(await searchParams);
+  const url = canonicalUrl(buildHref({ category: activeCategory, page: currentPage }));
+
+  const label = FILTER_OPTIONS.find((option) => option.value === activeCategory)?.label;
+  const scope = activeCategory && label ? `Новости: ${label}` : 'Новости';
+  const title = `${scope}${currentPage > 1 ? `, страница ${currentPage}` : ''} — ОБЩЕЕ ДЕЛО`;
+
+  return {
+    title,
+    description: DESCRIPTION,
+    alternates: { canonical: url },
+    openGraph: { url, title, description: DESCRIPTION },
+  };
+};
+
 const Page = async ({ searchParams }: NewsPageProps) => {
-  const params = await searchParams;
-
-  const categoryParam = firstParam(params.category);
-  const activeCategory = categoryParam && categoryParam in CATEGORY_IDS ? categoryParam : null;
-
-  const pageParam = Number(firstParam(params.page));
-  const currentPage = Number.isFinite(pageParam) && pageParam > 1 ? Math.floor(pageParam) : 1;
+  const { activeCategory, currentPage } = resolveParams(await searchParams);
 
   const { items, totalPages } = await fetchNewsList({
     page: currentPage,

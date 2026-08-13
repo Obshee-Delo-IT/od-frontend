@@ -2,6 +2,7 @@ import '@/shared/ui/styles/global.css';
 import { PT_Sans as PTSans, PT_Sans_Narrow as PtSansNarrow } from 'next/font/google';
 import { Footer } from '@/modules/Footer';
 import { HeaderServer } from '@/modules/Header';
+import { siteUrl } from '@/shared/config/site';
 import { Container } from '@/shared/ui/components/Container';
 import { RadixProvider } from '@/shared/ui/theme';
 import type { Metadata } from 'next';
@@ -19,9 +20,35 @@ const ptSansNarrow = PtSansNarrow({
   weight: ['700'],
 });
 
+const SITE_NAME = 'ОБЩЕЕ ДЕЛО';
+const SITE_DESCRIPTION = 'Общероссийская общественная организация';
+
 export const metadata: Metadata = {
-  title: 'ОБЩЕЕ ДЕЛО',
-  description: 'Общероссийская общественная организация',
+  /**
+   * Without this, a relative `alternates.canonical` is emitted relative *and*
+   * slashless — pointing every crawler at a 308 — and relative OG images fall
+   * back to `http://localhost:3000`. It is inherited by every segment.
+   */
+  metadataBase: new URL(siteUrl),
+  // No `title.template`: the page titles already carry the « — ОБЩЕЕ ДЕЛО»
+  // suffix, and a template would double it.
+  title: SITE_NAME,
+  description: SITE_DESCRIPTION,
+  openGraph: {
+    type: 'website',
+    siteName: SITE_NAME,
+    title: SITE_NAME,
+    description: SITE_DESCRIPTION,
+    // Open Graph wants the underscore form; `ru-RU` is silently ignored.
+    locale: 'ru_RU',
+    countryName: 'Russia',
+  },
+  /**
+   * Carried over from the live WP template (confirmed against the production
+   * host, not the dev copy) — Yandex Webmaster ownership is verified by this
+   * meta tag and would be lost the moment the frontend takes the domain.
+   */
+  verification: { yandex: '5970d7ec7d8e8b0b' },
 };
 
 const RootLayout = ({

@@ -14,7 +14,7 @@ import type { Metadata } from 'next';
  * The live site serves **every** post — news, article, film, event report — at
  * a bare `/<id>/`, and those URLs carry 46 % of all site entries (Yandex
  * Metrica, 91 days). So `/<id>` is the canonical post URL here too: we render
- * the page at the address search engines already know instead of 308ing to a
+ * the page at the address search engines already know instead of redirecting to a
  * redesigned one. `/news/<id>` and `/video/<id>` redirect *into* this route
  * (see `next.config.ts`), not the other way round.
  *
@@ -75,7 +75,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     return film ? filmMetadata(film) : {};
   }
   if (kind === 'news') {
-    return newsMetadata(await cachedFetchNews(id));
+    return newsMetadata(await cachedFetchNews(id), id);
   }
   return {};
 }

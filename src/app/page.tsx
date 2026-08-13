@@ -13,15 +13,25 @@ import {
 } from '@/modules/Home';
 import { NewsletterSignup } from '@/modules/NewsletterSignup';
 import { fetchFilms, fetchLatestNews } from '@/shared/api';
+import { canonicalUrl } from '@/shared/config/site';
 import { Box } from '@/shared/ui/components/Box';
 import type { Metadata } from 'next';
 
 export const revalidate = 3600;
 export const dynamicParams = true;
 
+const TITLE = 'ОБЩЕЕ ДЕЛО — общероссийская общественная организация';
+const DESCRIPTION = 'Поддержка президентских инициатив в области здоровьесбережения нации';
+
 export const metadata: Metadata = {
-  title: 'ОБЩЕЕ ДЕЛО — общероссийская общественная организация',
-  description: 'Поддержка президентских инициатив в области здоровьесбережения нации',
+  title: TITLE,
+  description: DESCRIPTION,
+  alternates: { canonical: canonicalUrl('/') },
+  openGraph: {
+    url: canonicalUrl('/'),
+    title: TITLE,
+    description: DESCRIPTION,
+  },
 };
 
 dayjs.locale('ru');

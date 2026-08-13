@@ -1,90 +1,90 @@
-import { FILM_CATEGORY_IDS, LEGACY_FILM_SEGMENTS } from './filmCategories';
+import { catalogueHref, resolveFilmCategory, type FilmCategorySegment } from './filmCategories';
 
 /**
- * URL compatibility with the site we're replacing (A8).
+ * WordPress's own catalogue alias `/category/video/<segment>/` spells the
+ * categories differently from the site's `/video/<segment>/` pages. Low volume
+ * overall, but `/category/video/mult/` alone is 256 entries.
+ */
+const WP_CATEGORY_ALIASES: Record<string, FilmCategorySegment> = {
+  movies: 'filmy',
+  mult: 'multy',
+  roliki: 'roliki',
+  famous: 'famous-people',
+};
+
+/** `/category/<slug>/` for news → the filter key the `/news/` chips use. */
+const NEWS_CATEGORY_ALIASES: Record<string, string> = {
+  novosti: 'nashi-dela',
+  articles: 'articles',
+};
+
+/** A legacy path segment as a page number; junk and «page 1» alike mean 1. */
+const pageNumber = (value: string | undefined): number => {
+  const page = Number(value);
+  return Number.isFinite(page) && page > 1 ? Math.floor(page) : 1;
+};
+
+/** Page 1 is the bare index, so it never acquires a second address. */
+const newsHref = (page: number): string => (page > 1 ? `/news/?page=${page}` : '/news/');
+
+/**
+ * URL compatibility with the live site we're replacing (A8).
  *
- * Measured on 91 days of Yandex Metrica, the shapes handled here carry ~13 % of
- * all site entries and the redesign serves none of them natively. The biggest
- * legacy shape — a bare `/<id>/` post, 46 % of entries — is **not** here: it is
- * rendered directly by `app/[...slug]/page.tsx`, so it takes no redirect at all.
+ * Every shape here is one the **live** site serves — measured on 91 days of
+ * Yandex Metrica they carry ~13 % of all site entries. URLs that only ever
+ * existed on our own unlaunched rebuild are deliberately absent: nothing links
+ * to them and no search index holds them, so a rule for one would be dead code
+ * outliving its reason.
  *
- * **Why this is a function and not a `redirects()` table.** Next strips the
- * trailing slash off a `redirects()` destination and its own `trailingSlash`
- * normalisation then 308s it back on, making every legacy URL a two-hop chain.
- * Returning the final, already-normalised path from `middleware.ts` collapses
- * that to one hop. The middleware's `matcher` is scoped to these four prefixes,
- * so nothing else pays for it.
+ * The two biggest legacy shapes aren't redirects at all — `/<id>/` posts (46 %
+ * of entries) are rendered by `app/[...slug]/page.tsx`, and the catalogue
+ * categories are real routes under `/video/<segment>/`.
+ *
+ * **Why a function and not a `redirects()` table.** Next strips the trailing
+ * slash off a `redirects()` destination and its own `trailingSlash`
+ * normalisation then 301s it back on, making every legacy URL a two-hop chain.
+ * Returning the final, already-normalised path from the proxy collapses that to
+ * one hop. Config redirects also run *before* the proxy, so a rule left there
+ * would silently shadow this.
  *
  * Returns the destination path (**with** its trailing slash, so Next has
  * nothing left to normalise), or `null` to let the request through untouched.
  */
 export const resolveLegacyUrl = (pathname: string): string | null => {
-  const segments = pathname.split('/').filter(Boolean);
-  const [first, second, third] = segments;
+  const [first, second, third, fourth, fifth] = pathname.split('/').filter(Boolean);
 
   if (first === 'video') {
-    // The catalogue index itself, and `/video/<id>` which folds into `/<id>`.
-    if (!second) {
-      return null;
-    }
-    if (/^\d+$/.test(second)) {
-      return `/${second}/`;
-    }
-    // «короткометражки» has no WP category — the live page is a curated list,
-    // so it lands on the full catalogue.
+    // «Короткометражки» has no WP category — the live page is a curated list.
     if (second === 'short') {
       return '/video/';
     }
-    const slug = LEGACY_FILM_SEGMENTS[second];
-    // NB the index resolves `?category=` by *slug*, not by category id — an id
-    // silently falls back to «Все».
-    return slug ? `/video/?category=${slug}` : null;
-  }
-
-  if (first === 'news') {
-    if (!second) {
-      return null;
+    // WP paginated a category with a path segment; we use a query param.
+    const segment = resolveFilmCategory(second);
+    if (segment && third === 'page') {
+      return catalogueHref({ segment, page: pageNumber(fourth) });
     }
-    if (/^\d+$/.test(second)) {
-      return `/${second}/`;
-    }
-    // WP paginates with a path segment; we use a query param.
-    if (second === 'page' && /^\d+$/.test(third ?? '')) {
-      return third === '1' ? '/news/' : `/news/?page=${third}`;
-    }
+    // Everything else under `/video/` is served here: the index and each category.
     return null;
   }
 
-  // The live home is a paginated feed; its later pages are the news archive.
-  if (first === 'page' && /^\d+$/.test(second ?? '')) {
-    return second === '1' ? '/' : `/news/?page=${second}`;
+  if (first === 'news' && second === 'page') {
+    return newsHref(pageNumber(third));
+  }
+
+  // The live home is a paginated feed whose later pages are the news archive.
+  if (first === 'page' && second) {
+    return newsHref(pageNumber(second));
   }
 
   if (first === 'category') {
-    // `/category/video/*` is a second, older alias of the catalogue — low total
-    // volume, but `/category/video/mult/` alone is 256 entries. Its segments
-    // (`movies`, `mult`, `roliki`, `famous`) are already our own slugs.
     if (second === 'video') {
-      const rest = segments.slice(2);
-      const slug = rest[0] && rest[0] !== 'page' ? rest[0] : null;
-      const pageAt = slug ? 1 : 0;
-      const page = rest[pageAt] === 'page' && /^\d+$/.test(rest[pageAt + 1] ?? '') ? rest[pageAt + 1] : null;
-
-      const query = new URLSearchParams();
-      if (slug && slug in FILM_CATEGORY_IDS) {
-        query.set('category', slug);
-      }
-      if (page && page !== '1') {
-        query.set('page', page);
-      }
-      const search = query.toString();
-      return search ? `/video/?${search}` : '/video/';
+      // Either `/category/video/<segment>/page/N/` or `/category/video/page/N/`.
+      const segment = WP_CATEGORY_ALIASES[third] ?? null;
+      return catalogueHref({ segment, page: pageNumber(segment ? fifth : fourth) });
     }
-    if (second === 'novosti') {
-      return '/news/?category=47';
-    }
-    if (second === 'articles') {
-      return '/news/?category=578';
+    const news = NEWS_CATEGORY_ALIASES[second];
+    if (news) {
+      return `/news/?category=${news}`;
     }
   }
 

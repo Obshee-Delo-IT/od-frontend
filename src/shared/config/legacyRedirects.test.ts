@@ -1,74 +1,85 @@
 import { describe, expect, it } from 'vitest';
-import { FILM_CATEGORY_IDS } from './filmCategories';
 import { resolveLegacyUrl } from './legacyRedirects';
 
 describe('resolveLegacyUrl', () => {
-  it('maps every live catalogue sub-page to the index filter', () => {
-    expect(resolveLegacyUrl('/video/filmy/')).toBe('/video/?category=movies');
-    expect(resolveLegacyUrl('/video/multy/')).toBe('/video/?category=mult');
-    expect(resolveLegacyUrl('/video/roliki/')).toBe('/video/?category=roliki');
-    expect(resolveLegacyUrl('/video/famous-people/')).toBe('/video/?category=famous');
-    // «короткометражки» has no WP category — the full catalogue is the fallback.
+  it('leaves the catalogue alone — those are served, not redirected', () => {
+    // /video/multy/ and /video/filmy/ are the #2 and #3 entry pages on the
+    // site. Redirecting them into a ?category= query would hand a crawler a
+    // URL it attributes back to /video/.
+    expect(resolveLegacyUrl('/video/')).toBeNull();
+    expect(resolveLegacyUrl('/video/filmy/')).toBeNull();
+    expect(resolveLegacyUrl('/video/multy/')).toBeNull();
+    expect(resolveLegacyUrl('/video/roliki/')).toBeNull();
+    expect(resolveLegacyUrl('/video/famous-people/')).toBeNull();
+  });
+
+  it('sends «короткометражки» to the full catalogue — no such WP category', () => {
     expect(resolveLegacyUrl('/video/short/')).toBe('/video/');
   });
 
-  it('targets the index by slug, never by category id', () => {
-    // `?category=581` is not a miss but a silent fallback to «Все», so it would
-    // answer 200 while showing the wrong list. This is the regression guard.
-    const ids = Object.values(FILM_CATEGORY_IDS).map(String);
-    const paths = [
-      '/video/filmy/',
-      '/video/multy/',
-      '/video/roliki/',
-      '/video/famous-people/',
-      '/category/video/mult/',
-      '/category/video/movies/',
-    ];
-
-    paths.forEach((path) => {
-      const category = new URL(resolveLegacyUrl(path) ?? '', 'https://x').searchParams.get('category');
-      expect(category).not.toBeNull();
-      expect(ids).not.toContain(category);
-      expect(category! in FILM_CATEGORY_IDS).toBe(true);
-    });
+  it('turns WordPress path pagination into the query param we use', () => {
+    expect(resolveLegacyUrl('/video/filmy/page/2/')).toBe('/video/filmy/?page=2');
+    expect(resolveLegacyUrl('/news/page/2/')).toBe('/news/?page=2');
+    expect(resolveLegacyUrl('/page/2/')).toBe('/news/?page=2');
   });
 
-  it('folds the redesigned detail URLs into the canonical /<id>', () => {
-    expect(resolveLegacyUrl('/video/67400/')).toBe('/67400/');
-    expect(resolveLegacyUrl('/news/60862/')).toBe('/60862/');
+  it('collapses page 1 onto the bare index', () => {
+    expect(resolveLegacyUrl('/news/page/1/')).toBe('/news/');
+    expect(resolveLegacyUrl('/page/1/')).toBe('/news/');
+    expect(resolveLegacyUrl('/video/filmy/page/1/')).toBe('/video/filmy/');
   });
 
-  it('handles the /category/video alias, including its own segments', () => {
-    expect(resolveLegacyUrl('/category/video/mult/')).toBe('/video/?category=mult');
-    expect(resolveLegacyUrl('/category/video/movies/')).toBe('/video/?category=movies');
-    expect(resolveLegacyUrl('/category/video/roliki/')).toBe('/video/?category=roliki');
-    expect(resolveLegacyUrl('/category/video/famous/')).toBe('/video/?category=famous');
+  it('maps the /category/video alias onto the catalogue’s own segments', () => {
+    // WordPress spells these differently from the site's pages.
+    expect(resolveLegacyUrl('/category/video/movies/')).toBe('/video/filmy/');
+    expect(resolveLegacyUrl('/category/video/mult/')).toBe('/video/multy/');
+    expect(resolveLegacyUrl('/category/video/roliki/')).toBe('/video/roliki/');
+    expect(resolveLegacyUrl('/category/video/famous/')).toBe('/video/famous-people/');
     expect(resolveLegacyUrl('/category/video/')).toBe('/video/');
-    // An unrecognised segment degrades to the full catalogue rather than 404ing.
-    expect(resolveLegacyUrl('/category/video/nonsense/')).toBe('/video/');
   });
 
-  it('keeps both the category and the page when the alias carries pagination', () => {
-    expect(resolveLegacyUrl('/category/video/movies/page/2/')).toBe('/video/?category=movies&page=2');
+  it('keeps both the category and the page from a paginated alias', () => {
+    expect(resolveLegacyUrl('/category/video/movies/page/2/')).toBe('/video/filmy/?page=2');
     expect(resolveLegacyUrl('/category/video/page/3/')).toBe('/video/?page=3');
   });
 
-  it('rewrites path pagination to the query param we use', () => {
-    expect(resolveLegacyUrl('/news/page/2/')).toBe('/news/?page=2');
-    expect(resolveLegacyUrl('/page/2/')).toBe('/news/?page=2');
-    // Page 1 is the bare index — no redundant `?page=1` in the destination.
-    expect(resolveLegacyUrl('/news/page/1/')).toBe('/news/');
-    expect(resolveLegacyUrl('/page/1/')).toBe('/');
+  it('degrades an unrecognised alias segment to the full catalogue', () => {
+    expect(resolveLegacyUrl('/category/video/nonsense/')).toBe('/video/');
+  });
+
+  it('maps the news category aliases to filter keys /news/ actually accepts', () => {
+    // The ids (47 / 578) are not filter keys — pointing at them would answer
+    // 200 with an unfiltered list, the same silent failure the catalogue had.
+    expect(resolveLegacyUrl('/category/novosti/')).toBe('/news/?category=nashi-dela');
+    expect(resolveLegacyUrl('/category/articles/')).toBe('/news/?category=articles');
+  });
+
+  it('never redirects a URL that only existed on our own rebuild', () => {
+    // /news/<id> and /video/<id> were this project's first cut of the post
+    // routes — never public, never indexed. /<id>/ is served directly, and
+    // /video/67400/ falls through to the segment route's 404.
+    expect(resolveLegacyUrl('/video/67400/')).toBeNull();
+    expect(resolveLegacyUrl('/news/60862/')).toBeNull();
+  });
+
+  it('leaves the routes we serve, and everything A6 will serve, alone', () => {
+    expect(resolveLegacyUrl('/')).toBeNull();
+    expect(resolveLegacyUrl('/news/')).toBeNull();
+    expect(resolveLegacyUrl('/67400/')).toBeNull();
+    expect(resolveLegacyUrl('/about/')).toBeNull();
+    expect(resolveLegacyUrl('/materials/plakati/')).toBeNull();
+    expect(resolveLegacyUrl('/health/')).toBeNull();
+    expect(resolveLegacyUrl('/page/')).toBeNull();
   });
 
   it('always returns a slash-terminated path, so nothing is left to normalise', () => {
     const destinations = [
-      '/video/filmy/',
-      '/video/67400/',
-      '/news/60862/',
+      '/video/short/',
+      '/video/filmy/page/2/',
       '/news/page/2/',
       '/page/2/',
       '/category/video/mult/',
+      '/category/video/movies/page/2/',
       '/category/novosti/',
     ].map((path) => resolveLegacyUrl(path));
 
@@ -78,18 +89,22 @@ describe('resolveLegacyUrl', () => {
     });
   });
 
-  it('leaves the routes we actually serve alone', () => {
-    expect(resolveLegacyUrl('/')).toBeNull();
-    expect(resolveLegacyUrl('/video/')).toBeNull();
-    expect(resolveLegacyUrl('/news/')).toBeNull();
-    expect(resolveLegacyUrl('/67400/')).toBeNull();
-    expect(resolveLegacyUrl('/about/')).toBeNull();
-    expect(resolveLegacyUrl('/materials/plakati/')).toBeNull();
-    expect(resolveLegacyUrl('/health/')).toBeNull();
-  });
+  it('never lands on a destination that itself redirects', () => {
+    const paths = [
+      '/video/short/',
+      '/video/filmy/page/2/',
+      '/news/page/2/',
+      '/page/2/',
+      '/category/video/mult/',
+      '/category/video/movies/page/2/',
+      '/category/video/',
+      '/category/novosti/',
+      '/category/articles/',
+    ];
 
-  it('maps the two news category aliases', () => {
-    expect(resolveLegacyUrl('/category/novosti/')).toBe('/news/?category=47');
-    expect(resolveLegacyUrl('/category/articles/')).toBe('/news/?category=578');
+    paths.forEach((path) => {
+      const destination = resolveLegacyUrl(path)!;
+      expect(resolveLegacyUrl(destination.split('?')[0])).toBeNull();
+    });
   });
 });

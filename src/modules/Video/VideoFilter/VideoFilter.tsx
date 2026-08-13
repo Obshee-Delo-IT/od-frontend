@@ -21,9 +21,10 @@ export interface VideoFilterProps {
 }
 
 /**
- * Category switcher for `/video`: a «Подобрать фильм по теме» {@link Dropdown}
- * on desktop, the {@link Tabs} strip on mobile (toggled by CSS). Both navigate
- * to the option's precomputed href — the page reads `?category=` to filter.
+ * Category switcher for the catalogue: a «Подобрать фильм по теме»
+ * {@link Dropdown} on desktop, the {@link Tabs} strip on mobile (toggled by
+ * CSS). Both navigate to the option's precomputed href, which is the category's
+ * own page — `/video/multy/`, not `/video/?category=mult`.
  */
 export const VideoFilter: React.FC<VideoFilterProps> = ({ options, active, className }) => {
   const router = useRouter();

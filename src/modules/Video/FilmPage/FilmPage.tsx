@@ -3,7 +3,8 @@ import { ImagePreviewClient } from '@/modules/News/ImagePreview';
 import { parsePost, resolveContentImages } from '@/modules/News/utils';
 import { cachedFetchVideo, fetchVideoList, resolveMediaUrl } from '@/shared/api';
 import { wpBaseUrl } from '@/shared/api/httpClient';
-import { ALL_FILM_CATEGORY_IDS } from '@/shared/config/filmCategories';
+import { ALL_FILM_CATEGORY_IDS, catalogueHref } from '@/shared/config/filmCategories';
+import { canonicalUrl } from '@/shared/config/site';
 import { Box } from '@/shared/ui/components/Box';
 import { Breadcrumbs } from '@/shared/ui/components/Breadcrumbs';
 import { GutenbergProvider } from '@/shared/ui/theme';
@@ -21,17 +22,27 @@ export interface FilmPageProps {
   id: string;
 }
 
-export const filmMetadata = (film: NonNullable<Awaited<ReturnType<typeof cachedFetchVideo>>>): Metadata => ({
-  title: `${film.title} — ОБЩЕЕ ДЕЛО`,
-  description: film.excerpt ?? undefined,
-  openGraph: {
-    type: 'video.movie',
-    countryName: 'Russia',
-    locale: 'ru-RU',
-    title: film.title,
-    images: film.thumbnailUrl ? [film.thumbnailUrl] : undefined,
-  },
-});
+export const filmMetadata = (film: NonNullable<Awaited<ReturnType<typeof cachedFetchVideo>>>): Metadata => {
+  // The canonical is the legacy `/<id>/` this page is served at — the address
+  // the sitemap publishes and `/video/<id>` redirects to.
+  const url = canonicalUrl(`/${film.id}/`);
+
+  return {
+    title: `${film.title} — ОБЩЕЕ ДЕЛО`,
+    description: film.excerpt ?? undefined,
+    alternates: { canonical: url },
+    openGraph: {
+      type: 'video.movie',
+      url,
+      countryName: 'Russia',
+      // Open Graph wants the underscore form; `ru-RU` is silently ignored.
+      locale: 'ru_RU',
+      title: film.title,
+      description: film.excerpt ?? undefined,
+      images: film.thumbnailUrl ? [film.thumbnailUrl] : undefined,
+    },
+  };
+};
 
 /**
  * The film player page. Lives in the module rather than in `app/` because the
@@ -57,7 +68,7 @@ export const FilmPage = async ({ id }: FilmPageProps) => {
     .map((item) => ({
       id: item.id,
       title: item.title,
-      href: `/${item.id}`,
+      href: `/${item.id}/`,
       thumbnailUrl: item.thumbnailUrl,
       share: item.share,
     }));
@@ -82,7 +93,8 @@ export const FilmPage = async ({ id }: FilmPageProps) => {
 
   return (
     <Box display="flex" flexDirection="column" gap={{ mobile: 32, smallDesktop: 40, desktop: 40 }} py={48}>
-      <Breadcrumbs items={[{ label: 'Видео', href: '/video' }, { label: film.title }]} />
+      {/* Slash-terminated: `trailingSlash: true` makes the slashless twin a redirect. */}
+      <Breadcrumbs items={[{ label: 'Видео', href: catalogueHref({ segment: null }) }, { label: film.title }]} />
 
       <div className={css.hero}>
         <FilmPlayer
