@@ -86,6 +86,18 @@ export const resolveLegacyUrl = (pathname: string): string | null => {
     if (news) {
       return `/news/?category=${news}`;
     }
+    // Every other WP category archive lands on the news index. `/category/` is
+    // WordPress's own URL space — the redesign has no per-region or per-tag
+    // archive and never will — so this closes the family: nothing under it is
+    // built, and nothing under it 404s. It is a long tail of ~90 mostly
+    // regional slugs (`/category/oblast/piter/`, plus Cyrillic ones like
+    // `/category/вс-рф/`) worth ~10 entries in 91 days between them.
+    //
+    // Deliberately page 1, dropping any `/page/N/`: WP paginated a single
+    // region's archive, so page 20 of «Питер» and page 20 of the whole feed are
+    // unrelated sets of posts. Landing further into a feed the visitor didn't
+    // ask for is worse than landing at the top of it.
+    return '/news/';
   }
 
   return null;

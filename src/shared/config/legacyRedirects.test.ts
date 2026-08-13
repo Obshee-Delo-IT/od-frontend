@@ -54,6 +54,24 @@ describe('resolveLegacyUrl', () => {
     expect(resolveLegacyUrl('/category/articles/')).toBe('/news/?category=articles');
   });
 
+  it('closes the whole /category/ family — no WP archive is left to 404', () => {
+    // `/category/` is WordPress's URL space, not ours. The long tail is ~90
+    // regional archives with no equivalent on the redesign; they land on the
+    // news index rather than falling through to a 404.
+    expect(resolveLegacyUrl('/category/oblast/')).toBe('/news/');
+    expect(resolveLegacyUrl('/category/oblast/piter/')).toBe('/news/');
+    expect(resolveLegacyUrl('/category/metodic/')).toBe('/news/');
+    expect(resolveLegacyUrl('/category/')).toBe('/news/');
+    // Cyrillic slugs arrive percent-encoded; unrecognised either way.
+    expect(resolveLegacyUrl('/category/%D0%B2%D1%81-%D1%80%D1%84/')).toBe('/news/');
+  });
+
+  it('drops the page number from an unmapped archive', () => {
+    // Page 20 of «Питер» and page 20 of the whole feed are unrelated sets, so
+    // preserving it would drop the visitor mid-feed for no reason.
+    expect(resolveLegacyUrl('/category/oblast/piter/page/20/')).toBe('/news/');
+  });
+
   it('never redirects a URL that only existed on our own rebuild', () => {
     // /news/<id> and /video/<id> were this project's first cut of the post
     // routes — never public, never indexed. /<id>/ is served directly, and
@@ -100,6 +118,7 @@ describe('resolveLegacyUrl', () => {
       '/category/video/',
       '/category/novosti/',
       '/category/articles/',
+      '/category/oblast/piter/',
     ];
 
     paths.forEach((path) => {
