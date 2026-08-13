@@ -51,7 +51,7 @@ const HomePage = async () => {
         films={films.map((film) => ({
           id: film.id,
           title: film.title,
-          href: `/video/${film.id}`,
+          href: `/${film.id}`,
           thumbnailUrl: film.thumbnailUrl,
         }))}
       />
@@ -62,7 +62,7 @@ const HomePage = async () => {
         items={news.map((post) => ({
           id: post.id,
           title: post.title,
-          href: `/news/${post.id}`,
+          href: `/${post.id}`,
           date: post.date ? dayjs(post.date).format('DD.MM.YYYY') : undefined,
           imageSrc: post.thumbnailUrl,
           imageAlt: post.title,

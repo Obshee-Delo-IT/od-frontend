@@ -90,7 +90,7 @@ const Page = async ({ searchParams }: VideoPageProps) => {
             <VideoCard
               key={film.id}
               title={film.title}
-              href={`/video/${film.id}`}
+              href={`/${film.id}`}
               imageSrc={film.thumbnailUrl}
               imageAlt={film.title}
               description={film.excerpt}

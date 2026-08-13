@@ -1,66 +1,52 @@
 import { notFound } from 'next/navigation';
 import { ImagePreviewClient } from '@/modules/News/ImagePreview';
 import { parsePost, resolveContentImages } from '@/modules/News/utils';
-import {
-  absolutizeWpMedia,
-  aspectRatioFromUrl,
-  CollapsibleBody,
-  extractFilmPoster,
-  FilmActions,
-  FilmPlayer,
-  FilmPosterCard,
-  RelatedFilms,
-} from '@/modules/Video';
 import { cachedFetchVideo, fetchVideoList, resolveMediaUrl } from '@/shared/api';
-import { wpBaseUrl, wpFetch } from '@/shared/api/httpClient';
+import { wpBaseUrl } from '@/shared/api/httpClient';
 import { Box } from '@/shared/ui/components/Box';
 import { Breadcrumbs } from '@/shared/ui/components/Breadcrumbs';
 import { GutenbergProvider } from '@/shared/ui/theme';
+import { CollapsibleBody } from '../CollapsibleBody';
+import { FilmActions } from '../FilmActions';
+import { FilmPlayer } from '../FilmPlayer';
+import { FilmPosterCard } from '../FilmPosterCard';
+import { RelatedFilms } from '../RelatedFilms';
+import { absolutizeWpMedia, aspectRatioFromUrl, extractFilmPoster } from '../utils';
 import css from './FilmPage.module.css';
 import type { Metadata } from 'next';
 
-export const dynamicParams = true;
-export const revalidate = 3600;
+/**
+ * Children of «Видео» (85) — the film catalogue. Used to pick the sub-category
+ * the related strip is scoped to, and to seed SSG with real films rather than
+ * the «Видео события» event reports that dominate an unfiltered query. Same set
+ * as the /video index filter.
+ */
+export const VIDEO_CATEGORY_IDS = [581, 580, 86, 559];
 
-// Children of «Видео» (85) — the film catalogue. Used to pick the sub-category
-// the related strip is scoped to, and to seed SSG with real films rather than
-// the «Видео события» event reports that dominate an unfiltered query. Same set
-// as the /video index filter.
-const VIDEO_CATEGORY_IDS = [581, 580, 86, 559];
-
-export async function generateStaticParams() {
-  const res = await wpFetch(
-    `/wp/v2/posts?format=video&categories=${VIDEO_CATEGORY_IDS.join(',')}&per_page=20&_fields=id`
-  );
-  if (!res.ok) {
-    return [];
-  }
-  const posts = (await res.json()) as Array<{ id?: number }>;
-  return posts.filter((post) => post.id).map(({ id }) => ({ id: String(id) }));
+export interface FilmPageProps {
+  /** WP post id, from the legacy `/<id>` URL. */
+  id: string;
 }
 
-export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
-  const { id } = await params;
-  const film = await cachedFetchVideo(id);
-  if (!film) {
-    return {};
-  }
+export const filmMetadata = (film: NonNullable<Awaited<ReturnType<typeof cachedFetchVideo>>>): Metadata => ({
+  title: `${film.title} — ОБЩЕЕ ДЕЛО`,
+  description: film.excerpt ?? undefined,
+  openGraph: {
+    type: 'video.movie',
+    countryName: 'Russia',
+    locale: 'ru-RU',
+    title: film.title,
+    images: film.thumbnailUrl ? [film.thumbnailUrl] : undefined,
+  },
+});
 
-  return {
-    title: `${film.title} — ОБЩЕЕ ДЕЛО`,
-    description: film.excerpt ?? undefined,
-    openGraph: {
-      type: 'video.movie',
-      countryName: 'Russia',
-      locale: 'ru-RU',
-      title: film.title,
-      images: film.thumbnailUrl ? [film.thumbnailUrl] : undefined,
-    },
-  };
-}
-
-const Page = async ({ params }: { params: Promise<{ id: string }> }) => {
-  const { id } = await params;
+/**
+ * The film player page. Lives in the module rather than in `app/` because the
+ * canonical URL is the legacy `/<id>` (see A8 in the implementation plan), and
+ * that route is a catch-all dispatcher shared with news — it can't own the
+ * film-specific fetching and layout.
+ */
+export const FilmPage = async ({ id }: FilmPageProps) => {
   const film = await cachedFetchVideo(id);
   if (!film) {
     notFound();
@@ -78,7 +64,7 @@ const Page = async ({ params }: { params: Promise<{ id: string }> }) => {
     .map((item) => ({
       id: item.id,
       title: item.title,
-      href: `/video/${item.id}`,
+      href: `/${item.id}`,
       thumbnailUrl: item.thumbnailUrl,
       share: item.share,
     }));
@@ -144,5 +130,3 @@ const Page = async ({ params }: { params: Promise<{ id: string }> }) => {
     </Box>
   );
 };
-
-export default Page;

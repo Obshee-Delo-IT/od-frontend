@@ -1,53 +1,37 @@
 import { Text } from '@radix-ui/themes';
 import dayjs from 'dayjs';
-import { Metadata } from 'next';
-import { SubscribeToNews } from '@/modules/News';
-import { ImagePreviewClient } from '@/modules/News/ImagePreview';
-import { SimilarNews } from '@/modules/News/SimilarNews';
-import { parsePost, resolveContentImages } from '@/modules/News/utils';
 import { cachedFetchNews } from '@/shared/api/fetchNews';
-import { client } from '@/shared/api/httpClient';
 import { Box } from '@/shared/ui/components/Box';
 import { Breadcrumbs } from '@/shared/ui/components/Breadcrumbs';
 import { GutenbergProvider } from '@/shared/ui/theme';
-import css from './NewsPage.module.css';
+import { ImagePreviewClient } from '../ImagePreview';
+import { SimilarNews } from '../SimilarNews';
+import css from './NewsArticle.module.css';
+import { SubscribeToNews } from '../SubscribeToNews/SubscribeToNews';
+import { parsePost, resolveContentImages } from '../utils';
+import type { Metadata } from 'next';
 
-export const dynamicParams = true;
-export const revalidate = 3600;
-
-export async function generateStaticParams() {
-  const postsResponse = await client.GET('/wp/v2/posts', {
-    params: {
-      query: {
-        per_page: 20,
-      },
-    },
-  });
-
-  if (!postsResponse.data) {
-    return [];
-  }
-
-  return postsResponse.data?.map(({ id }) => ({ id: String(id) }));
+export interface NewsArticleProps {
+  /** WP post id, from the legacy `/<id>` URL. */
+  id: string;
 }
 
-export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
-  const { id } = await params;
-  const data = await cachedFetchNews(id);
+export const newsMetadata = (post: Awaited<ReturnType<typeof cachedFetchNews>>): Metadata => ({
+  title: post?.title?.rendered,
+  openGraph: {
+    type: 'website',
+    countryName: 'Russia',
+    title: post?.title?.rendered,
+    locale: 'ru-RU',
+  },
+});
 
-  return {
-    title: data?.title?.rendered,
-    openGraph: {
-      type: 'website',
-      countryName: 'Russia',
-      title: data?.title?.rendered,
-      locale: 'ru-RU',
-    },
-  };
-}
-
-const Page = async ({ params }: { params: Promise<{ id: string }> }) => {
-  const { id } = await params;
+/**
+ * The news/article detail page. Lives in the module rather than in `app/`
+ * because the canonical URL is the legacy `/<id>` (see A8 in the implementation
+ * plan), and that route is a catch-all dispatcher shared with films.
+ */
+export const NewsArticle = async ({ id }: NewsArticleProps) => {
   const data = await cachedFetchNews(id);
 
   const [category, region] = data?.categories ?? [];
@@ -130,5 +114,3 @@ const Page = async ({ params }: { params: Promise<{ id: string }> }) => {
     </Box>
   );
 };
-
-export default Page;

@@ -85,7 +85,7 @@ const Page = async ({ searchParams }: NewsPageProps) => {
           {items.map((post) => (
             <NewsCard
               key={post.id}
-              href={`/news/${post.id}`}
+              href={`/${post.id}`}
               title={post.title}
               date={post.date ? dayjs(post.date).format('DD.MM.YYYY') : undefined}
               imageSrc={post.thumbnailUrl}

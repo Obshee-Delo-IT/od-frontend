@@ -8,9 +8,9 @@ export interface VideoDetail extends VideoSummary {
 }
 
 /**
- * Single film for the `/video/[id]` player page. Returns `null` for a missing
- * id or a post that isn't `format=video` (plain news ids don't get a film page),
- * so the route can `notFound()`.
+ * Single film for the player page (canonical URL `/<id>`, see A8). Returns
+ * `null` for a missing id or a post that isn't `format=video` (plain news ids
+ * don't get a film page), so the route can `notFound()`.
  */
 export const fetchVideo = async (id: string): Promise<VideoDetail | null> => {
   if (!/^\d+$/.test(id)) {
