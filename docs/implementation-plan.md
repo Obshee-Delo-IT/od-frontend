@@ -75,10 +75,9 @@ A redesigned route auto-shadows its fallback, so Tier 3 is reversible page-by-pa
 
 ## Workstream B — WordPress / data layer
 
-**B2, B3 and B-CPT shipped 2026-08-13**, plus B4's and B7's frontend halves — type generation unblocked, cache tags on every WP request, `POST /api/revalidate/`, `fetchSearch`, and the `profile`/`project` recon behind D3. Detail in [notes §4](./implementation-notes.md#4-shipped--data--media-b-e). Everything below is what's left, and **the two biggest items are not code**: B1's content shape and B-VIDEO2's film data.
+**B2, B3, B4 and B-CPT shipped 2026-08-13**, plus B7's frontend half — type generation unblocked, cache tags on every WP request, `POST /api/revalidate/` with the WordPress mu-plugin that calls it installed on od-dev, `fetchSearch`, and the `profile`/`project` recon behind D3. Detail in [notes §4](./implementation-notes.md#4-shipped--data--media-b-e). Everything below is what's left, and **the two biggest items are not code**: B1's content shape and B-VIDEO2's film data.
 
 - [~] **B1 remainder.** CPT inventory is done ([`wp-backend.md`](./wp-backend.md) §3–4). **Left:** decide the content shape for **materials** (D8) and **FAQ** (D5) — plain pages, a taxonomy on a generic CPT, or widgets. See [`wp-backend.md` §8](./wp-backend.md#8-outstanding-questions-the-wp-state-doesnt-answer). **This is the biggest unanswered content question and it blocks Tier 2.**
-- [~] **B4 remainder.** The frontend half shipped — `POST /api/revalidate/`, verified against a production build ([notes](./implementation-notes.md#b4-on-demand-revalidation--the-frontend-half-2026-08-13)). **Left, and it needs WP access:** install the mu-plugin from [`wp-backend.md` §6.5](./wp-backend.md), set `REVALIDATE_SECRET` per tier, and first confirm Timeweb allows outbound HTTP from WP hooks. Until then editors still wait out the 1-hour window.
 - [ ] **B6. Forms backend.** Every form in the redesign is **net-new** — the live site has none. Submissions land in the existing RU-hosted WordPress (152-FZ), via a WP plugin endpoint (CF7 / Gravity / WPForms) or an `app/api/*` proxy. Spam protection: **Yandex SmartCaptcha**, not reCAPTCHA. Email via WP's existing mail config.
 - [~] **B7 remainder.** `fetchSearch` shipped ([notes](./implementation-notes.md#b7-search--the-data-layer-2026-08-13)) — endpoint probed, paging and `subtype` filtering work. **Left:** the UI. The input ships with `header-v2` (**C9**), and a results page has no mock yet — two design questions before any of it: what search covers (posts only? pages too?) and what a result looks like, given WP returns no excerpt or thumbnail. Also still open: routing the legacy `?s=` URLs, which need a destination that exists.
 - [ ] **B8. WP cleanup — kill the page-builder and unsupported UI plugins.** Headless means WP only serves data, so most of the **27** active plugins are dead weight. Target list and ordering in [`wp-backend.md` §4](./wp-backend.md). Critical path:
@@ -202,7 +201,7 @@ Real decisions needing a human (Design / PM / org leadership). Questions already
 ### Infra
 
 - Who holds the Coolify / GHCR credentials, and are stage and prod two apps on one VPS? (The A2 sizing assumes yes.)
-- Acceptable cache staleness for editors — is the 1-hour window enough, or must the B4 webhook be installed before launch? The frontend side is built and verified; what's left is a WP change (mu-plugin + `REVALIDATE_SECRET`) and confirming Timeweb allows outbound HTTP from hooks. Worth asking the editors, not guessing: it is the difference between "publish, then wait an hour" and "publish, then reload".
+- ~~Acceptable cache staleness for editors — is the 1-hour window enough, or must the B4 webhook be installed before launch?~~ **Moot: both halves are built and tested, so instant publishing is now the cheaper option.** It costs two lines of per-tier config at deploy time ([runbook §4.8](./prod-migration-runbook.md)) rather than a decision.
 - Backup / disaster-recovery story for WP and uploads?
 - Are the sibling properties (`od-pro.ru`, `помоги.общее-дело.рф`, `статы.общее-дело.рф`, the punycode alt) part of this redesign, or strictly cross-links?
 
