@@ -199,6 +199,66 @@ The public channel **«ФИЛЬМЫ | ОБЩЕЕ ДЕЛО»** (Telegram Desktop 
 
 `wp-block-cb-carousel-v2` comes from the **carousel-block** plugin (Codeboxr, v2.0.5). Full inventory in [`wp-backend.md` §4](./wp-backend.md).
 
+### B2. Type generation unblocked — 2026-08-13
+
+`redocly.yml`'s `x-openapi-ts.output` carried a stray space (`./src/types/generated /wp-json-openapi.ts`), so `pnpm generate:types` had been writing a **directory** named `generated ` and the committed types had been frozen since 29 May. Path fixed; regenerated against od-dev.
+
+Two things to know before running it again. **Pipe the result through Prettier** — openapi-typescript emits double quotes and 4-space indent, which isn't this repo's format, and without that step the diff is 35 000 lines of quote churn instead of the 434 that changed. And **read the diff**: ten weeks of od-dev drift amounted to ACF adding an `acf-disabled` post status to every status enum plus an `_acf_changed` write-payload flag, and `meta` going from `Record<string, never>` to `{}`. **No paths added or removed** — `/wp/v2/{posts,pages,categories,profile,project,search}` and CF7's `feedback` endpoint were all already in the schema, which is why nothing downstream broke.
+
+### B3. Cache tags on every WordPress request — 2026-08-13
+
+`src/shared/api/cacheTags.ts` — `WP_TAGS`, `postTag(id)`, `isWpTag()` and `wpCache(tags, revalidate?)`, which returns the `next: { revalidate, tags }` fragment that both `wpFetch` and the typed client accept. All eleven runtime WP call sites go through it.
+
+**Tags are what make a *page* purgeable, not just its JSON.** Next records the tags of every fetch a render touched onto that route's ISR entry, so `wp:post:123` drops the prerendered `/123/` along with the response it was built from. Without them B4 would have had nothing to address.
+
+Granularity is deliberately coarse: WordPress keeps news, articles, films and event reports in the single `post` type, so any post edit purges `wp:posts` and every listing with it — cheaper than teaching a webhook which of ~8 200 posts appears in which listing, and wrong only in regenerating a few pages that hadn't changed. `wp:films`, `wp:menus` and `wp:widgets` keep the catalogue, header and footer out of that blast radius.
+
+Two side effects worth noting. The **header and footer were previously uncached** and render in the root layout, so every dynamic request hit WordPress for the nav; they now cost one request an hour. And `generateStaticParams` is deliberately left **untagged** — it picks the ISR seed once per build and returns a list of ids, so there's nothing to purge and a cache window there could only serve a rebuild a stale seed.
+
+The fragile part is pinned by a test (`httpClient.test.ts`): the typed client's cache options survive only because openapi-fetch copies leftover init keys onto the `Request` it builds (`new Request()` drops unknown keys) and Next reads `next` off a Request input as well as off `init`. If an upgrade changes either, fetches silently go untagged — no error anywhere.
+
+**One part of B3 as written was not done: "every fetcher typed via openapi-fetch".** The five listing/detail fetchers still use raw `wpFetch`, for two reasons that converting them wouldn't fix. The generated schema's `post` type describes neither `_embed`'s `_embedded` nor ACF's `acf` — the two things those fetchers exist to read — so the typed client would hand back a type that omits most of the payload. And the client's throwing middleware turns a non-2xx into an exception, while these fetchers depend on an out-of-range page (400) and a missing post (404) being *answers*: «no results» and `notFound()`. `fetchSearch` shows the middle path that is worth copying — raw `wpFetch` for transport, with the payload typed off `components['schemas']['search-result']` from the generated file, so the shape is still schema-derived. Revisit only if the WP-side OpenAPI plugin starts describing `_embedded` and `acf`.
+
+### B4. On-demand revalidation — the frontend half, 2026-08-13
+
+`POST /api/revalidate/` (`src/app/api/revalidate/route.ts`), secret-gated by `REVALIDATE_SECRET` in an `x-revalidate-secret` header. Body is `{postId}`, `{tags}` or `{paths}`; answers 200 with what it purged, 401 on a bad secret, **503 when no secret is configured** so a half-configured tier is inert rather than open, 400 for everything else.
+
+Verified against a production build rather than mocks:
+
+| | |
+| --- | --- |
+| `{"postId":71933}` | `/71933/` HIT→MISS, **and** `/materials/articles/` HIT→MISS — a different fetch sharing `wp:posts` |
+| `{"tags":["wp:films"]}` | `/71933/` (film) HIT→MISS, `/72897/` (news) stays **HIT** — the tags discriminate |
+
+Four decisions behind the code:
+
+- **`revalidateTag(tag, { expire: 0 })`, not a named profile.** Every built-in profile including `'max'` only marks the entry *stale*, which serves the pre-edit page once more while it rebuilds — precisely the "I published it, where is it?" this route exists to remove. The one-argument form does expire immediately but is deprecated in Next 16, and `updateTag` is Server-Actions-only and throws in a route handler.
+- **Only `wp*` tags are accepted.** Next's implicit route tags (`_N_T_/…`) are addressable through the same API, so taking arbitrary tags would turn a leaked secret into a purge of the entire render cache.
+- **Secret in a header, never `?secret=`** — a query string lands in every access log and proxy trace between WordPress and the app. Compared over SHA-256 digests so `timingSafeEqual` gets equal-length inputs and can't leak the secret's length.
+- **Both slash variants of a `paths` entry are purged**, because `revalidatePath` addresses a route by an implicit tag derived from the pathname it rendered at, and `trailingSlash: true` makes it unknowable from outside whether that was `/news` or `/news/`.
+
+**Nothing calls it yet.** The WordPress half is an mu-plugin (so it survives the §4.5 theme swap) written out in [`wp-backend.md` §6.5](./wp-backend.md), and needs WP access plus confirmation that Timeweb allows outbound HTTP from hooks. Also note the endpoint must be posted **with** its trailing slash — the slashless form is a 308, verified, same trap as `/health/`.
+
+### B7. Search — the data layer, 2026-08-13
+
+`fetchSearch` over `GET /wp/v2/search`, the endpoint B7 had already settled on. **Fetcher only** — the input belongs to `header-v2` (C9) and the results page has no mock, so neither was guessed at.
+
+Probed against od-dev first, and the assumptions held: the endpoint sends `X-WP-Total{,Pages}`, honours `subtype=`, and answers an out-of-range page with `200 []` rather than the 400 `/wp/v2/posts` returns. It carries id/title/url/type/subtype and **nothing else** — no excerpt, no thumbnail — so a results UI that wants either has to fetch the posts separately.
+
+Two behaviours that aren't obvious from the endpoint. **Posts are linked as `/<id>/`, not by the `url` WP reports**: WP hands back its own permalink on the `WP_BASE` origin, and passing that through would walk visitors off the site into the WordPress install; pages keep their path, which is where A6 will serve them. And **an empty query never reaches WordPress** — `?search=` isn't an error there, it matches everything, so WP would answer with the first page of the whole archive dressed up as search results. `subtype` is a parameter rather than a baked-in filter: what search should cover is a product decision.
+
+### B-CPT. `profile` / `project` recon — 2026-08-13
+
+Read-only pass over od-dev's two cmsms CPTs, to size D3 before building it. Full inventory in [`wp-backend.md` §3.5](./wp-backend.md); the load-bearing results:
+
+- **`/profile/[slug]` is a template over existing data, not a content project.** 139 published records, 136 with a featured image, bodies already clean Gutenberg (median 902 chars).
+- **The region field already exists in REST** — `meta.cmsms_profile_subtitle`, filled on 130 of 139. No ACF work, no body parsing. But it is free text: 89 distinct values, only 18 naming an oblast/republic, the rest bare settlements («Екатеринбург», «г. Якутск»). Displayable, not groupable without normalisation.
+- **…and B8 would silently delete it.** The values are ordinary postmeta and survive plugin removal, but their REST exposure comes from cmsms's `register_post_meta`. The headless theme must re-register the key, and the cleanup's `DELETE … meta_key LIKE 'cmsms_%'` must exclude it. Both are now explicit steps in `wp-backend.md` §4.4.
+- **The cmsms taxonomies aren't in REST at all** — `/wp/v2/pl-categs` and `/wp/v2/pj-categs` both 404, and `/wp/v2/types/profile` lists only `post_tag`, which 2 records use. There is no coordinator-by-region filter available unless re-registration adds `show_in_rest`. §6.2 had previously listed `pl-categs` as available; corrected.
+- **Cyrillic slugs look like a trap and aren't.** 67 of 139 are percent-encoded, up to 194 characters; WP's `?slug=` matches the stored, decoded, re-encoded and case-flipped forms alike, so the route can pass its param straight through.
+- **Contact details are prose**: phone on 92/139, email on 113/139, in mixed formats. That — not "region" — is what the "promote to ACF?" question is actually about.
+- **`project` re-verified dead**: 0 published, no REST taxonomies, nothing links to it. D6 «Программы» stays plain WP pages.
+
 ### E3. File downloads — no build needed
 
 On od-dev the "Скачать фильм" buttons are **Gutenberg button blocks authored in the post body**, linking out to Yandex.Disk. Not a separate file-serving flow — they ride along in the post HTML we already render via `parsePost` + `GutenbergProvider`. Only watch-out: rendered content's external links/buttons must display correctly (Gutenberg button-block CSS) and open sensibly (`target`/`rel`).
@@ -232,7 +292,7 @@ WP media is **already offloaded to a Yandex object-storage bucket**; that decisi
 
 ### F1. Testing — partial
 
-**Vitest 4 + RTL 16 + jsdom** via `vitest.config.ts` / `vitest.setup.ts` with `vite-plugin-svgr` + native Vite tsconfig-paths; `pnpm test` / `test:watch` / `test:coverage`. **44 spec files / 197 cases** as of 2026-08-13, covering the shared primitives, every home section, the news + video fetchers, the routing config and the pure utils. Convention: `*.test.ts(x)` colocated, explicit `vitest` imports, wrap Radix-flavoured components in `<Theme>`.
+**Vitest 4 + RTL 16 + jsdom** via `vitest.config.ts` / `vitest.setup.ts` with `vite-plugin-svgr` + native Vite tsconfig-paths; `pnpm test` / `test:watch` / `test:coverage`. **48 spec files / 233 cases** as of 2026-08-13, covering the shared primitives, every home section, the news + video + search fetchers, the cache-tag and revalidate layer, the routing config and the pure utils. Convention: `*.test.ts(x)` colocated, explicit `vitest` imports, wrap Radix-flavoured components in `<Theme>`.
 
 Rationale worth keeping: AI-first development thrives on fast feedback — cheap unit/component tests catch regressions when an agent edits many files in one pass, far better than manual review of each diff.
 

@@ -162,7 +162,7 @@ The stored value is the **short id from `play_link`** (`https://kinescope.io/<sh
 
 ## 4. Frontend configuration and deploy
 
-**4.1 Environment variables** (per deployment tier — read at module load, so a restart is required after any change):
+**4.1 Environment variables** (per deployment tier — read at module load, so a restart is required after any change; `REVALIDATE_SECRET` is the one exception):
 
 | var | value | note |
 |---|---|---|
@@ -170,13 +170,14 @@ The stored value is the **short id from `play_link`** (`https://kinescope.io/<sh
 | `WP_USER` / `WP_PASSWORD` | application password for that env | never reuse across envs |
 | `WP_MEDIA_CDN` | prod bucket, or `""` to disable the rewrite | defaults to the od-dev Yandex bucket — **override for prod** (B6) |
 | `SITE_URL` | the public origin of *this* deployment, no trailing slash | **new with F4.** Feeds `metadataBase`, every `rel=canonical`, `sitemap.xml` and `robots.txt`. Defaults to `https://obshee-delo.ru`, so an unset var on stage makes stage advertise **prod's** URLs — it fails silently and only shows up in a crawler. Set it explicitly on every non-prod tier. |
+| `REVALIDATE_SECRET` | a random per-tier secret | **new with B4.** Gates `POST /api/revalidate/`. Unset ⇒ the endpoint 503s and purges nothing, which is the safe default; a tier holding *another* tier's secret is a hole, so generate a fresh one each time. Read per request, so no restart needed. |
 | `KINESCOPE_TOKEN` | Kinescope API token | **scripts only, never needed at runtime or in the image** — used by `film:kinescope` (§3.6) |
 
 **4.2 Regenerate the API types** once the target serves REST — `redocly.yml` still points at `od-dev.tmweb.ru/wp-json-openapi`:
 ```bash
-pnpm generate:types && pnpm type-check
+pnpm generate:types && npx prettier --write src/types/generated/wp-json-openapi.ts && pnpm type-check
 ```
-> Note: `redocly.yml`'s `output` currently contains a stray space (`./src/types/generated /wp-json-openapi.ts`). Fix it before relying on this step.
+> The output path was fixed on 2026-08-13 (it had a stray space and wrote to a directory named `generated `). Prettier is not optional here: the CLI emits double quotes and 4-space indent, so without it the diff is 35 000 lines of formatting instead of the handful that changed.
 
 **4.3 Apply the real category ids (B5)** if §1.3 differed from od-dev. **One file since 2026-08-13** — `src/shared/config/filmCategories.ts`, which holds `FILM_CATEGORIES` (URL segment → id: `filmy` 581, `multy` 580, `roliki` 86, `famous-people` 559) and is read by `/video/` and `/video/<segment>/`, the related-films scope on a film page, the catch-all's SSG seed, `sitemap.xml` and the A8 redirect table. Change the four numbers there and every consumer follows. **Do not rename the keys** — they are the live site's URL segments, and `/video/multy/` and `/video/filmy/` are the #2 and #3 entry pages on the site.
 
@@ -210,7 +211,9 @@ pnpm lint && pnpm type-check && pnpm test && pnpm build
 
 `.dockerignore` was fixed on 2026-08-04 (it had been named `.docerkignore`, so Docker ignored it entirely while the Dockerfile does `COPY . .` — a local build would have baked `.env` into a layer). Building in CI avoids that class of leak anyway, which is a further argument for never building on a developer machine.
 
-**4.8 ISR caveat.** The ISR cache lives on the container filesystem, so it is **per-replica**. Scaling past one instance needs a shared `cacheHandler`. `revalidate = 3600` everywhere and there is **no on-demand revalidation** (B4 in the plan is open), so WP edits take up to an hour to appear — tell the editors, or ship the revalidate webhook first.
+**4.8 ISR caveat.** The ISR cache lives on the container filesystem, so it is **per-replica**. Scaling past one instance needs a shared `cacheHandler` — and note the same applies to purges: `POST /api/revalidate/` clears the replica that receives it, so on more than one instance every replica has to be hit, or the shared handler must land first.
+
+`revalidate = 3600` everywhere. **On-demand revalidation is built but not connected** (B4): the app exposes `POST /api/revalidate/` and every WP fetch is tagged, but nothing calls it until the mu-plugin from [`wp-backend.md` §6.5](./wp-backend.md) is installed on the WP side and `REVALIDATE_SECRET` is set on this tier. Until then WP edits take up to an hour to appear — tell the editors, or close the loop first. **Give each tier its own secret**; prod's on stage is access to prod's cache.
 
 ---
 
@@ -259,7 +262,7 @@ Migrating the data and pointing the app at prod is **not** launch. Still require
 - ~~**A8 URL compatibility.**~~ **Done 2026-08-13** (`1bd016d`, `f0ac6a9`, `cbfc8d5`, `908b292`, `ea290ac`) — `/<id>` and `/video/<segment>/` are served natively, the proxy redirects the whole `/category/*` family plus the `/video/short/` and `/page/N/` shapes at one 301 each, and gate 12 measured **84.2 %** entry-traffic coverage locally with no shape failures. **Two loose ends, both operational:** re-run gate 12 against a real deploy (od-dev lacks recent posts, so five `/<id>` rows can only settle on prod), and set `SITE_URL` per tier (§4.1).
 - ~~**F4 SEO baseline**~~ — **the URL-facing half is done** (`ea290ac`): `sitemap.xml` (8 248 URLs), `robots.txt`, `metadataBase` and self-referential canonicals on every route, per-page OG on the indexes. **Still open before launch: JSON-LD** (`NewsArticle` / `VideoObject` / `Organization`) and an OG image fallback.
 - **A4 Yandex Metrica + consent banner**, **F6 152-FZ privacy page** (port the live text, strip the stale Google Analytics reference, keep the СМИ registration line + 12+ badge). **A2 is decided** — Beget VPS + Coolify — but the deploy half of **A3** (docker build + push to GHCR, incl. the Dockerfile build-args in §4.7) is still open.
-- **B4 on-demand revalidation** — otherwise editors wait an hour (§4.6).
+- **B4 on-demand revalidation — the WordPress half.** The app side shipped 2026-08-13 (`POST /api/revalidate/`, tags on every WP fetch, verified against a production build). What remains on this checklist is a WP change: install the §6.5 mu-plugin, set `REVALIDATE_SECRET` on the tier, confirm Timeweb allows outbound HTTP from hooks. Skip it and editors wait an hour (§4.8).
 - **B8 WordPress plugin cleanup** is **not** required for the frontend, with one exception: removing `clearfy-pro` is what permanently fixes both the REST block (B1) and the WP-CLI redirect gotcha. Everything else in B8 is hygiene.
 
 ---

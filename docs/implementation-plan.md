@@ -8,7 +8,7 @@ Status legend: `[ ]` not started · `[~]` partial or blocked · `[x]` done.
 
 ## Current state (2026-08-13)
 
-**Shipped routes:** `/` · `/news/` · `/materials/articles/` · `/video/` + `/video/<segment>/` (4 categories) · `/<id>` (post detail — news or film, by `post_format`) · `/sitemap.xml` · `/robots.txt` · `/health/`.
+**Shipped routes:** `/` · `/news/` · `/materials/articles/` · `/video/` + `/video/<segment>/` (4 categories) · `/<id>` (post detail — news or film, by `post_format`) · `/sitemap.xml` · `/robots.txt` · `/health/` · `POST /api/revalidate/`.
 
 **Shipped, in one line each** — detail in [`implementation-notes.md`](./implementation-notes.md):
 
@@ -22,6 +22,7 @@ Status legend: `[ ]` not started · `[~]` partial or blocked · `[x]` done.
 | **D2** | News index + post detail. |
 | **D7** | Film catalogue + film page (Kinescope player, downloads, poster card, related films). |
 | **B-VIDEO** | ACF `group_film_meta`, 18 fields, canonical film data model + the `film:*` CSV tooling. |
+| **B2 · B3 · B7 · B-CPT** | Data layer: type generation unblocked · cache tags on every WP request · `fetchSearch` · the `profile`/`project` recon behind D3. |
 | **E3/E4** | Downloads ride in post content; Kinescope НКО approved and embedded. |
 | **F4** | Half: sitemap (8 248 URLs), robots, `metadataBase`, self-referential canonicals. |
 
@@ -73,16 +74,16 @@ A redesigned route auto-shadows its fallback, so Tier 3 is reversible page-by-pa
 
 ## Workstream B — WordPress / data layer
 
+**B2, B3 and B-CPT shipped 2026-08-13**, plus B4's and B7's frontend halves — type generation unblocked, cache tags on every WP request, `POST /api/revalidate/`, `fetchSearch`, and the `profile`/`project` recon behind D3. Detail in [notes §4](./implementation-notes.md#4-shipped--data--media-b-e). Everything below is what's left, and **the two biggest items are not code**: B1's content shape and B-VIDEO2's film data.
+
 - [~] **B1 remainder.** CPT inventory is done ([`wp-backend.md`](./wp-backend.md) §3–4). **Left:** decide the content shape for **materials** (D8) and **FAQ** (D5) — plain pages, a taxonomy on a generic CPT, or widgets. See [`wp-backend.md` §8](./wp-backend.md#8-outstanding-questions-the-wp-state-doesnt-answer). **This is the biggest unanswered content question and it blocks Tier 2.**
-- [ ] **B2. Regenerate `wp-json-openapi.ts` after each WP schema change.** ⚠️ `redocly.yml`'s `output` has a stray space (`./src/types/generated /wp-json-openapi.ts`), so `pnpm generate:types` writes to a directory named `generated ` instead of updating the committed file. Fix before relying on it.
-- [ ] **B3. Standardise the fetcher pattern.** Every `src/shared/api/fetch*.ts` typed via openapi-fetch + `next: { tags: [...] }`; add `cachedFetch*` variants where used twice in one render.
-- [ ] **B4. On-demand revalidation.** `app/api/revalidate/route.ts` (secret-gated POST → `revalidatePath`/`revalidateTag`) + the WP-side webhook. Today WP edits only propagate via the 1-hour SWR window.
+- [~] **B4 remainder.** The frontend half shipped — `POST /api/revalidate/`, verified against a production build ([notes](./implementation-notes.md#b4-on-demand-revalidation--the-frontend-half-2026-08-13)). **Left, and it needs WP access:** install the mu-plugin from [`wp-backend.md` §6.5](./wp-backend.md), set `REVALIDATE_SECRET` per tier, and first confirm Timeweb allows outbound HTTP from WP hooks. Until then editors still wait out the 1-hour window.
 - [ ] **B6. Forms backend.** Every form in the redesign is **net-new** — the live site has none. Submissions land in the existing RU-hosted WordPress (152-FZ), via a WP plugin endpoint (CF7 / Gravity / WPForms) or an `app/api/*` proxy. Spam protection: **Yandex SmartCaptcha**, not reCAPTCHA. Email via WP's existing mail config.
-- [ ] **B7. Search.** In scope — `header-v2` embeds a styled search input. Endpoint settled: `GET /wp/v2/search?search=…`. For ~500–1000 URLs that's enough at launch; defer Algolia/Meilisearch unless relevance becomes a problem.
+- [~] **B7 remainder.** `fetchSearch` shipped ([notes](./implementation-notes.md#b7-search--the-data-layer-2026-08-13)) — endpoint probed, paging and `subtype` filtering work. **Left:** the UI. The input ships with `header-v2` (**C9**), and a results page has no mock yet — two design questions before any of it: what search covers (posts only? pages too?) and what a result looks like, given WP returns no excerpt or thumbnail. Also still open: routing the legacy `?s=` URLs, which need a destination that exists.
 - [ ] **B8. WP cleanup — kill the page-builder and unsupported UI plugins.** Headless means WP only serves data, so most of the **27** active plugins are dead weight. Target list and ordering in [`wp-backend.md` §4](./wp-backend.md). Critical path:
   1. Build/pick the headless theme (custom 5-file minimal, or stock Twenty Twenty-Five); register `profile` + `pl-categs` in its `functions.php` with the **same slug** + `'show_in_rest' => true`. Do **not** re-register `project`/`pj-categs`/`pj-tags`.
   2. Verify `/wp/v2/profile` still returns content with cmsms deactivated (toggle off, don't delete). **Unblocks D3.**
-  3. **ACF is load-bearing — do not remove it.** Extending it to `profile` side-fields is optional.
+  3. **Re-register the `cmsms_profile_subtitle` post meta** with `show_in_rest` in the same file, and exclude it from step 7's `cmsms_%` meta purge. It holds the coordinator's region on 130 of 139 profiles and reaches the API only through cmsms — removing the plugin deletes the field from D3 without touching a row of content (B-CPT, 2026-08-13). **ACF is load-bearing — do not remove it.** Extending it to `profile` side-fields (phone/email) stays optional.
   4. Delete the 21 `project` drafts before removing cmsms.
   5. Migrate or accept loss of `wp-block-cb-carousel-v2` markup in existing posts before removing `carousel-block` (cleanest: bulk-replace with core `wp-block-gallery`, which `parsePost.tsx` already handles).
   6. Deactivate + delete in order: welfare → cmsms-* → UI/shortcode plugins → optional UX plugins → emergency-only tools.
@@ -112,7 +113,6 @@ A redesigned route auto-shadows its fallback, so Tier 3 is reversible page-by-pa
   - **67400** has a `status: error` Kinescope upload (`2kgaX4mQMQcxVvn177pfDF`, duration 0) alongside the working one — worth deleting. Its download labels are also wrong: `disk.yandex.ru/i/-5L5AfVOrXQFlw` is stored as «Сокр. версия» but is the 35-минутная полная версия.
   - **39664 «Как научиться любить?» has no `share_youtube`** — the Telegram channel gives it 71933's link. One of the two channel posts is wrong.
   - **8 films exist on prod but not od-dev** and sit in the worksheet with a blank `id` (2 already have a Kinescope id). Fill when the sheet runs against prod.
-- [ ] **B-CPT. Recon the `project` / `profile` CPTs** before building D3/D6 — fields, REST exposure, taxonomy, counts, whether ACF is wanted on them. Both are public on od-dev (recon 2026-06-04; project sample id `56057`), so those pages are more CMS-ready than the mocks assume.
 
 ---
 
@@ -180,7 +180,7 @@ Real decisions needing a human (Design / PM / org leadership). Questions already
 
 - **Materials**: is each sub-category a separate WP post type, a taxonomy on a generic "material" type, or a static asset listing? **The biggest unanswered content question — it blocks D8 (Tier 2).**
 - **Regional news**: WP has ~80 region categories and a top-level `Региональные новости` (547 posts), but the design specs only three chips. Does regional filtering belong on `/news/`? And should «Наши дела» really map to the catch-all `Новости` (47) or to a narrower curated set?
-- Do editors want `profile`'s `region`/`phone`/`email` promoted to ACF fields instead of living in the post body? (B8 step 3.)
+- **`profile` contact fields (D3).** Narrowed by the B-CPT recon: **region is already structured** (`meta.cmsms_profile_subtitle`, 130/139 — though free-text place names, so displayable rather than groupable), while **phone and email are prose in the body** (92 and 113 of 139). So the only question left is those two — parse them at render time and accept a two-thirds hit rate, have editors backfill them into ACF fields, or drop the contact row from the mock?
 - Do the three Figma `project-1/2/3` mocks correspond to anything real? (D6.)
 
 ### Behaviour
@@ -194,7 +194,7 @@ Real decisions needing a human (Design / PM / org leadership). Questions already
 ### Infra
 
 - Who holds the Coolify / GHCR credentials, and are stage and prod two apps on one VPS? (The A2 sizing assumes yes.)
-- Acceptable cache staleness for editors — is 1-hour SWR enough, or is on-demand revalidation (B4) required before launch?
+- Acceptable cache staleness for editors — is the 1-hour window enough, or must the B4 webhook be installed before launch? The frontend side is built and verified; what's left is a WP change (mu-plugin + `REVALIDATE_SECRET`) and confirming Timeweb allows outbound HTTP from hooks. Worth asking the editors, not guessing: it is the difference between "publish, then wait an hour" and "publish, then reload".
 - Backup / disaster-recovery story for WP and uploads?
 - Are the sibling properties (`od-pro.ru`, `помоги.общее-дело.рф`, `статы.общее-дело.рф`, the punycode alt) part of this redesign, or strictly cross-links?
 
