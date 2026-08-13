@@ -2,4 +2,4 @@ apis:
   wp@v2.0.0:
     root: https://od-dev.tmweb.ru/wp-json-openapi
     x-openapi-ts:
-      output: ./src/types/generated /wp-json-openapi.ts
+      output: ./src/types/generated/wp-json-openapi.ts

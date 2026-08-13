@@ -942,7 +942,8 @@ export interface paths {
               | 'submitted'
               | 'funded'
               | 'refunded'
-              | 'failed';
+              | 'failed'
+              | 'acf-disabled';
             /** @description Пароль для защиты содержания и отрывка. */
             password?: string;
             /** @description Название записи. */
@@ -1003,6 +1004,8 @@ export interface paths {
               | 'audio';
             /** @description Мета поля. */
             meta?: {
+              /** @default false */
+              _acf_changed?: boolean;
               /** @default  */
               footnotes?: string;
             };
@@ -1110,7 +1113,8 @@ export interface paths {
               | 'submitted'
               | 'funded'
               | 'refunded'
-              | 'failed';
+              | 'failed'
+              | 'acf-disabled';
             /** @description Пароль для защиты содержания и отрывка. */
             password?: string;
             /** @description Название записи. */
@@ -1171,6 +1175,8 @@ export interface paths {
               | 'audio';
             /** @description Мета поля. */
             meta?: {
+              /** @default false */
+              _acf_changed?: boolean;
               /** @default  */
               footnotes?: string;
             };
@@ -1235,7 +1241,8 @@ export interface paths {
               | 'submitted'
               | 'funded'
               | 'refunded'
-              | 'failed';
+              | 'failed'
+              | 'acf-disabled';
             /** @description Пароль для защиты содержания и отрывка. */
             password?: string;
             /** @description Название записи. */
@@ -1296,6 +1303,8 @@ export interface paths {
               | 'audio';
             /** @description Мета поля. */
             meta?: {
+              /** @default false */
+              _acf_changed?: boolean;
               /** @default  */
               footnotes?: string;
             };
@@ -1395,7 +1404,8 @@ export interface paths {
               | 'submitted'
               | 'funded'
               | 'refunded'
-              | 'failed';
+              | 'failed'
+              | 'acf-disabled';
             /** @description Пароль для защиты содержания и отрывка. */
             password?: string;
             /** @description Название записи. */
@@ -1456,6 +1466,8 @@ export interface paths {
               | 'audio';
             /** @description Мета поля. */
             meta?: {
+              /** @default false */
+              _acf_changed?: boolean;
               /** @default  */
               footnotes?: string;
             };
@@ -1692,7 +1704,8 @@ export interface paths {
               | 'submitted'
               | 'funded'
               | 'refunded'
-              | 'failed';
+              | 'failed'
+              | 'acf-disabled';
             /** @description Пароль для защиты содержания и отрывка. */
             password?: string;
             /** @description Название записи. */
@@ -1753,6 +1766,8 @@ export interface paths {
               | 'audio';
             /** @description Мета поля. */
             meta?: {
+              /** @default false */
+              _acf_changed?: boolean;
               /** @default  */
               footnotes?: string;
             };
@@ -1947,7 +1962,8 @@ export interface paths {
               | 'submitted'
               | 'funded'
               | 'refunded'
-              | 'failed';
+              | 'failed'
+              | 'acf-disabled';
             /** @description Пароль для защиты содержания и отрывка. */
             password?: string;
             /** @description ID родителя записи. */
@@ -1997,6 +2013,8 @@ export interface paths {
             menu_order?: number;
             /** @description Мета поля. */
             meta?: {
+              /** @default false */
+              _acf_changed?: boolean;
               /** @default  */
               footnotes?: string;
             };
@@ -2098,7 +2116,8 @@ export interface paths {
               | 'submitted'
               | 'funded'
               | 'refunded'
-              | 'failed';
+              | 'failed'
+              | 'acf-disabled';
             /** @description Пароль для защиты содержания и отрывка. */
             password?: string;
             /** @description ID родителя записи. */
@@ -2148,6 +2167,8 @@ export interface paths {
             menu_order?: number;
             /** @description Мета поля. */
             meta?: {
+              /** @default false */
+              _acf_changed?: boolean;
               /** @default  */
               footnotes?: string;
             };
@@ -2206,7 +2227,8 @@ export interface paths {
               | 'submitted'
               | 'funded'
               | 'refunded'
-              | 'failed';
+              | 'failed'
+              | 'acf-disabled';
             /** @description Пароль для защиты содержания и отрывка. */
             password?: string;
             /** @description ID родителя записи. */
@@ -2256,6 +2278,8 @@ export interface paths {
             menu_order?: number;
             /** @description Мета поля. */
             meta?: {
+              /** @default false */
+              _acf_changed?: boolean;
               /** @default  */
               footnotes?: string;
             };
@@ -2349,7 +2373,8 @@ export interface paths {
               | 'submitted'
               | 'funded'
               | 'refunded'
-              | 'failed';
+              | 'failed'
+              | 'acf-disabled';
             /** @description Пароль для защиты содержания и отрывка. */
             password?: string;
             /** @description ID родителя записи. */
@@ -2399,6 +2424,8 @@ export interface paths {
             menu_order?: number;
             /** @description Мета поля. */
             meta?: {
+              /** @default false */
+              _acf_changed?: boolean;
               /** @default  */
               footnotes?: string;
             };
@@ -2629,7 +2656,8 @@ export interface paths {
               | 'submitted'
               | 'funded'
               | 'refunded'
-              | 'failed';
+              | 'failed'
+              | 'acf-disabled';
             /** @description Пароль для защиты содержания и отрывка. */
             password?: string;
             /** @description Название записи. */
@@ -2677,6 +2705,8 @@ export interface paths {
             menu_order?: number;
             /** @description Мета поля. */
             meta?: {
+              /** @default false */
+              _acf_changed?: boolean;
               /** @default  */
               footnotes?: string;
             };
@@ -2866,7 +2896,8 @@ export interface paths {
               | 'submitted'
               | 'funded'
               | 'refunded'
-              | 'failed';
+              | 'failed'
+              | 'acf-disabled';
             /** @description Название записи. */
             title?: {
               /** @description Название записи как оно существует в базе данных. */
@@ -2889,7 +2920,10 @@ export interface paths {
              */
             ping_status?: 'open' | 'closed';
             /** @description Мета поля. */
-            meta?: Record<string, never>;
+            meta?: {
+              /** @default false */
+              _acf_changed?: boolean;
+            };
             /** @description Файл темы используемый для показа записи. */
             template?: string;
             /** @description Альтернативный текст для показа когда вложение не отображается. */
@@ -3002,7 +3036,8 @@ export interface paths {
               | 'submitted'
               | 'funded'
               | 'refunded'
-              | 'failed';
+              | 'failed'
+              | 'acf-disabled';
             /** @description Название записи. */
             title?: {
               /** @description Название записи как оно существует в базе данных. */
@@ -3025,7 +3060,10 @@ export interface paths {
              */
             ping_status?: 'open' | 'closed';
             /** @description Мета поля. */
-            meta?: Record<string, never>;
+            meta?: {
+              /** @default false */
+              _acf_changed?: boolean;
+            };
             /** @description Файл темы используемый для показа записи. */
             template?: string;
             /** @description Альтернативный текст для показа когда вложение не отображается. */
@@ -3099,7 +3137,8 @@ export interface paths {
               | 'submitted'
               | 'funded'
               | 'refunded'
-              | 'failed';
+              | 'failed'
+              | 'acf-disabled';
             /** @description Название записи. */
             title?: {
               /** @description Название записи как оно существует в базе данных. */
@@ -3122,7 +3161,10 @@ export interface paths {
              */
             ping_status?: 'open' | 'closed';
             /** @description Мета поля. */
-            meta?: Record<string, never>;
+            meta?: {
+              /** @default false */
+              _acf_changed?: boolean;
+            };
             /** @description Файл темы используемый для показа записи. */
             template?: string;
             /** @description Альтернативный текст для показа когда вложение не отображается. */
@@ -3231,7 +3273,8 @@ export interface paths {
               | 'submitted'
               | 'funded'
               | 'refunded'
-              | 'failed';
+              | 'failed'
+              | 'acf-disabled';
             /** @description Название записи. */
             title?: {
               /** @description Название записи как оно существует в базе данных. */
@@ -3254,7 +3297,10 @@ export interface paths {
              */
             ping_status?: 'open' | 'closed';
             /** @description Мета поля. */
-            meta?: Record<string, never>;
+            meta?: {
+              /** @default false */
+              _acf_changed?: boolean;
+            };
             /** @description Файл темы используемый для показа записи. */
             template?: string;
             /** @description Альтернативный текст для показа когда вложение не отображается. */
@@ -3566,7 +3612,8 @@ export interface paths {
               | 'submitted'
               | 'funded'
               | 'refunded'
-              | 'failed';
+              | 'failed'
+              | 'acf-disabled';
             /**
              * @description ID родителя объекта.
              * @default 0
@@ -3605,7 +3652,10 @@ export interface paths {
             /** @description Элементы назначенные объекту в таксономии nav_menu. */
             menus?: number;
             /** @description Мета поля. */
-            meta?: Record<string, never>;
+            meta?: {
+              /** @default false */
+              _acf_changed?: boolean;
+            };
           };
         };
       };
@@ -3700,7 +3750,8 @@ export interface paths {
               | 'submitted'
               | 'funded'
               | 'refunded'
-              | 'failed';
+              | 'failed'
+              | 'acf-disabled';
             /** @description ID родителя объекта. */
             parent?: number;
             /** @description Текст для атрибута title элемента link для данного пункта меню. */
@@ -3730,7 +3781,10 @@ export interface paths {
             /** @description Элементы назначенные объекту в таксономии nav_menu. */
             menus?: number;
             /** @description Мета поля. */
-            meta?: Record<string, never>;
+            meta?: {
+              /** @default false */
+              _acf_changed?: boolean;
+            };
           };
         };
       };
@@ -3786,7 +3840,8 @@ export interface paths {
               | 'submitted'
               | 'funded'
               | 'refunded'
-              | 'failed';
+              | 'failed'
+              | 'acf-disabled';
             /** @description ID родителя объекта. */
             parent?: number;
             /** @description Текст для атрибута title элемента link для данного пункта меню. */
@@ -3816,7 +3871,10 @@ export interface paths {
             /** @description Элементы назначенные объекту в таксономии nav_menu. */
             menus?: number;
             /** @description Мета поля. */
-            meta?: Record<string, never>;
+            meta?: {
+              /** @default false */
+              _acf_changed?: boolean;
+            };
           };
         };
       };
@@ -3907,7 +3965,8 @@ export interface paths {
               | 'submitted'
               | 'funded'
               | 'refunded'
-              | 'failed';
+              | 'failed'
+              | 'acf-disabled';
             /** @description ID родителя объекта. */
             parent?: number;
             /** @description Текст для атрибута title элемента link для данного пункта меню. */
@@ -3937,7 +3996,10 @@ export interface paths {
             /** @description Элементы назначенные объекту в таксономии nav_menu. */
             menus?: number;
             /** @description Мета поля. */
-            meta?: Record<string, never>;
+            meta?: {
+              /** @default false */
+              _acf_changed?: boolean;
+            };
           };
         };
       };
@@ -4031,7 +4093,8 @@ export interface paths {
               | 'submitted'
               | 'funded'
               | 'refunded'
-              | 'failed';
+              | 'failed'
+              | 'acf-disabled';
             /** @description Текст для атрибута title элемента link для данного пункта меню. */
             attr_title?: string;
             /** @description Имена классов для элемента ссылки этого пункта меню. */
@@ -4059,7 +4122,10 @@ export interface paths {
             /** @description Элементы назначенные объекту в таксономии nav_menu. */
             menus?: number;
             /** @description Мета поля. */
-            meta?: Record<string, never>;
+            meta?: {
+              /** @default false */
+              _acf_changed?: boolean;
+            };
           };
         };
       };
@@ -4260,7 +4326,8 @@ export interface paths {
               | 'submitted'
               | 'funded'
               | 'refunded'
-              | 'failed';
+              | 'failed'
+              | 'acf-disabled';
             /** @description Пароль для защиты содержания и отрывка. */
             password?: string;
             /** @description Название записи. */
@@ -4288,6 +4355,8 @@ export interface paths {
             };
             /** @description Мета поля. */
             meta?: {
+              /** @default false */
+              _acf_changed?: boolean;
               /**
                * @default
                * @enum {string}
@@ -4396,7 +4465,8 @@ export interface paths {
               | 'submitted'
               | 'funded'
               | 'refunded'
-              | 'failed';
+              | 'failed'
+              | 'acf-disabled';
             /** @description Пароль для защиты содержания и отрывка. */
             password?: string;
             /** @description Название записи. */
@@ -4424,6 +4494,8 @@ export interface paths {
             };
             /** @description Мета поля. */
             meta?: {
+              /** @default false */
+              _acf_changed?: boolean;
               /**
                * @default
                * @enum {string}
@@ -4489,7 +4561,8 @@ export interface paths {
               | 'submitted'
               | 'funded'
               | 'refunded'
-              | 'failed';
+              | 'failed'
+              | 'acf-disabled';
             /** @description Пароль для защиты содержания и отрывка. */
             password?: string;
             /** @description Название записи. */
@@ -4517,6 +4590,8 @@ export interface paths {
             };
             /** @description Мета поля. */
             meta?: {
+              /** @default false */
+              _acf_changed?: boolean;
               /**
                * @default
                * @enum {string}
@@ -4617,7 +4692,8 @@ export interface paths {
               | 'submitted'
               | 'funded'
               | 'refunded'
-              | 'failed';
+              | 'failed'
+              | 'acf-disabled';
             /** @description Пароль для защиты содержания и отрывка. */
             password?: string;
             /** @description Название записи. */
@@ -4645,6 +4721,8 @@ export interface paths {
             };
             /** @description Мета поля. */
             meta?: {
+              /** @default false */
+              _acf_changed?: boolean;
               /**
                * @default
                * @enum {string}
@@ -4882,7 +4960,8 @@ export interface paths {
               | 'submitted'
               | 'funded'
               | 'refunded'
-              | 'failed';
+              | 'failed'
+              | 'acf-disabled';
             /** @description Пароль для защиты содержания и отрывка. */
             password?: string;
             /** @description Название записи. */
@@ -4910,6 +4989,8 @@ export interface paths {
             };
             /** @description Мета поля. */
             meta?: {
+              /** @default false */
+              _acf_changed?: boolean;
               /**
                * @default
                * @enum {string}
@@ -5206,7 +5287,8 @@ export interface paths {
               | 'submitted'
               | 'funded'
               | 'refunded'
-              | 'failed';
+              | 'failed'
+              | 'acf-disabled';
             /** @description ID автора шаблона. */
             author?: number;
           };
@@ -5369,7 +5451,8 @@ export interface paths {
               | 'submitted'
               | 'funded'
               | 'refunded'
-              | 'failed';
+              | 'failed'
+              | 'acf-disabled';
             /** @description ID автора шаблона. */
             author?: number;
           };
@@ -5518,7 +5601,8 @@ export interface paths {
               | 'submitted'
               | 'funded'
               | 'refunded'
-              | 'failed';
+              | 'failed'
+              | 'acf-disabled';
             /** @description ID автора шаблона. */
             author?: number;
           };
@@ -5588,7 +5672,8 @@ export interface paths {
               | 'submitted'
               | 'funded'
               | 'refunded'
-              | 'failed';
+              | 'failed'
+              | 'acf-disabled';
             /** @description ID автора шаблона. */
             author?: number;
           };
@@ -5693,7 +5778,8 @@ export interface paths {
               | 'submitted'
               | 'funded'
               | 'refunded'
-              | 'failed';
+              | 'failed'
+              | 'acf-disabled';
             /** @description ID автора шаблона. */
             author?: number;
           };
@@ -5933,7 +6019,8 @@ export interface paths {
               | 'submitted'
               | 'funded'
               | 'refunded'
-              | 'failed';
+              | 'failed'
+              | 'acf-disabled';
             /** @description ID автора шаблона. */
             author?: number;
             /** @description Где предполагается использовать часть шаблона ( шапка, подвал и т.д.) */
@@ -6098,7 +6185,8 @@ export interface paths {
               | 'submitted'
               | 'funded'
               | 'refunded'
-              | 'failed';
+              | 'failed'
+              | 'acf-disabled';
             /** @description ID автора шаблона. */
             author?: number;
             /** @description Где предполагается использовать часть шаблона ( шапка, подвал и т.д.) */
@@ -6249,7 +6337,8 @@ export interface paths {
               | 'submitted'
               | 'funded'
               | 'refunded'
-              | 'failed';
+              | 'failed'
+              | 'acf-disabled';
             /** @description ID автора шаблона. */
             author?: number;
             /** @description Где предполагается использовать часть шаблона ( шапка, подвал и т.д.) */
@@ -6321,7 +6410,8 @@ export interface paths {
               | 'submitted'
               | 'funded'
               | 'refunded'
-              | 'failed';
+              | 'failed'
+              | 'acf-disabled';
             /** @description ID автора шаблона. */
             author?: number;
             /** @description Где предполагается использовать часть шаблона ( шапка, подвал и т.д.) */
@@ -6428,7 +6518,8 @@ export interface paths {
               | 'submitted'
               | 'funded'
               | 'refunded'
-              | 'failed';
+              | 'failed'
+              | 'acf-disabled';
             /** @description ID автора шаблона. */
             author?: number;
             /** @description Где предполагается использовать часть шаблона ( шапка, подвал и т.д.) */
@@ -6875,7 +6966,8 @@ export interface paths {
               | 'submitted'
               | 'funded'
               | 'refunded'
-              | 'failed';
+              | 'failed'
+              | 'acf-disabled';
             /** @description Пароль для защиты содержания и отрывка. */
             password?: string;
             /** @description Название записи. */
@@ -6992,7 +7084,8 @@ export interface paths {
               | 'submitted'
               | 'funded'
               | 'refunded'
-              | 'failed';
+              | 'failed'
+              | 'acf-disabled';
             /** @description Пароль для защиты содержания и отрывка. */
             password?: string;
             /** @description Название записи. */
@@ -7068,7 +7161,8 @@ export interface paths {
               | 'submitted'
               | 'funded'
               | 'refunded'
-              | 'failed';
+              | 'failed'
+              | 'acf-disabled';
             /** @description Пароль для защиты содержания и отрывка. */
             password?: string;
             /** @description Название записи. */
@@ -7179,7 +7273,8 @@ export interface paths {
               | 'submitted'
               | 'funded'
               | 'refunded'
-              | 'failed';
+              | 'failed'
+              | 'acf-disabled';
             /** @description Пароль для защиты содержания и отрывка. */
             password?: string;
             /** @description Название записи. */
@@ -7427,7 +7522,8 @@ export interface paths {
               | 'submitted'
               | 'funded'
               | 'refunded'
-              | 'failed';
+              | 'failed'
+              | 'acf-disabled';
             /** @description Пароль для защиты содержания и отрывка. */
             password?: string;
             /** @description Название записи. */
@@ -8052,7 +8148,8 @@ export interface paths {
               | 'submitted'
               | 'funded'
               | 'refunded'
-              | 'failed';
+              | 'failed'
+              | 'acf-disabled';
             /** @description Пароль для защиты содержания и отрывка. */
             password?: string;
             /** @description Название записи. */
@@ -8171,7 +8268,8 @@ export interface paths {
               | 'submitted'
               | 'funded'
               | 'refunded'
-              | 'failed';
+              | 'failed'
+              | 'acf-disabled';
             /** @description Пароль для защиты содержания и отрывка. */
             password?: string;
             /** @description Название записи. */
@@ -8249,7 +8347,8 @@ export interface paths {
               | 'submitted'
               | 'funded'
               | 'refunded'
-              | 'failed';
+              | 'failed'
+              | 'acf-disabled';
             /** @description Пароль для защиты содержания и отрывка. */
             password?: string;
             /** @description Название записи. */
@@ -8362,7 +8461,8 @@ export interface paths {
               | 'submitted'
               | 'funded'
               | 'refunded'
-              | 'failed';
+              | 'failed'
+              | 'acf-disabled';
             /** @description Пароль для защиты содержания и отрывка. */
             password?: string;
             /** @description Название записи. */
@@ -8612,7 +8712,8 @@ export interface paths {
               | 'submitted'
               | 'funded'
               | 'refunded'
-              | 'failed';
+              | 'failed'
+              | 'acf-disabled';
             /** @description Пароль для защиты содержания и отрывка. */
             password?: string;
             /** @description Название записи. */
@@ -8818,7 +8919,8 @@ export interface paths {
               | 'submitted'
               | 'funded'
               | 'refunded'
-              | 'failed';
+              | 'failed'
+              | 'acf-disabled';
             /** @description Пароль для защиты содержания и отрывка. */
             password?: string;
             /** @description Название записи. */
@@ -8881,6 +8983,8 @@ export interface paths {
               | 'audio';
             /** @description Мета поля. */
             meta?: {
+              /** @default false */
+              _acf_changed?: boolean;
               /** @default  */
               footnotes?: string;
             };
@@ -8982,7 +9086,8 @@ export interface paths {
               | 'submitted'
               | 'funded'
               | 'refunded'
-              | 'failed';
+              | 'failed'
+              | 'acf-disabled';
             /** @description Пароль для защиты содержания и отрывка. */
             password?: string;
             /** @description Название записи. */
@@ -9045,6 +9150,8 @@ export interface paths {
               | 'audio';
             /** @description Мета поля. */
             meta?: {
+              /** @default false */
+              _acf_changed?: boolean;
               /** @default  */
               footnotes?: string;
             };
@@ -9103,7 +9210,8 @@ export interface paths {
               | 'submitted'
               | 'funded'
               | 'refunded'
-              | 'failed';
+              | 'failed'
+              | 'acf-disabled';
             /** @description Пароль для защиты содержания и отрывка. */
             password?: string;
             /** @description Название записи. */
@@ -9166,6 +9274,8 @@ export interface paths {
               | 'audio';
             /** @description Мета поля. */
             meta?: {
+              /** @default false */
+              _acf_changed?: boolean;
               /** @default  */
               footnotes?: string;
             };
@@ -9259,7 +9369,8 @@ export interface paths {
               | 'submitted'
               | 'funded'
               | 'refunded'
-              | 'failed';
+              | 'failed'
+              | 'acf-disabled';
             /** @description Пароль для защиты содержания и отрывка. */
             password?: string;
             /** @description Название записи. */
@@ -9322,6 +9433,8 @@ export interface paths {
               | 'audio';
             /** @description Мета поля. */
             meta?: {
+              /** @default false */
+              _acf_changed?: boolean;
               /** @default  */
               footnotes?: string;
             };
@@ -9552,7 +9665,8 @@ export interface paths {
               | 'submitted'
               | 'funded'
               | 'refunded'
-              | 'failed';
+              | 'failed'
+              | 'acf-disabled';
             /** @description Пароль для защиты содержания и отрывка. */
             password?: string;
             /** @description Название записи. */
@@ -9615,6 +9729,8 @@ export interface paths {
               | 'audio';
             /** @description Мета поля. */
             meta?: {
+              /** @default false */
+              _acf_changed?: boolean;
               /** @default  */
               footnotes?: string;
             };
@@ -9823,7 +9939,8 @@ export interface paths {
               | 'submitted'
               | 'funded'
               | 'refunded'
-              | 'failed';
+              | 'failed'
+              | 'acf-disabled';
             /** @description Пароль для защиты содержания и отрывка. */
             password?: string;
             /** @description Название записи. */
@@ -9869,6 +9986,8 @@ export interface paths {
             menu_order?: number;
             /** @description Мета поля. */
             meta?: {
+              /** @default false */
+              _acf_changed?: boolean;
               /** @default  */
               cmsms_profile_subtitle?: string;
               /** @default  */
@@ -9974,7 +10093,8 @@ export interface paths {
               | 'submitted'
               | 'funded'
               | 'refunded'
-              | 'failed';
+              | 'failed'
+              | 'acf-disabled';
             /** @description Пароль для защиты содержания и отрывка. */
             password?: string;
             /** @description Название записи. */
@@ -10020,6 +10140,8 @@ export interface paths {
             menu_order?: number;
             /** @description Мета поля. */
             meta?: {
+              /** @default false */
+              _acf_changed?: boolean;
               /** @default  */
               cmsms_profile_subtitle?: string;
               /** @default  */
@@ -10082,7 +10204,8 @@ export interface paths {
               | 'submitted'
               | 'funded'
               | 'refunded'
-              | 'failed';
+              | 'failed'
+              | 'acf-disabled';
             /** @description Пароль для защиты содержания и отрывка. */
             password?: string;
             /** @description Название записи. */
@@ -10128,6 +10251,8 @@ export interface paths {
             menu_order?: number;
             /** @description Мета поля. */
             meta?: {
+              /** @default false */
+              _acf_changed?: boolean;
               /** @default  */
               cmsms_profile_subtitle?: string;
               /** @default  */
@@ -10225,7 +10350,8 @@ export interface paths {
               | 'submitted'
               | 'funded'
               | 'refunded'
-              | 'failed';
+              | 'failed'
+              | 'acf-disabled';
             /** @description Пароль для защиты содержания и отрывка. */
             password?: string;
             /** @description Название записи. */
@@ -10271,6 +10397,8 @@ export interface paths {
             menu_order?: number;
             /** @description Мета поля. */
             meta?: {
+              /** @default false */
+              _acf_changed?: boolean;
               /** @default  */
               cmsms_profile_subtitle?: string;
               /** @default  */
@@ -10505,7 +10633,8 @@ export interface paths {
               | 'submitted'
               | 'funded'
               | 'refunded'
-              | 'failed';
+              | 'failed'
+              | 'acf-disabled';
             /** @description Пароль для защиты содержания и отрывка. */
             password?: string;
             /** @description Название записи. */
@@ -10551,6 +10680,8 @@ export interface paths {
             menu_order?: number;
             /** @description Мета поля. */
             meta?: {
+              /** @default false */
+              _acf_changed?: boolean;
               /** @default  */
               cmsms_profile_subtitle?: string;
               /** @default  */
@@ -15612,7 +15743,17 @@ export interface components {
        * @description Именованный статус записи.
        * @enum {string}
        */
-      status?: 'publish' | 'future' | 'draft' | 'pending' | 'private' | 'submitted' | 'funded' | 'refunded' | 'failed';
+      status?:
+        | 'publish'
+        | 'future'
+        | 'draft'
+        | 'pending'
+        | 'private'
+        | 'submitted'
+        | 'funded'
+        | 'refunded'
+        | 'failed'
+        | 'acf-disabled';
       /** @description Тип записи. */
       type?: string;
       /** @description Пароль для защиты содержания и отрывка. */
@@ -15671,6 +15812,8 @@ export interface components {
       format?: 'standard' | 'aside' | 'chat' | 'gallery' | 'link' | 'image' | 'quote' | 'status' | 'video' | 'audio';
       /** @description Мета поля. */
       meta?: {
+        /** @default false */
+        _acf_changed: boolean;
         /** @default  */
         footnotes: string;
       };
@@ -15749,6 +15892,8 @@ export interface components {
       };
       /** @description Мета поля. */
       meta?: {
+        /** @default false */
+        _acf_changed: boolean;
         /** @default  */
         footnotes: string;
       };
@@ -15800,7 +15945,17 @@ export interface components {
        * @description Именованный статус записи.
        * @enum {string}
        */
-      status?: 'publish' | 'future' | 'draft' | 'pending' | 'private' | 'submitted' | 'funded' | 'refunded' | 'failed';
+      status?:
+        | 'publish'
+        | 'future'
+        | 'draft'
+        | 'pending'
+        | 'private'
+        | 'submitted'
+        | 'funded'
+        | 'refunded'
+        | 'failed'
+        | 'acf-disabled';
       /** @description Тип записи. */
       type?: string;
       /** @description Пароль для защиты содержания и отрывка. */
@@ -15858,6 +16013,8 @@ export interface components {
       menu_order?: number;
       /** @description Мета поля. */
       meta?: {
+        /** @default false */
+        _acf_changed: boolean;
         /** @default  */
         footnotes: string;
       };
@@ -15930,6 +16087,8 @@ export interface components {
       };
       /** @description Мета поля. */
       meta?: {
+        /** @default false */
+        _acf_changed: boolean;
         /** @default  */
         footnotes: string;
       };
@@ -15981,7 +16140,17 @@ export interface components {
        * @description Именованный статус записи.
        * @enum {string}
        */
-      status?: 'publish' | 'future' | 'draft' | 'pending' | 'private' | 'submitted' | 'funded' | 'refunded' | 'failed';
+      status?:
+        | 'publish'
+        | 'future'
+        | 'draft'
+        | 'pending'
+        | 'private'
+        | 'submitted'
+        | 'funded'
+        | 'refunded'
+        | 'failed'
+        | 'acf-disabled';
       /** @description Тип записи. */
       type?: string;
       /** @description Шаблон постоянных ссылок для записи. */
@@ -16012,7 +16181,10 @@ export interface components {
        */
       ping_status?: 'open' | 'closed';
       /** @description Мета поля. */
-      meta?: Record<string, never>;
+      meta?: {
+        /** @default false */
+        _acf_changed: boolean;
+      };
       /** @description Файл темы используемый для показа записи. */
       template?: string;
       /** @description Альтернативный текст для показа когда вложение не отображается. */
@@ -16079,7 +16251,17 @@ export interface components {
        * @default publish
        * @enum {string}
        */
-      status: 'publish' | 'future' | 'draft' | 'pending' | 'private' | 'submitted' | 'funded' | 'refunded' | 'failed';
+      status:
+        | 'publish'
+        | 'future'
+        | 'draft'
+        | 'pending'
+        | 'private'
+        | 'submitted'
+        | 'funded'
+        | 'refunded'
+        | 'failed'
+        | 'acf-disabled';
       /**
        * @description ID родителя объекта.
        * @default 0
@@ -16120,7 +16302,10 @@ export interface components {
       /** @description Элементы назначенные объекту в таксономии nav_menu. */
       menus?: number;
       /** @description Мета поля. */
-      meta?: Record<string, never>;
+      meta?: {
+        /** @default false */
+        _acf_changed: boolean;
+      };
     };
     /** nav_menu_item-revision */
     'nav_menu_item-revision': {
@@ -16164,7 +16349,10 @@ export interface components {
             rendered?: string;
           };
       /** @description Мета поля. */
-      meta?: Record<string, never>;
+      meta?: {
+        /** @default false */
+        _acf_changed: boolean;
+      };
       /**
        * Format: uri
        * @description Ссылка для предварительного просмотра записи.
@@ -16213,7 +16401,17 @@ export interface components {
        * @description Именованный статус записи.
        * @enum {string}
        */
-      status?: 'publish' | 'future' | 'draft' | 'pending' | 'private' | 'submitted' | 'funded' | 'refunded' | 'failed';
+      status?:
+        | 'publish'
+        | 'future'
+        | 'draft'
+        | 'pending'
+        | 'private'
+        | 'submitted'
+        | 'funded'
+        | 'refunded'
+        | 'failed'
+        | 'acf-disabled';
       /** @description Тип записи. */
       type?: string;
       /** @description Пароль для защиты содержания и отрывка. */
@@ -16243,6 +16441,8 @@ export interface components {
       };
       /** @description Мета поля. */
       meta?: {
+        /** @default false */
+        _acf_changed: boolean;
         /**
          * @default
          * @enum {string}
@@ -16318,6 +16518,8 @@ export interface components {
       };
       /** @description Мета поля. */
       meta?: {
+        /** @default false */
+        _acf_changed: boolean;
         /**
          * @default
          * @enum {string}
@@ -16380,7 +16582,17 @@ export interface components {
        * @default publish
        * @enum {string}
        */
-      status: 'publish' | 'future' | 'draft' | 'pending' | 'private' | 'submitted' | 'funded' | 'refunded' | 'failed';
+      status:
+        | 'publish'
+        | 'future'
+        | 'draft'
+        | 'pending'
+        | 'private'
+        | 'submitted'
+        | 'funded'
+        | 'refunded'
+        | 'failed'
+        | 'acf-disabled';
       /** @description ID записи. */
       wp_id?: number;
       /** @description Файл темы существует */
@@ -16452,7 +16664,17 @@ export interface components {
        * @default publish
        * @enum {string}
        */
-      status: 'publish' | 'future' | 'draft' | 'pending' | 'private' | 'submitted' | 'funded' | 'refunded' | 'failed';
+      status:
+        | 'publish'
+        | 'future'
+        | 'draft'
+        | 'pending'
+        | 'private'
+        | 'submitted'
+        | 'funded'
+        | 'refunded'
+        | 'failed'
+        | 'acf-disabled';
       /** @description ID записи. */
       wp_id?: number;
       /** @description Файл темы существует */
@@ -16570,7 +16792,17 @@ export interface components {
        * @description Именованный статус записи.
        * @enum {string}
        */
-      status?: 'publish' | 'future' | 'draft' | 'pending' | 'private' | 'submitted' | 'funded' | 'refunded' | 'failed';
+      status?:
+        | 'publish'
+        | 'future'
+        | 'draft'
+        | 'pending'
+        | 'private'
+        | 'submitted'
+        | 'funded'
+        | 'refunded'
+        | 'failed'
+        | 'acf-disabled';
       /** @description Тип записи. */
       type?: string;
       /** @description Пароль для защиты содержания и отрывка. */
@@ -16652,7 +16884,10 @@ export interface components {
         protected?: boolean;
       };
       /** @description Мета поля. */
-      meta?: Record<string, never>;
+      meta?: {
+        /** @default false */
+        _acf_changed: boolean;
+      };
       /**
        * Format: uri
        * @description Ссылка для предварительного просмотра записи.
@@ -16793,7 +17028,17 @@ export interface components {
        * @description Именованный статус записи.
        * @enum {string}
        */
-      status?: 'publish' | 'future' | 'draft' | 'pending' | 'private' | 'submitted' | 'funded' | 'refunded' | 'failed';
+      status?:
+        | 'publish'
+        | 'future'
+        | 'draft'
+        | 'pending'
+        | 'private'
+        | 'submitted'
+        | 'funded'
+        | 'refunded'
+        | 'failed'
+        | 'acf-disabled';
       /** @description Тип записи. */
       type?: string;
       /** @description Пароль для защиты содержания и отрывка. */
@@ -16883,7 +17128,10 @@ export interface components {
         protected?: boolean;
       };
       /** @description Мета поля. */
-      meta?: Record<string, never>;
+      meta?: {
+        /** @default false */
+        _acf_changed: boolean;
+      };
       /**
        * Format: uri
        * @description Ссылка для предварительного просмотра записи.
@@ -16932,7 +17180,17 @@ export interface components {
        * @description Именованный статус записи.
        * @enum {string}
        */
-      status?: 'publish' | 'future' | 'draft' | 'pending' | 'private' | 'submitted' | 'funded' | 'refunded' | 'failed';
+      status?:
+        | 'publish'
+        | 'future'
+        | 'draft'
+        | 'pending'
+        | 'private'
+        | 'submitted'
+        | 'funded'
+        | 'refunded'
+        | 'failed'
+        | 'acf-disabled';
       /** @description Тип записи. */
       type?: string;
       /** @description Пароль для защиты содержания и отрывка. */
@@ -16993,6 +17251,8 @@ export interface components {
       format?: 'standard' | 'aside' | 'chat' | 'gallery' | 'link' | 'image' | 'quote' | 'status' | 'video' | 'audio';
       /** @description Мета поля. */
       meta?: {
+        /** @default false */
+        _acf_changed: boolean;
         /** @default  */
         footnotes: string;
       };
@@ -17065,6 +17325,8 @@ export interface components {
       };
       /** @description Мета поля. */
       meta?: {
+        /** @default false */
+        _acf_changed: boolean;
         /** @default  */
         footnotes: string;
       };
@@ -17116,7 +17378,17 @@ export interface components {
        * @description Именованный статус записи.
        * @enum {string}
        */
-      status?: 'publish' | 'future' | 'draft' | 'pending' | 'private' | 'submitted' | 'funded' | 'refunded' | 'failed';
+      status?:
+        | 'publish'
+        | 'future'
+        | 'draft'
+        | 'pending'
+        | 'private'
+        | 'submitted'
+        | 'funded'
+        | 'refunded'
+        | 'failed'
+        | 'acf-disabled';
       /** @description Тип записи. */
       type?: string;
       /** @description Пароль для защиты содержания и отрывка. */
@@ -17170,6 +17442,8 @@ export interface components {
       menu_order?: number;
       /** @description Мета поля. */
       meta?: {
+        /** @default false */
+        _acf_changed: boolean;
         /** @default  */
         cmsms_profile_subtitle: string;
         /** @default  */
@@ -17246,6 +17520,8 @@ export interface components {
       };
       /** @description Мета поля. */
       meta?: {
+        /** @default false */
+        _acf_changed: boolean;
         /** @default  */
         cmsms_profile_subtitle: string;
         /** @default  */
