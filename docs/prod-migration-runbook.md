@@ -19,7 +19,8 @@ Related: [`implementation-plan.md`](./implementation-plan.md) (task state) · [`
 | **B5** | **Category ids may differ.** `581/580/86/559` are hardcoded in two files. | A wrong id silently empties the catalogue and the related-films strip. | §1.3 + §4.3 |
 | **B6** | **Media offload origin unconfirmed for prod.** | `WP_MEDIA_CDN` defaults to the od-dev bucket; a different prod bucket breaks every image. | §1.5 + §4.1 |
 | ~~B7~~ | ~~Hosting/deploy target undecided~~ — **decided: Beget VPS + Coolify, images built in GitHub Actions → GHCR.** | Remaining work is the CI push step (§4.7), not a decision. | §4 |
-| **B8** | **Only ~4 routes are redesigned** (`/`, `/news`, `/news/[id]`, `/video`, `/video/[id]`). | Launching without the A6 legacy fallback means 170 pages 404. **Launch gate, not a migration step** — see §6. | A6 |
+| **B8** | **Only ~4 routes are redesigned** (`/`, `/news`, `/news/[id]`, `/video`, `/video/[id]`). | Launching without the A6 legacy fallback means 170 pages 404. **Launch gate, not a migration step** — see §6. Those 170 pages are ~15 % of entry traffic. | A6 |
+| **B9** | **The redesigned routes don't match live URLs.** Live serves posts at `/<id>/` and films at `/video/filmy|multy|…/`; we serve `/news\|video/<id>` and `/video?category=`. No `redirects()` exists. | **59 % of all site entries** (Metrica, 91 days) would 404 — bigger than B8. Fix as an `/<id>` dispatch inside A6's catch-all, not a redirect table. | A8 |
 
 ---
 
@@ -211,7 +212,7 @@ Run against the deployed target, not localhost.
 1. `/video` — 200, ten cards, pagination present. Card count should equal §1.6's four-category total (od-dev: 99), **not** the full `format=video` count.
 2. Each category tab returns results and its count matches WP.
 3. `/video/<id>` for a film with downloads — pills render with durations; share tiles show the VK/Rutube/YouTube brand marks; breadcrumbs «Видео → title».
-4. `/video/<id>` for a film with `kinescope_id` — the Kinescope iframe plays. 53 of 99 qualify on od-dev after §3.6.
+4. `/video/<id>` for a film with `kinescope_id` — the Kinescope iframe plays. 70 of 99 qualify on od-dev after §3.6.
 5. `/video/<id>` for a film with a poster — the sidebar плакат card renders with «Скачать плакат».
 6. Card thumbnails resolve (covers from §3.5) — no broken images, no `wp.invalid`.
 7. `/`, `/news`, `/news/<id>` still render — the news route shares `resolveMediaUrl` and `parsePost` with video.
@@ -219,6 +220,7 @@ Run against the deployed target, not localhost.
 9. `pnpm film:import --in <sheet>` reports `0 field(s)` — data landed and persisted.
 10. 375px and 1440px on `/video` and one film page.
 11. `/health` returns a plain `ok` (Coolify's probe target).
+12. **No 404 on the live site's real URLs (A8).** Take the top ~200 URLs by entry visits from the Yandex Metrica `Страницы входа` export and request each against the deploy; every one must answer 200 or 308-to-200. This is the gate that catches the URL-shape change — the live site serves every post at `/<id>/` and the film catalogue at `/video/filmy|multy|roliki|short|famous-people/`, which together are **59 % of all site entries**. Include at least one `/category/video/mult/` (256 entries on its own) and one `/page/N/`.
 
 ---
 
@@ -226,7 +228,8 @@ Run against the deployed target, not localhost.
 
 Migrating the data and pointing the app at prod is **not** launch. Still required:
 
-- **A6 legacy-page fallback.** ~170 of 174 pages have no redesigned route; without the catch-all iframe proxy they 404. Needs the frozen copy stood up with a chromeless template + REST, `WP_LEGACY_BASE`, the proxy route and the catch-all. See [`legacy-page-fallback.md` §5](./legacy-page-fallback.md).
+- **A6 legacy-page fallback.** ~170 of 174 pages have no redesigned route; without the catch-all iframe proxy they 404. Needs the frozen copy stood up with a chromeless template + REST, `WP_LEGACY_BASE`, the proxy route and the catch-all. See [`legacy-page-fallback.md` §5](./legacy-page-fallback.md). Those 170 pages are only **~15 % of entry traffic** — see the traffic tiering in [`implementation-plan.md`](./implementation-plan.md#launch-priority--measured-from-real-traffic-yandex-metrica-2026-05-14--2026-08-13) for which of them deserve a native route before prod (Materials index + 4 sub-pages, `/contacts/`, `/profile/[slug]`) and which stay on the fallback.
+- **A8 URL compatibility.** Separate from A6 and larger: the redesigned routes themselves don't match the live URL shape (`/<id>/` → `/news|video/<id>`, `/video/filmy/` → `/video?category=`). 59 % of entries. Best folded into A6's catch-all as an `/<id>` dispatch rather than a redirect table — see A8 in the plan. Gate 12 in §5 verifies it.
 - **A2 hosting decision**, **A4 Yandex Metrica + consent banner**, **F6 152-FZ privacy page**, **F4 SEO baseline** (`robots.txt`, `sitemap.xml`, OG beyond news).
 - **B4 on-demand revalidation** — otherwise editors wait an hour (§4.6).
 - **B8 WordPress plugin cleanup** is **not** required for the frontend, with one exception: removing `clearfy-pro` is what permanently fixes both the REST block (B1) and the WP-CLI redirect gotcha. Everything else in B8 is hygiene.
