@@ -1,0 +1,965 @@
+<!DOCTYPE html>
+<!--[if IE 8]>
+<html class="ie ie8" lang="ru-RU">
+<![endif]-->
+<!--[if !(IE 8)]><!-->
+<html lang="ru-RU" class="cmsms_html">
+<!--<![endif]-->
+<head><meta name="yandex-verification" content="5970d7ec7d8e8b0b" /> 
+<meta charset="UTF-8" /><script>if(navigator.userAgent.match(/MSIE|Internet Explorer/i)||navigator.userAgent.match(/Trident\/7\..*?rv:11/i)){var href=document.location.href;if(!href.match(/[?&]nowprocket/)){if(href.indexOf("?")==-1){if(href.indexOf("#")==-1){document.location.href=href+"?nowprocket=1"}else{document.location.href=href.replace("#","?nowprocket=1#")}}else{if(href.indexOf("#")==-1){document.location.href=href+"&nowprocket=1"}else{document.location.href=href.replace("#","&nowprocket=1#")}}}}</script><script>class RocketLazyLoadScripts{constructor(e){this.triggerEvents=e,this.eventOptions={passive:!0},this.userEventListener=this.triggerListener.bind(this),this.delayedScripts={normal:[],async:[],defer:[]},this.allJQueries=[]}_addUserInteractionListener(e){this.triggerEvents.forEach((t=>window.addEventListener(t,e.userEventListener,e.eventOptions)))}_removeUserInteractionListener(e){this.triggerEvents.forEach((t=>window.removeEventListener(t,e.userEventListener,e.eventOptions)))}triggerListener(){this._removeUserInteractionListener(this),"loading"===document.readyState?document.addEventListener("DOMContentLoaded",this._loadEverythingNow.bind(this)):this._loadEverythingNow()}async _loadEverythingNow(){this._delayEventListeners(),this._delayJQueryReady(this),this._handleDocumentWrite(),this._registerAllDelayedScripts(),this._preloadAllScripts(),await this._loadScriptsFromList(this.delayedScripts.normal),await this._loadScriptsFromList(this.delayedScripts.defer),await this._loadScriptsFromList(this.delayedScripts.async),await this._triggerDOMContentLoaded(),await this._triggerWindowLoad(),window.dispatchEvent(new Event("rocket-allScriptsLoaded"))}_registerAllDelayedScripts(){document.querySelectorAll("script[type=rocketlazyloadscript]").forEach((e=>{e.hasAttribute("src")?e.hasAttribute("async")&&!1!==e.async?this.delayedScripts.async.push(e):e.hasAttribute("defer")&&!1!==e.defer||"module"===e.getAttribute("data-rocket-type")?this.delayedScripts.defer.push(e):this.delayedScripts.normal.push(e):this.delayedScripts.normal.push(e)}))}async _transformScript(e){return await this._requestAnimFrame(),new Promise((t=>{const n=document.createElement("script");let r;[...e.attributes].forEach((e=>{let t=e.nodeName;"type"!==t&&("data-rocket-type"===t&&(t="type",r=e.nodeValue),n.setAttribute(t,e.nodeValue))})),e.hasAttribute("src")?(n.addEventListener("load",t),n.addEventListener("error",t)):(n.text=e.text,t()),e.parentNode.replaceChild(n,e)}))}async _loadScriptsFromList(e){const t=e.shift();return t?(await this._transformScript(t),this._loadScriptsFromList(e)):Promise.resolve()}_preloadAllScripts(){var e=document.createDocumentFragment();[...this.delayedScripts.normal,...this.delayedScripts.defer,...this.delayedScripts.async].forEach((t=>{const n=t.getAttribute("src");if(n){const t=document.createElement("link");t.href=n,t.rel="preload",t.as="script",e.appendChild(t)}})),document.head.appendChild(e)}_delayEventListeners(){let e={};function t(t,n){!function(t){function n(n){return e[t].eventsToRewrite.indexOf(n)>=0?"rocket-"+n:n}e[t]||(e[t]={originalFunctions:{add:t.addEventListener,remove:t.removeEventListener},eventsToRewrite:[]},t.addEventListener=function(){arguments[0]=n(arguments[0]),e[t].originalFunctions.add.apply(t,arguments)},t.removeEventListener=function(){arguments[0]=n(arguments[0]),e[t].originalFunctions.remove.apply(t,arguments)})}(t),e[t].eventsToRewrite.push(n)}function n(e,t){let n=e[t];Object.defineProperty(e,t,{get:()=>n||function(){},set(r){e["rocket"+t]=n=r}})}t(document,"DOMContentLoaded"),t(window,"DOMContentLoaded"),t(window,"load"),t(window,"pageshow"),t(document,"readystatechange"),n(document,"onreadystatechange"),n(window,"onload"),n(window,"onpageshow")}_delayJQueryReady(e){let t=window.jQuery;Object.defineProperty(window,"jQuery",{get:()=>t,set(n){if(n&&n.fn&&!e.allJQueries.includes(n)){n.fn.ready=n.fn.init.prototype.ready=function(t){e.domReadyFired?t.bind(document)(n):document.addEventListener("rocket-DOMContentLoaded",(()=>t.bind(document)(n)))};const t=n.fn.on;n.fn.on=n.fn.init.prototype.on=function(){if(this[0]===window){function e(e){return e.split(" ").map((e=>"load"===e||0===e.indexOf("load.")?"rocket-jquery-load":e)).join(" ")}"string"==typeof arguments[0]||arguments[0]instanceof String?arguments[0]=e(arguments[0]):"object"==typeof arguments[0]&&Object.keys(arguments[0]).forEach((t=>{delete Object.assign(arguments[0],{[e(t)]:arguments[0][t]})[t]}))}return t.apply(this,arguments),this},e.allJQueries.push(n)}t=n}})}async _triggerDOMContentLoaded(){this.domReadyFired=!0,await this._requestAnimFrame(),document.dispatchEvent(new Event("rocket-DOMContentLoaded")),await this._requestAnimFrame(),window.dispatchEvent(new Event("rocket-DOMContentLoaded")),await this._requestAnimFrame(),document.dispatchEvent(new Event("rocket-readystatechange")),await this._requestAnimFrame(),document.rocketonreadystatechange&&document.rocketonreadystatechange()}async _triggerWindowLoad(){await this._requestAnimFrame(),window.dispatchEvent(new Event("rocket-load")),await this._requestAnimFrame(),window.rocketonload&&window.rocketonload(),await this._requestAnimFrame(),this.allJQueries.forEach((e=>e(window).trigger("rocket-jquery-load"))),window.dispatchEvent(new Event("rocket-pageshow")),await this._requestAnimFrame(),window.rocketonpageshow&&window.rocketonpageshow()}_handleDocumentWrite(){const e=new Map;document.write=document.writeln=function(t){const n=document.currentScript,r=document.createRange(),i=n.parentElement;let o=e.get(n);void 0===o&&(o=n.nextSibling,e.set(n,o));const a=document.createDocumentFragment();r.setStart(a,0),a.appendChild(r.createContextualFragment(t)),i.insertBefore(a,o)}}async _requestAnimFrame(){return new Promise((e=>requestAnimationFrame(e)))}static run(){const e=new RocketLazyLoadScripts(["keydown","mousemove","touchmove","touchstart","touchend","wheel"]);e._addUserInteractionListener(e)}}RocketLazyLoadScripts.run();</script>
+
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+<link rel="shortcut icon" href="https://obshee-delo.ru/wp-content/uploads/2016/02/favicon-od.ico" type="image/x-icon" />
+<link rel="profile" href="http://gmpg.org/xfn/11" />
+<link rel="pingback" href="https://obshee-delo.ru/xmlrpc.php" />
+
+<title>Частые вопросы &#8212; Общее дело</title><link rel="preload" as="style" href="https://fonts.googleapis.com/css?family=Droid%20Sans%3A400%2C700%7COpen%20Sans%3A300%2C300italic%2C400%2C400italic%2C700%2C700italic%7CPT%20Sans%3A400%2C400italic%2C700%2C700italic&#038;display=swap" /><link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Droid%20Sans%3A400%2C700%7COpen%20Sans%3A300%2C300italic%2C400%2C400italic%2C700%2C700italic%7CPT%20Sans%3A400%2C400italic%2C700%2C700italic&#038;display=swap" media="print" onload="this.media='all'" /><noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Droid%20Sans%3A400%2C700%7COpen%20Sans%3A300%2C300italic%2C400%2C400italic%2C700%2C700italic%7CPT%20Sans%3A400%2C400italic%2C700%2C700italic&#038;display=swap" /></noscript>
+<link rel='dns-prefetch' href='//www.google.com' />
+<link rel='dns-prefetch' href='//fonts.googleapis.com' />
+<link href='https://fonts.gstatic.com' crossorigin rel='preconnect' />
+<link rel="alternate" type="application/rss+xml" title="Общее дело &raquo; Лента" href="https://obshee-delo.ru/feed/" />
+<link rel="alternate" type="application/rss+xml" title="Общее дело &raquo; Лента комментариев" href="https://obshee-delo.ru/comments/feed/" />
+<link data-minify="1" rel='stylesheet' id='validate-engine-css-css'  href='https://obshee-delo.ru/wp-content/cache/min/1/wp-content/plugins/wysija-newsletters/css/validationEngine.jquery.css?ver=1723474224' type='text/css' media='all' />
+<link data-minify="1" rel='stylesheet' id='all_in_one_bannerWithPlaylist_site_css-css'  href='https://obshee-delo.ru/wp-content/cache/min/1/wp-content/plugins/all_in_one_bannerWithPlaylist/bannerWithPlaylist/allinone_bannerWithPlaylist.css?ver=1723474224' type='text/css' media='all' />
+
+<link rel='stylesheet' id='wp-block-library-css'  href='https://obshee-delo.ru/wp-includes/css/dist/block-library/style.min.css' type='text/css' media='all' />
+<link data-minify="1" rel='stylesheet' id='contact-form-7-css'  href='https://obshee-delo.ru/wp-content/cache/min/1/wp-content/plugins/contact-form-7/includes/css/styles.css?ver=1723474224' type='text/css' media='all' />
+<link data-minify="1" rel='stylesheet' id='leyka-new-templates-styles-css'  href='https://obshee-delo.ru/wp-content/cache/min/1/wp-content/plugins/leyka/assets/css/public.css?ver=1723474224' type='text/css' media='all' />
+<style id='leyka-new-templates-styles-inline-css' type='text/css'>
+
+:root {
+	--leyka-ext-support-packages-color-main: #F38D04;
+	--leyka-ext-support-packages-color-main-op10: #F38D041A;
+	--leyka-ext-support-packages-color-background: #ffffff;
+	--leyka-ext-support-packages-color-caption: #ffffff;
+	--leyka-ext-support-packages-color-text: #000000;
+}
+        
+
+:root {
+	--leyka-ext-engagement-banner-color-main: #F38D04;
+	--leyka-ext-engagement-banner-color-main-op10: #F38D041A;
+	--leyka-ext-engagement-banner-color-background: #FDD39B;
+	--leyka-ext-engagement-banner-color-caption: #FDD39B;
+	--leyka-ext-engagement-banner-color-text: #1B1A18;
+}
+        
+
+:root {
+	--leyka-ext-example-color-main: #F38D04;
+	--leyka-ext-example-color-main-op10: #F38D041A;
+	--leyka-ext-example-color-background: #FDD39B;
+	--leyka-ext-example-color-caption: #FDD39B;
+	--leyka-ext-example-color-text: #1B1A18;
+}
+        
+</style>
+<link data-minify="1" rel='stylesheet' id='leyka-plugin-styles-css'  href='https://obshee-delo.ru/wp-content/cache/min/1/wp-content/plugins/leyka/css/public.css?ver=1723474224' type='text/css' media='all' />
+<link data-minify="1" rel='stylesheet' id='page-list-style-css'  href='https://obshee-delo.ru/wp-content/cache/min/1/wp-content/plugins/page-list/css/page-list.css?ver=1723474224' type='text/css' media='all' />
+<link data-minify="1" rel='stylesheet' id='theme-style-css'  href='https://obshee-delo.ru/wp-content/cache/min/1/wp-content/themes/welfare/style.css?ver=1723474224' type='text/css' media='screen, print' />
+<link data-minify="1" rel='stylesheet' id='theme-design-style-css'  href='https://obshee-delo.ru/wp-content/cache/min/1/wp-content/themes/welfare/css/style.css?ver=1723474225' type='text/css' media='screen, print' />
+<link data-minify="1" rel='stylesheet' id='theme-adapt-css'  href='https://obshee-delo.ru/wp-content/cache/min/1/wp-content/themes/welfare/css/adaptive.css?ver=1723474225' type='text/css' media='screen, print' />
+<link data-minify="1" rel='stylesheet' id='theme-retina-css'  href='https://obshee-delo.ru/wp-content/cache/min/1/wp-content/themes/welfare/css/retina.css?ver=1723474225' type='text/css' media='screen' />
+<link data-minify="1" rel='stylesheet' id='theme-icons-css'  href='https://obshee-delo.ru/wp-content/cache/min/1/wp-content/themes/welfare/css/fontello.css?ver=1723474226' type='text/css' media='screen' />
+<link data-minify="1" rel='stylesheet' id='animate-css'  href='https://obshee-delo.ru/wp-content/cache/min/1/wp-content/themes/welfare/css/animate.css?ver=1723474226' type='text/css' media='screen' />
+<link data-minify="1" rel='stylesheet' id='isotope-css'  href='https://obshee-delo.ru/wp-content/cache/min/1/wp-content/themes/welfare/css/jquery.isotope.css?ver=1723474226' type='text/css' media='screen' />
+<link data-minify="1" rel='stylesheet' id='ilightbox-css'  href='https://obshee-delo.ru/wp-content/cache/min/1/wp-content/themes/welfare/css/ilightbox.css?ver=1723474226' type='text/css' media='screen' />
+<link data-minify="1" rel='stylesheet' id='ilightbox-skin-parade-css'  href='https://obshee-delo.ru/wp-content/cache/min/1/wp-content/themes/welfare/css/ilightbox-skins/parade-skin.css?ver=1723474226' type='text/css' media='screen' />
+<link data-minify="1" rel='stylesheet' id='theme-fonts-schemes-css'  href='https://obshee-delo.ru/wp-content/cache/min/1/wp-content/uploads/cmsms_styles/welfare.css?ver=1723474226' type='text/css' media='screen' />
+<!--[if lte IE 9]>
+<link rel='stylesheet' id='theme-fonts-css'  href='https://obshee-delo.ru/wp-content/uploads/cmsms_styles/welfare_fonts.css' type='text/css' media='screen' />
+<![endif]-->
+<!--[if lte IE 9]>
+<link rel='stylesheet' id='theme-schemes-primary-css'  href='https://obshee-delo.ru/wp-content/uploads/cmsms_styles/welfare_colors_primary.css' type='text/css' media='screen' />
+<![endif]-->
+<!--[if lte IE 9]>
+<link rel='stylesheet' id='theme-schemes-secondary-css'  href='https://obshee-delo.ru/wp-content/uploads/cmsms_styles/welfare_colors_secondary.css' type='text/css' media='screen' />
+<![endif]-->
+<!--[if lt IE 9]>
+<link rel='stylesheet' id='theme-ie-css'  href='https://obshee-delo.ru/wp-content/themes/welfare/css/ie.css' type='text/css' media='screen' />
+<![endif]-->
+
+<link data-minify="1" rel='stylesheet' id='welfare-gutenberg-frontend-style-css'  href='https://obshee-delo.ru/wp-content/cache/min/1/wp-content/themes/welfare/gutenberg/css/frontend-style.css?ver=1723474226' type='text/css' media='screen' />
+<link data-minify="1" rel='stylesheet' id='slb_core-css'  href='https://obshee-delo.ru/wp-content/cache/min/1/wp-content/plugins/simple-lightbox/client/css/app.css?ver=1723474226' type='text/css' media='all' />
+<style id='rocket-lazyload-inline-css' type='text/css'>
+.rll-youtube-player{position:relative;padding-bottom:56.23%;height:0;overflow:hidden;max-width:100%;}.rll-youtube-player:focus-within{outline: 2px solid currentColor;outline-offset: 5px;}.rll-youtube-player iframe{position:absolute;top:0;left:0;width:100%;height:100%;z-index:100;background:0 0}.rll-youtube-player img{bottom:0;display:block;left:0;margin:auto;max-width:100%;width:100%;position:absolute;right:0;top:0;border:none;height:auto;-webkit-transition:.4s all;-moz-transition:.4s all;transition:.4s all}.rll-youtube-player img:hover{-webkit-filter:brightness(75%)}.rll-youtube-player .play{height:100%;width:100%;left:0;top:0;position:absolute;background:url(https://obshee-delo.ru/wp-content/plugins/wp-rocket/assets/img/youtube.png) no-repeat center;background-color: transparent !important;cursor:pointer;border:none;}
+</style>
+<link data-minify="1" rel='stylesheet' id='style.owl.carousel-css'  href='https://obshee-delo.ru/wp-content/cache/min/1/wp-content/plugins/owl-carousel/css/owl.carousel.css?ver=1723474226' type='text/css' media='all' />
+<link data-minify="1" rel='stylesheet' id='style.owl.carousel.theme-css'  href='https://obshee-delo.ru/wp-content/cache/min/1/wp-content/plugins/owl-carousel/css/owl.theme.css?ver=1723474226' type='text/css' media='all' />
+<link data-minify="1" rel='stylesheet' id='style.owl.carousel.transitions-css'  href='https://obshee-delo.ru/wp-content/cache/min/1/wp-content/plugins/owl-carousel/css/owl.transitions.css?ver=1723474226' type='text/css' media='all' />
+<link data-minify="1" rel='stylesheet' id='style.owl.carousel.styles-css'  href='https://obshee-delo.ru/wp-content/cache/min/1/wp-content/plugins/owl-carousel/css/styles.css?ver=1723474226' type='text/css' media='all' />
+<script type="rocketlazyloadscript" data-rocket-type='text/javascript' src='https://obshee-delo.ru/wp-includes/js/jquery/jquery.js' id='jquery-core-js' defer></script>
+<script type="rocketlazyloadscript" data-rocket-type='text/javascript' src='https://obshee-delo.ru/wp-content/plugins/all_in_one_bannerWithPlaylist/bannerWithPlaylist/js/jquery.touchSwipe.min.js' id='lbg-touchSwipe-js' defer></script>
+<script type="rocketlazyloadscript" data-rocket-type='text/javascript' src='https://obshee-delo.ru/wp-content/plugins/all_in_one_bannerWithPlaylist/bannerWithPlaylist/js/allinone_bannerWithPlaylist.js' id='lbg-all_in_one_bannerWithPlaylist-js' defer></script>
+<script type="rocketlazyloadscript" data-rocket-type='text/javascript' src='https://obshee-delo.ru/wp-content/plugins/all_in_one_bannerWithPlaylist/bannerWithPlaylist/js/jquery.mousewheel.min.js' id='lbg-mousewheel-js' defer></script>
+<script type="rocketlazyloadscript" data-rocket-type='text/javascript' src='https://obshee-delo.ru/wp-content/themes/welfare/js/jsLibraries.min.js' id='libs-js' defer></script>
+<script type="rocketlazyloadscript" data-rocket-type='text/javascript' src='https://obshee-delo.ru/wp-content/themes/welfare/js/jquery.iLightBox.min.js' id='iLightBox-js' defer></script>
+<script type="rocketlazyloadscript" data-rocket-type='text/javascript' src='https://obshee-delo.ru/wp-content/plugins/owl-carousel/js/owl.carousel.js' id='js.owl.carousel-js' defer></script>
+<script type="rocketlazyloadscript" data-rocket-type='text/javascript' src='https://obshee-delo.ru/wp-content/plugins/owl-carousel/js/script.js' id='js.owl.carousel.script-js' defer></script>
+<link rel="canonical" href="https://obshee-delo.ru/faq/" />
+<style>.pseudo-clearfy-link { color: #008acf; cursor: pointer;}.pseudo-clearfy-link:hover { text-decoration: none;}</style>
+                <script type="rocketlazyloadscript">
+                    document.documentElement.classList.add("leyka-js");
+                </script>
+                <style>
+                    :root {
+                        --color-main: 		#1db318;
+                        --color-main-dark: 	#1aa316;
+                        --color-main-light: #acebaa;
+                    }
+                </style>
+
+                <style type="text/css">
+	.header_top,
+	.header_top_outer,
+	.header_top_inner, 
+	.header_top_aligner, 
+	.header_top_donation_but {
+		height : 35px;
+	}
+	
+	.header_mid,
+	.header_mid_outer,
+	.header_mid .header_mid_inner .search_wrap_inner,
+	.header_mid .header_mid_inner .header_donation_but_wrap_inner,
+	.header_mid .header_mid_inner .slogan_wrap_inner,
+	.header_mid .header_mid_inner .social_wrap_inner,
+	.header_mid .header_mid_inner nav > div > ul,
+	.header_mid .header_mid_inner nav > div > ul > li,
+	.header_mid .header_mid_inner nav > div > ul > li > a,
+	.header_mid .header_mid_inner nav > div > ul > li > a > span.nav_bg_clr,
+	.header_mid .header_mid_inner .logo,
+	.header_mid .header_mid_inner .resp_nav_wrap_inner {
+		height : 80px;
+	}
+	
+	.header_bot,
+	.header_bot_outer,
+	.header_bot .header_bot_inner nav > div > ul,
+	.header_bot .header_bot_inner nav > div > ul > li,
+	.header_bot .header_bot_inner nav > div > ul > li > a {
+		height : 50px;
+	}
+	
+	#page.cmsms_heading_after_header #middle, 
+	#page.cmsms_heading_under_header #middle .headline .headline_outer {
+		padding-top : 80px;
+	}
+	
+	#page.cmsms_heading_after_header.enable_header_top #middle, 
+	#page.cmsms_heading_under_header.enable_header_top #middle .headline .headline_outer {
+		padding-top : 115px;
+	}
+	
+	#page.cmsms_heading_after_header.enable_header_bottom #middle, 
+	#page.cmsms_heading_under_header.enable_header_bottom #middle .headline .headline_outer {
+		padding-top : 130px;
+	}
+	
+	#page.cmsms_heading_after_header.enable_header_top.enable_header_bottom #middle, 
+	#page.cmsms_heading_under_header.enable_header_top.enable_header_bottom #middle .headline .headline_outer {
+		padding-top : 165px;
+	}
+	
+	.cmsms_dynamic_cart {
+		margin-top : 53px;
+	}
+	
+	.cmsms_dynamic_cart .widget_shopping_cart_content, 
+	.cmsms_added_product_info {
+		margin-top : 64px;
+	}
+	
+	@media only screen and (max-width: 1024px) {
+		.header_top,
+		.header_top_outer,
+		.header_top_inner,
+		.header_top_aligner,
+		.header_top_donation_but,
+		.header_mid,
+		.header_mid_outer,
+		.header_mid .header_mid_inner nav > div > ul,
+		.header_mid .header_mid_inner nav > div > ul > li,
+		.header_mid .header_mid_inner nav > div > ul > li > a,
+		.header_mid .header_mid_inner nav > div > ul > li > a > span.nav_bg_clr,
+		.header_bot,
+		.header_bot_outer,
+		.header_bot .header_bot_inner nav > div > ul,
+		.header_bot .header_bot_inner nav > div > ul > li,
+		.header_bot .header_bot_inner nav > div > ul > li > a {
+			height : auto;
+		}
+		
+		#page.cmsms_heading_after_header #middle, 
+		#page.cmsms_heading_under_header #middle .headline .headline_outer, 
+		#page.cmsms_heading_after_header.enable_header_top #middle, 
+		#page.cmsms_heading_under_header.enable_header_top #middle .headline .headline_outer, 
+		#page.cmsms_heading_after_header.enable_header_bottom #middle, 
+		#page.cmsms_heading_under_header.enable_header_bottom #middle .headline .headline_outer, 
+		#page.cmsms_heading_after_header.enable_header_top.enable_header_bottom #middle, 
+		#page.cmsms_heading_under_header.enable_header_top.enable_header_bottom #middle .headline .headline_outer {
+			padding-top : 0 !important;
+		}
+	}
+	
+	@media only screen and (max-width: 1200px) {
+		.cmsms_dynamic_cart {
+			margin-top : 93px !important;
+		}
+	}
+@font-face {
+	font-family: 'Myriad Pro';
+	src: url('/wp-content/themes/welfare/fonts/MyriadPro-BoldCond.eot');
+	src: url('/wp-content/themes/welfare/fonts/MyriadPro-BoldCond.eot?#iefix') format('embedded-opentype'),
+		 url('/wp-content/themes/welfare/fonts/MyriadPro-BoldCond.woff') format('woff'),
+		 url('/wp-content/themes/welfare/fonts/MyriadPro-BoldCond.svg#MyriadPro-BoldCond') format('svg');
+	font-weight: bold;
+	font-style: normal;
+}
+
+@font-face {
+	font-family: 'Myriad Pro';
+	src: url('/wp-content/themes/welfare/fonts/MyriadPro-BoldCondIt.eot');
+	src: url('/wp-content/themes/welfare/fonts/MyriadPro-BoldCondIt.eot?#iefix') format('embedded-opentype'),
+		 url('/wp-content/themes/welfare/fonts/MyriadPro-BoldCondIt.woff') format('woff'),
+		 url('/wp-content/themes/welfare/fonts/MyriadPro-BoldCondIt.svg#MyriadPro-BoldCondIt') format('svg');
+	font-weight: bold;
+	font-style: italic;
+}
+
+@font-face {
+	font-family: 'Myriad Pro';
+	src: url('/wp-content/themes/welfare/fonts/MyriadPro-Cond.eot');
+	src: url('/wp-content/themes/welfare/fonts/MyriadPro-Cond.eot?#iefix') format('embedded-opentype'),
+		 url('/wp-content/themes/welfare/fonts/MyriadPro-Cond.woff') format('woff'),
+		 url('/wp-content/themes/welfare/fonts/MyriadPro-Cond.svg#MyriadPro-Cond') format('svg');
+	font-weight: normal;
+	font-style: normal;
+}
+
+@font-face {
+	font-family: 'Myriad Pro';
+	src: url('/wp-content/themes/welfare/fonts/MyriadPro-CondIt.eot');
+	src: url('/wp-content/themes/welfare/fonts/MyriadPro-CondIt.eot?#iefix') format('embedded-opentype'),
+		 url('/wp-content/themes/welfare/fonts/MyriadPro-CondIt.woff') format('woff'),
+		 url('/wp-content/themes/welfare/fonts/MyriadPro-CondIt.svg#MyriadPro-CondIt') format('svg');
+	font-weight: normal;
+	font-style: italic;
+}
+
+.entry-title
+{
+font-family:'Myriad Pro';
+text-transform:uppercase;
+}
+/*.colorize, .cmsms_wrap_blog img{
+    -webkit-filter: grayscale(100%);
+    -moz-filter: grayscale(100%);
+    -ms-filter: grayscale(100%);
+    -o-filter: grayscale(100%);
+    filter: grayscale(100%);
+}*/
+/*.colorize:hover, .cmsms_wrap_blog img:hover
+{
+    -webkit-filter: grayscale(0%);
+    -moz-filter: grayscale(0%);
+    -ms-filter: grayscale(0%);
+    -o-filter: grayscale(0%);
+    filter: grayscale(0%);
+}*/
+body{
+    font-size: 16px;
+}
+.widget ul li a{
+font-weight:normal;
+}
+#footer{
+    height: 0px;
+}
+.cmsms_toggle_title a {
+font-weight:bold!important;
+font-size:16px!important;
+}
+.cmsms_toggle_inner{
+    background-color:#f1f1f1;
+    border: 1px solid #d1d1d1;
+    border-radius: 15px;
+}
+.entry-content{
+text-align:justify;
+}
+
+.cmsms_products .product .product_outer .product_inner .cmsms_product_footer > a
+{
+    max-width: 0px;
+    height: auto;
+    background-color: #ae0a04;
+  padding-right: 23px;
+}
+.owl-item .item { 
+margin-right: 10px;
+    margin-left: 10px;
+    border: 1px solid #ccc;
+}
+
+.wysija-paragraph{
+    float: left;
+    margin-right: 10px;
+    width: 200px;
+}
+.sbs-count-users{
+    border: 1px solid #676767;
+    margin: 5px;
+    padding: 7px;
+    border-radius: 9px;
+    background-color: #676767;
+    color: #fff;
+    font-size: 150%;
+    font-weight: bold;
+}
+.headline .entry-title
+{
+font-weight:600;
+font-size: 2.8125em;
+line-height: 1em;
+}
+.wysija-submit{
+font-size:inherit!important;
+}
+#leyka-payment-form input[type="submit"]{
+	background-color: #ae0a04;
+    font-family: 'PT Sans', Arial, Helvetica, 'Nimbus Sans L', sans-serif;
+    font-size: 15px;
+    line-height: 44px;
+    font-weight: normal;
+    font-style: normal;
+    text-transform: none;
+    border: 0;
+    display: inline-block;
+    padding: 0 25px;
+    cursor: pointer;
+    position: relative;
+    -webkit-border-radius: 25px;
+    border-radius: 25px;
+}
+#leyka-payment-form input[type="submit"]:hover, #leyka-payment-form input[type="submit"]:focus, #leyka-payment-form input[type="submit"]:active{
+background:#000;
+}
+#leyka-payment-form .amount.flexible input{
+border: 1px solid #ccc;
+    font-family: 'PT Sans', Arial, Helvetica, 'Nimbus Sans L', sans-serif;
+    font-weight: bold;
+}
+
+.navigation .sub-menu{
+background-color: #fff!important;
+border: 1px solid #777;
+}
+
+/*@media (max-width: 767px) {
+   #four_images,  #sslider{
+     display:none;
+   }
+}*/
+
+.leyka-scale-button a{
+    background: #ae0a04;
+    border-radius: 25px;
+}
+.leyka-scale-scale .collected{
+background: #ae0a04;
+}
+	#footer.cmsms_footer_default .footer_inner {
+		min-height:250px;
+	}
+	
+	.fixed_footer #main {
+		margin-bottom:250px;
+	}
+</style><link rel="icon" href="https://obshee-delo.ru/wp-content/uploads/2016/03/od-250x250-55x55.png" sizes="32x32" />
+<link rel="icon" href="https://obshee-delo.ru/wp-content/uploads/2016/03/od-250x250.png" sizes="192x192" />
+<link rel="apple-touch-icon" href="https://obshee-delo.ru/wp-content/uploads/2016/03/od-250x250.png" />
+<meta name="msapplication-TileImage" content="https://obshee-delo.ru/wp-content/uploads/2016/03/od-250x250.png" />
+		<style type="text/css" id="wp-custom-css">
+			.leyka-oferta-text{
+    background: #fff;
+    opacity: 0.9;
+
+    position: absolute!important;
+    width: 80%;
+    padding: 25px;
+}
+
+#share-campaign-area {
+	display: none;
+}
+
+#menu-item-27971 > a {
+	color: deeppink!important;
+}
+
+@media only screen and (max-width:767px) {
+	#menu-item-27971 > a {
+	color: darkcyan!important;
+	font-weight: 700!important;
+}
+}
+
+
+#navigation>li {
+    padding: 0 10px;
+    padding-top: 0px;
+    padding-right: 10px;
+    padding-bottom: 0px;
+    padding-left: 10px;
+}		</style>
+		<noscript><style id="rocket-lazyload-nojs-css">.rll-youtube-player, [data-lazy-src]{display:none !important;}</style></noscript>
+<!-- Yandex.Metrika counter -->
+<script type="rocketlazyloadscript" data-rocket-type="text/javascript" >
+   (function(m,e,t,r,i,k,a){m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};
+   m[i].l=1*new Date();
+   for (var j = 0; j < document.scripts.length; j++) {if (document.scripts[j].src === r) { return; }}
+   k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a)})
+   (window, document, "script", "https://mc.yandex.ru/metrika/tag.js", "ym");
+
+   ym(34478865, "init", {
+        clickmap:true,
+        trackLinks:true,
+        accurateTrackBounce:true,
+        webvisor:true
+   });
+</script>
+<noscript><div><img src="https://mc.yandex.ru/watch/34478865" style="position:absolute; left:-9999px;" alt="" /></div></noscript>
+<!-- /Yandex.Metrika counter -->
+	
+</head>
+<body class="page-template-default page page-id-28446">
+	
+<!-- _________________________ Start Page _________________________ -->
+<section id="page" class="csstransition cmsms_liquid enable_header_bottom cmsms_heading_after_header hfeed site">
+
+
+<!-- _________________________ Start Main _________________________ -->
+<div id="main">
+<!-- _________________________ Start Header _________________________ -->
+<header id="header">
+		<div class="header_mid" data-height="80">
+		<div class="header_mid_outer">
+			<div class="header_mid_inner">
+							<div class="search_wrap">
+					<div class="search_wrap_inner">
+						<div class="search_wrap_inner_left">
+							
+<div class="search_bar_wrap">
+	<form role="search" method="get" action="https://obshee-delo.ru">
+		<p class="search_field">
+			<input name="s" placeholder="Введите ключевые слова..." value="" type="search" />
+		</p>
+		<p class="search_button">
+			<button type="submit" class="cmsms_theme_icon_search"></button>
+		</p>
+	</form>
+</div>
+
+						</div>
+					</div>
+				</div>
+							<div class="slogan_wrap">
+					<div class="slogan_wrap_inner">
+						<div class="slogan_wrap_text">
+							<div class="button_wrap"><a href="https://xn--d1aadek5agm.xn----9sbkcac6brh7h.xn--p1ai/" class="cmsms_button" target="_blank"><span style="color:#fff">Оказать помощь</span></a></div>						</div>
+					</div>
+				</div>
+						
+			<div class="logo_wrap">
+<style type="text/css">
+	.header_mid .header_mid_inner .logo_wrap {
+		width : 80px;
+	}
+</style>
+<a href="https://obshee-delo.ru/" title="Общее дело" class="logo">
+	<img src="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%200%200'%3E%3C/svg%3E" alt="Общее дело" data-lazy-src="https://obshee-delo.ru/wp-content/uploads/2016/05/logo-od-litl.png" /><noscript><img src="https://obshee-delo.ru/wp-content/uploads/2016/05/logo-od-litl.png" alt="Общее дело" /></noscript>
+<style type="text/css">
+	.header_mid_inner .logo img.logo_retina {
+		max-width : 80px;
+	}
+</style>
+<img class="logo_retina" src="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2080%2060'%3E%3C/svg%3E" alt="Общее дело" width="80" height="60" data-lazy-src="https://obshee-delo.ru/wp-content/uploads/2016/02/logo-od-big.png" /><noscript><img class="logo_retina" src="https://obshee-delo.ru/wp-content/uploads/2016/02/logo-od-big.png" alt="Общее дело" width="80" height="60" /></noscript></a>
+</div>
+			
+			<div class="title_wrap">Общероссийская общественная организация</div>
+						</div>
+		</div>
+	</div>
+	<div class="header_bot" data-height="50">
+		<div class="header_bot_outer">
+			<div class="header_bot_inner">
+				<div class="resp_nav_wrap">
+					<div class="resp_nav_wrap_inner">
+						<div class="resp_nav_content">
+							<a class="responsive_nav cmsms_theme_icon_resp_nav" href="javascript:void(0);"></a>
+													</div>
+					</div>
+				</div>
+				
+				<!-- _________________________ Start Navigation _________________________ -->
+				<nav role="navigation">
+					<div class="menu-footer-navigation-container"><ul id="navigation" class="navigation"><li id="menu-item-4588" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-home menu-item-4588"><a href="https://obshee-delo.ru/"><span>ГЛАВНАЯ</span></a></li>
+<li id="menu-item-4590" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-has-children menu-item-4590"><a href="https://obshee-delo.ru/about/"><span>О НАС</span></a>
+<ul class="sub-menu">
+	<li id="menu-item-31623" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-31623"><a href="https://obshee-delo.ru/about/"><span>Об организации</span></a></li>
+	<li id="menu-item-59470" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-59470"><a href="https://obshee-delo.ru/team/"><span>Команда</span></a></li>
+	<li id="menu-item-56724" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-56724"><a href="https://obshee-delo.ru/about/activist-stories/"><span>Отзывы и истории активистов</span></a></li>
+	<li id="menu-item-27985" class="menu-item menu-item-type-custom menu-item-object-custom menu-item-27985"><a href="https://xn----9sbkcac6brh7h.xn--p1ai/about/smi/"><span>Сми о нас</span></a></li>
+	<li id="menu-item-27986" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-27986"><a href="https://obshee-delo.ru/about/nashi_partnery/"><span>Наши партнеры</span></a></li>
+	<li id="menu-item-27987" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-27987"><a href="https://obshee-delo.ru/about/udostoverenie/"><span>Удостоверение</span></a></li>
+	<li id="menu-item-27991" class="menu-item menu-item-type-custom menu-item-object-custom menu-item-27991"><a href="https://xn----9sbkcac6brh7h.xn--p1ai/about/ostavit-otziv/"><span>Написать отзыв</span></a></li>
+	<li id="menu-item-27988" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-27988"><a href="https://obshee-delo.ru/about/ustav/"><span>Устав организации</span></a></li>
+	<li id="menu-item-27989" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-27989"><a href="https://obshee-delo.ru/about/experts-review/"><span>Экспертные заключения</span></a></li>
+	<li id="menu-item-27993" class="menu-item menu-item-type-custom menu-item-object-custom menu-item-27993"><a href="https://xn----9sbkcac6brh7h.xn--p1ai/about/reviews/"><span>Благодарственные письма</span></a></li>
+	<li id="menu-item-46567" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-46567"><a href="https://obshee-delo.ru/about/docs/"><span>Документы и отчёты</span></a></li>
+	<li id="menu-item-48974" class="menu-item menu-item-type-custom menu-item-object-custom menu-item-48974"><a href="http://xn--80a7adb.xn----9sbkcac6brh7h.xn--p1ai/"><span>Наша статистика</span></a></li>
+</ul>
+</li>
+<li id="menu-item-60452" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-60452"><a href="https://obshee-delo.ru/projects/"><span>ПРОГРАММЫ</span></a></li>
+<li id="menu-item-19801" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-has-children menu-item-19801"><a href="https://obshee-delo.ru/video/"><span>ФИЛЬМЫ</span></a>
+<ul class="sub-menu">
+	<li id="menu-item-27998" class="menu-item menu-item-type-custom menu-item-object-custom menu-item-27998"><a href="https://xn----9sbkcac6brh7h.xn--p1ai/video/filmy/"><span>Фильмы</span></a></li>
+	<li id="menu-item-28060" class="menu-item menu-item-type-custom menu-item-object-custom menu-item-28060"><a href="/video/multy/"><span>Мультфильмы</span></a></li>
+	<li id="menu-item-27999" class="menu-item menu-item-type-custom menu-item-object-custom menu-item-27999"><a href="https://xn----9sbkcac6brh7h.xn--p1ai/video/roliki/"><span>Ролики</span></a></li>
+	<li id="menu-item-35020" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-35020"><a href="https://obshee-delo.ru/video/short/"><span>Короткометражные</span></a></li>
+	<li id="menu-item-28000" class="menu-item menu-item-type-custom menu-item-object-custom menu-item-28000"><a href="https://xn----9sbkcac6brh7h.xn--p1ai/video/famous-people/"><span>Известные люди</span></a></li>
+</ul>
+</li>
+<li id="menu-item-31693" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-31693"><a href="https://obshee-delo.ru/get-involved/"><span>ПРИМИ УЧАСТИЕ</span></a></li>
+<li id="menu-item-20181" class="menu-item menu-item-type-custom menu-item-object-custom menu-item-has-children menu-item-20181"><a href="/materials/"><span>МАТЕРИАЛЫ</span></a>
+<ul class="sub-menu">
+	<li id="menu-item-27971" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-27971"><a href="https://obshee-delo.ru/materials/order-materials/"><span>Заказать материалы</span></a></li>
+	<li id="menu-item-27982" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-27982"><a href="https://obshee-delo.ru/materials/metodichki/"><span>Методические пособия</span></a></li>
+	<li id="menu-item-57395" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-has-children menu-item-57395"><a href="https://obshee-delo.ru/materials/printed-products/"><span>Печатная продукция</span></a>
+	<ul class="sub-menu">
+		<li id="menu-item-27970" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-27970"><a href="https://obshee-delo.ru/materials/disk/"><span>Диски Общего дела</span></a></li>
+		<li id="menu-item-28712" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-28712"><a href="https://obshee-delo.ru/materials/books/"><span>Наши книги</span></a></li>
+		<li id="menu-item-31138" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-31138"><a href="https://obshee-delo.ru/materials/zakladki/"><span>Закладки для книг</span></a></li>
+		<li id="menu-item-27972" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-27972"><a href="https://obshee-delo.ru/materials/booklet/"><span>Листовки и буклеты</span></a></li>
+		<li id="menu-item-38325" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-38325"><a href="https://obshee-delo.ru/materials/autosticker/"><span>Наклейки на автомобиль</span></a></li>
+	</ul>
+</li>
+	<li id="menu-item-57396" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-has-children menu-item-57396"><a href="https://obshee-delo.ru/materials/social-reklama/"><span>Социальная реклама</span></a>
+	<ul class="sub-menu">
+		<li id="menu-item-27976" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-27976"><a href="https://obshee-delo.ru/materials/plakati/"><span>Плакаты социальной рекламы</span></a></li>
+		<li id="menu-item-27977" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-27977"><a href="https://obshee-delo.ru/materials/billboards/"><span>Придорожные щиты</span></a></li>
+		<li id="menu-item-27979" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-27979"><a href="https://obshee-delo.ru/materials/sticker/"><span>Стикеры социальной рекламы</span></a></li>
+		<li id="menu-item-31308" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-31308"><a href="https://obshee-delo.ru/materials/led-board-roliki/"><span>Ролики для светодиодных щитов</span></a></li>
+		<li id="menu-item-34989" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-34989"><a href="https://obshee-delo.ru/materials/audio-roliki-social-reklama/"><span>Аудио-ролики социальной рекламы</span></a></li>
+	</ul>
+</li>
+	<li id="menu-item-27978" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-27978"><a href="https://obshee-delo.ru/materials/articles/"><span>Статьи для газет и журналов</span></a></li>
+</ul>
+</li>
+<li id="menu-item-56658" class="menu-item menu-item-type-custom menu-item-object-custom menu-item-56658"><a href="https://od-pro.ru/"><span>ОБЩЕЕДЕЛО-ПРО</span></a></li>
+<li id="menu-item-20187" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-20187"><a href="https://obshee-delo.ru/contacts/"><span>КОНТАКТЫ</span></a></li>
+</ul></div>					<div class="cl"></div>
+				</nav>
+				<!-- _________________________ Finish Navigation _________________________ -->
+				
+			</div>
+		</div>
+	</div>
+</header>
+<!-- _________________________ Finish Header _________________________ -->
+
+	
+<!-- _________________________ Start Middle _________________________ -->
+<section id="middle">
+<style type="text/css">.headline_color {
+				background-color:;
+			}
+			.headline_aligner, 
+			.cmsms_breadcrumbs_aligner {
+				min-height:70px;
+			}
+		</style>
+		<div class="headline cmsms_color_scheme_default">
+			<div class="headline_outer">
+				<div class="headline_color"></div><div class="headline_inner align_left">
+						<div class="headline_aligner"></div><div class="headline_text"><h1 class="entry-title">Частые вопросы</h1></div><div class="cmsms_breadcrumbs"><div class="cmsms_breadcrumbs_aligner"></div><div class="cmsms_breadcrumbs_inner"><a href="https://obshee-delo.ru" class="cms_home">Главная</a>
+	<span class="breadcrumbs_sep"> / </span>
+	<span>Частые вопросы</span></div></div></div></div>
+		</div><div class="middle_inner">
+<section class="content_wrap fullwidth">
+
+<!-- Start Content -->
+<div class="middle_content entry"></div></section><style type="text/css"> 
+#cmsms_row_6a7daff9a7de40_64740990 .cmsms_row_outer_parent { 
+	padding-top: 0px; 
+} 
+
+#cmsms_row_6a7daff9a7de40_64740990 .cmsms_row_outer_parent { 
+	padding-bottom: 50px; 
+} 
+
+ 
+#cmsms_heading_6a7daff9a816d6_69035527 { 
+	text-align:center; 
+	margin-top:35px; 
+	margin-bottom:20px; 
+} 
+
+#cmsms_heading_6a7daff9a816d6_69035527 .cmsms_heading { 
+	text-align:center; 
+} 
+
+#cmsms_heading_6a7daff9a816d6_69035527 .cmsms_heading, #cmsms_heading_6a7daff9a816d6_69035527 .cmsms_heading a { 
+	font-weight:normal; 
+	font-style:normal; 
+} 
+
+#cmsms_heading_6a7daff9a816d6_69035527 .cmsms_heading_divider { 
+} 
+
+ 
+#cmsms_row_6a7daff9a86a95_58985941 .cmsms_row_outer_parent { 
+	padding-top: 0px; 
+} 
+
+#cmsms_row_6a7daff9a86a95_58985941 .cmsms_row_outer_parent { 
+	padding-bottom: 50px; 
+} 
+
+</style><div id="cmsms_row_6a7daff9a7de40_64740990" class="cmsms_row cmsms_color_scheme_default">
+<div class="cmsms_row_outer_parent">
+<div class="cmsms_row_outer">
+<div class="cmsms_row_inner">
+<div class="cmsms_row_margin">
+<div class="cmsms_column one_first">
+
+<div id="cmsms_heading_6a7daff9a816d6_69035527" class="cmsms_heading_wrap cmsms_heading_align_center">
+	<h2 class="cmsms_heading">Ответы на частые вопросы</h2>
+</div><div class="cmsms_toggles toggles_mode_toggle">
+<div class="cmsms_toggle_wrap" data-tags="all ">
+<div class="cmsms_toggle_title">
+<span class="cmsms_toggle_plus">
+<span class="cmsms_toggle_plus_hor"></span>
+<span class="cmsms_toggle_plus_vert"></span>
+</span>
+<a href="#">Как отключить ежемесячное пожертвование?</a>
+</div>
+<div class="cmsms_toggle">
+<div class="cmsms_toggle_inner">
+<p>Регулярное пожертвование легко отключить, если у вас изменятся обстоятельства. Перед каждым списанием денег со счета платежный сервис присылает электронное письмо с предупреждением о скором списании и ссылкой для отказа от пожертвования.</p>
+<p>Ссылка для отказа от пожертвования есть и в письмах, которые мы присылаем сразу после списания пожертвования с вашей карты.</p>
+<p>Вы также можете написать нам на <a href="mailto:web@obshee-delo.ru" target="_blank" rel="noopener noreferrer">web@obshee-delo.ru</a>, и мы отключим ваше ежемесячное пожертвование вручную.</p>
+</div>
+</div>
+</div><div class="cmsms_toggle_wrap" data-tags="all ">
+<div class="cmsms_toggle_title">
+<span class="cmsms_toggle_plus">
+<span class="cmsms_toggle_plus_hor"></span>
+<span class="cmsms_toggle_plus_vert"></span>
+</span>
+<a href="#">Типичные вопросы аудитории</a>
+</div>
+<div class="cmsms_toggle">
+<div class="cmsms_toggle_inner">
+<p><strong>В вашей общественной организации много говорится о том, что алкоголь – это яд, но почему не говорится о том, что есть качественный алкоголь и есть некачественный?</strong></p>
+<p>Алкоголь в любом виде – это яд, и если мы говорим о качественном алкоголе, мы говорим о качественном яде. Вся разница между качественным алкоголем и некачественным в том, что в так называемом «качественном» меньше всевозможных ядовитых ингридиентов: красителей, консервантов, сивушных масел, других спиртов, помимо этилового и т.д. Все они крайне токсичны, ввиду чего  высока вероятность смерти, даже после единократного употребления. Даже если этиловый спирт очищен от всех этих веществ, он остается ядом и его наркотические свойства нисколько меньше не становятся. Поэтому даже самые дорогие и самые «качественные» алкогольные изделия являются наркотическим ядом и их употребление даже в малых дозах крайне вредно и опасно.</p>
+<p><strong>Почему в фильмах вашей общественной организации не говорится о том, что если пить культурно и в меру, то тогда можно без проблем и праздники справлять с алкоголем, и машину водить без проблем?</strong></p>
+<p>Любой Алкоголь – это яд. Разве можно травиться ядом культурно? «Я культурно пью синильную кислоту», или «я культурно глотаю мышьяк» – это звучит глупо! Слово «культурно» применимо только к чему-то положительному. Например, культурный человек, культурная речь, культурная столица. Но не может быть культурного хулиганства, интеллигентного разбоя, воровства в меру… Так что не может быть культурного употребления алкоголя, культурного курения, культурной наркомании… Алкоголь и культура – это несовместимые понятия! Важно помнить, что все алкоголики когда-то начинали с «культурного» употребления. Но алкоголь – это наркотик, лишающий человека разума, адекватности, заставляющий постоянно увеличивать дозу и частоту приема. Если спросить любого алкоголика, зачем он так много пьет – он ответит, что «свою меру знает»… Так все они, незаметно для себя, превращались из «умеренно» пьющих в неадекватных маргиналов. Когда именно «культурно» пьющий превратится в алкоголика – вопрос времени и индивидуального врожденного запаса здоровья.</p>
+<p><strong>Кто вас финансирует? Кто за вами стоит? На кого вы работаете?</strong></p>
+<p>Мы – Общероссийская общественная организация «Общее Дело». Мы занимаемся тем, что помогаем людям по-новому взглянуть на алкогольную и табачную проблемы. Мы – общественная организация, а это значит «негосударственная». То есть государство нас не финансирует. На производство материалов деньги дают неравнодушные люди. Многие наши фильмы мы создали за счет свободного  сбора средств в интернете (краудфандинга). Вся наша организация держится на волонтерах, которые добровольно тратят свое время на распространение правдивой информации о том, как алкоголь, сигареты и другие наркотики разрушают здоровье и судьбу как отдельно взятого человека, так и всей страны. Волонтеры приходят в учебные заведения и трудовые коллективы в свое личное свободное время, им никто не платит зарплату или финансового вознаграждения за проведение просветительских мероприятий. И если в ходе просмотра и обсуждения фильма хотя бы один человек из присутствующих примет для себя принципиальное решение никогда не употреблять алкоголь, табак и другие наркотики – значит уже такие встречи проходят не зря.</p>
+<p><strong>В фильмах вашей общественной организации много говорилось о том, что алкоголь – это яд, но ведь в аптеках много лекарств на основе алкоголя?</strong></p>
+<p>Действительно, в аптеках продаются препараты на основе алкоголя, но, как правило, они используются для наружного применения, для обеззараживания ран. В медицине алкоголь не предназначен для принятия внутрь.</p>
+<p><img src="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20708%20510'%3E%3C/svg%3E" alt="Пособие Лекарственные средства" width="708" height="510" data-lazy-src="/wp-content/uploads/2017/12/lekarstvoPosobie.jpg" /><noscript><img src="/wp-content/uploads/2017/12/lekarstvoPosobie.jpg" alt="Пособие Лекарственные средства" width="708" height="510" /></noscript></p>
+<p><strong>В фильмах вашей общественной организации есть много сцен курения, а в одном из фильмов были показаны марки пива. Разве ваши фильмы не являются тоже манипуляцией и скрытой рекламой курения и алкоголя?</strong></p>
+<p>Нет. Наши фильмы – это антиреклама сигарет и алкоголя. Упомянутые сцены сопровождаются объективными научными обличительными комментариями. Фильмы нашей организации мы показываем для того, чтобы люди узнали правду.</p>
+<p><strong>Скажите, если сухой закон имел такой положительный эффект, почему его не введут снова?</strong></p>
+<p>Наша организация поддерживает любые ограничительные меры в отношении продажи и рекламы алкоголя и табака, но дело в том, что алкогольные и табачные корпорации получают огромную прибыль от продажи этих ядов. Большие деньги дают огромное влияние и они  приложат все силы, чтобы такие законы не принимались. Сейчас идет информационная война. На одной стороне баррикад – производители алкоголя и сигарет, а на другой стороне – люди, желающие здоровья и процветания нашей стране. На стороне производителей – деньги, и они круглосуточно рекламируют свою отраву по телевизору (скрытая реклама в кино, сериалах, телепередачах). А у нас таких денег нет, но на нашей стороне – ПРАВДА!</p>
+<p>Можно сколь угодно долго ждать, пока добрый дядя сверху введет сухой закон, но каждый из нас может ввести такой закон для себя. Тогда вводить закон «сверху» попросту не понадобится. Активисты нашей организации вообще не употребляю ни алкоголь, ни сигареты, ни тем более наркотики, и совершенно без этого не страдают. Наоборот, чувствуют себя очень хорошо, наслаждаются полнотой жизни. Они не пьют ни по праздникам, ни по будням, считают это глупыми привычками, унизительной наркотической зависимостью. Более того, большинство их друзей, тоже принципиально не пьют и не курят. Таких людей в нашей стране становится все больше и больше!</p>
+<p><strong>А фильмы организации «Общее дело» показывают по телевизору? Если нет, то почему?</strong></p>
+<p>На федеральных телеканалах пока не показывают. Мы обращались с такой инициативой на все центральные телеканалы, но нам отказали. Однако на региональных телеканалах наши фильмы показывают, и они пользуются большим успехом у зрителей.</p>
+<p>Причину отказа федеральных телеканалов назвать трудно. Возможно, директора каналов сами пьют и курят, либо потому, что за показ хотят много денег, которых у нас на текущий момент нет. Возможно, существует негласный запрет на показ фильмов, рассказывающих правду об алкоголе и сигаретах, поскольку производители этих ядов платят телеканалам за скрытую рекламу.</p>
+<p><strong>Я слышал, что безопасная доза алкоголя существует, просто она очень маленькая и её нужно рассчитывать исходя из массы тела человека&#8230;</strong></p>
+<p>Согласно данным Всемирной Организации Здравоохранения (ВОЗ) безопасной дозы алкоголя не существует..Ссылка на исследования на сайте ВОЗ ниже:</p>
+<p><a href="http://www.euro.who.int/ru/health-topics/disease-prevention/alcohol-use/data-and-statistics/q-and-a-how-can-i-drink-alcohol-safely">http://www.euro.who.int/ru/health-topics/disease-prevention/alcohol-use/data-and-statistics/q-and-a-how-can-i-drink-alcohol-safely</a></p>
+<p>Также рекомендуем ознакомиться с письмом МинЗдрава РФ:</p>
+<p><a href="/wp-content/uploads/2018/05/vgaW5f4FL3I.jpg" data-slb-active="1" data-slb-asset="1076975669" data-slb-internal="0" data-slb-group="28446"><img class="alignnone size-full wp-image-41029" src="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20545%20571'%3E%3C/svg%3E" alt="Частые вопросы" width="545" height="571" data-lazy-srcset="https://obshee-delo.ru/wp-content/uploads/2018/05/vgaW5f4FL3I.jpg 545w, https://obshee-delo.ru/wp-content/uploads/2018/05/vgaW5f4FL3I-286x300.jpg 286w" data-lazy-sizes="(max-width: 545px) 100vw, 545px" data-lazy-src="/wp-content/uploads/2018/05/vgaW5f4FL3I.jpg" /><noscript><img class="alignnone size-full wp-image-41029" src="/wp-content/uploads/2018/05/vgaW5f4FL3I.jpg" alt="Частые вопросы" width="545" height="571" srcset="https://obshee-delo.ru/wp-content/uploads/2018/05/vgaW5f4FL3I.jpg 545w, https://obshee-delo.ru/wp-content/uploads/2018/05/vgaW5f4FL3I-286x300.jpg 286w" sizes="(max-width: 545px) 100vw, 545px" /></noscript></a></p>
+<p><strong>Большая медицинская энциклопедия об алкоголе</strong></p>
+<p>«Этиловый спирт C<sub>2</sub>H<sub>5</sub>OH – бесцветная гигроскопическая жидкость жгучего вкуса, с характерным запахом. На организм человека оказывает наркотическое и токсическое действие, а затем резкое угнетение центральной нервной системы. <em><strong>Даже в небольших дозах</strong> </em>приводит к нарушению важнейших функций организма и тяжелому поражению всех органов и тканей, вызывает органические заболевания нервной и сердечно-сосудистой систем, печени, пищеварительного тракта, ведет к моральной и психической деградации личности».</p>
+<p><em>Источник: </em>Большая медицинская энциклопедия. Редактор Б.В. Петровский. М.: Советская энциклопедия. 1986 г. Том 28, стр. 372-373.</p>
+<p><strong>Главный нарколог Минздрава России о допустимых дозах алкоголя</strong></p>
+<p><strong> </strong>В апреле 2018 года британские кардиологи из Фонда сердечных заболеваний Великобритании заявили, что они, якобы, смогли определить безвредную для человека дозу алкоголя. Согласно выводам ученых, она составляет 100 граммов чистого спирта в неделю. Это эквивалентно четырем бутылкам пива крепостью 5% (объемом 500 мл каждая) или одной бутылке вина крепостью 12% (объемом 830 мл), или одному стакану водки крепостью 40% (объемом 250 мл). Эти выводы британских ученых были опубликованы в Российской газете.</p>
+<p>Когда журналисты из Новостного агентства «РИА Новости» прочитали в Российской газете эту новость, они обратились за комментариями к главному внештатному специалисту-наркологу Министерства здравоохранения России Евгению Брюну. И вот что он ответил:<em> <strong>&#171;Не нужно верить этим данным. Нужно понимать, что алкоголь (этанол) – это токсическое вещество и любое поступление его в организм наносит вред. Есть люди, которые плохо перерабатывают алкоголь, для них это более вредно. Есть люди с лучшим состоянием печени, им, наверное, менее вредно, но вредно всем&#187;.</strong></em></p>
+<p><em>Источники: <a href="https://rg.ru/2018/04/14/doza-alkogolia.html">https://rg.ru/2018/04/14/doza-alkogolia.html</a> и <a href="https://sn.ria.ru/20180628/1523562430.html">https://sn.ria.ru/20180628/1523562430.html</a></em></p>
+<p><strong>Новейшие исследования ученых доказали: безвредной дозы алкоголя не существует</strong></p>
+<p><strong> </strong>Один из самых авторитетных в мире научно-медицинских журналов – британский журнал «The Lancet», издающийся с 1823 года, в 2018 году опубликовал масштабное многолетнее исследование, над которым трудились 512 ученых из 243 научно-исследовательских институтов по всему миру. Главный вывод, который сделали авторы исследования: алкоголь является одной из главных причин мировой смертности, и безопасной дозы его потребления не существует. Любая, даже самая минимальная доза спиртного, связана с рисками для здоровья. Вот как об этом высказалась руководитель исследования Эммануэла Гакидоу: <em><strong>«Что ранее не в полной мере осознавалось – и что удивительно – так это то, что потребление спиртного в любом объеме не является полезным для вашего здоровья. Люди более не должны полагать, что один-другой глоток спиртного в день идет им на пользу. Самое полезное для них – вовсе отказаться от алкоголя».</strong></em></p>
+<p><em>Источники:</em> 1: <a href="https://nplus1.ru/news/2018/08/24/drinking-is-bad">https://nplus1.ru/news/2018/08/24/drinking-is-bad</a> 2: <a href="https://www.popmech.ru/science/438212-uchenye-oprovergli-sushchestvovanie-bezopasnoy-dozy-alkogolya/">https://www.popmech.ru/science/438212-uchenye-oprovergli-sushchestvovanie-bezopasnoy-dozy-alkogolya/</a> 3: <a href="https://www.thelancet.com/journals/lancet/article/PIIS0140-6736(18)31310-2/fulltext">https://www.thelancet.com/journals/lancet/article/PIIS0140-6736(18)31310-2/fulltext</a></p>
+<p><strong>ВОЗ утверждает: безвредных доз алкоголя не существует.</strong></p>
+<p><a href="http://www.euro.who.int/ru/health-topics/disease-prevention/alcohol-use/data-and-statistics/q-and-a-how-can-i-drink-alcohol-safely">http://www.euro.who.int/ru/health-topics/disease-prevention/alcohol-use/data-and-statistics/q-and-a-how-can-i-drink-alcohol-safely</a></p>
+<p><a href="https://health.mail.ru/news/voz_nizhnego_poroga_bezopasnogo_upotrebleniya/">https://health.mail.ru/news/voz_nizhnego_poroga_bezopasnogo_upotrebleniya/</a></p>
+<p>Цитата с сайта ВОЗ: Доктор Ларс Мюллер (Lars Møller), руководитель программы &#171;Алкоголь и запрещенные наркотики&#187; в Европейском региональном бюро ВОЗ, отвечая на часто задаваемые вопросы об алкоголе, разоблачает мифы о так называемом безопасном уровне потребления.</p>
+<p><em>Вопрос: </em><em>Возможно ли употреблять алкоголь без вреда для здоровья?</em></p>
+<p>Ответ: Наверное, такой ответ не всем придется по душе, но безопасной дозы алкоголя не существует. Конечно же, есть уровень потребления, при котором риск будет достаточно невелик, однако ВОЗ не устанавливает четких значений для таких доз, поскольку фактические данные свидетельствуют о том, что для здоровья безопаснее всего не пить вообще.</p>
+<p><em>Вопрос: </em><em>Я пью совсем немного. Такой ли уж ощутимой будет разница для моего здоровья, если я перестану пить совсем?</em></p>
+<p>Ответ: Отказ от алкоголя приводит к заметным улучшениям здоровья даже для тех, кто раньше пил алкоголь в умеренных количествах.</p>
+<p><strong>ВОЗ утверждает: алкоголь вызывает рак, и нижней границы дозы алкоголя, не вызывающей рак, не существует. Любые дозы алкоголя являются канцерогенными и увеличивают риск развития рака.</strong></p>
+<p><a href="http://www.euro.who.int/ru/health-topics/disease-prevention/alcohol-use/news/news/2018/02/raising-awareness-of-the-link-between-alcohol-and-cancer">http://www.euro.who.int/ru/health-topics/disease-prevention/alcohol-use/news/news/2018/02/raising-awareness-of-the-link-between-alcohol-and-cancer</a></p>
+<p>Цитата с сайта ВОЗ: Было установлено, что употребление алкоголя может вызывать как минимум семь видов рака, а именно: рак кишечника (толстой и прямой кишки), рак молочной железы, рак пищевода, рак гортани, рак печени, рак ротовой полости, рак горла. Четко установленного нижнего порога безопасного потребления спиртных изделий не существует, а это значит, что даже небольшие дозы алкоголя повышают риск развития рака.</p>
+<p><strong>ВОЗ утверждает: никотин – это наркотик.</strong></p>
+<p><a href="http://www.who.int/tobacco/mpower/offer/ru/index1.html">http://www.who.int/tobacco/mpower/offer/ru/index1.html</a></p>
+<p>Цитата с сайта ВОЗ: Табак содержит никотин – наркотик, вызывающий зависимость подобно героину и кокаину.</p>
+<p><strong>ВОЗ утверждает: в состав табачного дыма входит 4000 химических веществ.</strong></p>
+<p><a href="http://www.who.int/features/qa/60/ru/">http://www.who.int/features/qa/60/ru/</a></p>
+<p>Цитата с сайта ВОЗ: Табачный дым содержит около 4000 известных химических веществ, по крайней мере 250 из них заведомо вредны для здоровья и более 50 вызывают у людей рак.</p>
+<p><strong>Актуализация проблемы алкоголя, табака, наркотиков в России</strong></p>
+<p>Академик РАМН, доктор медицинских наук Углов Федор Григорьевич в 2004 году сообщил в своей книге «Правда и ложь о разрешенных наркотиках» результаты своего исследования: каждый год в России рождается около 200 тысяч дефективных и умственно неполноценных детей, и главная причина рождения таких детей – потребление родителями алкоголя и табака (<a href="/wp-content/uploads/2019/04/Углов-Ф.Г.-Правда-и-ложь-о-разрешенных-наркотиках-2004.doc">книга Углова</a>, см. стр. 160, 164). Учитывая, что по официальным данным Росстата в России ежегодно рождается 1 900 000 детей, получается, что каждый 9-й ребенок в России рождается дефективным или умственно неполноценным.</p>
+<p>12 августа 2009 года президент России Медведев Д.А. заявил, что «Потребление алкоголя в России растет в основном за счет роста потребления среди подростков. Ежедневно или через день алкоголь употребляют 33% всех юношей-подростков и 20% всех девочек-подростков». <a href="https://www.youtube.com/watch?v=irxxdyAv6jk&amp;t=10s">https://www.youtube.com/watch?v=irxxdyAv6jk&amp;t=10s</a></p>
+<p>Главный нарколог России Евгений Брюн в 2015 году заявил, что в России ежегодно выпивается 13,5 литров абсолютного спирта на душу населения в год. Если перевести это количество в водку, то получается в среднем 67 бутылок водки в год на одного россиянина (расчет: 13,5л / 40 х 100 = 33,75 литров водки = 67 бутылок водки по 0,5 литра в год на человека). <a href="http://tass.ru/obschestvo/2051228">http://tass.ru/obschestvo/2051228</a></p>
+<p>В 2012 году доктор медицинских наук, руководитель Отдела информатики и системных исследований Московского НИИ психиатрии Минздрава РФ Немцов Александр Викентьевич опубликовал научный доклад, согласно которому от алкоголя в России ежегодно умирает 487 тысяч человек. Статистически в эти 487 тысяч он включил: умерших от острых алкогольных отравлений; умерших от болезней, вызванных алкоголем; погибших в дорожно-транспортных происшествиях, произошедших по вине пьяных водителей, а также в результате других несчастных случаев, произошедших под влиянием алкоголя; покончивших с собой в состоянии алкогольного опьянения; убитых людьми, находившимися в момент убийства в состоянии опьянения. (<a href="/wp-content/uploads/2019/04/Немцов-А.В.-Доклад-Алкогольные-проблемы-в-России.-2012-год-см.-стр.-8.pdf">доклад Немцова А.В.</a>)</p>
+<p>Короткий видеоролик с Немцовым А.В.: <a href="https://www.youtube.com/watch?v=ImdavwyUsA0">https://www.youtube.com/watch?v=ImdavwyUsA0</a></p>
+<p>В 2016 году Роспотребнадзор заявил на своем официальном сайте, что «по данным экспертов, в России злоупотребление алкоголем приводит к преждевременной, предотвратимой смерти около полумиллиона человек ежегодно»: <a href="http://rospotrebnadzor.ru/about/info/news/news_details.php?ELEMENT_ID=5533">http://rospotrebnadzor.ru/about/info/news/news_details.php?ELEMENT_ID=5533</a></p>
+<p>07 февраля 2019 года министр здравоохранения России Вероника Скворцова заявила в эфире радиостанции «Вести FM», что причиной смерти большинства трудоспособных мужчин в России является алкоголь. «70 процентов – это алкоголь-ассоциированная смертность, причем не только острая, но накопительная алкогольная смертность – циррозы, язвенная болезнь желудка и все осложнения, панкреонекроз, атеросклероз, ранняя гипертоническая болезнь», – сказала она. Второй распространенной причиной смертности мужчин министр назвала курение. По словам министра, достичь существенного снижения смертности от предотвратимых причин получится, если сами россияне будут ответственно подходить к вопросам своего здоровья: <a href="https://tass.ru/obschestvo/6089480">https://tass.ru/obschestvo/6089480  </a>и <a href="https://www.youtube.com/watch?v=MLw45h3JTH0">https://www.youtube.com/watch?v=MLw45h3JTH0</a></p>
+<p>В 2012 году председатель Правительства России Медведев Д.А. заявил, что в России от болезней, вызванных курением, ежегодно умирает 400 тыс. человек. <a href="https://www.youtube.com/watch?v=BeLeBUaRtd0&amp;t=70s">https://www.youtube.com/watch?v=BeLeBUaRtd0&amp;t=70s</a></p>
+<p>В 2010 году директор ФСКН России заявил, что ежегодно от наркотиков в России гибнет более 100 тыс. россиян, причем подавляющее большинство из них – молодежь до 30 лет. <a href="https://rg.ru/2010/12/21/nark-anons.html">https://rg.ru/2010/12/21/nark-anons.html</a></p>
+<p>Всего по данным Росстата каждый год в России умирает около 1 900 000 чел. Таким образом, алкоголь, табак и наркотики – это главные причины смертности в России, вместе провоцирующие более одного миллиона смертей ежегодно.</p>
+<p>28 апреля 2017 года на заседании Совбеза РФ Владимир Путин заявил, что за последние несколько лет число несовершеннолетних наркоманов в России выросло на 60%. Согласно этому же сообщению в России 7,5 миллионов наркоманов. Кроме того, президент отметил, что необходимо качественно повысить уровень координации госорганов и общественных антинаркотических организаций: <a href="http://tass.ru/obschestvo/4220430">http://tass.ru/obschestvo/4220430 </a>и <a href="http://kremlin.ru/events/president/news/54401">http://kremlin.ru/events/president/news/54401</a></p>
+<p>Согласно докладу Всемирной организации здравоохранения за 2010 год, Россия занимает четвертое место в мире по уровню потребления алкоголя на душу населения. Во всём мире по уровню пьянства Россию обгоняют (с небольшим отрывом) только Белоруссия, Молдавия и Литва: <a href="https://ru.wikipedia.org/wiki/Список_стран_по_потреблению_алкоголя_на_человека">https://ru.wikipedia.org/wiki/Список_стран_по_потреблению_алкоголя_на_человека</a></p>
+<p>Согласно исследованию одного из самых авторитетных в мире научно-медицинских журналов – британского журнала «The Lancet», Россия – самая курящая страна в мире. Исследование было проведено в 2012 году. Согласно исследованию, курит 33% россиян: <a href="https://rg.ru/2012/08/23/kurenie-site.html">https://rg.ru/2012/08/23/kurenie-site.html</a></p>
+<p>Согласно исследованию Всероссийского центра изучения общественного мнения (ВЦИОМ), проведенному в 2016 году, в России курит 31% жителей: <a href="https://ria.ru/society/20160531/1441120952.html">https://ria.ru/society/20160531/1441120952.html</a></p>
+<p>В 2012 году председатель Правительства России Медведев Д.А. заявил, что Россия – самая курящая страна в мире: <a href="https://www.youtube.com/watch?v=Cwb_RjjITPc">https://www.youtube.com/watch?v=Cwb_RjjITPc</a></p>
+</div>
+</div>
+</div></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div id="cmsms_row_6a7daff9a86a95_58985941" class="cmsms_row cmsms_color_scheme_default">
+<div class="cmsms_row_outer_parent">
+<div class="cmsms_row_outer">
+<div class="cmsms_row_inner">
+<div class="cmsms_row_margin">
+<div class="cmsms_column one_first">
+<div class="cmsms_text">
+<div id="volunteer" class="white-bgr wrap">
+<div>
+<div class="volunteer-wrap article-base-format">
+<p style="text-align: center;">Будем рады ответить на другие ваши вопросы по почте <a href="mailto:web@obshee-delo.ru" target="_blank" rel="noopener noreferrer">web@obshee-delo.ru</a></p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+<div class="cl"></div><section class="content_wrap fullwidth">
+
+<div class="middle_content entry"></div>
+<!-- Finish Content -->
+
+</section></div>
+</section>
+<!-- _________________________ Finish Middle _________________________ -->
+
+
+<!-- _________________________ Start Bottom _________________________ -->
+<section id="bottom" class="cmsms_color_scheme_footer">
+<div class="bottom_bg">
+<div class="bottom_outer">
+<div class="bottom_inner sidebar_layout_14141414">
+<aside id="text-4" class="widget widget_text"><h3 class="widgettitle">КОНТАКТЫ РЕДАКЦИИ</h3>			<div class="textwidget"><ul>
+<li>
+<b>Средство массовой информации:</b><br>
+Сетевое издание<br> "ОБЩЕЕ ДЕЛО"<br>
+<a href="/wp-content/uploads/2019/04/2018-02-16-Выписка-из-реестра-СМИ-сайт-ОД.pdf" target="_blank" rel="noopener noreferrer">Зарегистрировано Роскомнадзором, свидетельство Эл № ФC77-72346 от 14 февраля 2018</a></li>
+
+
+<li><b>Учредитель:</b><br>
+Общероссийская общественная организация "Общее дело" ОГРН: 1127799010624</li>
+
+
+<li><b>Главный редактор:</b><br>
+Дегтярев А.А.</li>
+
+
+<li><b>Электронная почта:</b><br>
+web@obshee-delo.ru</li>
+
+<li><b>Телефон:</b><br>
++7 (962) 950-75-61</li>
+
+
+<li>При перепечатывании материалов ссылка на издание обязательна. <strong style="color:white;font-size:25px;">12+</strong></li>
+</ul>
+</div>
+		</aside><aside id="text-2" class="widget widget_text"><h3 class="widgettitle">ОТЗЫВЫ</h3>			<div class="textwidget"><ul>
+<li><a href="/about/reviews/">Письма и отзывы</a></li>
+<li><a href="/about/smi/">СМИ о нас</a></li>
+<li><a href="/about/experts-review/">Экспертные заключения</a></li>
+<li><a href="/about/nashi_partnery/">Наши партнеры</a></li>
+<li><a href="/about/ostavit-otziv/">Оставить отзыв</a></li>
+<li><a href="http://od1.reformal.ru/" target="_blank" rel="noopener noreferrer">Предложить идею</a></li>
+
+
+</ul></div>
+		</aside><aside id="text-3" class="widget widget_text"><h3 class="widgettitle">ССЫЛКИ</h3>			<div class="textwidget"><ul>
+
+<li><a href="/about/">О нас</a></li>
+<li><a href="/news/">Наши дела</a></li>
+<li><a href="/video/">Наши фильмы</a></li>
+<li><a href="/get-involved/">Прими участие</a></li>
+<li><a href="/materials/">Наши материалы</a></li>
+<li><a href="/sitemap/">Карта сайта</a></li>
+<li><a href="/faq/">Частые вопросы</a></li>
+<li><a href="/sp/">Благотворительная акция</a></li>
+<li><a href="/conf_politics/">Политика конфиденциальности</a></li>
+</ul>
+
+<ul></li>
+Учётный номер в реестре НКО №0012011716</li></ul></div>
+		</aside><aside id="text-5" class="widget widget_text"><h3 class="widgettitle">МЫ В СОЦСЕТЯХ</h3>			<div class="textwidget"><ul>
+
+<li>
+
+<a href="http://vk.com/obsheedelorf" class="cmsms-icon-vkontakte" title="VK" target="_blank" rel="noopener noreferrer"> В контакте</a></li>
+
+<li><a href="http://ok.ru/obsheedelo" class="cmsms-icon-odnoklassniki" title="instagram" target="_blank" rel="noopener noreferrer"> Одноклассники</a></li>
+
+<li><a href="https://www.youtube.com/user/proektobsheedelo?sub_confirmation=1" class="cmsms-icon-youtube-2" title="YouTube" target="_blank" rel="noopener noreferrer"> YouTube</a></li>
+
+</ul>
+</div>
+		</aside></div></div></div></section><!-- _________________________ Finish Bottom _________________________ -->
+
+<a href="javascript:void(0);" id="slide_top" class="cmsms_theme_icon_slide_top"></a>
+	</div>
+<!-- _________________________ Finish Main _________________________ -->
+
+<!-- _________________________ Start Footer _________________________ -->
+	<footer id="footer" role="contentinfo" class="cmsms_color_scheme_footer cmsms_footer_default">
+		<div class="footer_bg">
+			<div class="footer_inner">
+		<div class="footer_custom_html">При перепечатывании материалов ссылка на издание обязательна. 12+</div><span class="copyright">При перепечатывании материалов ссылка на издание обязательна. 12+</span>
+			</div>
+		</div>
+	</footer>
+<!-- _________________________ Finish Footer _________________________ -->
+
+</section>
+<span class="cmsms_responsive_width"></span>
+<!-- _________________________ Finish Page _________________________ -->
+<script type="rocketlazyloadscript" src="https://xn----9sbkcac6brh7h.xn--p1ai/wp-content/themes/welfare/js/script.js" defer></script>
+<script type="rocketlazyloadscript">var pseudo_links = document.querySelectorAll(".pseudo-clearfy-link");for (var i=0;i<pseudo_links.length;i++ ) { pseudo_links[i].addEventListener("click", function(e){   window.open( e.target.getAttribute("data-uri") ); }); }</script><link data-minify="1" rel='stylesheet' id='hljstheme-css'  href='https://obshee-delo.ru/wp-content/cache/min/1/wp-content/plugins/wp-code-highlightjs/styles/default.css?ver=1723474226' type='text/css' media='all' />
+<script type="rocketlazyloadscript" data-rocket-type='text/javascript' src='https://obshee-delo.ru/wp-includes/js/jquery/ui/core.min.js' id='jquery-ui-core-js' defer></script>
+<script type="rocketlazyloadscript" data-rocket-type='text/javascript' src='https://obshee-delo.ru/wp-includes/js/jquery/ui/widget.min.js' id='jquery-ui-widget-js' defer></script>
+<script type="rocketlazyloadscript" data-rocket-type='text/javascript' src='https://obshee-delo.ru/wp-includes/js/jquery/ui/mouse.min.js' id='jquery-ui-mouse-js' defer></script>
+<script type="rocketlazyloadscript" data-rocket-type='text/javascript' src='https://obshee-delo.ru/wp-includes/js/jquery/ui/slider.min.js' id='jquery-ui-slider-js' defer></script>
+<script type="rocketlazyloadscript" data-rocket-type='text/javascript' src='https://obshee-delo.ru/wp-includes/js/jquery/ui/effect.min.js' id='jquery-effects-core-js' defer></script>
+<script type="rocketlazyloadscript" data-rocket-type='text/javascript' src='https://obshee-delo.ru/wp-includes/js/jquery/ui/effect-transfer.min.js' id='jquery-effects-transfer-js' defer></script>
+<script type="rocketlazyloadscript" data-rocket-type='text/javascript' src='https://obshee-delo.ru/wp-includes/js/comment-reply.min.js' id='comment-reply-js' defer></script>
+<script type="rocketlazyloadscript" data-rocket-type='text/javascript' src='https://obshee-delo.ru/wp-includes/js/dist/vendor/wp-polyfill.min.js' id='wp-polyfill-js'></script>
+<script type="rocketlazyloadscript" data-rocket-type='text/javascript' id='wp-polyfill-js-after'>
+( 'fetch' in window ) || document.write( '<script src="https://obshee-delo.ru/wp-includes/js/dist/vendor/wp-polyfill-fetch.min.js" defer></scr' + 'ipt>' );( document.contains ) || document.write( '<script src="https://obshee-delo.ru/wp-includes/js/dist/vendor/wp-polyfill-node-contains.min.js" defer></scr' + 'ipt>' );( window.DOMRect ) || document.write( '<script src="https://obshee-delo.ru/wp-includes/js/dist/vendor/wp-polyfill-dom-rect.min.js" defer></scr' + 'ipt>' );( window.URL && window.URL.prototype && window.URLSearchParams ) || document.write( '<script src="https://obshee-delo.ru/wp-includes/js/dist/vendor/wp-polyfill-url.min.js" defer></scr' + 'ipt>' );( window.FormData && window.FormData.prototype.keys ) || document.write( '<script src="https://obshee-delo.ru/wp-includes/js/dist/vendor/wp-polyfill-formdata.min.js" defer></scr' + 'ipt>' );( Element.prototype.matches && Element.prototype.closest ) || document.write( '<script src="https://obshee-delo.ru/wp-includes/js/dist/vendor/wp-polyfill-element-closest.min.js" defer></scr' + 'ipt>' );
+</script>
+<script type='text/javascript' id='contact-form-7-js-extra'>
+/* <![CDATA[ */
+var wpcf7 = {"api":{"root":"https:\/\/obshee-delo.ru\/wp-json\/","namespace":"contact-form-7\/v1"},"cached":"1"};
+/* ]]> */
+</script>
+<script type="rocketlazyloadscript" data-rocket-type='text/javascript' src='https://obshee-delo.ru/wp-content/plugins/contact-form-7/includes/js/index.js' id='contact-form-7-js' defer></script>
+<script type="rocketlazyloadscript" data-rocket-type='text/javascript' src='https://obshee-delo.ru/wp-content/plugins/leyka/js/jquery.easyModal.min.js' id='leyka-modal-js' defer></script>
+<script type='text/javascript' id='leyka-public-js-extra'>
+/* <![CDATA[ */
+var leyka = {"ajaxurl":"https:\/\/obshee-delo.ru\/wp-admin\/admin-ajax.php","homeurl":"https:\/\/obshee-delo.ru\/","plugin_url":"https:\/\/obshee-delo.ru\/wp-content\/plugins\/leyka\/","gtm_ga_eec_available":"0","correct_donation_amount_required_msg":"\u0423\u043a\u0430\u0436\u0438\u0442\u0435 \u0441\u0443\u043c\u043c\u0443","donation_amount_too_great_msg":"\u0423\u043a\u0430\u0437\u0430\u043d\u043d\u044b\u0439 \u0440\u0430\u0437\u043c\u0435\u0440 \u0441\u043b\u0438\u0448\u043a\u043e\u043c \u0432\u0435\u043b\u0438\u043a (\u0434\u043e\u043f\u0443\u0441\u0442\u0438\u043c\u043e \u043c\u0430\u043a\u0441\u0438\u043c\u0443\u043c %s)","donation_amount_too_small_msg":"\u0423\u043a\u0430\u0437\u0430\u043d\u043d\u044b\u0439 \u0440\u0430\u0437\u043c\u0435\u0440 \u0441\u043b\u0438\u0448\u043a\u043e\u043c \u043c\u0430\u043b (\u0434\u043e\u043f\u0443\u0441\u0442\u0438\u043c\u043e \u043c\u0438\u043d\u0438\u043c\u0443\u043c %s)","amount_incorrect_msg":"\u0423\u043a\u0430\u0436\u0438\u0442\u0435 \u0441\u0443\u043c\u043c\u0443 \u043e\u0442 %s \u0434\u043e %s <span class=\"curr-mark\">%s<\/span>","donor_name_required_msg":"\u0423\u043a\u0430\u0436\u0438\u0442\u0435 \u0432\u0430\u0448\u0435 \u0438\u043c\u044f","oferta_agreement_required_msg":"\u041d\u0435\u043e\u0431\u0445\u043e\u0434\u0438\u043c\u043e \u0432\u0430\u0448\u0435 \u0441\u043e\u0433\u043b\u0430\u0441\u0438\u0435","checkbox_check_required_msg":"\u041d\u0435\u043e\u0431\u0445\u043e\u0434\u0438\u043c\u043e \u0432\u0430\u0448\u0435 \u0441\u043e\u0433\u043b\u0430\u0441\u0438\u0435","text_required_msg":"\u0417\u0430\u043f\u043e\u043b\u043d\u0438\u0442\u0435 \u044d\u0442\u043e \u043f\u043e\u043b\u0435","email_required_msg":"\u0423\u043a\u0430\u0436\u0438\u0442\u0435 email","email_invalid_msg":"\u0423\u043a\u0430\u0436\u0438\u0442\u0435 email \u0432 \u0444\u043e\u0440\u043c\u0430\u0442\u0435 your@email.com","must_not_be_email_msg":"\u0412 \u044d\u0442\u043e\u043c \u043f\u043e\u043b\u0435 \u043d\u0435 \u043d\u0443\u0436\u043d\u043e \u0443\u043a\u0430\u0437\u044b\u0432\u0430\u0442\u044c email","value_too_long_msg":"\u0423\u043a\u0430\u0437\u0430\u043d\u043e \u0441\u043b\u0438\u0448\u043a\u043e\u043c \u0434\u043b\u0438\u043d\u043d\u043e\u0435 \u0437\u043d\u0430\u0447\u0435\u043d\u0438\u0435","error_while_unsibscribe_msg":"\u041e\u0448\u0438\u0431\u043a\u0430 \u043f\u0440\u0438 \u0437\u0430\u043f\u0440\u043e\u0441\u0435 \u043d\u0430 \u043e\u0442\u043c\u0435\u043d\u0443 \u0440\u0435\u043a\u0443\u0440\u0440\u0435\u043d\u0442\u043d\u043e\u0439 \u043f\u043e\u0434\u043f\u0438\u0441\u043a\u0438","default_error_msg":"\u041e\u0448\u0438\u0431\u043a\u0430","phone_invalid":"\u041f\u043e\u0436\u0430\u043b\u0443\u0439\u0441\u0442\u0430, \u0432\u0432\u0435\u0434\u0438\u0442\u0435 \u043d\u043e\u043c\u0435\u0440 \u0442\u0435\u043b\u0435\u0444\u043e\u043d\u0430 \u0432 \u0444\u043e\u0440\u043c\u0430\u0442\u0435 7\u0445\u0445\u0445\u0445\u0445\u0445\u0445\u0445\u0445\u0445","ajax_wrong_server_response":"\u041e\u0448\u0438\u0431\u043a\u0430 \u0432 \u043e\u0442\u0432\u0435\u0442\u0435 \u0441\u0435\u0440\u0432\u0435\u0440\u0430. \u041f\u043e\u0436\u0430\u043b\u0443\u0439\u0441\u0442\u0430, \u0441\u043e\u043e\u0431\u0449\u0438\u0442\u0435 \u043e\u0431 \u044d\u0442\u043e\u043c \u0442\u0435\u0445\u043d\u0438\u0447\u0435\u0441\u043a\u043e\u0439 \u043f\u043e\u0434\u0434\u0435\u0440\u0436\u043a\u0435 \u044d\u0442\u043e\u0433\u043e \u0441\u0430\u0439\u0442\u0430.","cp_not_set_up":"\u041e\u0448\u0438\u0431\u043a\u0430 \u0432 \u043d\u0430\u0441\u0442\u0440\u043e\u0439\u043a\u0430\u0445 CloudPayments. \u041f\u043e\u0436\u0430\u043b\u0443\u0439\u0441\u0442\u0430, \u0441\u043e\u043e\u0431\u0449\u0438\u0442\u0435 \u043e\u0431 \u044d\u0442\u043e\u043c \u0442\u0435\u0445\u043d\u0438\u0447\u0435\u0441\u043a\u043e\u0439 \u043f\u043e\u0434\u0434\u0435\u0440\u0436\u043a\u0435 \u044d\u0442\u043e\u0433\u043e \u0441\u0430\u0439\u0442\u0430.","cp_donation_failure_reasons":{"User has cancelled":"\u041f\u043b\u0430\u0442\u0451\u0436 \u043e\u0442\u043c\u0435\u043d\u0451\u043d"}};
+/* ]]> */
+</script>
+<script type="rocketlazyloadscript" data-rocket-type='text/javascript' src='https://obshee-delo.ru/wp-content/plugins/leyka/js/public.js' id='leyka-public-js' defer></script>
+<script type="rocketlazyloadscript" data-rocket-type='text/javascript' id='rocket-browser-checker-js-after'>
+"use strict";var _createClass=function(){function defineProperties(target,props){for(var i=0;i<props.length;i++){var descriptor=props[i];descriptor.enumerable=descriptor.enumerable||!1,descriptor.configurable=!0,"value"in descriptor&&(descriptor.writable=!0),Object.defineProperty(target,descriptor.key,descriptor)}}return function(Constructor,protoProps,staticProps){return protoProps&&defineProperties(Constructor.prototype,protoProps),staticProps&&defineProperties(Constructor,staticProps),Constructor}}();function _classCallCheck(instance,Constructor){if(!(instance instanceof Constructor))throw new TypeError("Cannot call a class as a function")}var RocketBrowserCompatibilityChecker=function(){function RocketBrowserCompatibilityChecker(options){_classCallCheck(this,RocketBrowserCompatibilityChecker),this.passiveSupported=!1,this._checkPassiveOption(this),this.options=!!this.passiveSupported&&options}return _createClass(RocketBrowserCompatibilityChecker,[{key:"_checkPassiveOption",value:function(self){try{var options={get passive(){return!(self.passiveSupported=!0)}};window.addEventListener("test",null,options),window.removeEventListener("test",null,options)}catch(err){self.passiveSupported=!1}}},{key:"initRequestIdleCallback",value:function(){!1 in window&&(window.requestIdleCallback=function(cb){var start=Date.now();return setTimeout(function(){cb({didTimeout:!1,timeRemaining:function(){return Math.max(0,50-(Date.now()-start))}})},1)}),!1 in window&&(window.cancelIdleCallback=function(id){return clearTimeout(id)})}},{key:"isDataSaverModeOn",value:function(){return"connection"in navigator&&!0===navigator.connection.saveData}},{key:"supportsLinkPrefetch",value:function(){var elem=document.createElement("link");return elem.relList&&elem.relList.supports&&elem.relList.supports("prefetch")&&window.IntersectionObserver&&"isIntersecting"in IntersectionObserverEntry.prototype}},{key:"isSlowConnection",value:function(){return"connection"in navigator&&"effectiveType"in navigator.connection&&("2g"===navigator.connection.effectiveType||"slow-2g"===navigator.connection.effectiveType)}}]),RocketBrowserCompatibilityChecker}();
+</script>
+<script type='text/javascript' id='rocket-preload-links-js-extra'>
+/* <![CDATA[ */
+var RocketPreloadLinksConfig = {"excludeUris":"\/(.+\/)?feed\/?.+\/?|\/(?:.+\/)?embed\/|\/(index\\.php\/)?wp\\-json(\/.*|$)|\/wp-admin\/|\/logout\/|\/wp-login.php","usesTrailingSlash":"1","imageExt":"jpg|jpeg|gif|png|tiff|bmp|webp|avif","fileExt":"jpg|jpeg|gif|png|tiff|bmp|webp|avif|php|pdf|html|htm","siteUrl":"https:\/\/obshee-delo.ru","onHoverDelay":"100","rateThrottle":"3"};
+/* ]]> */
+</script>
+<script type="rocketlazyloadscript" data-rocket-type='text/javascript' id='rocket-preload-links-js-after'>
+(function() {
+"use strict";var r="function"==typeof Symbol&&"symbol"==typeof Symbol.iterator?function(e){return typeof e}:function(e){return e&&"function"==typeof Symbol&&e.constructor===Symbol&&e!==Symbol.prototype?"symbol":typeof e},e=function(){function i(e,t){for(var n=0;n<t.length;n++){var i=t[n];i.enumerable=i.enumerable||!1,i.configurable=!0,"value"in i&&(i.writable=!0),Object.defineProperty(e,i.key,i)}}return function(e,t,n){return t&&i(e.prototype,t),n&&i(e,n),e}}();function i(e,t){if(!(e instanceof t))throw new TypeError("Cannot call a class as a function")}var t=function(){function n(e,t){i(this,n),this.browser=e,this.config=t,this.options=this.browser.options,this.prefetched=new Set,this.eventTime=null,this.threshold=1111,this.numOnHover=0}return e(n,[{key:"init",value:function(){!this.browser.supportsLinkPrefetch()||this.browser.isDataSaverModeOn()||this.browser.isSlowConnection()||(this.regex={excludeUris:RegExp(this.config.excludeUris,"i"),images:RegExp(".("+this.config.imageExt+")$","i"),fileExt:RegExp(".("+this.config.fileExt+")$","i")},this._initListeners(this))}},{key:"_initListeners",value:function(e){-1<this.config.onHoverDelay&&document.addEventListener("mouseover",e.listener.bind(e),e.listenerOptions),document.addEventListener("mousedown",e.listener.bind(e),e.listenerOptions),document.addEventListener("touchstart",e.listener.bind(e),e.listenerOptions)}},{key:"listener",value:function(e){var t=e.target.closest("a"),n=this._prepareUrl(t);if(null!==n)switch(e.type){case"mousedown":case"touchstart":this._addPrefetchLink(n);break;case"mouseover":this._earlyPrefetch(t,n,"mouseout")}}},{key:"_earlyPrefetch",value:function(t,e,n){var i=this,r=setTimeout(function(){if(r=null,0===i.numOnHover)setTimeout(function(){return i.numOnHover=0},1e3);else if(i.numOnHover>i.config.rateThrottle)return;i.numOnHover++,i._addPrefetchLink(e)},this.config.onHoverDelay);t.addEventListener(n,function e(){t.removeEventListener(n,e,{passive:!0}),null!==r&&(clearTimeout(r),r=null)},{passive:!0})}},{key:"_addPrefetchLink",value:function(i){return this.prefetched.add(i.href),new Promise(function(e,t){var n=document.createElement("link");n.rel="prefetch",n.href=i.href,n.onload=e,n.onerror=t,document.head.appendChild(n)}).catch(function(){})}},{key:"_prepareUrl",value:function(e){if(null===e||"object"!==(void 0===e?"undefined":r(e))||!1 in e||-1===["http:","https:"].indexOf(e.protocol))return null;var t=e.href.substring(0,this.config.siteUrl.length),n=this._getPathname(e.href,t),i={original:e.href,protocol:e.protocol,origin:t,pathname:n,href:t+n};return this._isLinkOk(i)?i:null}},{key:"_getPathname",value:function(e,t){var n=t?e.substring(this.config.siteUrl.length):e;return n.startsWith("/")||(n="/"+n),this._shouldAddTrailingSlash(n)?n+"/":n}},{key:"_shouldAddTrailingSlash",value:function(e){return this.config.usesTrailingSlash&&!e.endsWith("/")&&!this.regex.fileExt.test(e)}},{key:"_isLinkOk",value:function(e){return null!==e&&"object"===(void 0===e?"undefined":r(e))&&(!this.prefetched.has(e.href)&&e.origin===this.config.siteUrl&&-1===e.href.indexOf("?")&&-1===e.href.indexOf("#")&&!this.regex.excludeUris.test(e.href)&&!this.regex.images.test(e.href))}}],[{key:"run",value:function(){"undefined"!=typeof RocketPreloadLinksConfig&&new n(new RocketBrowserCompatibilityChecker({capture:!0,passive:!0}),RocketPreloadLinksConfig).init()}}]),n}();t.run();
+}());
+</script>
+<script type='text/javascript' id='jLibs-js-extra'>
+/* <![CDATA[ */
+var cmsms_jlibs = {"button_height":"-22"};
+/* ]]> */
+</script>
+<script type="rocketlazyloadscript" data-rocket-type='text/javascript' src='https://obshee-delo.ru/wp-content/themes/welfare/js/jqueryLibraries.min.js' id='jLibs-js' defer></script>
+<script type='text/javascript' id='script-js-extra'>
+/* <![CDATA[ */
+var cmsms_script = {"theme_url":"https:\/\/obshee-delo.ru\/wp-content\/themes\/welfare","site_url":"https:\/\/obshee-delo.ru\/","ajaxurl":"https:\/\/obshee-delo.ru\/wp-admin\/admin-ajax.php","nonce_ajax_like":"63e0c872a9","primary_color":"#ae0a04","ilightbox_skin":"parade","ilightbox_path":"vertical","ilightbox_infinite":"0","ilightbox_aspect_ratio":"1","ilightbox_mobile_optimizer":"1","ilightbox_max_scale":"1","ilightbox_min_scale":"0.2","ilightbox_inner_toolbar":"0","ilightbox_smart_recognition":"0","ilightbox_fullscreen_one_slide":"0","ilightbox_fullscreen_viewport":"center","ilightbox_controls_toolbar":"1","ilightbox_controls_arrows":"0","ilightbox_controls_fullscreen":"1","ilightbox_controls_thumbnail":"1","ilightbox_controls_keyboard":"1","ilightbox_controls_mousewheel":"1","ilightbox_controls_swipe":"1","ilightbox_controls_slideshow":"0","ilightbox_close_text":"Close","ilightbox_enter_fullscreen_text":"Enter Fullscreen (Shift+Enter)","ilightbox_exit_fullscreen_text":"Exit Fullscreen (Shift+Enter)","ilightbox_slideshow_text":"Slideshow","ilightbox_next_text":"Next","ilightbox_previous_text":"Previous","ilightbox_load_image_error":"An error occurred when trying to load photo.","ilightbox_load_contents_error":"An error occurred when trying to load contents.","ilightbox_missing_plugin_error":"The content your are attempting to view requires the <a href='{pluginspage}' target='_blank'>{type} plugin<\\\/a>."};
+/* ]]> */
+</script>
+<script type="rocketlazyloadscript" data-rocket-type='text/javascript' src='https://obshee-delo.ru/wp-content/themes/welfare/js/jquery.script.js' id='script-js' defer></script>
+<script type="rocketlazyloadscript" data-rocket-type='text/javascript' src='https://obshee-delo.ru/wp-content/themes/welfare/js/jquery.tweet.min.js' id='twitter-js' defer></script>
+<script type="rocketlazyloadscript" data-rocket-type='text/javascript' src='https://obshee-delo.ru/wp-content/themes/welfare/js/scrollspy.js' id='scrollspy-js' defer></script>
+<script type="rocketlazyloadscript" data-rocket-type='text/javascript' src='https://www.google.com/recaptcha/api.js?render=6LeYyq4UAAAAAGnupZhL5-XrXcHnMHJjNWTSLIc0' id='google-recaptcha-js'></script>
+<script type='text/javascript' id='wpcf7-recaptcha-js-extra'>
+/* <![CDATA[ */
+var wpcf7_recaptcha = {"sitekey":"6LeYyq4UAAAAAGnupZhL5-XrXcHnMHJjNWTSLIc0","actions":{"homepage":"homepage","contactform":"contactform"}};
+/* ]]> */
+</script>
+<script type="rocketlazyloadscript" data-rocket-type='text/javascript' src='https://obshee-delo.ru/wp-content/plugins/contact-form-7/modules/recaptcha/index.js' id='wpcf7-recaptcha-js' defer></script>
+<script type="rocketlazyloadscript" data-rocket-type='text/javascript' src='https://obshee-delo.ru/wp-content/plugins/wp-code-highlightjs/highlight.common.pack.js' id='hljs-js' defer></script>
+<script type="rocketlazyloadscript" data-rocket-type='text/javascript' src='https://obshee-delo.ru/wp-content/plugins/simple-lightbox/client/js/prod/lib.core.js' id='slb_core-js' defer></script>
+<script type="rocketlazyloadscript" data-rocket-type='text/javascript' src='https://obshee-delo.ru/wp-content/plugins/simple-lightbox/client/js/prod/lib.view.js' id='slb_view-js' defer></script>
+<script type="rocketlazyloadscript" data-rocket-type='text/javascript' src='https://obshee-delo.ru/wp-content/plugins/simple-lightbox/themes/baseline/js/prod/client.js' id='slb-asset-slb_baseline-base-js' defer></script>
+<script type="rocketlazyloadscript" data-rocket-type='text/javascript' src='https://obshee-delo.ru/wp-content/plugins/simple-lightbox/themes/default/js/prod/client.js' id='slb-asset-slb_default-base-js' defer></script>
+<script type="rocketlazyloadscript" data-rocket-type='text/javascript' src='https://obshee-delo.ru/wp-content/plugins/simple-lightbox/template-tags/item/js/prod/tag.item.js' id='slb-asset-item-base-js' defer></script>
+<script type="rocketlazyloadscript" data-rocket-type='text/javascript' src='https://obshee-delo.ru/wp-content/plugins/simple-lightbox/template-tags/ui/js/prod/tag.ui.js' id='slb-asset-ui-base-js' defer></script>
+<script type="rocketlazyloadscript" data-rocket-type='text/javascript' src='https://obshee-delo.ru/wp-content/plugins/simple-lightbox/content-handlers/image/js/prod/handler.image.js' id='slb-asset-image-base-js' defer></script>
+    <style>code.hljs { /*margin: 5px;*/ }</style>
+    <script type="rocketlazyloadscript" data-rocket-type="text/javascript">window.addEventListener('DOMContentLoaded', function() {
+    (function($, window) {
+        var init_fn_flag = false;
+        var init_fn = (function() {
+            if (init_fn_flag)
+                return;
+            init_fn_flag = true;
+             hljs.configure({"tabReplace":"    "});
+            $('pre code').each(function(i, block) {
+                hljs.highlightBlock(block);
+            });
+        });
+        $(document).ready(init_fn);
+        $(window).on("load", init_fn);
+    })(jQuery, window);
+    });</script>
+<script type="rocketlazyloadscript" data-rocket-type="text/javascript" id="slb_footer">window.addEventListener('DOMContentLoaded', function() {/* <![CDATA[ */if ( !!window.jQuery ) {(function($){$(document).ready(function(){if ( !!window.SLB && SLB.has_child('View.init') ) { SLB.View.init({"ui_autofit":true,"ui_animate":true,"slideshow_autostart":true,"slideshow_duration":"6","group_loop":true,"ui_overlay_opacity":"0.8","ui_title_default":false,"theme_default":"slb_default","ui_labels":{"loading":"Loading","close":"Close","nav_next":"Next","nav_prev":"Previous","slideshow_start":"Start slideshow","slideshow_stop":"Stop slideshow","group_status":"Item %current% of %total%"}}); }
+if ( !!window.SLB && SLB.has_child('View.assets') ) { {$.extend(SLB.View.assets, {"1076975669":{"id":41029,"type":"image","internal":true,"source":"https:\/\/obshee-delo.ru\/wp-content\/uploads\/2018\/05\/vgaW5f4FL3I.jpg","title":"vgaW5f4FL3I","caption":"","description":""}});} }
+/* THM */
+if ( !!window.SLB && SLB.has_child('View.extend_theme') ) { SLB.View.extend_theme('slb_baseline',{"name":"\u0411\u0430\u0437\u043e\u0432\u0430\u044f \u043b\u0438\u043d\u0438\u044f","parent":"","styles":[{"handle":"base","uri":"https:\/\/obshee-delo.ru\/wp-content\/plugins\/simple-lightbox\/themes\/baseline\/css\/style.css","deps":[]}],"layout_raw":"<div class=\"slb_container\"><div class=\"slb_content\">{{item.content}}<div class=\"slb_nav\"><span class=\"slb_prev\">{{ui.nav_prev}}<\/span><span class=\"slb_next\">{{ui.nav_next}}<\/span><\/div><div class=\"slb_controls\"><span class=\"slb_close\">{{ui.close}}<\/span><span class=\"slb_slideshow\">{{ui.slideshow_control}}<\/span><\/div><div class=\"slb_loading\">{{ui.loading}}<\/div><\/div><div class=\"slb_details\"><div class=\"inner\"><div class=\"slb_data\"><div class=\"slb_data_content\"><span class=\"slb_data_title\">{{item.title}}<\/span><span class=\"slb_group_status\">{{ui.group_status}}<\/span><div class=\"slb_data_desc\">{{item.description}}<\/div><\/div><\/div><div class=\"slb_nav\"><span class=\"slb_prev\">{{ui.nav_prev}}<\/span><span class=\"slb_next\">{{ui.nav_next}}<\/span><\/div><\/div><\/div><\/div>"}); }if ( !!window.SLB && SLB.has_child('View.extend_theme') ) { SLB.View.extend_theme('slb_default',{"name":"\u041f\u043e \u0443\u043c\u043e\u043b\u0447\u0430\u043d\u0438\u044e (\u0441\u0432\u0435\u0442\u043b\u044b\u0439)","parent":"slb_baseline","styles":[{"handle":"base","uri":"https:\/\/obshee-delo.ru\/wp-content\/plugins\/simple-lightbox\/themes\/default\/css\/style.css","deps":[]}]}); }})})(jQuery);}/* ]]> */});</script>
+<script type="rocketlazyloadscript" data-rocket-type="text/javascript" id="slb_context">window.addEventListener('DOMContentLoaded', function() {/* <![CDATA[ */if ( !!window.jQuery ) {(function($){$(document).ready(function(){if ( !!window.SLB ) { {$.extend(SLB, {"context":["public","user_guest"]});} }})})(jQuery);}/* ]]> */});</script>
+<script>window.lazyLoadOptions={elements_selector:"img[data-lazy-src],.rocket-lazyload,iframe[data-lazy-src]",data_src:"lazy-src",data_srcset:"lazy-srcset",data_sizes:"lazy-sizes",class_loading:"lazyloading",class_loaded:"lazyloaded",threshold:300,callback_loaded:function(element){if(element.tagName==="IFRAME"&&element.dataset.rocketLazyload=="fitvidscompatible"){if(element.classList.contains("lazyloaded")){if(typeof window.jQuery!="undefined"){if(jQuery.fn.fitVids){jQuery(element).parent().fitVids()}}}}}};window.addEventListener('LazyLoad::Initialized',function(e){var lazyLoadInstance=e.detail.instance;if(window.MutationObserver){var observer=new MutationObserver(function(mutations){var image_count=0;var iframe_count=0;var rocketlazy_count=0;mutations.forEach(function(mutation){for(var i=0;i<mutation.addedNodes.length;i++){if(typeof mutation.addedNodes[i].getElementsByTagName!=='function'){continue}
+if(typeof mutation.addedNodes[i].getElementsByClassName!=='function'){continue}
+images=mutation.addedNodes[i].getElementsByTagName('img');is_image=mutation.addedNodes[i].tagName=="IMG";iframes=mutation.addedNodes[i].getElementsByTagName('iframe');is_iframe=mutation.addedNodes[i].tagName=="IFRAME";rocket_lazy=mutation.addedNodes[i].getElementsByClassName('rocket-lazyload');image_count+=images.length;iframe_count+=iframes.length;rocketlazy_count+=rocket_lazy.length;if(is_image){image_count+=1}
+if(is_iframe){iframe_count+=1}}});if(image_count>0||iframe_count>0||rocketlazy_count>0){lazyLoadInstance.update()}});var b=document.getElementsByTagName("body")[0];var config={childList:!0,subtree:!0};observer.observe(b,config)}},!1)</script><script data-no-minify="1" async src="https://obshee-delo.ru/wp-content/plugins/wp-rocket/assets/js/lazyload/17.5/lazyload.min.js"></script><script>function lazyLoadThumb(e){var t='<img data-lazy-src="https://i.ytimg.com/vi/ID/hqdefault.jpg" alt="" width="480" height="360"><noscript><img src="https://i.ytimg.com/vi/ID/hqdefault.jpg" alt="" width="480" height="360"></noscript>',a='<button class="play" aria-label="play Youtube video"></button>';return t.replace("ID",e)+a}function lazyLoadYoutubeIframe(){var e=document.createElement("iframe"),t="ID?autoplay=1";t+=0===this.parentNode.dataset.query.length?'':'&'+this.parentNode.dataset.query;e.setAttribute("src",t.replace("ID",this.parentNode.dataset.src)),e.setAttribute("frameborder","0"),e.setAttribute("allowfullscreen","1"),e.setAttribute("allow", "accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"),this.parentNode.parentNode.replaceChild(e,this.parentNode)}document.addEventListener("DOMContentLoaded",function(){var e,t,p,a=document.getElementsByClassName("rll-youtube-player");for(t=0;t<a.length;t++)e=document.createElement("div"),e.setAttribute("data-id",a[t].dataset.id),e.setAttribute("data-query", a[t].dataset.query),e.setAttribute("data-src", a[t].dataset.src),e.innerHTML=lazyLoadThumb(a[t].dataset.id),a[t].appendChild(e),p=e.querySelector('.play'),p.onclick=lazyLoadYoutubeIframe});</script>
+
+
+<!-- Google Analytics снят 07.08.2026 (решение владельца): передача данных за пределы РФ без необходимости; счётчик — только Яндекс.Метрика в header.php -->
+
+
+
+
+
+<!-- Пиксель ретаргетинга ВКонтакте снят 07.08.2026: собирал аудиторию в чужой рекламный кабинет, в политике ПДн не описан -->
+
+
+</body>
+</html>
+
+<!-- This website is like a Rocket, isn't it? Performance optimized by WP Rocket. Learn more: https://wp-rocket.me - Debug: cached@1786621945 -->

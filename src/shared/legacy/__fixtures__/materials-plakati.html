@@ -1,0 +1,1976 @@
+<!DOCTYPE html>
+<!--[if IE 8]>
+<html class="ie ie8" lang="ru-RU">
+<![endif]-->
+<!--[if !(IE 8)]><!-->
+<html lang="ru-RU" class="cmsms_html">
+<!--<![endif]-->
+<head><meta name="yandex-verification" content="5970d7ec7d8e8b0b" /> 
+<meta charset="UTF-8" /><script>if(navigator.userAgent.match(/MSIE|Internet Explorer/i)||navigator.userAgent.match(/Trident\/7\..*?rv:11/i)){var href=document.location.href;if(!href.match(/[?&]nowprocket/)){if(href.indexOf("?")==-1){if(href.indexOf("#")==-1){document.location.href=href+"?nowprocket=1"}else{document.location.href=href.replace("#","?nowprocket=1#")}}else{if(href.indexOf("#")==-1){document.location.href=href+"&nowprocket=1"}else{document.location.href=href.replace("#","&nowprocket=1#")}}}}</script><script>class RocketLazyLoadScripts{constructor(e){this.triggerEvents=e,this.eventOptions={passive:!0},this.userEventListener=this.triggerListener.bind(this),this.delayedScripts={normal:[],async:[],defer:[]},this.allJQueries=[]}_addUserInteractionListener(e){this.triggerEvents.forEach((t=>window.addEventListener(t,e.userEventListener,e.eventOptions)))}_removeUserInteractionListener(e){this.triggerEvents.forEach((t=>window.removeEventListener(t,e.userEventListener,e.eventOptions)))}triggerListener(){this._removeUserInteractionListener(this),"loading"===document.readyState?document.addEventListener("DOMContentLoaded",this._loadEverythingNow.bind(this)):this._loadEverythingNow()}async _loadEverythingNow(){this._delayEventListeners(),this._delayJQueryReady(this),this._handleDocumentWrite(),this._registerAllDelayedScripts(),this._preloadAllScripts(),await this._loadScriptsFromList(this.delayedScripts.normal),await this._loadScriptsFromList(this.delayedScripts.defer),await this._loadScriptsFromList(this.delayedScripts.async),await this._triggerDOMContentLoaded(),await this._triggerWindowLoad(),window.dispatchEvent(new Event("rocket-allScriptsLoaded"))}_registerAllDelayedScripts(){document.querySelectorAll("script[type=rocketlazyloadscript]").forEach((e=>{e.hasAttribute("src")?e.hasAttribute("async")&&!1!==e.async?this.delayedScripts.async.push(e):e.hasAttribute("defer")&&!1!==e.defer||"module"===e.getAttribute("data-rocket-type")?this.delayedScripts.defer.push(e):this.delayedScripts.normal.push(e):this.delayedScripts.normal.push(e)}))}async _transformScript(e){return await this._requestAnimFrame(),new Promise((t=>{const n=document.createElement("script");let r;[...e.attributes].forEach((e=>{let t=e.nodeName;"type"!==t&&("data-rocket-type"===t&&(t="type",r=e.nodeValue),n.setAttribute(t,e.nodeValue))})),e.hasAttribute("src")?(n.addEventListener("load",t),n.addEventListener("error",t)):(n.text=e.text,t()),e.parentNode.replaceChild(n,e)}))}async _loadScriptsFromList(e){const t=e.shift();return t?(await this._transformScript(t),this._loadScriptsFromList(e)):Promise.resolve()}_preloadAllScripts(){var e=document.createDocumentFragment();[...this.delayedScripts.normal,...this.delayedScripts.defer,...this.delayedScripts.async].forEach((t=>{const n=t.getAttribute("src");if(n){const t=document.createElement("link");t.href=n,t.rel="preload",t.as="script",e.appendChild(t)}})),document.head.appendChild(e)}_delayEventListeners(){let e={};function t(t,n){!function(t){function n(n){return e[t].eventsToRewrite.indexOf(n)>=0?"rocket-"+n:n}e[t]||(e[t]={originalFunctions:{add:t.addEventListener,remove:t.removeEventListener},eventsToRewrite:[]},t.addEventListener=function(){arguments[0]=n(arguments[0]),e[t].originalFunctions.add.apply(t,arguments)},t.removeEventListener=function(){arguments[0]=n(arguments[0]),e[t].originalFunctions.remove.apply(t,arguments)})}(t),e[t].eventsToRewrite.push(n)}function n(e,t){let n=e[t];Object.defineProperty(e,t,{get:()=>n||function(){},set(r){e["rocket"+t]=n=r}})}t(document,"DOMContentLoaded"),t(window,"DOMContentLoaded"),t(window,"load"),t(window,"pageshow"),t(document,"readystatechange"),n(document,"onreadystatechange"),n(window,"onload"),n(window,"onpageshow")}_delayJQueryReady(e){let t=window.jQuery;Object.defineProperty(window,"jQuery",{get:()=>t,set(n){if(n&&n.fn&&!e.allJQueries.includes(n)){n.fn.ready=n.fn.init.prototype.ready=function(t){e.domReadyFired?t.bind(document)(n):document.addEventListener("rocket-DOMContentLoaded",(()=>t.bind(document)(n)))};const t=n.fn.on;n.fn.on=n.fn.init.prototype.on=function(){if(this[0]===window){function e(e){return e.split(" ").map((e=>"load"===e||0===e.indexOf("load.")?"rocket-jquery-load":e)).join(" ")}"string"==typeof arguments[0]||arguments[0]instanceof String?arguments[0]=e(arguments[0]):"object"==typeof arguments[0]&&Object.keys(arguments[0]).forEach((t=>{delete Object.assign(arguments[0],{[e(t)]:arguments[0][t]})[t]}))}return t.apply(this,arguments),this},e.allJQueries.push(n)}t=n}})}async _triggerDOMContentLoaded(){this.domReadyFired=!0,await this._requestAnimFrame(),document.dispatchEvent(new Event("rocket-DOMContentLoaded")),await this._requestAnimFrame(),window.dispatchEvent(new Event("rocket-DOMContentLoaded")),await this._requestAnimFrame(),document.dispatchEvent(new Event("rocket-readystatechange")),await this._requestAnimFrame(),document.rocketonreadystatechange&&document.rocketonreadystatechange()}async _triggerWindowLoad(){await this._requestAnimFrame(),window.dispatchEvent(new Event("rocket-load")),await this._requestAnimFrame(),window.rocketonload&&window.rocketonload(),await this._requestAnimFrame(),this.allJQueries.forEach((e=>e(window).trigger("rocket-jquery-load"))),window.dispatchEvent(new Event("rocket-pageshow")),await this._requestAnimFrame(),window.rocketonpageshow&&window.rocketonpageshow()}_handleDocumentWrite(){const e=new Map;document.write=document.writeln=function(t){const n=document.currentScript,r=document.createRange(),i=n.parentElement;let o=e.get(n);void 0===o&&(o=n.nextSibling,e.set(n,o));const a=document.createDocumentFragment();r.setStart(a,0),a.appendChild(r.createContextualFragment(t)),i.insertBefore(a,o)}}async _requestAnimFrame(){return new Promise((e=>requestAnimationFrame(e)))}static run(){const e=new RocketLazyLoadScripts(["keydown","mousemove","touchmove","touchstart","touchend","wheel"]);e._addUserInteractionListener(e)}}RocketLazyLoadScripts.run();</script>
+
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+<link rel="shortcut icon" href="https://obshee-delo.ru/wp-content/uploads/2016/02/favicon-od.ico" type="image/x-icon" />
+<link rel="profile" href="http://gmpg.org/xfn/11" />
+<link rel="pingback" href="https://obshee-delo.ru/xmlrpc.php" />
+
+<title>Плакаты социальной рекламы &#8212; Общее дело</title><link rel="preload" as="style" href="https://fonts.googleapis.com/css?family=Droid%20Sans%3A400%2C700%7COpen%20Sans%3A300%2C300italic%2C400%2C400italic%2C700%2C700italic%7CPT%20Sans%3A400%2C400italic%2C700%2C700italic&#038;display=swap" /><link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Droid%20Sans%3A400%2C700%7COpen%20Sans%3A300%2C300italic%2C400%2C400italic%2C700%2C700italic%7CPT%20Sans%3A400%2C400italic%2C700%2C700italic&#038;display=swap" media="print" onload="this.media='all'" /><noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Droid%20Sans%3A400%2C700%7COpen%20Sans%3A300%2C300italic%2C400%2C400italic%2C700%2C700italic%7CPT%20Sans%3A400%2C400italic%2C700%2C700italic&#038;display=swap" /></noscript>
+<link rel='dns-prefetch' href='//www.google.com' />
+<link rel='dns-prefetch' href='//fonts.googleapis.com' />
+<link href='https://fonts.gstatic.com' crossorigin rel='preconnect' />
+<link rel="alternate" type="application/rss+xml" title="Общее дело &raquo; Лента" href="https://obshee-delo.ru/feed/" />
+<link rel="alternate" type="application/rss+xml" title="Общее дело &raquo; Лента комментариев" href="https://obshee-delo.ru/comments/feed/" />
+<link data-minify="1" rel='stylesheet' id='validate-engine-css-css'  href='https://obshee-delo.ru/wp-content/cache/min/1/wp-content/plugins/wysija-newsletters/css/validationEngine.jquery.css?ver=1723474224' type='text/css' media='all' />
+<link data-minify="1" rel='stylesheet' id='all_in_one_bannerWithPlaylist_site_css-css'  href='https://obshee-delo.ru/wp-content/cache/min/1/wp-content/plugins/all_in_one_bannerWithPlaylist/bannerWithPlaylist/allinone_bannerWithPlaylist.css?ver=1723474224' type='text/css' media='all' />
+
+<link rel='stylesheet' id='wp-block-library-css'  href='https://obshee-delo.ru/wp-includes/css/dist/block-library/style.min.css' type='text/css' media='all' />
+<link data-minify="1" rel='stylesheet' id='contact-form-7-css'  href='https://obshee-delo.ru/wp-content/cache/min/1/wp-content/plugins/contact-form-7/includes/css/styles.css?ver=1723474224' type='text/css' media='all' />
+<link data-minify="1" rel='stylesheet' id='leyka-new-templates-styles-css'  href='https://obshee-delo.ru/wp-content/cache/min/1/wp-content/plugins/leyka/assets/css/public.css?ver=1723474224' type='text/css' media='all' />
+<style id='leyka-new-templates-styles-inline-css' type='text/css'>
+
+:root {
+	--leyka-ext-support-packages-color-main: #F38D04;
+	--leyka-ext-support-packages-color-main-op10: #F38D041A;
+	--leyka-ext-support-packages-color-background: #ffffff;
+	--leyka-ext-support-packages-color-caption: #ffffff;
+	--leyka-ext-support-packages-color-text: #000000;
+}
+        
+
+:root {
+	--leyka-ext-engagement-banner-color-main: #F38D04;
+	--leyka-ext-engagement-banner-color-main-op10: #F38D041A;
+	--leyka-ext-engagement-banner-color-background: #FDD39B;
+	--leyka-ext-engagement-banner-color-caption: #FDD39B;
+	--leyka-ext-engagement-banner-color-text: #1B1A18;
+}
+        
+
+:root {
+	--leyka-ext-example-color-main: #F38D04;
+	--leyka-ext-example-color-main-op10: #F38D041A;
+	--leyka-ext-example-color-background: #FDD39B;
+	--leyka-ext-example-color-caption: #FDD39B;
+	--leyka-ext-example-color-text: #1B1A18;
+}
+        
+</style>
+<link data-minify="1" rel='stylesheet' id='leyka-plugin-styles-css'  href='https://obshee-delo.ru/wp-content/cache/min/1/wp-content/plugins/leyka/css/public.css?ver=1723474224' type='text/css' media='all' />
+<link data-minify="1" rel='stylesheet' id='page-list-style-css'  href='https://obshee-delo.ru/wp-content/cache/min/1/wp-content/plugins/page-list/css/page-list.css?ver=1723474224' type='text/css' media='all' />
+<link data-minify="1" rel='stylesheet' id='theme-style-css'  href='https://obshee-delo.ru/wp-content/cache/min/1/wp-content/themes/welfare/style.css?ver=1723474224' type='text/css' media='screen, print' />
+<link data-minify="1" rel='stylesheet' id='theme-design-style-css'  href='https://obshee-delo.ru/wp-content/cache/min/1/wp-content/themes/welfare/css/style.css?ver=1723474225' type='text/css' media='screen, print' />
+<link data-minify="1" rel='stylesheet' id='theme-adapt-css'  href='https://obshee-delo.ru/wp-content/cache/min/1/wp-content/themes/welfare/css/adaptive.css?ver=1723474225' type='text/css' media='screen, print' />
+<link data-minify="1" rel='stylesheet' id='theme-retina-css'  href='https://obshee-delo.ru/wp-content/cache/min/1/wp-content/themes/welfare/css/retina.css?ver=1723474225' type='text/css' media='screen' />
+<link data-minify="1" rel='stylesheet' id='theme-icons-css'  href='https://obshee-delo.ru/wp-content/cache/min/1/wp-content/themes/welfare/css/fontello.css?ver=1723474226' type='text/css' media='screen' />
+<link data-minify="1" rel='stylesheet' id='animate-css'  href='https://obshee-delo.ru/wp-content/cache/min/1/wp-content/themes/welfare/css/animate.css?ver=1723474226' type='text/css' media='screen' />
+<link data-minify="1" rel='stylesheet' id='isotope-css'  href='https://obshee-delo.ru/wp-content/cache/min/1/wp-content/themes/welfare/css/jquery.isotope.css?ver=1723474226' type='text/css' media='screen' />
+<link data-minify="1" rel='stylesheet' id='ilightbox-css'  href='https://obshee-delo.ru/wp-content/cache/min/1/wp-content/themes/welfare/css/ilightbox.css?ver=1723474226' type='text/css' media='screen' />
+<link data-minify="1" rel='stylesheet' id='ilightbox-skin-parade-css'  href='https://obshee-delo.ru/wp-content/cache/min/1/wp-content/themes/welfare/css/ilightbox-skins/parade-skin.css?ver=1723474226' type='text/css' media='screen' />
+<link data-minify="1" rel='stylesheet' id='theme-fonts-schemes-css'  href='https://obshee-delo.ru/wp-content/cache/min/1/wp-content/uploads/cmsms_styles/welfare.css?ver=1723474226' type='text/css' media='screen' />
+<!--[if lte IE 9]>
+<link rel='stylesheet' id='theme-fonts-css'  href='https://obshee-delo.ru/wp-content/uploads/cmsms_styles/welfare_fonts.css' type='text/css' media='screen' />
+<![endif]-->
+<!--[if lte IE 9]>
+<link rel='stylesheet' id='theme-schemes-primary-css'  href='https://obshee-delo.ru/wp-content/uploads/cmsms_styles/welfare_colors_primary.css' type='text/css' media='screen' />
+<![endif]-->
+<!--[if lte IE 9]>
+<link rel='stylesheet' id='theme-schemes-secondary-css'  href='https://obshee-delo.ru/wp-content/uploads/cmsms_styles/welfare_colors_secondary.css' type='text/css' media='screen' />
+<![endif]-->
+<!--[if lt IE 9]>
+<link rel='stylesheet' id='theme-ie-css'  href='https://obshee-delo.ru/wp-content/themes/welfare/css/ie.css' type='text/css' media='screen' />
+<![endif]-->
+
+<link data-minify="1" rel='stylesheet' id='welfare-gutenberg-frontend-style-css'  href='https://obshee-delo.ru/wp-content/cache/min/1/wp-content/themes/welfare/gutenberg/css/frontend-style.css?ver=1723474226' type='text/css' media='screen' />
+<link data-minify="1" rel='stylesheet' id='slb_core-css'  href='https://obshee-delo.ru/wp-content/cache/min/1/wp-content/plugins/simple-lightbox/client/css/app.css?ver=1723474226' type='text/css' media='all' />
+<style id='rocket-lazyload-inline-css' type='text/css'>
+.rll-youtube-player{position:relative;padding-bottom:56.23%;height:0;overflow:hidden;max-width:100%;}.rll-youtube-player:focus-within{outline: 2px solid currentColor;outline-offset: 5px;}.rll-youtube-player iframe{position:absolute;top:0;left:0;width:100%;height:100%;z-index:100;background:0 0}.rll-youtube-player img{bottom:0;display:block;left:0;margin:auto;max-width:100%;width:100%;position:absolute;right:0;top:0;border:none;height:auto;-webkit-transition:.4s all;-moz-transition:.4s all;transition:.4s all}.rll-youtube-player img:hover{-webkit-filter:brightness(75%)}.rll-youtube-player .play{height:100%;width:100%;left:0;top:0;position:absolute;background:url(https://obshee-delo.ru/wp-content/plugins/wp-rocket/assets/img/youtube.png) no-repeat center;background-color: transparent !important;cursor:pointer;border:none;}
+</style>
+<link data-minify="1" rel='stylesheet' id='style.owl.carousel-css'  href='https://obshee-delo.ru/wp-content/cache/min/1/wp-content/plugins/owl-carousel/css/owl.carousel.css?ver=1723474226' type='text/css' media='all' />
+<link data-minify="1" rel='stylesheet' id='style.owl.carousel.theme-css'  href='https://obshee-delo.ru/wp-content/cache/min/1/wp-content/plugins/owl-carousel/css/owl.theme.css?ver=1723474226' type='text/css' media='all' />
+<link data-minify="1" rel='stylesheet' id='style.owl.carousel.transitions-css'  href='https://obshee-delo.ru/wp-content/cache/min/1/wp-content/plugins/owl-carousel/css/owl.transitions.css?ver=1723474226' type='text/css' media='all' />
+<link data-minify="1" rel='stylesheet' id='style.owl.carousel.styles-css'  href='https://obshee-delo.ru/wp-content/cache/min/1/wp-content/plugins/owl-carousel/css/styles.css?ver=1723474226' type='text/css' media='all' />
+<script type="rocketlazyloadscript" data-rocket-type='text/javascript' src='https://obshee-delo.ru/wp-includes/js/jquery/jquery.js' id='jquery-core-js' defer></script>
+<script type="rocketlazyloadscript" data-rocket-type='text/javascript' src='https://obshee-delo.ru/wp-content/plugins/all_in_one_bannerWithPlaylist/bannerWithPlaylist/js/jquery.touchSwipe.min.js' id='lbg-touchSwipe-js' defer></script>
+<script type="rocketlazyloadscript" data-rocket-type='text/javascript' src='https://obshee-delo.ru/wp-content/plugins/all_in_one_bannerWithPlaylist/bannerWithPlaylist/js/allinone_bannerWithPlaylist.js' id='lbg-all_in_one_bannerWithPlaylist-js' defer></script>
+<script type="rocketlazyloadscript" data-rocket-type='text/javascript' src='https://obshee-delo.ru/wp-content/plugins/all_in_one_bannerWithPlaylist/bannerWithPlaylist/js/jquery.mousewheel.min.js' id='lbg-mousewheel-js' defer></script>
+<script type="rocketlazyloadscript" data-rocket-type='text/javascript' src='https://obshee-delo.ru/wp-content/themes/welfare/js/jsLibraries.min.js' id='libs-js' defer></script>
+<script type="rocketlazyloadscript" data-rocket-type='text/javascript' src='https://obshee-delo.ru/wp-content/themes/welfare/js/jquery.iLightBox.min.js' id='iLightBox-js' defer></script>
+<script type="rocketlazyloadscript" data-rocket-type='text/javascript' src='https://obshee-delo.ru/wp-content/plugins/owl-carousel/js/owl.carousel.js' id='js.owl.carousel-js' defer></script>
+<script type="rocketlazyloadscript" data-rocket-type='text/javascript' src='https://obshee-delo.ru/wp-content/plugins/owl-carousel/js/script.js' id='js.owl.carousel.script-js' defer></script>
+<link rel="canonical" href="https://obshee-delo.ru/materials/plakati/" />
+<style>.pseudo-clearfy-link { color: #008acf; cursor: pointer;}.pseudo-clearfy-link:hover { text-decoration: none;}</style>
+                <script type="rocketlazyloadscript">
+                    document.documentElement.classList.add("leyka-js");
+                </script>
+                <style>
+                    :root {
+                        --color-main: 		#1db318;
+                        --color-main-dark: 	#1aa316;
+                        --color-main-light: #acebaa;
+                    }
+                </style>
+
+                <style type="text/css">
+	.header_top,
+	.header_top_outer,
+	.header_top_inner, 
+	.header_top_aligner, 
+	.header_top_donation_but {
+		height : 35px;
+	}
+	
+	.header_mid,
+	.header_mid_outer,
+	.header_mid .header_mid_inner .search_wrap_inner,
+	.header_mid .header_mid_inner .header_donation_but_wrap_inner,
+	.header_mid .header_mid_inner .slogan_wrap_inner,
+	.header_mid .header_mid_inner .social_wrap_inner,
+	.header_mid .header_mid_inner nav > div > ul,
+	.header_mid .header_mid_inner nav > div > ul > li,
+	.header_mid .header_mid_inner nav > div > ul > li > a,
+	.header_mid .header_mid_inner nav > div > ul > li > a > span.nav_bg_clr,
+	.header_mid .header_mid_inner .logo,
+	.header_mid .header_mid_inner .resp_nav_wrap_inner {
+		height : 80px;
+	}
+	
+	.header_bot,
+	.header_bot_outer,
+	.header_bot .header_bot_inner nav > div > ul,
+	.header_bot .header_bot_inner nav > div > ul > li,
+	.header_bot .header_bot_inner nav > div > ul > li > a {
+		height : 50px;
+	}
+	
+	#page.cmsms_heading_after_header #middle, 
+	#page.cmsms_heading_under_header #middle .headline .headline_outer {
+		padding-top : 80px;
+	}
+	
+	#page.cmsms_heading_after_header.enable_header_top #middle, 
+	#page.cmsms_heading_under_header.enable_header_top #middle .headline .headline_outer {
+		padding-top : 115px;
+	}
+	
+	#page.cmsms_heading_after_header.enable_header_bottom #middle, 
+	#page.cmsms_heading_under_header.enable_header_bottom #middle .headline .headline_outer {
+		padding-top : 130px;
+	}
+	
+	#page.cmsms_heading_after_header.enable_header_top.enable_header_bottom #middle, 
+	#page.cmsms_heading_under_header.enable_header_top.enable_header_bottom #middle .headline .headline_outer {
+		padding-top : 165px;
+	}
+	
+	.cmsms_dynamic_cart {
+		margin-top : 53px;
+	}
+	
+	.cmsms_dynamic_cart .widget_shopping_cart_content, 
+	.cmsms_added_product_info {
+		margin-top : 64px;
+	}
+	
+	@media only screen and (max-width: 1024px) {
+		.header_top,
+		.header_top_outer,
+		.header_top_inner,
+		.header_top_aligner,
+		.header_top_donation_but,
+		.header_mid,
+		.header_mid_outer,
+		.header_mid .header_mid_inner nav > div > ul,
+		.header_mid .header_mid_inner nav > div > ul > li,
+		.header_mid .header_mid_inner nav > div > ul > li > a,
+		.header_mid .header_mid_inner nav > div > ul > li > a > span.nav_bg_clr,
+		.header_bot,
+		.header_bot_outer,
+		.header_bot .header_bot_inner nav > div > ul,
+		.header_bot .header_bot_inner nav > div > ul > li,
+		.header_bot .header_bot_inner nav > div > ul > li > a {
+			height : auto;
+		}
+		
+		#page.cmsms_heading_after_header #middle, 
+		#page.cmsms_heading_under_header #middle .headline .headline_outer, 
+		#page.cmsms_heading_after_header.enable_header_top #middle, 
+		#page.cmsms_heading_under_header.enable_header_top #middle .headline .headline_outer, 
+		#page.cmsms_heading_after_header.enable_header_bottom #middle, 
+		#page.cmsms_heading_under_header.enable_header_bottom #middle .headline .headline_outer, 
+		#page.cmsms_heading_after_header.enable_header_top.enable_header_bottom #middle, 
+		#page.cmsms_heading_under_header.enable_header_top.enable_header_bottom #middle .headline .headline_outer {
+			padding-top : 0 !important;
+		}
+	}
+	
+	@media only screen and (max-width: 1200px) {
+		.cmsms_dynamic_cart {
+			margin-top : 93px !important;
+		}
+	}
+@font-face {
+	font-family: 'Myriad Pro';
+	src: url('/wp-content/themes/welfare/fonts/MyriadPro-BoldCond.eot');
+	src: url('/wp-content/themes/welfare/fonts/MyriadPro-BoldCond.eot?#iefix') format('embedded-opentype'),
+		 url('/wp-content/themes/welfare/fonts/MyriadPro-BoldCond.woff') format('woff'),
+		 url('/wp-content/themes/welfare/fonts/MyriadPro-BoldCond.svg#MyriadPro-BoldCond') format('svg');
+	font-weight: bold;
+	font-style: normal;
+}
+
+@font-face {
+	font-family: 'Myriad Pro';
+	src: url('/wp-content/themes/welfare/fonts/MyriadPro-BoldCondIt.eot');
+	src: url('/wp-content/themes/welfare/fonts/MyriadPro-BoldCondIt.eot?#iefix') format('embedded-opentype'),
+		 url('/wp-content/themes/welfare/fonts/MyriadPro-BoldCondIt.woff') format('woff'),
+		 url('/wp-content/themes/welfare/fonts/MyriadPro-BoldCondIt.svg#MyriadPro-BoldCondIt') format('svg');
+	font-weight: bold;
+	font-style: italic;
+}
+
+@font-face {
+	font-family: 'Myriad Pro';
+	src: url('/wp-content/themes/welfare/fonts/MyriadPro-Cond.eot');
+	src: url('/wp-content/themes/welfare/fonts/MyriadPro-Cond.eot?#iefix') format('embedded-opentype'),
+		 url('/wp-content/themes/welfare/fonts/MyriadPro-Cond.woff') format('woff'),
+		 url('/wp-content/themes/welfare/fonts/MyriadPro-Cond.svg#MyriadPro-Cond') format('svg');
+	font-weight: normal;
+	font-style: normal;
+}
+
+@font-face {
+	font-family: 'Myriad Pro';
+	src: url('/wp-content/themes/welfare/fonts/MyriadPro-CondIt.eot');
+	src: url('/wp-content/themes/welfare/fonts/MyriadPro-CondIt.eot?#iefix') format('embedded-opentype'),
+		 url('/wp-content/themes/welfare/fonts/MyriadPro-CondIt.woff') format('woff'),
+		 url('/wp-content/themes/welfare/fonts/MyriadPro-CondIt.svg#MyriadPro-CondIt') format('svg');
+	font-weight: normal;
+	font-style: italic;
+}
+
+.entry-title
+{
+font-family:'Myriad Pro';
+text-transform:uppercase;
+}
+/*.colorize, .cmsms_wrap_blog img{
+    -webkit-filter: grayscale(100%);
+    -moz-filter: grayscale(100%);
+    -ms-filter: grayscale(100%);
+    -o-filter: grayscale(100%);
+    filter: grayscale(100%);
+}*/
+/*.colorize:hover, .cmsms_wrap_blog img:hover
+{
+    -webkit-filter: grayscale(0%);
+    -moz-filter: grayscale(0%);
+    -ms-filter: grayscale(0%);
+    -o-filter: grayscale(0%);
+    filter: grayscale(0%);
+}*/
+body{
+    font-size: 16px;
+}
+.widget ul li a{
+font-weight:normal;
+}
+#footer{
+    height: 0px;
+}
+.cmsms_toggle_title a {
+font-weight:bold!important;
+font-size:16px!important;
+}
+.cmsms_toggle_inner{
+    background-color:#f1f1f1;
+    border: 1px solid #d1d1d1;
+    border-radius: 15px;
+}
+.entry-content{
+text-align:justify;
+}
+
+.cmsms_products .product .product_outer .product_inner .cmsms_product_footer > a
+{
+    max-width: 0px;
+    height: auto;
+    background-color: #ae0a04;
+  padding-right: 23px;
+}
+.owl-item .item { 
+margin-right: 10px;
+    margin-left: 10px;
+    border: 1px solid #ccc;
+}
+
+.wysija-paragraph{
+    float: left;
+    margin-right: 10px;
+    width: 200px;
+}
+.sbs-count-users{
+    border: 1px solid #676767;
+    margin: 5px;
+    padding: 7px;
+    border-radius: 9px;
+    background-color: #676767;
+    color: #fff;
+    font-size: 150%;
+    font-weight: bold;
+}
+.headline .entry-title
+{
+font-weight:600;
+font-size: 2.8125em;
+line-height: 1em;
+}
+.wysija-submit{
+font-size:inherit!important;
+}
+#leyka-payment-form input[type="submit"]{
+	background-color: #ae0a04;
+    font-family: 'PT Sans', Arial, Helvetica, 'Nimbus Sans L', sans-serif;
+    font-size: 15px;
+    line-height: 44px;
+    font-weight: normal;
+    font-style: normal;
+    text-transform: none;
+    border: 0;
+    display: inline-block;
+    padding: 0 25px;
+    cursor: pointer;
+    position: relative;
+    -webkit-border-radius: 25px;
+    border-radius: 25px;
+}
+#leyka-payment-form input[type="submit"]:hover, #leyka-payment-form input[type="submit"]:focus, #leyka-payment-form input[type="submit"]:active{
+background:#000;
+}
+#leyka-payment-form .amount.flexible input{
+border: 1px solid #ccc;
+    font-family: 'PT Sans', Arial, Helvetica, 'Nimbus Sans L', sans-serif;
+    font-weight: bold;
+}
+
+.navigation .sub-menu{
+background-color: #fff!important;
+border: 1px solid #777;
+}
+
+/*@media (max-width: 767px) {
+   #four_images,  #sslider{
+     display:none;
+   }
+}*/
+
+.leyka-scale-button a{
+    background: #ae0a04;
+    border-radius: 25px;
+}
+.leyka-scale-scale .collected{
+background: #ae0a04;
+}
+	#footer.cmsms_footer_default .footer_inner {
+		min-height:250px;
+	}
+	
+	.fixed_footer #main {
+		margin-bottom:250px;
+	}
+</style><link rel="icon" href="https://obshee-delo.ru/wp-content/uploads/2016/03/od-250x250-55x55.png" sizes="32x32" />
+<link rel="icon" href="https://obshee-delo.ru/wp-content/uploads/2016/03/od-250x250.png" sizes="192x192" />
+<link rel="apple-touch-icon" href="https://obshee-delo.ru/wp-content/uploads/2016/03/od-250x250.png" />
+<meta name="msapplication-TileImage" content="https://obshee-delo.ru/wp-content/uploads/2016/03/od-250x250.png" />
+		<style type="text/css" id="wp-custom-css">
+			.leyka-oferta-text{
+    background: #fff;
+    opacity: 0.9;
+
+    position: absolute!important;
+    width: 80%;
+    padding: 25px;
+}
+
+#share-campaign-area {
+	display: none;
+}
+
+#menu-item-27971 > a {
+	color: deeppink!important;
+}
+
+@media only screen and (max-width:767px) {
+	#menu-item-27971 > a {
+	color: darkcyan!important;
+	font-weight: 700!important;
+}
+}
+
+
+#navigation>li {
+    padding: 0 10px;
+    padding-top: 0px;
+    padding-right: 10px;
+    padding-bottom: 0px;
+    padding-left: 10px;
+}		</style>
+		<noscript><style id="rocket-lazyload-nojs-css">.rll-youtube-player, [data-lazy-src]{display:none !important;}</style></noscript>
+<!-- Yandex.Metrika counter -->
+<script type="rocketlazyloadscript" data-rocket-type="text/javascript" >
+   (function(m,e,t,r,i,k,a){m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};
+   m[i].l=1*new Date();
+   for (var j = 0; j < document.scripts.length; j++) {if (document.scripts[j].src === r) { return; }}
+   k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a)})
+   (window, document, "script", "https://mc.yandex.ru/metrika/tag.js", "ym");
+
+   ym(34478865, "init", {
+        clickmap:true,
+        trackLinks:true,
+        accurateTrackBounce:true,
+        webvisor:true
+   });
+</script>
+<noscript><div><img src="https://mc.yandex.ru/watch/34478865" style="position:absolute; left:-9999px;" alt="" /></div></noscript>
+<!-- /Yandex.Metrika counter -->
+	
+</head>
+<body class="page-template-default page page-id-20307 page-parent page-child parent-pageid-20225">
+	
+<!-- _________________________ Start Page _________________________ -->
+<section id="page" class="csstransition chrome_only cmsms_liquid enable_header_bottom cmsms_heading_after_header hfeed site">
+
+
+<!-- _________________________ Start Main _________________________ -->
+<div id="main">
+<!-- _________________________ Start Header _________________________ -->
+<header id="header">
+		<div class="header_mid" data-height="80">
+		<div class="header_mid_outer">
+			<div class="header_mid_inner">
+							<div class="search_wrap">
+					<div class="search_wrap_inner">
+						<div class="search_wrap_inner_left">
+							
+<div class="search_bar_wrap">
+	<form role="search" method="get" action="https://obshee-delo.ru">
+		<p class="search_field">
+			<input name="s" placeholder="Введите ключевые слова..." value="" type="search" />
+		</p>
+		<p class="search_button">
+			<button type="submit" class="cmsms_theme_icon_search"></button>
+		</p>
+	</form>
+</div>
+
+						</div>
+					</div>
+				</div>
+							<div class="slogan_wrap">
+					<div class="slogan_wrap_inner">
+						<div class="slogan_wrap_text">
+							<div class="button_wrap"><a href="https://xn--d1aadek5agm.xn----9sbkcac6brh7h.xn--p1ai/" class="cmsms_button" target="_blank"><span style="color:#fff">Оказать помощь</span></a></div>						</div>
+					</div>
+				</div>
+						
+			<div class="logo_wrap">
+<style type="text/css">
+	.header_mid .header_mid_inner .logo_wrap {
+		width : 80px;
+	}
+</style>
+<a href="https://obshee-delo.ru/" title="Общее дело" class="logo">
+	<img src="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%200%200'%3E%3C/svg%3E" alt="Общее дело" data-lazy-src="https://obshee-delo.ru/wp-content/uploads/2016/05/logo-od-litl.png" /><noscript><img src="https://obshee-delo.ru/wp-content/uploads/2016/05/logo-od-litl.png" alt="Общее дело" /></noscript>
+<style type="text/css">
+	.header_mid_inner .logo img.logo_retina {
+		max-width : 80px;
+	}
+</style>
+<img class="logo_retina" src="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2080%2060'%3E%3C/svg%3E" alt="Общее дело" width="80" height="60" data-lazy-src="https://obshee-delo.ru/wp-content/uploads/2016/02/logo-od-big.png" /><noscript><img class="logo_retina" src="https://obshee-delo.ru/wp-content/uploads/2016/02/logo-od-big.png" alt="Общее дело" width="80" height="60" /></noscript></a>
+</div>
+			
+			<div class="title_wrap">Общероссийская общественная организация</div>
+						</div>
+		</div>
+	</div>
+	<div class="header_bot" data-height="50">
+		<div class="header_bot_outer">
+			<div class="header_bot_inner">
+				<div class="resp_nav_wrap">
+					<div class="resp_nav_wrap_inner">
+						<div class="resp_nav_content">
+							<a class="responsive_nav cmsms_theme_icon_resp_nav" href="javascript:void(0);"></a>
+													</div>
+					</div>
+				</div>
+				
+				<!-- _________________________ Start Navigation _________________________ -->
+				<nav role="navigation">
+					<div class="menu-footer-navigation-container"><ul id="navigation" class="navigation"><li id="menu-item-4588" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-home menu-item-4588"><a href="https://obshee-delo.ru/"><span>ГЛАВНАЯ</span></a></li>
+<li id="menu-item-4590" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-has-children menu-item-4590"><a href="https://obshee-delo.ru/about/"><span>О НАС</span></a>
+<ul class="sub-menu">
+	<li id="menu-item-31623" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-31623"><a href="https://obshee-delo.ru/about/"><span>Об организации</span></a></li>
+	<li id="menu-item-59470" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-59470"><a href="https://obshee-delo.ru/team/"><span>Команда</span></a></li>
+	<li id="menu-item-56724" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-56724"><a href="https://obshee-delo.ru/about/activist-stories/"><span>Отзывы и истории активистов</span></a></li>
+	<li id="menu-item-27985" class="menu-item menu-item-type-custom menu-item-object-custom menu-item-27985"><a href="https://xn----9sbkcac6brh7h.xn--p1ai/about/smi/"><span>Сми о нас</span></a></li>
+	<li id="menu-item-27986" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-27986"><a href="https://obshee-delo.ru/about/nashi_partnery/"><span>Наши партнеры</span></a></li>
+	<li id="menu-item-27987" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-27987"><a href="https://obshee-delo.ru/about/udostoverenie/"><span>Удостоверение</span></a></li>
+	<li id="menu-item-27991" class="menu-item menu-item-type-custom menu-item-object-custom menu-item-27991"><a href="https://xn----9sbkcac6brh7h.xn--p1ai/about/ostavit-otziv/"><span>Написать отзыв</span></a></li>
+	<li id="menu-item-27988" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-27988"><a href="https://obshee-delo.ru/about/ustav/"><span>Устав организации</span></a></li>
+	<li id="menu-item-27989" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-27989"><a href="https://obshee-delo.ru/about/experts-review/"><span>Экспертные заключения</span></a></li>
+	<li id="menu-item-27993" class="menu-item menu-item-type-custom menu-item-object-custom menu-item-27993"><a href="https://xn----9sbkcac6brh7h.xn--p1ai/about/reviews/"><span>Благодарственные письма</span></a></li>
+	<li id="menu-item-46567" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-46567"><a href="https://obshee-delo.ru/about/docs/"><span>Документы и отчёты</span></a></li>
+	<li id="menu-item-48974" class="menu-item menu-item-type-custom menu-item-object-custom menu-item-48974"><a href="http://xn--80a7adb.xn----9sbkcac6brh7h.xn--p1ai/"><span>Наша статистика</span></a></li>
+</ul>
+</li>
+<li id="menu-item-60452" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-60452"><a href="https://obshee-delo.ru/projects/"><span>ПРОГРАММЫ</span></a></li>
+<li id="menu-item-19801" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-has-children menu-item-19801"><a href="https://obshee-delo.ru/video/"><span>ФИЛЬМЫ</span></a>
+<ul class="sub-menu">
+	<li id="menu-item-27998" class="menu-item menu-item-type-custom menu-item-object-custom menu-item-27998"><a href="https://xn----9sbkcac6brh7h.xn--p1ai/video/filmy/"><span>Фильмы</span></a></li>
+	<li id="menu-item-28060" class="menu-item menu-item-type-custom menu-item-object-custom menu-item-28060"><a href="/video/multy/"><span>Мультфильмы</span></a></li>
+	<li id="menu-item-27999" class="menu-item menu-item-type-custom menu-item-object-custom menu-item-27999"><a href="https://xn----9sbkcac6brh7h.xn--p1ai/video/roliki/"><span>Ролики</span></a></li>
+	<li id="menu-item-35020" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-35020"><a href="https://obshee-delo.ru/video/short/"><span>Короткометражные</span></a></li>
+	<li id="menu-item-28000" class="menu-item menu-item-type-custom menu-item-object-custom menu-item-28000"><a href="https://xn----9sbkcac6brh7h.xn--p1ai/video/famous-people/"><span>Известные люди</span></a></li>
+</ul>
+</li>
+<li id="menu-item-31693" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-31693"><a href="https://obshee-delo.ru/get-involved/"><span>ПРИМИ УЧАСТИЕ</span></a></li>
+<li id="menu-item-20181" class="menu-item menu-item-type-custom menu-item-object-custom current-menu-ancestor menu-item-has-children menu-item-20181"><a href="/materials/"><span>МАТЕРИАЛЫ</span></a>
+<ul class="sub-menu">
+	<li id="menu-item-27971" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-27971"><a href="https://obshee-delo.ru/materials/order-materials/"><span>Заказать материалы</span></a></li>
+	<li id="menu-item-27982" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-27982"><a href="https://obshee-delo.ru/materials/metodichki/"><span>Методические пособия</span></a></li>
+	<li id="menu-item-57395" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-has-children menu-item-57395"><a href="https://obshee-delo.ru/materials/printed-products/"><span>Печатная продукция</span></a>
+	<ul class="sub-menu">
+		<li id="menu-item-27970" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-27970"><a href="https://obshee-delo.ru/materials/disk/"><span>Диски Общего дела</span></a></li>
+		<li id="menu-item-28712" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-28712"><a href="https://obshee-delo.ru/materials/books/"><span>Наши книги</span></a></li>
+		<li id="menu-item-31138" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-31138"><a href="https://obshee-delo.ru/materials/zakladki/"><span>Закладки для книг</span></a></li>
+		<li id="menu-item-27972" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-27972"><a href="https://obshee-delo.ru/materials/booklet/"><span>Листовки и буклеты</span></a></li>
+		<li id="menu-item-38325" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-38325"><a href="https://obshee-delo.ru/materials/autosticker/"><span>Наклейки на автомобиль</span></a></li>
+	</ul>
+</li>
+	<li id="menu-item-57396" class="menu-item menu-item-type-post_type menu-item-object-page current-menu-ancestor current-menu-parent current_page_parent current_page_ancestor menu-item-has-children menu-item-57396"><a href="https://obshee-delo.ru/materials/social-reklama/"><span>Социальная реклама</span></a>
+	<ul class="sub-menu">
+		<li id="menu-item-27976" class="menu-item menu-item-type-post_type menu-item-object-page current-menu-item page_item page-item-20307 current_page_item menu-item-27976"><a href="https://obshee-delo.ru/materials/plakati/" aria-current="page"><span>Плакаты социальной рекламы</span></a></li>
+		<li id="menu-item-27977" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-27977"><a href="https://obshee-delo.ru/materials/billboards/"><span>Придорожные щиты</span></a></li>
+		<li id="menu-item-27979" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-27979"><a href="https://obshee-delo.ru/materials/sticker/"><span>Стикеры социальной рекламы</span></a></li>
+		<li id="menu-item-31308" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-31308"><a href="https://obshee-delo.ru/materials/led-board-roliki/"><span>Ролики для светодиодных щитов</span></a></li>
+		<li id="menu-item-34989" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-34989"><a href="https://obshee-delo.ru/materials/audio-roliki-social-reklama/"><span>Аудио-ролики социальной рекламы</span></a></li>
+	</ul>
+</li>
+	<li id="menu-item-27978" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-27978"><a href="https://obshee-delo.ru/materials/articles/"><span>Статьи для газет и журналов</span></a></li>
+</ul>
+</li>
+<li id="menu-item-56658" class="menu-item menu-item-type-custom menu-item-object-custom menu-item-56658"><a href="https://od-pro.ru/"><span>ОБЩЕЕДЕЛО-ПРО</span></a></li>
+<li id="menu-item-20187" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-20187"><a href="https://obshee-delo.ru/contacts/"><span>КОНТАКТЫ</span></a></li>
+</ul></div>					<div class="cl"></div>
+				</nav>
+				<!-- _________________________ Finish Navigation _________________________ -->
+				
+			</div>
+		</div>
+	</div>
+</header>
+<!-- _________________________ Finish Header _________________________ -->
+
+	
+<!-- _________________________ Start Middle _________________________ -->
+<section id="middle">
+<style type="text/css">.headline_color {
+				background-color:;
+			}
+			.headline_aligner, 
+			.cmsms_breadcrumbs_aligner {
+				min-height:70px;
+			}
+		</style>
+		<div class="headline cmsms_color_scheme_default">
+			<div class="headline_outer">
+				<div class="headline_color"></div><div class="headline_inner align_left">
+						<div class="headline_aligner"></div><div class="headline_text"><h1 class="entry-title">Плакаты социальной рекламы</h1></div><div class="cmsms_breadcrumbs"><div class="cmsms_breadcrumbs_aligner"></div><div class="cmsms_breadcrumbs_inner"><a href="https://obshee-delo.ru" class="cms_home">Главная</a>
+	<span class="breadcrumbs_sep"> / </span>
+	<a href="https://obshee-delo.ru/materials/">Наши материалы</a>
+	<span class="breadcrumbs_sep"> / </span>
+	<span>Плакаты социальной рекламы</span></div></div></div></div>
+		</div><div class="middle_inner">
+<section class="content_wrap fullwidth">
+
+<!-- Start Content -->
+<div class="middle_content entry"></div></section><style type="text/css"> 
+#cmsms_row_6a7d9468d5e575_32240611 .cmsms_row_outer_parent { 
+	padding-top: 40px; 
+} 
+
+#cmsms_row_6a7d9468d5e575_32240611 .cmsms_row_outer_parent { 
+	padding-bottom: 15px; 
+} 
+
+ 
+#cmsms_row_6a7d9468d69c88_30305117 .cmsms_row_outer_parent { 
+	padding-top: 0px; 
+} 
+
+#cmsms_row_6a7d9468d69c88_30305117 .cmsms_row_outer_parent { 
+	padding-bottom: 50px; 
+} 
+
+
+#cmsms_button_6a7d9468d6b014_78226315 { 
+	text-align:center; 
+} 
+
+#cmsms_button_6a7d9468d6b014_78226315 .cmsms_button:before { 
+	margin-right:.5em; 
+	margin-left:0; 
+	vertical-align:baseline; 
+} 
+
+#cmsms_button_6a7d9468d6b014_78226315 .cmsms_button { 
+	font-weight:normal; 
+	font-style:normal; 
+	border-style:solid; 
+} 
+#cmsms_button_6a7d9468d6b014_78226315 .cmsms_button:hover { 
+} 
+
+#cmsms_button_6a7d9468d6b575_28509816 { 
+	text-align:center; 
+} 
+
+#cmsms_button_6a7d9468d6b575_28509816 .cmsms_button:before { 
+	margin-right:.5em; 
+	margin-left:0; 
+	vertical-align:baseline; 
+} 
+
+#cmsms_button_6a7d9468d6b575_28509816 .cmsms_button { 
+	font-weight:normal; 
+	font-style:normal; 
+	border-style:solid; 
+} 
+#cmsms_button_6a7d9468d6b575_28509816 .cmsms_button:hover { 
+} 
+ 
+#cmsms_row_6a7d9468d6b728_27739766 .cmsms_row_outer_parent { 
+	padding-top: 40px; 
+} 
+
+#cmsms_row_6a7d9468d6b728_27739766 .cmsms_row_outer_parent { 
+	padding-bottom: 15px; 
+} 
+
+ 
+#cmsms_row_6a7d9468d72890_67067471 .cmsms_row_outer_parent { 
+	padding-top: 0px; 
+} 
+
+#cmsms_row_6a7d9468d72890_67067471 .cmsms_row_outer_parent { 
+	padding-bottom: 50px; 
+} 
+
+
+#cmsms_button_6a7d9468d72fd9_25901194 { 
+	text-align:center; 
+} 
+
+#cmsms_button_6a7d9468d72fd9_25901194 .cmsms_button:before { 
+	margin-right:.5em; 
+	margin-left:0; 
+	vertical-align:baseline; 
+} 
+
+#cmsms_button_6a7d9468d72fd9_25901194 .cmsms_button { 
+	font-weight:normal; 
+	font-style:normal; 
+	border-style:solid; 
+} 
+#cmsms_button_6a7d9468d72fd9_25901194 .cmsms_button:hover { 
+} 
+
+#cmsms_button_6a7d9468d73438_37996310 { 
+	text-align:center; 
+} 
+
+#cmsms_button_6a7d9468d73438_37996310 .cmsms_button:before { 
+	margin-right:.5em; 
+	margin-left:0; 
+	vertical-align:baseline; 
+} 
+
+#cmsms_button_6a7d9468d73438_37996310 .cmsms_button { 
+	font-weight:normal; 
+	font-style:normal; 
+	border-style:solid; 
+} 
+#cmsms_button_6a7d9468d73438_37996310 .cmsms_button:hover { 
+} 
+ 
+#cmsms_row_6a7d9468d735a2_48604493 .cmsms_row_outer_parent { 
+	padding-top: 40px; 
+} 
+
+#cmsms_row_6a7d9468d735a2_48604493 .cmsms_row_outer_parent { 
+	padding-bottom: 15px; 
+} 
+
+ 
+#cmsms_row_6a7d9468d78912_01009850 .cmsms_row_outer_parent { 
+	padding-top: 0px; 
+} 
+
+#cmsms_row_6a7d9468d78912_01009850 .cmsms_row_outer_parent { 
+	padding-bottom: 50px; 
+} 
+
+
+#cmsms_button_6a7d9468d78f11_88231844 { 
+	text-align:center; 
+} 
+
+#cmsms_button_6a7d9468d78f11_88231844 .cmsms_button:before { 
+	margin-right:.5em; 
+	margin-left:0; 
+	vertical-align:baseline; 
+} 
+
+#cmsms_button_6a7d9468d78f11_88231844 .cmsms_button { 
+	font-weight:normal; 
+	font-style:normal; 
+	border-style:solid; 
+} 
+#cmsms_button_6a7d9468d78f11_88231844 .cmsms_button:hover { 
+} 
+
+#cmsms_button_6a7d9468d79337_65539378 { 
+	text-align:center; 
+} 
+
+#cmsms_button_6a7d9468d79337_65539378 .cmsms_button:before { 
+	margin-right:.5em; 
+	margin-left:0; 
+	vertical-align:baseline; 
+} 
+
+#cmsms_button_6a7d9468d79337_65539378 .cmsms_button { 
+	font-weight:normal; 
+	font-style:normal; 
+	border-style:solid; 
+} 
+#cmsms_button_6a7d9468d79337_65539378 .cmsms_button:hover { 
+} 
+ 
+#cmsms_row_6a7d9468d794b5_27640676 .cmsms_row_outer_parent { 
+	padding-top: 40px; 
+} 
+
+#cmsms_row_6a7d9468d794b5_27640676 .cmsms_row_outer_parent { 
+	padding-bottom: 15px; 
+} 
+
+ 
+#cmsms_divider_6a7d9468d7c883_94275201 { 
+	border-bottom-width:0px; 
+	border-bottom-style:solid; 
+	padding-top:25px; 
+	margin-bottom:25px; 
+} 
+ 
+#cmsms_divider_6a7d9468d807a1_68882973 { 
+	border-bottom-width:0px; 
+	border-bottom-style:solid; 
+	padding-top:25px; 
+	margin-bottom:25px; 
+} 
+ 
+#cmsms_row_6a7d9468d822a4_92888533 .cmsms_row_outer_parent { 
+	padding-top: 0px; 
+} 
+
+#cmsms_row_6a7d9468d822a4_92888533 .cmsms_row_outer_parent { 
+	padding-bottom: 50px; 
+} 
+
+
+#cmsms_button_6a7d9468d82967_21798433 { 
+	text-align:center; 
+} 
+
+#cmsms_button_6a7d9468d82967_21798433 .cmsms_button:before { 
+	margin-right:.5em; 
+	margin-left:0; 
+	vertical-align:baseline; 
+} 
+
+#cmsms_button_6a7d9468d82967_21798433 .cmsms_button { 
+	font-weight:normal; 
+	font-style:normal; 
+	border-style:solid; 
+} 
+#cmsms_button_6a7d9468d82967_21798433 .cmsms_button:hover { 
+} 
+
+#cmsms_button_6a7d9468d82da0_59096923 { 
+	text-align:center; 
+} 
+
+#cmsms_button_6a7d9468d82da0_59096923 .cmsms_button:before { 
+	margin-right:.5em; 
+	margin-left:0; 
+	vertical-align:baseline; 
+} 
+
+#cmsms_button_6a7d9468d82da0_59096923 .cmsms_button { 
+	font-weight:normal; 
+	font-style:normal; 
+	border-style:solid; 
+} 
+#cmsms_button_6a7d9468d82da0_59096923 .cmsms_button:hover { 
+} 
+ 
+#cmsms_row_6a7d9468d82f11_14543454 .cmsms_row_outer_parent { 
+	padding-top: 40px; 
+} 
+
+#cmsms_row_6a7d9468d82f11_14543454 .cmsms_row_outer_parent { 
+	padding-bottom: 15px; 
+} 
+
+ 
+#cmsms_divider_6a7d9468d85777_10403775 { 
+	border-bottom-width:0px; 
+	border-bottom-style:solid; 
+	padding-top:25px; 
+	margin-bottom:25px; 
+} 
+ 
+#cmsms_row_6a7d9468d8b4e6_41852699 .cmsms_row_outer_parent { 
+	padding-top: 0px; 
+} 
+
+#cmsms_row_6a7d9468d8b4e6_41852699 .cmsms_row_outer_parent { 
+	padding-bottom: 50px; 
+} 
+
+
+#cmsms_button_6a7d9468d8bb90_44557973 { 
+	text-align:center; 
+} 
+
+#cmsms_button_6a7d9468d8bb90_44557973 .cmsms_button:before { 
+	margin-right:.5em; 
+	margin-left:0; 
+	vertical-align:baseline; 
+} 
+
+#cmsms_button_6a7d9468d8bb90_44557973 .cmsms_button { 
+	font-weight:normal; 
+	font-style:normal; 
+	border-style:solid; 
+} 
+#cmsms_button_6a7d9468d8bb90_44557973 .cmsms_button:hover { 
+} 
+
+#cmsms_button_6a7d9468d8bfd9_37689669 { 
+	text-align:center; 
+} 
+
+#cmsms_button_6a7d9468d8bfd9_37689669 .cmsms_button:before { 
+	margin-right:.5em; 
+	margin-left:0; 
+	vertical-align:baseline; 
+} 
+
+#cmsms_button_6a7d9468d8bfd9_37689669 .cmsms_button { 
+	font-weight:normal; 
+	font-style:normal; 
+	border-style:solid; 
+} 
+#cmsms_button_6a7d9468d8bfd9_37689669 .cmsms_button:hover { 
+} 
+ 
+#cmsms_row_6a7d9468d8c143_30572914 .cmsms_row_outer_parent { 
+	padding-top: 40px; 
+} 
+
+#cmsms_row_6a7d9468d8c143_30572914 .cmsms_row_outer_parent { 
+	padding-bottom: 15px; 
+} 
+
+ 
+#cmsms_heading_6a7d9468d8d163_27181257 { 
+	text-align:center; 
+	margin-top:0px; 
+	margin-bottom:3px; 
+} 
+
+#cmsms_heading_6a7d9468d8d163_27181257 .cmsms_heading { 
+	text-align:center; 
+} 
+
+#cmsms_heading_6a7d9468d8d163_27181257 .cmsms_heading, #cmsms_heading_6a7d9468d8d163_27181257 .cmsms_heading a { 
+	font-weight:normal; 
+	font-style:normal; 
+} 
+
+#cmsms_heading_6a7d9468d8d163_27181257 .cmsms_heading_divider { 
+} 
+
+ 
+#cmsms_row_6a7d9468d8f764_90940326 .cmsms_row_outer_parent { 
+	padding-top: 0px; 
+} 
+
+#cmsms_row_6a7d9468d8f764_90940326 .cmsms_row_outer_parent { 
+	padding-bottom: 50px; 
+} 
+
+
+#cmsms_button_6a7d9468d8fea2_79274718 { 
+	text-align:center; 
+} 
+
+#cmsms_button_6a7d9468d8fea2_79274718 .cmsms_button:before { 
+	margin-right:.5em; 
+	margin-left:0; 
+	vertical-align:baseline; 
+} 
+
+#cmsms_button_6a7d9468d8fea2_79274718 .cmsms_button { 
+	font-weight:normal; 
+	font-style:normal; 
+	border-style:solid; 
+} 
+#cmsms_button_6a7d9468d8fea2_79274718 .cmsms_button:hover { 
+} 
+ 
+#cmsms_row_6a7d9468d900b3_93405857 .cmsms_row_outer_parent { 
+	padding-top: 0px; 
+} 
+
+#cmsms_row_6a7d9468d900b3_93405857 .cmsms_row_outer_parent { 
+	padding-bottom: 15px; 
+} 
+
+ 
+#cmsms_row_6a7d9468d96090_86727038 .cmsms_row_outer_parent { 
+	padding-top: 0px; 
+} 
+
+#cmsms_row_6a7d9468d96090_86727038 .cmsms_row_outer_parent { 
+	padding-bottom: 50px; 
+} 
+
+
+#cmsms_button_6a7d9468d967a7_60464313 { 
+	text-align:center; 
+} 
+
+#cmsms_button_6a7d9468d967a7_60464313 .cmsms_button:before { 
+	margin-right:.5em; 
+	margin-left:0; 
+	vertical-align:baseline; 
+} 
+
+#cmsms_button_6a7d9468d967a7_60464313 .cmsms_button { 
+	font-weight:normal; 
+	font-style:normal; 
+	border-style:solid; 
+} 
+#cmsms_button_6a7d9468d967a7_60464313 .cmsms_button:hover { 
+} 
+ 
+#cmsms_row_6a7d9468d96992_42930272 .cmsms_row_outer_parent { 
+	padding-top: 0px; 
+} 
+
+#cmsms_row_6a7d9468d96992_42930272 .cmsms_row_outer_parent { 
+	padding-bottom: 15px; 
+} 
+
+ 
+#cmsms_row_6a7d9468d9d182_01887481 .cmsms_row_outer_parent { 
+	padding-top: 0px; 
+} 
+
+#cmsms_row_6a7d9468d9d182_01887481 .cmsms_row_outer_parent { 
+	padding-bottom: 50px; 
+} 
+
+
+#cmsms_button_6a7d9468d9d901_93207616 { 
+	text-align:center; 
+} 
+
+#cmsms_button_6a7d9468d9d901_93207616 .cmsms_button:before { 
+	margin-right:.5em; 
+	margin-left:0; 
+	vertical-align:baseline; 
+} 
+
+#cmsms_button_6a7d9468d9d901_93207616 .cmsms_button { 
+	font-weight:normal; 
+	font-style:normal; 
+	border-style:solid; 
+} 
+#cmsms_button_6a7d9468d9d901_93207616 .cmsms_button:hover { 
+} 
+ 
+#cmsms_row_6a7d9468d9daa5_87951350 .cmsms_row_outer_parent { 
+	padding-top: 0px; 
+} 
+
+#cmsms_row_6a7d9468d9daa5_87951350 .cmsms_row_outer_parent { 
+	padding-bottom: 15px; 
+} 
+
+ 
+#cmsms_row_6a7d9468da1e74_58004145 .cmsms_row_outer_parent { 
+	padding-top: 0px; 
+} 
+
+#cmsms_row_6a7d9468da1e74_58004145 .cmsms_row_outer_parent { 
+	padding-bottom: 50px; 
+} 
+
+
+#cmsms_button_6a7d9468da2506_82198960 { 
+	text-align:center; 
+} 
+
+#cmsms_button_6a7d9468da2506_82198960 .cmsms_button:before { 
+	margin-right:.5em; 
+	margin-left:0; 
+	vertical-align:baseline; 
+} 
+
+#cmsms_button_6a7d9468da2506_82198960 .cmsms_button { 
+	font-weight:normal; 
+	font-style:normal; 
+	border-style:solid; 
+} 
+#cmsms_button_6a7d9468da2506_82198960 .cmsms_button:hover { 
+} 
+ 
+#cmsms_row_6a7d9468da2690_20355044 .cmsms_row_outer_parent { 
+	padding-top: 0px; 
+} 
+
+#cmsms_row_6a7d9468da2690_20355044 .cmsms_row_outer_parent { 
+	padding-bottom: 15px; 
+} 
+
+ 
+#cmsms_row_6a7d9468da6a96_53473771 .cmsms_row_outer_parent { 
+	padding-top: 0px; 
+} 
+
+#cmsms_row_6a7d9468da6a96_53473771 .cmsms_row_outer_parent { 
+	padding-bottom: 50px; 
+} 
+
+
+#cmsms_button_6a7d9468da7109_90117399 { 
+	text-align:center; 
+} 
+
+#cmsms_button_6a7d9468da7109_90117399 .cmsms_button:before { 
+	margin-right:.5em; 
+	margin-left:0; 
+	vertical-align:baseline; 
+} 
+
+#cmsms_button_6a7d9468da7109_90117399 .cmsms_button { 
+	font-weight:normal; 
+	font-style:normal; 
+	border-style:solid; 
+} 
+#cmsms_button_6a7d9468da7109_90117399 .cmsms_button:hover { 
+} 
+ 
+#cmsms_row_6a7d9468da72c0_77792430 .cmsms_row_outer_parent { 
+	padding-top: 0px; 
+} 
+
+#cmsms_row_6a7d9468da72c0_77792430 .cmsms_row_outer_parent { 
+	padding-bottom: 50px; 
+} 
+
+
+.sectionborder
+{
+border: solid 1px #d8d8d8;
+padding: 5px;
+height: 284px;
+border-radius:5px;
+}
+.sectionborder2
+{
+border: solid 1px #d8d8d8;
+padding: 5px;
+height: 500px;
+border-radius:5px;
+}
+
+.bottommargin
+{
+margin-bottom:10px;
+}
+.topmargin
+{
+margin-top:70px;
+} 
+#cmsms_row_6a7d9468da9bb7_77198030 .cmsms_row_outer_parent { 
+	padding-top: 0px; 
+} 
+
+#cmsms_row_6a7d9468da9bb7_77198030 .cmsms_row_outer_parent { 
+	padding-bottom: 50px; 
+} 
+
+ 
+#cmsms_heading_6a7d9468daaa31_58974706 { 
+	text-align:right; 
+	margin-top:8px; 
+	margin-bottom:20px; 
+} 
+
+#cmsms_heading_6a7d9468daaa31_58974706 .cmsms_heading { 
+	text-align:right; 
+} 
+
+#cmsms_heading_6a7d9468daaa31_58974706 .cmsms_heading, #cmsms_heading_6a7d9468daaa31_58974706 .cmsms_heading a { 
+	font-weight:normal; 
+	font-style:normal; 
+} 
+
+#cmsms_heading_6a7d9468daaa31_58974706 .cmsms_heading_divider { 
+} 
+
+</style><div id="cmsms_row_6a7d9468d5e575_32240611" class="cmsms_row cmsms_color_scheme_default">
+<div class="cmsms_row_outer_parent">
+<div class="cmsms_row_outer">
+<div class="cmsms_row_inner">
+<div class="cmsms_row_margin">
+<div class="cmsms_column one_fourth sectionborder">
+<div class="aligncenter">
+<div class="cmsms_img  cmsms_image_c">
+<a href="/wp-content/uploads/2019/11/Плакат-сколько-стоит-scaled.jpg" rel="ilightbox" data-slb-active="1" data-slb-asset="639407836" data-slb-internal="0" data-slb-group="20307"><img src="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%200%200'%3E%3C/svg%3E" data-lazy-src="https://obshee-delo.ru/wp-content/uploads/2019/11/Плакат-сколько_стоит-270h.jpg" /><noscript><img src="https://obshee-delo.ru/wp-content/uploads/2019/11/Плакат-сколько_стоит-270h.jpg" /></noscript></a>
+</div>
+</div>
+</div>
+<div class="cmsms_column one_fourth sectionborder">
+<div class="cmsms_text">
+<p style="text-align: center;"><span style="font-size: 14pt;">Примеры использования</span></p>
+</div>
+<div class="aligncenter">
+<div class="cmsms_img  cmsms_image_c colorize">
+<a href="/wp-content/uploads/2016/03/AGrEEEFpZzM.jpg" rel="ilightbox" data-slb-active="1" data-slb-asset="811243004" data-slb-internal="0" data-slb-group="20307"><img src="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%200%200'%3E%3C/svg%3E" data-lazy-src="https://obshee-delo.ru/wp-content/uploads/2016/03/AGrEEEFpZzM_187х207.jpg" /><noscript><img src="https://obshee-delo.ru/wp-content/uploads/2016/03/AGrEEEFpZzM_187х207.jpg" /></noscript></a>
+</div>
+</div>
+</div>
+<div class="cmsms_column one_fourth sectionborder">
+<div class="aligncenter">
+<div class="cmsms_img  cmsms_image_c">
+<a href="/wp-content/uploads/2019/12/ЗдоровыеДети.jpg" rel="ilightbox" data-slb-active="1" data-slb-asset="956033954" data-slb-internal="0" data-slb-group="20307"><img src="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%200%200'%3E%3C/svg%3E" data-lazy-src="https://obshee-delo.ru/wp-content/uploads/2019/12/ЗдоровыеДети_270h.jpg" /><noscript><img src="https://obshee-delo.ru/wp-content/uploads/2019/12/ЗдоровыеДети_270h.jpg" /></noscript></a>
+</div>
+</div>
+</div>
+<div class="cmsms_column one_fourth sectionborder">
+<div class="cmsms_text">
+<p style="text-align: center;"><span style="font-size: 14pt;">Примеры использования</span></p>
+</div>
+<div class="aligncenter">
+<div class="cmsms_img  cmsms_image_c colorize">
+<a href="/wp-content/uploads/2019/12/nxoUUtvxUOw_720h.jpg" rel="ilightbox" data-slb-active="1" data-slb-asset="241469135" data-slb-internal="0" data-slb-group="20307"><img src="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%200%200'%3E%3C/svg%3E" data-lazy-src="https://obshee-delo.ru/wp-content/uploads/2019/12/nxoUUtvxUOw_186x207.jpg" /><noscript><img src="https://obshee-delo.ru/wp-content/uploads/2019/12/nxoUUtvxUOw_186x207.jpg" /></noscript></a>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div id="cmsms_row_6a7d9468d69c88_30305117" class="cmsms_row cmsms_color_scheme_default">
+<div class="cmsms_row_outer_parent">
+<div class="cmsms_row_outer">
+<div class="cmsms_row_inner">
+<div class="cmsms_row_margin">
+<div class="cmsms_column one_half">
+
+<div id="cmsms_button_6a7d9468d6b014_78226315" class="button_wrap"><a href="https://yadi.sk/i/8ShaiNDuQab81Q" class="cmsms_button" target="_blank"><span>Скачать в качестве для печати</span></a></div>
+</div>
+<div class="cmsms_column one_half">
+
+<div id="cmsms_button_6a7d9468d6b575_28509816" class="button_wrap"><a href="https://yadi.sk/d/tFHNCjhDJmmurg" class="cmsms_button" target="_blank"><span>Скачать в качестве для печати</span></a></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div id="cmsms_row_6a7d9468d6b728_27739766" class="cmsms_row cmsms_color_scheme_default">
+<div class="cmsms_row_outer_parent">
+<div class="cmsms_row_outer">
+<div class="cmsms_row_inner">
+<div class="cmsms_row_margin">
+<div class="cmsms_column one_fourth sectionborder">
+<div class="aligncenter">
+<div class="cmsms_img  cmsms_image_c">
+<a href="/wp-content/uploads/2018/08/ПлакатПаук-фильм.jpg" rel="ilightbox" data-slb-active="1" data-slb-asset="7064409" data-slb-internal="0" data-slb-group="20307"><img src="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%200%200'%3E%3C/svg%3E" data-lazy-src="https://obshee-delo.ru/wp-content/uploads/2018/08/ПлакатПаук-фильм_h270.jpg" /><noscript><img src="https://obshee-delo.ru/wp-content/uploads/2018/08/ПлакатПаук-фильм_h270.jpg" /></noscript></a>
+</div>
+</div>
+</div>
+<div class="cmsms_column one_fourth sectionborder">
+<div class="cmsms_text">
+<p style="text-align: center;"><span style="font-size: 14pt;">Примеры использования</span></p>
+</div>
+<div class="aligncenter">
+<div class="cmsms_img  cmsms_image_c colorize">
+<a href="/wp-content/uploads/2016/03/AGrEEEFpZzM.jpg" rel="ilightbox" data-slb-active="1" data-slb-asset="811243004" data-slb-internal="0" data-slb-group="20307"><img src="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%200%200'%3E%3C/svg%3E" data-lazy-src="https://obshee-delo.ru/wp-content/uploads/2016/03/AGrEEEFpZzM_187х207.jpg" /><noscript><img src="https://obshee-delo.ru/wp-content/uploads/2016/03/AGrEEEFpZzM_187х207.jpg" /></noscript></a>
+</div>
+</div>
+</div>
+<div class="cmsms_column one_fourth sectionborder">
+<div class="aligncenter">
+<div class="cmsms_img  cmsms_image_c">
+<a href="/wp-content/uploads/2018/08/Глядя_на_тебя.jpg" rel="ilightbox" data-slb-active="1" data-slb-asset="873565868" data-slb-internal="0" data-slb-group="20307"><img src="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%200%200'%3E%3C/svg%3E" data-lazy-src="https://obshee-delo.ru/wp-content/uploads/2018/08/Глядя_на_тебя_h270.jpg" /><noscript><img src="https://obshee-delo.ru/wp-content/uploads/2018/08/Глядя_на_тебя_h270.jpg" /></noscript></a>
+</div>
+</div>
+</div>
+<div class="cmsms_column one_fourth sectionborder">
+<div class="cmsms_text">
+<p style="text-align: center;"><span style="font-size: 14pt;">Примеры использования</span></p>
+</div>
+<div class="aligncenter">
+<div class="cmsms_img  cmsms_image_c colorize">
+<a href="/wp-content/uploads/2016/03/NRSDMyKxnmM.jpg" rel="ilightbox" data-slb-active="1" data-slb-asset="572378088" data-slb-internal="0" data-slb-group="20307"><img src="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%200%200'%3E%3C/svg%3E" data-lazy-src="https://obshee-delo.ru/wp-content/uploads/2016/03/NRSDMyKxnmM_186х207.jpg" /><noscript><img src="https://obshee-delo.ru/wp-content/uploads/2016/03/NRSDMyKxnmM_186х207.jpg" /></noscript></a>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div id="cmsms_row_6a7d9468d72890_67067471" class="cmsms_row cmsms_color_scheme_default">
+<div class="cmsms_row_outer_parent">
+<div class="cmsms_row_outer">
+<div class="cmsms_row_inner">
+<div class="cmsms_row_margin">
+<div class="cmsms_column one_half">
+
+<div id="cmsms_button_6a7d9468d72fd9_25901194" class="button_wrap"><a href="https://yadi.sk/d/ybpy6JyQ3a6hYt" class="cmsms_button" target="_blank"><span>Скачать в качестве для печати</span></a></div>
+</div>
+<div class="cmsms_column one_half">
+
+<div id="cmsms_button_6a7d9468d73438_37996310" class="button_wrap"><a href="https://yadi.sk/d/hQ_pK20l3WeZnZ" class="cmsms_button" target="_blank"><span>Скачать в качестве для печати</span></a></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div id="cmsms_row_6a7d9468d735a2_48604493" class="cmsms_row cmsms_color_scheme_default">
+<div class="cmsms_row_outer_parent">
+<div class="cmsms_row_outer">
+<div class="cmsms_row_inner">
+<div class="cmsms_row_margin">
+<div class="cmsms_column one_fourth sectionborder">
+<div class="aligncenter">
+<div class="cmsms_img  cmsms_image_c">
+<a href="/wp-content/uploads/2016/03/Плакат-Твои-ответные-санкции_А3.jpg" rel="ilightbox" data-slb-active="1" data-slb-asset="1388500664" data-slb-internal="0" data-slb-group="20307"><img src="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%200%200'%3E%3C/svg%3E" data-lazy-src="https://obshee-delo.ru/wp-content/uploads/2016/03/Плакат-Твои-ответные-санкции_А3_270h.jpg" /><noscript><img src="https://obshee-delo.ru/wp-content/uploads/2016/03/Плакат-Твои-ответные-санкции_А3_270h.jpg" /></noscript></a>
+</div>
+</div>
+</div>
+<div class="cmsms_column one_fourth sectionborder">
+<div class="cmsms_text">
+<p style="text-align: center;"><span style="font-size: 14pt;">Примеры использования</span></p>
+</div>
+<div class="aligncenter">
+<div class="cmsms_img  cmsms_image_c colorize">
+<a href="/wp-content/uploads/2016/03/AGrEEEFpZzM.jpg" rel="ilightbox" data-slb-active="1" data-slb-asset="811243004" data-slb-internal="0" data-slb-group="20307"><img src="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%200%200'%3E%3C/svg%3E" data-lazy-src="https://obshee-delo.ru/wp-content/uploads/2016/03/AGrEEEFpZzM_187х207.jpg" /><noscript><img src="https://obshee-delo.ru/wp-content/uploads/2016/03/AGrEEEFpZzM_187х207.jpg" /></noscript></a>
+</div>
+</div>
+</div>
+<div class="cmsms_column one_fourth sectionborder">
+<div class="aligncenter">
+<div class="cmsms_img  cmsms_image_c">
+<a href="/wp-content/uploads/2016/03/Плакат-Здоровая-Россия-Общее-дело.jpg" rel="ilightbox" data-slb-active="1" data-slb-asset="1637096425" data-slb-internal="0" data-slb-group="20307"><img src="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%200%200'%3E%3C/svg%3E" data-lazy-src="https://obshee-delo.ru/wp-content/uploads/2016/03/Плакат-Здоровая-Россия-Общее-дело_270h.jpg" /><noscript><img src="https://obshee-delo.ru/wp-content/uploads/2016/03/Плакат-Здоровая-Россия-Общее-дело_270h.jpg" /></noscript></a>
+</div>
+</div>
+</div>
+<div class="cmsms_column one_fourth sectionborder">
+<div class="cmsms_text">
+<p style="text-align: center;"><span style="font-size: 14pt;">Примеры использования</span></p>
+</div>
+<div class="aligncenter">
+<div class="cmsms_img  cmsms_image_c colorize">
+<a href="/wp-content/uploads/2016/03/NRSDMyKxnmM.jpg" rel="ilightbox" data-slb-active="1" data-slb-asset="572378088" data-slb-internal="0" data-slb-group="20307"><img src="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%200%200'%3E%3C/svg%3E" data-lazy-src="https://obshee-delo.ru/wp-content/uploads/2016/03/NRSDMyKxnmM_186х207.jpg" /><noscript><img src="https://obshee-delo.ru/wp-content/uploads/2016/03/NRSDMyKxnmM_186х207.jpg" /></noscript></a>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div id="cmsms_row_6a7d9468d78912_01009850" class="cmsms_row cmsms_color_scheme_default">
+<div class="cmsms_row_outer_parent">
+<div class="cmsms_row_outer">
+<div class="cmsms_row_inner">
+<div class="cmsms_row_margin">
+<div class="cmsms_column one_half">
+
+<div id="cmsms_button_6a7d9468d78f11_88231844" class="button_wrap"><a href="https://yadi.sk/i/i7JldBW7zfFXX" class="cmsms_button" target="_blank"><span>Скачать в качестве для печати</span></a></div>
+</div>
+<div class="cmsms_column one_half">
+
+<div id="cmsms_button_6a7d9468d79337_65539378" class="button_wrap"><a href="https://yadi.sk/i/L8sQcSvpzfEPZ" class="cmsms_button" target="_blank"><span>Скачать в качестве для печати</span></a></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div id="cmsms_row_6a7d9468d794b5_27640676" class="cmsms_row cmsms_color_scheme_default">
+<div class="cmsms_row_outer_parent">
+<div class="cmsms_row_outer">
+<div class="cmsms_row_inner">
+<div class="cmsms_row_margin">
+<div class="cmsms_column one_fourth sectionborder">
+<div class="aligncenter">
+<div class="cmsms_img  cmsms_image_c">
+<a href="/wp-content/uploads/2016/03/плакат-Курение-в-подъезде-3.jpg" rel="ilightbox" data-slb-active="1" data-slb-asset="1599187098" data-slb-internal="0" data-slb-group="20307"><img src="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%200%200'%3E%3C/svg%3E" data-lazy-src="https://obshee-delo.ru/wp-content/uploads/2016/03/плакат-Курение-в-подъезде_small.jpg" /><noscript><img src="https://obshee-delo.ru/wp-content/uploads/2016/03/плакат-Курение-в-подъезде_small.jpg" /></noscript></a>
+</div>
+</div>
+</div>
+<div class="cmsms_column one_fourth sectionborder">
+<div class="cmsms_text">
+<p style="text-align: center;"><span style="font-size: 14pt;">Примеры использования</span></p>
+</div>
+
+
+<div id="cmsms_divider_6a7d9468d7c883_94275201" class="cl"></div>
+<div class="aligncenter">
+<div class="cmsms_img  cmsms_image_c colorize">
+<a href="/wp-content/uploads/2016/03/курение-в-подъезде-пример.jpg" rel="ilightbox" data-slb-active="1" data-slb-asset="91784305" data-slb-internal="0" data-slb-group="20307"><img src="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%200%200'%3E%3C/svg%3E" data-lazy-src="https://obshee-delo.ru/wp-content/uploads/2016/03/курение-в-подъезде-пример_small.jpg" /><noscript><img src="https://obshee-delo.ru/wp-content/uploads/2016/03/курение-в-подъезде-пример_small.jpg" /></noscript></a>
+</div>
+</div>
+</div>
+<div class="cmsms_column one_fourth sectionborder">
+<div class="aligncenter">
+<div class="cmsms_img  cmsms_image_c">
+<a href="/wp-content/uploads/2016/03/Плакат-Общее-дело-Будь-достоин-своих-прадедов.jpg" rel="ilightbox" data-slb-active="1" data-slb-asset="122542404" data-slb-internal="0" data-slb-group="20307"><img src="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%200%200'%3E%3C/svg%3E" data-lazy-src="https://obshee-delo.ru/wp-content/uploads/2016/03/ПлакатБудьДостоинСвоихДедов_small.jpg" /><noscript><img src="https://obshee-delo.ru/wp-content/uploads/2016/03/ПлакатБудьДостоинСвоихДедов_small.jpg" /></noscript></a>
+</div>
+</div>
+</div>
+<div class="cmsms_column one_fourth sectionborder">
+<div class="cmsms_text">
+<p style="text-align: center;"><span style="font-size: 14pt;">Примеры использования</span></p>
+</div>
+
+
+<div id="cmsms_divider_6a7d9468d807a1_68882973" class="cl"></div>
+<div class="aligncenter">
+<div class="cmsms_img  cmsms_image_c colorize">
+<a href="/wp-content/uploads/2016/03/пример-Общее-дело-Будь-достоин-своих-прадедов.jpg" rel="ilightbox" data-slb-active="1" data-slb-asset="472674103" data-slb-internal="0" data-slb-group="20307"><img src="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%200%200'%3E%3C/svg%3E" data-lazy-src="https://obshee-delo.ru/wp-content/uploads/2016/03/примерБудьДостоинДедов_small.jpg" /><noscript><img src="https://obshee-delo.ru/wp-content/uploads/2016/03/примерБудьДостоинДедов_small.jpg" /></noscript></a>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div id="cmsms_row_6a7d9468d822a4_92888533" class="cmsms_row cmsms_color_scheme_default">
+<div class="cmsms_row_outer_parent">
+<div class="cmsms_row_outer">
+<div class="cmsms_row_inner">
+<div class="cmsms_row_margin">
+<div class="cmsms_column one_half">
+
+<div id="cmsms_button_6a7d9468d82967_21798433" class="button_wrap"><a href="https://yadi.sk/i/eJXWX_v7353zV4" class="cmsms_button" target="_blank"><span>Скачать в качестве для печати</span></a></div>
+</div>
+<div class="cmsms_column one_half">
+
+<div id="cmsms_button_6a7d9468d82da0_59096923" class="button_wrap"><a href="https://yadi.sk/i/EbDLbuZR35F3ei" class="cmsms_button" target="_blank"><span>Скачать в качестве для печати</span></a></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div id="cmsms_row_6a7d9468d82f11_14543454" class="cmsms_row cmsms_color_scheme_default">
+<div class="cmsms_row_outer_parent">
+<div class="cmsms_row_outer">
+<div class="cmsms_row_inner">
+<div class="cmsms_row_margin">
+<div class="cmsms_column one_fourth sectionborder">
+<div class="aligncenter">
+<div class="cmsms_img  cmsms_image_c">
+<a href="/wp-content/uploads/2016/03/7-причин-отказаться-от-табачного-яда.jpg" rel="ilightbox" data-slb-active="1" data-slb-asset="857331593" data-slb-internal="0" data-slb-group="20307"><img src="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%200%200'%3E%3C/svg%3E" data-lazy-src="https://obshee-delo.ru/wp-content/uploads/2016/03/7-причин-отказаться-от-табачного-яда_270H.jpg" /><noscript><img src="https://obshee-delo.ru/wp-content/uploads/2016/03/7-причин-отказаться-от-табачного-яда_270H.jpg" /></noscript></a>
+</div>
+</div>
+</div>
+<div class="cmsms_column one_fourth sectionborder">
+<div class="cmsms_text">
+<p style="text-align: center;"><span style="font-size: 14pt;">Примеры использования</span></p>
+</div>
+
+
+<div id="cmsms_divider_6a7d9468d85777_10403775" class="cl"></div>
+<div class="aligncenter">
+<div class="cmsms_img  cmsms_image_c colorize">
+<a href="/wp-content/uploads/2016/03/stend_ugolok_zdorovja.jpg" rel="ilightbox" data-slb-active="1" data-slb-asset="1326935107" data-slb-internal="0" data-slb-group="20307"><img src="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%200%200'%3E%3C/svg%3E" data-lazy-src="https://obshee-delo.ru/wp-content/uploads/2016/03/stend_ugolok_zdorovja_140H.jpg" /><noscript><img src="https://obshee-delo.ru/wp-content/uploads/2016/03/stend_ugolok_zdorovja_140H.jpg" /></noscript></a>
+</div>
+</div>
+</div>
+<div class="cmsms_column one_fourth sectionborder">
+<div class="aligncenter">
+<div class="cmsms_img  cmsms_image_c">
+<a href="/wp-content/uploads/2019/01/36000_od.jpg" rel="ilightbox" data-slb-active="1" data-slb-asset="1196188046" data-slb-internal="0" data-slb-group="20307"><img src="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%200%200'%3E%3C/svg%3E" data-lazy-src="https://obshee-delo.ru/wp-content/uploads/2019/01/36000_od_270H.jpg" /><noscript><img src="https://obshee-delo.ru/wp-content/uploads/2019/01/36000_od_270H.jpg" /></noscript></a>
+</div>
+</div>
+</div>
+<div class="cmsms_column one_fourth sectionborder">
+<div class="aligncenter">
+<div class="cmsms_img  cmsms_image_c">
+<a href="/wp-content/uploads/2019/01/36000_bw.jpg" rel="ilightbox" data-slb-active="1" data-slb-asset="1805374537" data-slb-internal="0" data-slb-group="20307"><img src="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%200%200'%3E%3C/svg%3E" data-lazy-src="https://obshee-delo.ru/wp-content/uploads/2019/01/36000_bw_270H.jpg" /><noscript><img src="https://obshee-delo.ru/wp-content/uploads/2019/01/36000_bw_270H.jpg" /></noscript></a>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div id="cmsms_row_6a7d9468d8b4e6_41852699" class="cmsms_row cmsms_color_scheme_default">
+<div class="cmsms_row_outer_parent">
+<div class="cmsms_row_outer">
+<div class="cmsms_row_inner">
+<div class="cmsms_row_margin">
+<div class="cmsms_column one_half">
+
+<div id="cmsms_button_6a7d9468d8bb90_44557973" class="button_wrap"><a href="https://yadi.sk/i/ql5dySbh39dBYA" class="cmsms_button" target="_blank"><span>Скачать в качестве для печати</span></a></div>
+</div>
+<div class="cmsms_column one_half">
+
+<div id="cmsms_button_6a7d9468d8bfd9_37689669" class="button_wrap"><a href="https://yadi.sk/d/kOX9O802bZtodg" class="cmsms_button" target="_blank"><span>Скачать в качестве для печати</span></a></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div id="cmsms_row_6a7d9468d8c143_30572914" class="cmsms_row cmsms_color_scheme_default">
+<div class="cmsms_row_outer_parent">
+<div class="cmsms_row_outer">
+<div class="cmsms_row_inner">
+<div class="cmsms_row_margin">
+<div class="cmsms_column one_fourth">
+</div>
+<div class="cmsms_column one_half sectionborder">
+
+<div id="cmsms_heading_6a7d9468d8d163_27181257" class="cmsms_heading_wrap cmsms_heading_align_center">
+	<h2 class="cmsms_heading"><a href="/materials/plakati/vmeste-sdelaem-luchshe/">Серия плакатов &#171;Вместе сделаем страну лучше!&#187;</a></h2>
+</div><div class="aligncenter">
+<div class="cmsms_img  cmsms_image_c">
+<a href="/materials/plakati/vmeste-sdelaem-luchshe/" target="_blank"><img src="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%200%200'%3E%3C/svg%3E" data-lazy-src="https://obshee-delo.ru/wp-content/uploads/2016/03/vmeste_allputin.jpg" /><noscript><img src="https://obshee-delo.ru/wp-content/uploads/2016/03/vmeste_allputin.jpg" /></noscript></a>
+</div>
+</div>
+</div>
+<div class="cmsms_column one_fourth">
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div id="cmsms_row_6a7d9468d8f764_90940326" class="cmsms_row cmsms_color_scheme_default">
+<div class="cmsms_row_outer_parent">
+<div class="cmsms_row_outer">
+<div class="cmsms_row_inner">
+<div class="cmsms_row_margin">
+<div class="cmsms_column one_fourth">
+</div>
+<div class="cmsms_column one_half">
+
+<div id="cmsms_button_6a7d9468d8fea2_79274718" class="button_wrap"><a href="https://yadi.sk/d/8zpIiCqF3J5Ttd" class="cmsms_button" target="_blank"><span>Скачать в качестве для печати</span></a></div>
+</div>
+<div class="cmsms_column one_fourth">
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div id="cmsms_row_6a7d9468d900b3_93405857" class="cmsms_row cmsms_color_scheme_default">
+<div class="cmsms_row_outer_parent">
+<div class="cmsms_row_outer">
+<div class="cmsms_row_inner">
+<div class="cmsms_row_margin">
+<div class="cmsms_column one_fourth">
+</div>
+<div class="cmsms_column one_fourth sectionborder2">
+<div class="cmsms_img  cmsms_image_n">
+<a href="/wp-content/uploads/2016/03/banner_240x100-2-e1482172455260.jpg" rel="ilightbox" data-slb-active="1" data-slb-asset="128947194" data-slb-internal="0" data-slb-group="20307"><img src="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%200%200'%3E%3C/svg%3E" data-lazy-src="https://obshee-delo.ru/wp-content/uploads/2016/03/banner_240x100-2-e1482172455260.jpg" /><noscript><img src="https://obshee-delo.ru/wp-content/uploads/2016/03/banner_240x100-2-e1482172455260.jpg" /></noscript></a>
+</div>
+</div>
+<div class="cmsms_column one_fourth sectionborder2">
+<div class="cmsms_text">
+<p style="text-align: center;"><span style="font-size: 14pt;">Примеры использования</span></p>
+</div>
+<div class="aligncenter">
+<div class="cmsms_img  cmsms_image_c bottommargin colorize">
+<a href="/wp-content/uploads/2016/03/1.jpg" rel="ilightbox" data-slb-active="1" data-slb-asset="1342233045" data-slb-internal="0" data-slb-group="20307"><img src="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%200%200'%3E%3C/svg%3E" data-lazy-src="https://obshee-delo.ru/wp-content/uploads/2016/03/1-copy-1.jpg" /><noscript><img src="https://obshee-delo.ru/wp-content/uploads/2016/03/1-copy-1.jpg" /></noscript></a>
+</div>
+</div>
+<div class="aligncenter">
+<div class="cmsms_img  cmsms_image_c colorize">
+<a href="/wp-content/uploads/2016/03/6.jpg" rel="ilightbox" data-slb-active="1" data-slb-asset="689572097" data-slb-internal="0" data-slb-group="20307"><img src="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%200%200'%3E%3C/svg%3E" data-lazy-src="https://obshee-delo.ru/wp-content/uploads/2016/03/6-copy.jpg" /><noscript><img src="https://obshee-delo.ru/wp-content/uploads/2016/03/6-copy.jpg" /></noscript></a>
+</div>
+</div>
+</div>
+<div class="cmsms_column one_fourth">
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div id="cmsms_row_6a7d9468d96090_86727038" class="cmsms_row cmsms_color_scheme_default">
+<div class="cmsms_row_outer_parent">
+<div class="cmsms_row_outer">
+<div class="cmsms_row_inner">
+<div class="cmsms_row_margin">
+<div class="cmsms_column one_fourth">
+</div>
+<div class="cmsms_column one_half">
+
+<div id="cmsms_button_6a7d9468d967a7_60464313" class="button_wrap"><a href="https://yadi.sk/i/ZrjJfXma39ccEN" class="cmsms_button" target="_blank"><span>Скачать в качестве для печати</span></a></div>
+</div>
+<div class="cmsms_column one_fourth">
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div id="cmsms_row_6a7d9468d96992_42930272" class="cmsms_row cmsms_color_scheme_default">
+<div class="cmsms_row_outer_parent">
+<div class="cmsms_row_outer">
+<div class="cmsms_row_inner">
+<div class="cmsms_row_margin">
+<div class="cmsms_column three_fourth sectionborder2">
+<div class="aligncenter">
+<div class="cmsms_img  cmsms_image_c">
+<a href="/wp-content/uploads/2016/03/Жданов-6-на-9.jpg" rel="ilightbox" data-slb-active="1" data-slb-asset="558225299" data-slb-internal="0" data-slb-group="20307"><img src="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%200%200'%3E%3C/svg%3E" data-lazy-src="https://obshee-delo.ru/wp-content/uploads/2016/03/Жданов-6-на-9_480h.jpg" /><noscript><img src="https://obshee-delo.ru/wp-content/uploads/2016/03/Жданов-6-на-9_480h.jpg" /></noscript></a>
+</div>
+</div>
+</div>
+<div class="cmsms_column one_fourth sectionborder2">
+<div class="cmsms_text">
+<p style="text-align: center;"><span style="font-size: 14pt;">Примеры использования</span></p>
+</div>
+<div class="aligncenter">
+<div class="cmsms_img  cmsms_image_c bottommargin colorize">
+<a href="/wp-content/uploads/2016/03/3-2.jpg" rel="ilightbox" data-slb-active="1" data-slb-asset="1360282045" data-slb-internal="0" data-slb-group="20307"><img src="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%200%200'%3E%3C/svg%3E" data-lazy-src="https://obshee-delo.ru/wp-content/uploads/2016/03/3_1.jpg" /><noscript><img src="https://obshee-delo.ru/wp-content/uploads/2016/03/3_1.jpg" /></noscript></a>
+</div>
+</div>
+<div class="aligncenter">
+<div class="cmsms_img  cmsms_image_c colorize">
+<a href="/wp-content/uploads/2016/03/8.jpg" rel="ilightbox" data-slb-active="1" data-slb-asset="466598143" data-slb-internal="0" data-slb-group="20307"><img src="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%200%200'%3E%3C/svg%3E" data-lazy-src="https://obshee-delo.ru/wp-content/uploads/2016/03/8_1.jpg" /><noscript><img src="https://obshee-delo.ru/wp-content/uploads/2016/03/8_1.jpg" /></noscript></a>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div id="cmsms_row_6a7d9468d9d182_01887481" class="cmsms_row cmsms_color_scheme_default">
+<div class="cmsms_row_outer_parent">
+<div class="cmsms_row_outer">
+<div class="cmsms_row_inner">
+<div class="cmsms_row_margin">
+<div class="cmsms_column one_first">
+
+<div id="cmsms_button_6a7d9468d9d901_93207616" class="button_wrap"><a href="https://yadi.sk/i/eEftMONhzfWDs" class="cmsms_button" target="_blank"><span>Скачать в качестве для печати</span></a></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div id="cmsms_row_6a7d9468d9daa5_87951350" class="cmsms_row cmsms_color_scheme_default">
+<div class="cmsms_row_outer_parent">
+<div class="cmsms_row_outer">
+<div class="cmsms_row_inner">
+<div class="cmsms_row_margin">
+<div class="cmsms_column three_fourth sectionborder2">
+<div class="aligncenter">
+<div class="cmsms_img  cmsms_image_c topmargin">
+<a href="/wp-content/uploads/2016/03/Жданов-2-на-4.jpg" rel="ilightbox" data-slb-active="1" data-slb-asset="1492365346" data-slb-internal="0" data-slb-group="20307"><img src="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%200%200'%3E%3C/svg%3E" data-lazy-src="https://obshee-delo.ru/wp-content/uploads/2016/03/Жданов-2-на-4_480h.jpg" /><noscript><img src="https://obshee-delo.ru/wp-content/uploads/2016/03/Жданов-2-на-4_480h.jpg" /></noscript></a>
+</div>
+</div>
+</div>
+<div class="cmsms_column one_fourth sectionborder2">
+<div class="cmsms_text">
+<p style="text-align: center;"><span style="font-size: 14pt;">Примеры использования</span></p>
+</div>
+<div class="aligncenter">
+<div class="cmsms_img  cmsms_image_c bottommargin colorize">
+<a href="/wp-content/uploads/2016/03/5-1.jpg" rel="ilightbox" data-slb-active="1" data-slb-asset="718778255" data-slb-internal="0" data-slb-group="20307"><img src="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%200%200'%3E%3C/svg%3E" data-lazy-src="https://obshee-delo.ru/wp-content/uploads/2016/03/5_1-1-1.jpg" /><noscript><img src="https://obshee-delo.ru/wp-content/uploads/2016/03/5_1-1-1.jpg" /></noscript></a>
+</div>
+</div>
+<div class="aligncenter">
+<div class="cmsms_img  cmsms_image_c colorize">
+<a href="/wp-content/uploads/2016/03/5-1.jpg" rel="ilightbox" data-slb-active="1" data-slb-asset="718778255" data-slb-internal="0" data-slb-group="20307"><img src="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%200%200'%3E%3C/svg%3E" data-lazy-src="https://obshee-delo.ru/wp-content/uploads/2016/03/5_1-1-1.jpg" /><noscript><img src="https://obshee-delo.ru/wp-content/uploads/2016/03/5_1-1-1.jpg" /></noscript></a>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div id="cmsms_row_6a7d9468da1e74_58004145" class="cmsms_row cmsms_color_scheme_default">
+<div class="cmsms_row_outer_parent">
+<div class="cmsms_row_outer">
+<div class="cmsms_row_inner">
+<div class="cmsms_row_margin">
+<div class="cmsms_column one_first">
+
+<div id="cmsms_button_6a7d9468da2506_82198960" class="button_wrap"><a href="https://yadi.sk/i/1TBaHt4lzfWuv" class="cmsms_button" target="_blank"><span>Скачать в качестве для печати</span></a></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div id="cmsms_row_6a7d9468da2690_20355044" class="cmsms_row cmsms_color_scheme_default">
+<div class="cmsms_row_outer_parent">
+<div class="cmsms_row_outer">
+<div class="cmsms_row_inner">
+<div class="cmsms_row_margin">
+<div class="cmsms_column three_fourth sectionborder2">
+<div class="aligncenter">
+<div class="cmsms_img  cmsms_image_c topmargin">
+<a href="/wp-content/uploads/2016/03/Мать-с-ребенком-25-на-6.jpg" rel="ilightbox" data-slb-active="1" data-slb-asset="1033014940" data-slb-internal="0" data-slb-group="20307"><img src="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%200%200'%3E%3C/svg%3E" data-lazy-src="https://obshee-delo.ru/wp-content/uploads/2016/03/Мать-с-ребенком-25-на-6_480h.jpg" /><noscript><img src="https://obshee-delo.ru/wp-content/uploads/2016/03/Мать-с-ребенком-25-на-6_480h.jpg" /></noscript></a>
+</div>
+</div>
+</div>
+<div class="cmsms_column one_fourth sectionborder2">
+<div class="cmsms_text">
+<p style="text-align: center;"><span style="font-size: 14pt;">Примеры использования</span></p>
+</div>
+<div class="cmsms_img  cmsms_image_n bottommargin colorize">
+<a href="/wp-content/uploads/2016/03/4-3.jpg" rel="ilightbox" data-slb-active="1" data-slb-asset="472380374" data-slb-internal="0" data-slb-group="20307"><img src="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%200%200'%3E%3C/svg%3E" data-lazy-src="https://obshee-delo.ru/wp-content/uploads/2016/03/4_1-2.jpg" /><noscript><img src="https://obshee-delo.ru/wp-content/uploads/2016/03/4_1-2.jpg" /></noscript></a>
+</div>
+<div class="cmsms_img  cmsms_image_n colorize">
+<a href="/wp-content/uploads/2016/03/4-3.jpg" rel="ilightbox" data-slb-active="1" data-slb-asset="472380374" data-slb-internal="0" data-slb-group="20307"><img src="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%200%200'%3E%3C/svg%3E" data-lazy-src="https://obshee-delo.ru/wp-content/uploads/2016/03/4_1-2.jpg" /><noscript><img src="https://obshee-delo.ru/wp-content/uploads/2016/03/4_1-2.jpg" /></noscript></a>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div id="cmsms_row_6a7d9468da6a96_53473771" class="cmsms_row cmsms_color_scheme_default">
+<div class="cmsms_row_outer_parent">
+<div class="cmsms_row_outer">
+<div class="cmsms_row_inner">
+<div class="cmsms_row_margin">
+<div class="cmsms_column one_first">
+
+<div id="cmsms_button_6a7d9468da7109_90117399" class="button_wrap"><a href="https://yadi.sk/i/IW3PrSmgzfXkn" class="cmsms_button" target="_blank"><span>Скачать в качестве для печати</span></a></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div id="cmsms_row_6a7d9468da72c0_77792430" class="cmsms_row cmsms_color_scheme_default">
+<div class="cmsms_row_outer_parent">
+<div class="cmsms_row_outer">
+<div class="cmsms_row_inner">
+<div class="cmsms_row_margin">
+<div class="cmsms_column one_first">
+<div class="custom_css">
+
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div id="cmsms_row_6a7d9468da8854_95508384" class="cmsms_row cmsms_color_scheme_default">
+<div class="cmsms_row_outer_parent">
+<div class="cmsms_row_outer">
+<div class="cmsms_row_inner">
+<div class="cmsms_row_margin">
+<div class="cmsms_column one_first">
+<div class="cmsms_text">
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div id="cmsms_row_6a7d9468da9bb7_77198030" class="cmsms_row cmsms_color_scheme_default">
+<div class="cmsms_row_outer_parent">
+<div class="cmsms_row_outer">
+<div class="cmsms_row_inner">
+<div class="cmsms_row_margin">
+<div class="cmsms_column one_half">
+
+<div id="cmsms_heading_6a7d9468daaa31_58974706" class="cmsms_heading_wrap cmsms_heading_align_right">
+	<h3 class="cmsms_heading">Хотите быть в курсе наших новых материалов?</h3>
+</div>
+</div>
+<div class="cmsms_column one_half">
+<div class="cmsms_text">
+<div class="widget_wysija_cont shortcode_wysija"><div id="msg-form-wysija-shortcode6a7d9468dabdd-2" class="wysija-msg ajax"></div><form id="form-wysija-shortcode6a7d9468dabdd-2" method="post" action="#wysija" class="widget_wysija shortcode_wysija">
+<p class="wysija-paragraph">
+    
+    
+    	<input type="text" name="wysija[user][email]" class="wysija-input validate[required,custom[email]]" title="Адрес электронной почты" placeholder="Адрес электронной почты" value="" />
+    
+    
+    
+    <span class="abs-req">
+        <input type="text" name="wysija[user][abs][email]" class="wysija-input validated[abs][email]" value="" />
+    </span>
+    
+</p>
+
+<input class="wysija-submit wysija-submit-field" type="submit" value="Подписаться!" />
+
+    <input type="hidden" name="form_id" value="2" />
+    <input type="hidden" name="action" value="save" />
+    <input type="hidden" name="controller" value="subscribers" />
+    <input type="hidden" value="1" name="wysija-page" />
+
+    
+        <input type="hidden" name="wysija[user_list][list_ids]" value="3" />
+    
+ </form></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+<div class="cl"></div><section class="content_wrap fullwidth">
+
+<div class="middle_content entry"></div>
+<!-- Finish Content -->
+
+</section></div>
+</section>
+<!-- _________________________ Finish Middle _________________________ -->
+
+
+<!-- _________________________ Start Bottom _________________________ -->
+<section id="bottom" class="cmsms_color_scheme_footer">
+<div class="bottom_bg">
+<div class="bottom_outer">
+<div class="bottom_inner sidebar_layout_14141414">
+<aside id="text-4" class="widget widget_text"><h3 class="widgettitle">КОНТАКТЫ РЕДАКЦИИ</h3>			<div class="textwidget"><ul>
+<li>
+<b>Средство массовой информации:</b><br>
+Сетевое издание<br> "ОБЩЕЕ ДЕЛО"<br>
+<a href="/wp-content/uploads/2019/04/2018-02-16-Выписка-из-реестра-СМИ-сайт-ОД.pdf" target="_blank" rel="noopener noreferrer">Зарегистрировано Роскомнадзором, свидетельство Эл № ФC77-72346 от 14 февраля 2018</a></li>
+
+
+<li><b>Учредитель:</b><br>
+Общероссийская общественная организация "Общее дело" ОГРН: 1127799010624</li>
+
+
+<li><b>Главный редактор:</b><br>
+Дегтярев А.А.</li>
+
+
+<li><b>Электронная почта:</b><br>
+web@obshee-delo.ru</li>
+
+<li><b>Телефон:</b><br>
++7 (962) 950-75-61</li>
+
+
+<li>При перепечатывании материалов ссылка на издание обязательна. <strong style="color:white;font-size:25px;">12+</strong></li>
+</ul>
+</div>
+		</aside><aside id="text-2" class="widget widget_text"><h3 class="widgettitle">ОТЗЫВЫ</h3>			<div class="textwidget"><ul>
+<li><a href="/about/reviews/">Письма и отзывы</a></li>
+<li><a href="/about/smi/">СМИ о нас</a></li>
+<li><a href="/about/experts-review/">Экспертные заключения</a></li>
+<li><a href="/about/nashi_partnery/">Наши партнеры</a></li>
+<li><a href="/about/ostavit-otziv/">Оставить отзыв</a></li>
+<li><a href="http://od1.reformal.ru/" target="_blank" rel="noopener noreferrer">Предложить идею</a></li>
+
+
+</ul></div>
+		</aside><aside id="text-3" class="widget widget_text"><h3 class="widgettitle">ССЫЛКИ</h3>			<div class="textwidget"><ul>
+
+<li><a href="/about/">О нас</a></li>
+<li><a href="/news/">Наши дела</a></li>
+<li><a href="/video/">Наши фильмы</a></li>
+<li><a href="/get-involved/">Прими участие</a></li>
+<li><a href="/materials/">Наши материалы</a></li>
+<li><a href="/sitemap/">Карта сайта</a></li>
+<li><a href="/faq/">Частые вопросы</a></li>
+<li><a href="/sp/">Благотворительная акция</a></li>
+<li><a href="/conf_politics/">Политика конфиденциальности</a></li>
+</ul>
+
+<ul></li>
+Учётный номер в реестре НКО №0012011716</li></ul></div>
+		</aside><aside id="text-5" class="widget widget_text"><h3 class="widgettitle">МЫ В СОЦСЕТЯХ</h3>			<div class="textwidget"><ul>
+
+<li>
+
+<a href="http://vk.com/obsheedelorf" class="cmsms-icon-vkontakte" title="VK" target="_blank" rel="noopener noreferrer"> В контакте</a></li>
+
+<li><a href="http://ok.ru/obsheedelo" class="cmsms-icon-odnoklassniki" title="instagram" target="_blank" rel="noopener noreferrer"> Одноклассники</a></li>
+
+<li><a href="https://www.youtube.com/user/proektobsheedelo?sub_confirmation=1" class="cmsms-icon-youtube-2" title="YouTube" target="_blank" rel="noopener noreferrer"> YouTube</a></li>
+
+</ul>
+</div>
+		</aside></div></div></div></section><!-- _________________________ Finish Bottom _________________________ -->
+
+<a href="javascript:void(0);" id="slide_top" class="cmsms_theme_icon_slide_top"></a>
+	</div>
+<!-- _________________________ Finish Main _________________________ -->
+
+<!-- _________________________ Start Footer _________________________ -->
+	<footer id="footer" role="contentinfo" class="cmsms_color_scheme_footer cmsms_footer_default">
+		<div class="footer_bg">
+			<div class="footer_inner">
+		<div class="footer_custom_html">При перепечатывании материалов ссылка на издание обязательна. 12+</div><span class="copyright">При перепечатывании материалов ссылка на издание обязательна. 12+</span>
+			</div>
+		</div>
+	</footer>
+<!-- _________________________ Finish Footer _________________________ -->
+
+</section>
+<span class="cmsms_responsive_width"></span>
+<!-- _________________________ Finish Page _________________________ -->
+<script type="rocketlazyloadscript" src="https://xn----9sbkcac6brh7h.xn--p1ai/wp-content/themes/welfare/js/script.js" defer></script>
+<script type="rocketlazyloadscript">var pseudo_links = document.querySelectorAll(".pseudo-clearfy-link");for (var i=0;i<pseudo_links.length;i++ ) { pseudo_links[i].addEventListener("click", function(e){   window.open( e.target.getAttribute("data-uri") ); }); }</script><link data-minify="1" rel='stylesheet' id='hljstheme-css'  href='https://obshee-delo.ru/wp-content/cache/min/1/wp-content/plugins/wp-code-highlightjs/styles/default.css?ver=1723474226' type='text/css' media='all' />
+<script type="rocketlazyloadscript" data-rocket-type='text/javascript' src='https://obshee-delo.ru/wp-includes/js/jquery/ui/core.min.js' id='jquery-ui-core-js' defer></script>
+<script type="rocketlazyloadscript" data-rocket-type='text/javascript' src='https://obshee-delo.ru/wp-includes/js/jquery/ui/widget.min.js' id='jquery-ui-widget-js' defer></script>
+<script type="rocketlazyloadscript" data-rocket-type='text/javascript' src='https://obshee-delo.ru/wp-includes/js/jquery/ui/mouse.min.js' id='jquery-ui-mouse-js' defer></script>
+<script type="rocketlazyloadscript" data-rocket-type='text/javascript' src='https://obshee-delo.ru/wp-includes/js/jquery/ui/slider.min.js' id='jquery-ui-slider-js' defer></script>
+<script type="rocketlazyloadscript" data-rocket-type='text/javascript' src='https://obshee-delo.ru/wp-includes/js/jquery/ui/effect.min.js' id='jquery-effects-core-js' defer></script>
+<script type="rocketlazyloadscript" data-rocket-type='text/javascript' src='https://obshee-delo.ru/wp-includes/js/jquery/ui/effect-transfer.min.js' id='jquery-effects-transfer-js' defer></script>
+<script type="rocketlazyloadscript" data-rocket-type='text/javascript' src='https://obshee-delo.ru/wp-includes/js/comment-reply.min.js' id='comment-reply-js' defer></script>
+<script type="rocketlazyloadscript" data-rocket-type='text/javascript' src='https://obshee-delo.ru/wp-includes/js/dist/vendor/wp-polyfill.min.js' id='wp-polyfill-js'></script>
+<script type="rocketlazyloadscript" data-rocket-type='text/javascript' id='wp-polyfill-js-after'>
+( 'fetch' in window ) || document.write( '<script src="https://obshee-delo.ru/wp-includes/js/dist/vendor/wp-polyfill-fetch.min.js" defer></scr' + 'ipt>' );( document.contains ) || document.write( '<script src="https://obshee-delo.ru/wp-includes/js/dist/vendor/wp-polyfill-node-contains.min.js" defer></scr' + 'ipt>' );( window.DOMRect ) || document.write( '<script src="https://obshee-delo.ru/wp-includes/js/dist/vendor/wp-polyfill-dom-rect.min.js" defer></scr' + 'ipt>' );( window.URL && window.URL.prototype && window.URLSearchParams ) || document.write( '<script src="https://obshee-delo.ru/wp-includes/js/dist/vendor/wp-polyfill-url.min.js" defer></scr' + 'ipt>' );( window.FormData && window.FormData.prototype.keys ) || document.write( '<script src="https://obshee-delo.ru/wp-includes/js/dist/vendor/wp-polyfill-formdata.min.js" defer></scr' + 'ipt>' );( Element.prototype.matches && Element.prototype.closest ) || document.write( '<script src="https://obshee-delo.ru/wp-includes/js/dist/vendor/wp-polyfill-element-closest.min.js" defer></scr' + 'ipt>' );
+</script>
+<script type='text/javascript' id='contact-form-7-js-extra'>
+/* <![CDATA[ */
+var wpcf7 = {"api":{"root":"https:\/\/obshee-delo.ru\/wp-json\/","namespace":"contact-form-7\/v1"},"cached":"1"};
+/* ]]> */
+</script>
+<script type="rocketlazyloadscript" data-rocket-type='text/javascript' src='https://obshee-delo.ru/wp-content/plugins/contact-form-7/includes/js/index.js' id='contact-form-7-js' defer></script>
+<script type="rocketlazyloadscript" data-rocket-type='text/javascript' src='https://obshee-delo.ru/wp-content/plugins/leyka/js/jquery.easyModal.min.js' id='leyka-modal-js' defer></script>
+<script type='text/javascript' id='leyka-public-js-extra'>
+/* <![CDATA[ */
+var leyka = {"ajaxurl":"https:\/\/obshee-delo.ru\/wp-admin\/admin-ajax.php","homeurl":"https:\/\/obshee-delo.ru\/","plugin_url":"https:\/\/obshee-delo.ru\/wp-content\/plugins\/leyka\/","gtm_ga_eec_available":"0","correct_donation_amount_required_msg":"\u0423\u043a\u0430\u0436\u0438\u0442\u0435 \u0441\u0443\u043c\u043c\u0443","donation_amount_too_great_msg":"\u0423\u043a\u0430\u0437\u0430\u043d\u043d\u044b\u0439 \u0440\u0430\u0437\u043c\u0435\u0440 \u0441\u043b\u0438\u0448\u043a\u043e\u043c \u0432\u0435\u043b\u0438\u043a (\u0434\u043e\u043f\u0443\u0441\u0442\u0438\u043c\u043e \u043c\u0430\u043a\u0441\u0438\u043c\u0443\u043c %s)","donation_amount_too_small_msg":"\u0423\u043a\u0430\u0437\u0430\u043d\u043d\u044b\u0439 \u0440\u0430\u0437\u043c\u0435\u0440 \u0441\u043b\u0438\u0448\u043a\u043e\u043c \u043c\u0430\u043b (\u0434\u043e\u043f\u0443\u0441\u0442\u0438\u043c\u043e \u043c\u0438\u043d\u0438\u043c\u0443\u043c %s)","amount_incorrect_msg":"\u0423\u043a\u0430\u0436\u0438\u0442\u0435 \u0441\u0443\u043c\u043c\u0443 \u043e\u0442 %s \u0434\u043e %s <span class=\"curr-mark\">%s<\/span>","donor_name_required_msg":"\u0423\u043a\u0430\u0436\u0438\u0442\u0435 \u0432\u0430\u0448\u0435 \u0438\u043c\u044f","oferta_agreement_required_msg":"\u041d\u0435\u043e\u0431\u0445\u043e\u0434\u0438\u043c\u043e \u0432\u0430\u0448\u0435 \u0441\u043e\u0433\u043b\u0430\u0441\u0438\u0435","checkbox_check_required_msg":"\u041d\u0435\u043e\u0431\u0445\u043e\u0434\u0438\u043c\u043e \u0432\u0430\u0448\u0435 \u0441\u043e\u0433\u043b\u0430\u0441\u0438\u0435","text_required_msg":"\u0417\u0430\u043f\u043e\u043b\u043d\u0438\u0442\u0435 \u044d\u0442\u043e \u043f\u043e\u043b\u0435","email_required_msg":"\u0423\u043a\u0430\u0436\u0438\u0442\u0435 email","email_invalid_msg":"\u0423\u043a\u0430\u0436\u0438\u0442\u0435 email \u0432 \u0444\u043e\u0440\u043c\u0430\u0442\u0435 your@email.com","must_not_be_email_msg":"\u0412 \u044d\u0442\u043e\u043c \u043f\u043e\u043b\u0435 \u043d\u0435 \u043d\u0443\u0436\u043d\u043e \u0443\u043a\u0430\u0437\u044b\u0432\u0430\u0442\u044c email","value_too_long_msg":"\u0423\u043a\u0430\u0437\u0430\u043d\u043e \u0441\u043b\u0438\u0448\u043a\u043e\u043c \u0434\u043b\u0438\u043d\u043d\u043e\u0435 \u0437\u043d\u0430\u0447\u0435\u043d\u0438\u0435","error_while_unsibscribe_msg":"\u041e\u0448\u0438\u0431\u043a\u0430 \u043f\u0440\u0438 \u0437\u0430\u043f\u0440\u043e\u0441\u0435 \u043d\u0430 \u043e\u0442\u043c\u0435\u043d\u0443 \u0440\u0435\u043a\u0443\u0440\u0440\u0435\u043d\u0442\u043d\u043e\u0439 \u043f\u043e\u0434\u043f\u0438\u0441\u043a\u0438","default_error_msg":"\u041e\u0448\u0438\u0431\u043a\u0430","phone_invalid":"\u041f\u043e\u0436\u0430\u043b\u0443\u0439\u0441\u0442\u0430, \u0432\u0432\u0435\u0434\u0438\u0442\u0435 \u043d\u043e\u043c\u0435\u0440 \u0442\u0435\u043b\u0435\u0444\u043e\u043d\u0430 \u0432 \u0444\u043e\u0440\u043c\u0430\u0442\u0435 7\u0445\u0445\u0445\u0445\u0445\u0445\u0445\u0445\u0445\u0445","ajax_wrong_server_response":"\u041e\u0448\u0438\u0431\u043a\u0430 \u0432 \u043e\u0442\u0432\u0435\u0442\u0435 \u0441\u0435\u0440\u0432\u0435\u0440\u0430. \u041f\u043e\u0436\u0430\u043b\u0443\u0439\u0441\u0442\u0430, \u0441\u043e\u043e\u0431\u0449\u0438\u0442\u0435 \u043e\u0431 \u044d\u0442\u043e\u043c \u0442\u0435\u0445\u043d\u0438\u0447\u0435\u0441\u043a\u043e\u0439 \u043f\u043e\u0434\u0434\u0435\u0440\u0436\u043a\u0435 \u044d\u0442\u043e\u0433\u043e \u0441\u0430\u0439\u0442\u0430.","cp_not_set_up":"\u041e\u0448\u0438\u0431\u043a\u0430 \u0432 \u043d\u0430\u0441\u0442\u0440\u043e\u0439\u043a\u0430\u0445 CloudPayments. \u041f\u043e\u0436\u0430\u043b\u0443\u0439\u0441\u0442\u0430, \u0441\u043e\u043e\u0431\u0449\u0438\u0442\u0435 \u043e\u0431 \u044d\u0442\u043e\u043c \u0442\u0435\u0445\u043d\u0438\u0447\u0435\u0441\u043a\u043e\u0439 \u043f\u043e\u0434\u0434\u0435\u0440\u0436\u043a\u0435 \u044d\u0442\u043e\u0433\u043e \u0441\u0430\u0439\u0442\u0430.","cp_donation_failure_reasons":{"User has cancelled":"\u041f\u043b\u0430\u0442\u0451\u0436 \u043e\u0442\u043c\u0435\u043d\u0451\u043d"}};
+/* ]]> */
+</script>
+<script type="rocketlazyloadscript" data-rocket-type='text/javascript' src='https://obshee-delo.ru/wp-content/plugins/leyka/js/public.js' id='leyka-public-js' defer></script>
+<script type="rocketlazyloadscript" data-rocket-type='text/javascript' id='rocket-browser-checker-js-after'>
+"use strict";var _createClass=function(){function defineProperties(target,props){for(var i=0;i<props.length;i++){var descriptor=props[i];descriptor.enumerable=descriptor.enumerable||!1,descriptor.configurable=!0,"value"in descriptor&&(descriptor.writable=!0),Object.defineProperty(target,descriptor.key,descriptor)}}return function(Constructor,protoProps,staticProps){return protoProps&&defineProperties(Constructor.prototype,protoProps),staticProps&&defineProperties(Constructor,staticProps),Constructor}}();function _classCallCheck(instance,Constructor){if(!(instance instanceof Constructor))throw new TypeError("Cannot call a class as a function")}var RocketBrowserCompatibilityChecker=function(){function RocketBrowserCompatibilityChecker(options){_classCallCheck(this,RocketBrowserCompatibilityChecker),this.passiveSupported=!1,this._checkPassiveOption(this),this.options=!!this.passiveSupported&&options}return _createClass(RocketBrowserCompatibilityChecker,[{key:"_checkPassiveOption",value:function(self){try{var options={get passive(){return!(self.passiveSupported=!0)}};window.addEventListener("test",null,options),window.removeEventListener("test",null,options)}catch(err){self.passiveSupported=!1}}},{key:"initRequestIdleCallback",value:function(){!1 in window&&(window.requestIdleCallback=function(cb){var start=Date.now();return setTimeout(function(){cb({didTimeout:!1,timeRemaining:function(){return Math.max(0,50-(Date.now()-start))}})},1)}),!1 in window&&(window.cancelIdleCallback=function(id){return clearTimeout(id)})}},{key:"isDataSaverModeOn",value:function(){return"connection"in navigator&&!0===navigator.connection.saveData}},{key:"supportsLinkPrefetch",value:function(){var elem=document.createElement("link");return elem.relList&&elem.relList.supports&&elem.relList.supports("prefetch")&&window.IntersectionObserver&&"isIntersecting"in IntersectionObserverEntry.prototype}},{key:"isSlowConnection",value:function(){return"connection"in navigator&&"effectiveType"in navigator.connection&&("2g"===navigator.connection.effectiveType||"slow-2g"===navigator.connection.effectiveType)}}]),RocketBrowserCompatibilityChecker}();
+</script>
+<script type='text/javascript' id='rocket-preload-links-js-extra'>
+/* <![CDATA[ */
+var RocketPreloadLinksConfig = {"excludeUris":"\/(.+\/)?feed\/?.+\/?|\/(?:.+\/)?embed\/|\/(index\\.php\/)?wp\\-json(\/.*|$)|\/wp-admin\/|\/logout\/|\/wp-login.php","usesTrailingSlash":"1","imageExt":"jpg|jpeg|gif|png|tiff|bmp|webp|avif","fileExt":"jpg|jpeg|gif|png|tiff|bmp|webp|avif|php|pdf|html|htm","siteUrl":"https:\/\/obshee-delo.ru","onHoverDelay":"100","rateThrottle":"3"};
+/* ]]> */
+</script>
+<script type="rocketlazyloadscript" data-rocket-type='text/javascript' id='rocket-preload-links-js-after'>
+(function() {
+"use strict";var r="function"==typeof Symbol&&"symbol"==typeof Symbol.iterator?function(e){return typeof e}:function(e){return e&&"function"==typeof Symbol&&e.constructor===Symbol&&e!==Symbol.prototype?"symbol":typeof e},e=function(){function i(e,t){for(var n=0;n<t.length;n++){var i=t[n];i.enumerable=i.enumerable||!1,i.configurable=!0,"value"in i&&(i.writable=!0),Object.defineProperty(e,i.key,i)}}return function(e,t,n){return t&&i(e.prototype,t),n&&i(e,n),e}}();function i(e,t){if(!(e instanceof t))throw new TypeError("Cannot call a class as a function")}var t=function(){function n(e,t){i(this,n),this.browser=e,this.config=t,this.options=this.browser.options,this.prefetched=new Set,this.eventTime=null,this.threshold=1111,this.numOnHover=0}return e(n,[{key:"init",value:function(){!this.browser.supportsLinkPrefetch()||this.browser.isDataSaverModeOn()||this.browser.isSlowConnection()||(this.regex={excludeUris:RegExp(this.config.excludeUris,"i"),images:RegExp(".("+this.config.imageExt+")$","i"),fileExt:RegExp(".("+this.config.fileExt+")$","i")},this._initListeners(this))}},{key:"_initListeners",value:function(e){-1<this.config.onHoverDelay&&document.addEventListener("mouseover",e.listener.bind(e),e.listenerOptions),document.addEventListener("mousedown",e.listener.bind(e),e.listenerOptions),document.addEventListener("touchstart",e.listener.bind(e),e.listenerOptions)}},{key:"listener",value:function(e){var t=e.target.closest("a"),n=this._prepareUrl(t);if(null!==n)switch(e.type){case"mousedown":case"touchstart":this._addPrefetchLink(n);break;case"mouseover":this._earlyPrefetch(t,n,"mouseout")}}},{key:"_earlyPrefetch",value:function(t,e,n){var i=this,r=setTimeout(function(){if(r=null,0===i.numOnHover)setTimeout(function(){return i.numOnHover=0},1e3);else if(i.numOnHover>i.config.rateThrottle)return;i.numOnHover++,i._addPrefetchLink(e)},this.config.onHoverDelay);t.addEventListener(n,function e(){t.removeEventListener(n,e,{passive:!0}),null!==r&&(clearTimeout(r),r=null)},{passive:!0})}},{key:"_addPrefetchLink",value:function(i){return this.prefetched.add(i.href),new Promise(function(e,t){var n=document.createElement("link");n.rel="prefetch",n.href=i.href,n.onload=e,n.onerror=t,document.head.appendChild(n)}).catch(function(){})}},{key:"_prepareUrl",value:function(e){if(null===e||"object"!==(void 0===e?"undefined":r(e))||!1 in e||-1===["http:","https:"].indexOf(e.protocol))return null;var t=e.href.substring(0,this.config.siteUrl.length),n=this._getPathname(e.href,t),i={original:e.href,protocol:e.protocol,origin:t,pathname:n,href:t+n};return this._isLinkOk(i)?i:null}},{key:"_getPathname",value:function(e,t){var n=t?e.substring(this.config.siteUrl.length):e;return n.startsWith("/")||(n="/"+n),this._shouldAddTrailingSlash(n)?n+"/":n}},{key:"_shouldAddTrailingSlash",value:function(e){return this.config.usesTrailingSlash&&!e.endsWith("/")&&!this.regex.fileExt.test(e)}},{key:"_isLinkOk",value:function(e){return null!==e&&"object"===(void 0===e?"undefined":r(e))&&(!this.prefetched.has(e.href)&&e.origin===this.config.siteUrl&&-1===e.href.indexOf("?")&&-1===e.href.indexOf("#")&&!this.regex.excludeUris.test(e.href)&&!this.regex.images.test(e.href))}}],[{key:"run",value:function(){"undefined"!=typeof RocketPreloadLinksConfig&&new n(new RocketBrowserCompatibilityChecker({capture:!0,passive:!0}),RocketPreloadLinksConfig).init()}}]),n}();t.run();
+}());
+</script>
+<script type='text/javascript' id='jLibs-js-extra'>
+/* <![CDATA[ */
+var cmsms_jlibs = {"button_height":"-22"};
+/* ]]> */
+</script>
+<script type="rocketlazyloadscript" data-rocket-type='text/javascript' src='https://obshee-delo.ru/wp-content/themes/welfare/js/jqueryLibraries.min.js' id='jLibs-js' defer></script>
+<script type='text/javascript' id='script-js-extra'>
+/* <![CDATA[ */
+var cmsms_script = {"theme_url":"https:\/\/obshee-delo.ru\/wp-content\/themes\/welfare","site_url":"https:\/\/obshee-delo.ru\/","ajaxurl":"https:\/\/obshee-delo.ru\/wp-admin\/admin-ajax.php","nonce_ajax_like":"63e0c872a9","primary_color":"#ae0a04","ilightbox_skin":"parade","ilightbox_path":"vertical","ilightbox_infinite":"0","ilightbox_aspect_ratio":"1","ilightbox_mobile_optimizer":"1","ilightbox_max_scale":"1","ilightbox_min_scale":"0.2","ilightbox_inner_toolbar":"0","ilightbox_smart_recognition":"0","ilightbox_fullscreen_one_slide":"0","ilightbox_fullscreen_viewport":"center","ilightbox_controls_toolbar":"1","ilightbox_controls_arrows":"0","ilightbox_controls_fullscreen":"1","ilightbox_controls_thumbnail":"1","ilightbox_controls_keyboard":"1","ilightbox_controls_mousewheel":"1","ilightbox_controls_swipe":"1","ilightbox_controls_slideshow":"0","ilightbox_close_text":"Close","ilightbox_enter_fullscreen_text":"Enter Fullscreen (Shift+Enter)","ilightbox_exit_fullscreen_text":"Exit Fullscreen (Shift+Enter)","ilightbox_slideshow_text":"Slideshow","ilightbox_next_text":"Next","ilightbox_previous_text":"Previous","ilightbox_load_image_error":"An error occurred when trying to load photo.","ilightbox_load_contents_error":"An error occurred when trying to load contents.","ilightbox_missing_plugin_error":"The content your are attempting to view requires the <a href='{pluginspage}' target='_blank'>{type} plugin<\\\/a>."};
+/* ]]> */
+</script>
+<script type="rocketlazyloadscript" data-rocket-type='text/javascript' src='https://obshee-delo.ru/wp-content/themes/welfare/js/jquery.script.js' id='script-js' defer></script>
+<script type="rocketlazyloadscript" data-rocket-type='text/javascript' src='https://obshee-delo.ru/wp-content/themes/welfare/js/jquery.tweet.min.js' id='twitter-js' defer></script>
+<script type="rocketlazyloadscript" data-rocket-type='text/javascript' src='https://obshee-delo.ru/wp-content/themes/welfare/js/scrollspy.js' id='scrollspy-js' defer></script>
+<script type="rocketlazyloadscript" data-rocket-type='text/javascript' src='https://www.google.com/recaptcha/api.js?render=6LeYyq4UAAAAAGnupZhL5-XrXcHnMHJjNWTSLIc0' id='google-recaptcha-js'></script>
+<script type='text/javascript' id='wpcf7-recaptcha-js-extra'>
+/* <![CDATA[ */
+var wpcf7_recaptcha = {"sitekey":"6LeYyq4UAAAAAGnupZhL5-XrXcHnMHJjNWTSLIc0","actions":{"homepage":"homepage","contactform":"contactform"}};
+/* ]]> */
+</script>
+<script type="rocketlazyloadscript" data-rocket-type='text/javascript' src='https://obshee-delo.ru/wp-content/plugins/contact-form-7/modules/recaptcha/index.js' id='wpcf7-recaptcha-js' defer></script>
+<script type="rocketlazyloadscript" data-rocket-type='text/javascript' src='https://obshee-delo.ru/wp-content/plugins/wp-code-highlightjs/highlight.common.pack.js' id='hljs-js' defer></script>
+<script type="rocketlazyloadscript" data-rocket-type='text/javascript' src='https://obshee-delo.ru/wp-content/plugins/wysija-newsletters/js/validate/languages/jquery.validationEngine-ru.js' id='wysija-validator-lang-js' defer></script>
+<script type="rocketlazyloadscript" data-rocket-type='text/javascript' src='https://obshee-delo.ru/wp-content/plugins/wysija-newsletters/js/validate/jquery.validationEngine.js' id='wysija-validator-js' defer></script>
+<script type='text/javascript' id='wysija-front-subscribers-js-extra'>
+/* <![CDATA[ */
+var wysijaAJAX = {"action":"wysija_ajax","controller":"subscribers","ajaxurl":"https:\/\/obshee-delo.ru\/wp-admin\/admin-ajax.php","loadingTrans":"\u0417\u0430\u0433\u0440\u0443\u0437\u043a\u0430...","is_rtl":""};
+/* ]]> */
+</script>
+<script type="rocketlazyloadscript" data-rocket-type='text/javascript' src='https://obshee-delo.ru/wp-content/plugins/wysija-newsletters/js/front-subscribers.js' id='wysija-front-subscribers-js' defer></script>
+<script type="rocketlazyloadscript" data-rocket-type='text/javascript' src='https://obshee-delo.ru/wp-content/plugins/simple-lightbox/client/js/prod/lib.core.js' id='slb_core-js' defer></script>
+<script type="rocketlazyloadscript" data-rocket-type='text/javascript' src='https://obshee-delo.ru/wp-content/plugins/simple-lightbox/client/js/prod/lib.view.js' id='slb_view-js' defer></script>
+<script type="rocketlazyloadscript" data-rocket-type='text/javascript' src='https://obshee-delo.ru/wp-content/plugins/simple-lightbox/themes/baseline/js/prod/client.js' id='slb-asset-slb_baseline-base-js' defer></script>
+<script type="rocketlazyloadscript" data-rocket-type='text/javascript' src='https://obshee-delo.ru/wp-content/plugins/simple-lightbox/themes/default/js/prod/client.js' id='slb-asset-slb_default-base-js' defer></script>
+<script type="rocketlazyloadscript" data-rocket-type='text/javascript' src='https://obshee-delo.ru/wp-content/plugins/simple-lightbox/template-tags/item/js/prod/tag.item.js' id='slb-asset-item-base-js' defer></script>
+<script type="rocketlazyloadscript" data-rocket-type='text/javascript' src='https://obshee-delo.ru/wp-content/plugins/simple-lightbox/template-tags/ui/js/prod/tag.ui.js' id='slb-asset-ui-base-js' defer></script>
+<script type="rocketlazyloadscript" data-rocket-type='text/javascript' src='https://obshee-delo.ru/wp-content/plugins/simple-lightbox/content-handlers/image/js/prod/handler.image.js' id='slb-asset-image-base-js' defer></script>
+    <style>code.hljs { /*margin: 5px;*/ }</style>
+    <script type="rocketlazyloadscript" data-rocket-type="text/javascript">window.addEventListener('DOMContentLoaded', function() {
+    (function($, window) {
+        var init_fn_flag = false;
+        var init_fn = (function() {
+            if (init_fn_flag)
+                return;
+            init_fn_flag = true;
+             hljs.configure({"tabReplace":"    "});
+            $('pre code').each(function(i, block) {
+                hljs.highlightBlock(block);
+            });
+        });
+        $(document).ready(init_fn);
+        $(window).on("load", init_fn);
+    })(jQuery, window);
+    });</script>
+<script type="rocketlazyloadscript" data-rocket-type="text/javascript" id="slb_footer">window.addEventListener('DOMContentLoaded', function() {/* <![CDATA[ */if ( !!window.jQuery ) {(function($){$(document).ready(function(){if ( !!window.SLB && SLB.has_child('View.init') ) { SLB.View.init({"ui_autofit":true,"ui_animate":true,"slideshow_autostart":true,"slideshow_duration":"6","group_loop":true,"ui_overlay_opacity":"0.8","ui_title_default":false,"theme_default":"slb_default","ui_labels":{"loading":"Loading","close":"Close","nav_next":"Next","nav_prev":"Previous","slideshow_start":"Start slideshow","slideshow_stop":"Stop slideshow","group_status":"Item %current% of %total%"}}); }
+if ( !!window.SLB && SLB.has_child('View.assets') ) { {$.extend(SLB.View.assets, {"639407836":{"id":51432,"type":"image","internal":true,"source":"https:\/\/obshee-delo.ru\/wp-content\/uploads\/2019\/11\/\u041f\u043b\u0430\u043a\u0430\u0442-\u0441\u043a\u043e\u043b\u044c\u043a\u043e-\u0441\u0442\u043e\u0438\u0442-scaled.jpg","title":"\u041f\u043b\u0430\u043a\u0430\u0442-\u0441\u043a\u043e\u043b\u044c\u043a\u043e \u0441\u0442\u043e\u0438\u0442","caption":"","description":""},"811243004":{"id":27113,"type":"image","internal":true,"source":"https:\/\/obshee-delo.ru\/wp-content\/uploads\/2016\/03\/AGrEEEFpZzM.jpg","title":"AGrEEEFpZzM","caption":"","description":""},"956033954":{"id":52548,"type":"image","internal":true,"source":"https:\/\/obshee-delo.ru\/wp-content\/uploads\/2019\/12\/\u0417\u0434\u043e\u0440\u043e\u0432\u044b\u0435\u0414\u0435\u0442\u0438.jpg","title":"\u0417\u0434\u043e\u0440\u043e\u0432\u044b\u0435\u0414\u0435\u0442\u0438","caption":"","description":""},"241469135":{"id":52553,"type":"image","internal":true,"source":"https:\/\/obshee-delo.ru\/wp-content\/uploads\/2019\/12\/nxoUUtvxUOw_720h.jpg","title":"nxoUUtvxUOw_720h","caption":"","description":""},"7064409":{"id":42508,"type":"image","internal":true,"source":"https:\/\/obshee-delo.ru\/wp-content\/uploads\/2018\/08\/\u041f\u043b\u0430\u043a\u0430\u0442\u041f\u0430\u0443\u043a-\u0444\u0438\u043b\u044c\u043c.jpg","title":"\u041f\u043b\u0430\u043a\u0430\u0442\u041f\u0430\u0443\u043a- \u0444\u0438\u043b\u044c\u043c","caption":"","description":""},"873565868":{"id":42510,"type":"image","internal":true,"source":"https:\/\/obshee-delo.ru\/wp-content\/uploads\/2018\/08\/\u0413\u043b\u044f\u0434\u044f_\u043d\u0430_\u0442\u0435\u0431\u044f.jpg","title":"\u0413\u043b\u044f\u0434\u044f_\u043d\u0430_\u0442\u0435\u0431\u044f","caption":"","description":""},"572378088":{"id":27116,"type":"image","internal":true,"source":"https:\/\/obshee-delo.ru\/wp-content\/uploads\/2016\/03\/NRSDMyKxnmM.jpg","title":"NRSDMyKxnmM","caption":"","description":""},"1388500664":{"id":30505,"type":"image","internal":true,"source":"https:\/\/obshee-delo.ru\/wp-content\/uploads\/2016\/03\/\u041f\u043b\u0430\u043a\u0430\u0442-\u0422\u0432\u043e\u0438-\u043e\u0442\u0432\u0435\u0442\u043d\u044b\u0435-\u0441\u0430\u043d\u043a\u0446\u0438\u0438_\u04103.jpg","title":"%d0%bf%d0%bb%d0%b0%d0%ba%d0%b0%d1%82-%d1%82%d0%b2%d0%be%d0%b8-%d0%be%d1%82%d0%b2%d0%b5%d1%82%d0%bd%d1%8b%d0%b5-%d1%81%d0%b0%d0%bd%d0%ba%d1%86%d0%b8%d0%b8_%d0%b03","caption":"","description":""},"1637096425":{"id":30504,"type":"image","internal":true,"source":"https:\/\/obshee-delo.ru\/wp-content\/uploads\/2016\/03\/\u041f\u043b\u0430\u043a\u0430\u0442-\u0417\u0434\u043e\u0440\u043e\u0432\u0430\u044f-\u0420\u043e\u0441\u0441\u0438\u044f-\u041e\u0431\u0449\u0435\u0435-\u0434\u0435\u043b\u043e.jpg","title":"%d0%bf%d0%bb%d0%b0%d0%ba%d0%b0%d1%82-%d0%b7%d0%b4%d0%be%d1%80%d0%be%d0%b2%d0%b0%d1%8f-%d1%80%d0%be%d1%81%d1%81%d0%b8%d1%8f-%d0%be%d0%b1%d1%89%d0%b5%d0%b5-%d0%b4%d0%b5%d0%bb%d0%be","caption":"","description":""},"1599187098":{"id":31351,"type":"image","internal":true,"source":"https:\/\/obshee-delo.ru\/wp-content\/uploads\/2016\/03\/\u043f\u043b\u0430\u043a\u0430\u0442-\u041a\u0443\u0440\u0435\u043d\u0438\u0435-\u0432-\u043f\u043e\u0434\u044a\u0435\u0437\u0434\u0435-3.jpg","title":"\u043f\u043b\u0430\u043a\u0430\u0442 \u041a\u0443\u0440\u0435\u043d\u0438\u0435 \u0432 \u043f\u043e\u0434\u044a\u0435\u0437\u0434\u0435","caption":"","description":""},"91784305":{"id":31354,"type":"image","internal":true,"source":"https:\/\/obshee-delo.ru\/wp-content\/uploads\/2016\/03\/\u043a\u0443\u0440\u0435\u043d\u0438\u0435-\u0432-\u043f\u043e\u0434\u044a\u0435\u0437\u0434\u0435-\u043f\u0440\u0438\u043c\u0435\u0440.jpg","title":"\u043a\u0443\u0440\u0435\u043d\u0438\u0435 \u0432 \u043f\u043e\u0434\u044a\u0435\u0437\u0434\u0435 \u043f\u0440\u0438\u043c\u0435\u0440","caption":"","description":""},"122542404":{"id":31368,"type":"image","internal":true,"source":"https:\/\/obshee-delo.ru\/wp-content\/uploads\/2016\/03\/\u041f\u043b\u0430\u043a\u0430\u0442-\u041e\u0431\u0449\u0435\u0435-\u0434\u0435\u043b\u043e-\u0411\u0443\u0434\u044c-\u0434\u043e\u0441\u0442\u043e\u0438\u043d-\u0441\u0432\u043e\u0438\u0445-\u043f\u0440\u0430\u0434\u0435\u0434\u043e\u0432.jpg","title":"\u041f\u043b\u0430\u043a\u0430\u0442 \u041e\u0431\u0449\u0435\u0435 \u0434\u0435\u043b\u043e \u0411\u0443\u0434\u044c \u0434\u043e\u0441\u0442\u043e\u0438\u043d \u0441\u0432\u043e\u0438\u0445 \u043f\u0440\u0430\u0434\u0435\u0434\u043e\u0432","caption":"","description":""},"472674103":{"id":31370,"type":"image","internal":true,"source":"https:\/\/obshee-delo.ru\/wp-content\/uploads\/2016\/03\/\u043f\u0440\u0438\u043c\u0435\u0440-\u041e\u0431\u0449\u0435\u0435-\u0434\u0435\u043b\u043e-\u0411\u0443\u0434\u044c-\u0434\u043e\u0441\u0442\u043e\u0438\u043d-\u0441\u0432\u043e\u0438\u0445-\u043f\u0440\u0430\u0434\u0435\u0434\u043e\u0432.jpg","title":"\u043f\u0440\u0438\u043c\u0435\u0440 \u041e\u0431\u0449\u0435\u0435 \u0434\u0435\u043b\u043e \u0411\u0443\u0434\u044c \u0434\u043e\u0441\u0442\u043e\u0438\u043d \u0441\u0432\u043e\u0438\u0445 \u043f\u0440\u0430\u0434\u0435\u0434\u043e\u0432","caption":"","description":""},"857331593":{"id":31588,"type":"image","internal":true,"source":"https:\/\/obshee-delo.ru\/wp-content\/uploads\/2016\/03\/7-\u043f\u0440\u0438\u0447\u0438\u043d-\u043e\u0442\u043a\u0430\u0437\u0430\u0442\u044c\u0441\u044f-\u043e\u0442-\u0442\u0430\u0431\u0430\u0447\u043d\u043e\u0433\u043e-\u044f\u0434\u0430.jpg","title":"7 \u043f\u0440\u0438\u0447\u0438\u043d \u043e\u0442\u043a\u0430\u0437\u0430\u0442\u044c\u0441\u044f \u043e\u0442 \u0442\u0430\u0431\u0430\u0447\u043d\u043e\u0433\u043e \u044f\u0434\u0430","caption":"","description":""},"1326935107":{"id":null,"type":"image","internal":true,"source":"https:\/\/obshee-delo.ru\/wp-content\/uploads\/2016\/03\/stend_ugolok_zdorovja.jpg"},"1196188046":{"id":null,"type":"image","internal":true,"source":"https:\/\/obshee-delo.ru\/wp-content\/uploads\/2019\/01\/36000_od.jpg"},"1805374537":{"id":null,"type":"image","internal":true,"source":"https:\/\/obshee-delo.ru\/wp-content\/uploads\/2019\/01\/36000_bw.jpg"},"128947194":{"id":31126,"type":"image","internal":true,"source":"https:\/\/obshee-delo.ru\/wp-content\/uploads\/2016\/03\/banner_240x100-2-e1482172455260.jpg","title":"banner_240x100","caption":"","description":""},"1342233045":{"id":20390,"type":"image","internal":true,"source":"https:\/\/obshee-delo.ru\/wp-content\/uploads\/2016\/03\/1.jpg","title":"1","caption":"","description":""},"689572097":{"id":20391,"type":"image","internal":true,"source":"https:\/\/obshee-delo.ru\/wp-content\/uploads\/2016\/03\/6.jpg","title":"6","caption":"","description":""},"558225299":{"id":30523,"type":"image","internal":true,"source":"https:\/\/obshee-delo.ru\/wp-content\/uploads\/2016\/03\/\u0416\u0434\u0430\u043d\u043e\u0432-6-\u043d\u0430-9.jpg","title":"%d0%b6%d0%b4%d0%b0%d0%bd%d0%be%d0%b2-6-%d0%bd%d0%b0-9","caption":"","description":""},"1360282045":{"id":22848,"type":"image","internal":true,"source":"https:\/\/obshee-delo.ru\/wp-content\/uploads\/2016\/03\/3-2.jpg","title":"SONY DSC","caption":"SONY DSC","description":""},"466598143":{"id":20387,"type":"image","internal":true,"source":"https:\/\/obshee-delo.ru\/wp-content\/uploads\/2016\/03\/8.jpg","title":"SONY DSC","caption":"","description":""},"1492365346":{"id":30526,"type":"image","internal":true,"source":"https:\/\/obshee-delo.ru\/wp-content\/uploads\/2016\/03\/\u0416\u0434\u0430\u043d\u043e\u0432-2-\u043d\u0430-4.jpg","title":"%d0%b6%d0%b4%d0%b0%d0%bd%d0%be%d0%b2-2-%d0%bd%d0%b0-4","caption":"","description":""},"718778255":{"id":20511,"type":"image","internal":true,"source":"https:\/\/obshee-delo.ru\/wp-content\/uploads\/2016\/03\/5-1.jpg","title":"5","caption":"","description":""},"1033014940":{"id":30529,"type":"image","internal":true,"source":"https:\/\/obshee-delo.ru\/wp-content\/uploads\/2016\/03\/\u041c\u0430\u0442\u044c-\u0441-\u0440\u0435\u0431\u0435\u043d\u043a\u043e\u043c-25-\u043d\u0430-6.jpg","title":"%d0%bc%d0%b0%d1%82%d1%8c-%d1%81-%d1%80%d0%b5%d0%b1%d0%b5%d0%bd%d0%ba%d0%be%d0%bc-25-%d0%bd%d0%b0-6","caption":"","description":""},"472380374":{"id":22840,"type":"image","internal":true,"source":"https:\/\/obshee-delo.ru\/wp-content\/uploads\/2016\/03\/4-3.jpg","title":"4","caption":"","description":""}});} }
+/* THM */
+if ( !!window.SLB && SLB.has_child('View.extend_theme') ) { SLB.View.extend_theme('slb_baseline',{"name":"\u0411\u0430\u0437\u043e\u0432\u0430\u044f \u043b\u0438\u043d\u0438\u044f","parent":"","styles":[{"handle":"base","uri":"https:\/\/obshee-delo.ru\/wp-content\/plugins\/simple-lightbox\/themes\/baseline\/css\/style.css","deps":[]}],"layout_raw":"<div class=\"slb_container\"><div class=\"slb_content\">{{item.content}}<div class=\"slb_nav\"><span class=\"slb_prev\">{{ui.nav_prev}}<\/span><span class=\"slb_next\">{{ui.nav_next}}<\/span><\/div><div class=\"slb_controls\"><span class=\"slb_close\">{{ui.close}}<\/span><span class=\"slb_slideshow\">{{ui.slideshow_control}}<\/span><\/div><div class=\"slb_loading\">{{ui.loading}}<\/div><\/div><div class=\"slb_details\"><div class=\"inner\"><div class=\"slb_data\"><div class=\"slb_data_content\"><span class=\"slb_data_title\">{{item.title}}<\/span><span class=\"slb_group_status\">{{ui.group_status}}<\/span><div class=\"slb_data_desc\">{{item.description}}<\/div><\/div><\/div><div class=\"slb_nav\"><span class=\"slb_prev\">{{ui.nav_prev}}<\/span><span class=\"slb_next\">{{ui.nav_next}}<\/span><\/div><\/div><\/div><\/div>"}); }if ( !!window.SLB && SLB.has_child('View.extend_theme') ) { SLB.View.extend_theme('slb_default',{"name":"\u041f\u043e \u0443\u043c\u043e\u043b\u0447\u0430\u043d\u0438\u044e (\u0441\u0432\u0435\u0442\u043b\u044b\u0439)","parent":"slb_baseline","styles":[{"handle":"base","uri":"https:\/\/obshee-delo.ru\/wp-content\/plugins\/simple-lightbox\/themes\/default\/css\/style.css","deps":[]}]}); }})})(jQuery);}/* ]]> */});</script>
+<script type="rocketlazyloadscript" data-rocket-type="text/javascript" id="slb_context">window.addEventListener('DOMContentLoaded', function() {/* <![CDATA[ */if ( !!window.jQuery ) {(function($){$(document).ready(function(){if ( !!window.SLB ) { {$.extend(SLB, {"context":["public","user_guest"]});} }})})(jQuery);}/* ]]> */});</script>
+<script>window.lazyLoadOptions={elements_selector:"img[data-lazy-src],.rocket-lazyload,iframe[data-lazy-src]",data_src:"lazy-src",data_srcset:"lazy-srcset",data_sizes:"lazy-sizes",class_loading:"lazyloading",class_loaded:"lazyloaded",threshold:300,callback_loaded:function(element){if(element.tagName==="IFRAME"&&element.dataset.rocketLazyload=="fitvidscompatible"){if(element.classList.contains("lazyloaded")){if(typeof window.jQuery!="undefined"){if(jQuery.fn.fitVids){jQuery(element).parent().fitVids()}}}}}};window.addEventListener('LazyLoad::Initialized',function(e){var lazyLoadInstance=e.detail.instance;if(window.MutationObserver){var observer=new MutationObserver(function(mutations){var image_count=0;var iframe_count=0;var rocketlazy_count=0;mutations.forEach(function(mutation){for(var i=0;i<mutation.addedNodes.length;i++){if(typeof mutation.addedNodes[i].getElementsByTagName!=='function'){continue}
+if(typeof mutation.addedNodes[i].getElementsByClassName!=='function'){continue}
+images=mutation.addedNodes[i].getElementsByTagName('img');is_image=mutation.addedNodes[i].tagName=="IMG";iframes=mutation.addedNodes[i].getElementsByTagName('iframe');is_iframe=mutation.addedNodes[i].tagName=="IFRAME";rocket_lazy=mutation.addedNodes[i].getElementsByClassName('rocket-lazyload');image_count+=images.length;iframe_count+=iframes.length;rocketlazy_count+=rocket_lazy.length;if(is_image){image_count+=1}
+if(is_iframe){iframe_count+=1}}});if(image_count>0||iframe_count>0||rocketlazy_count>0){lazyLoadInstance.update()}});var b=document.getElementsByTagName("body")[0];var config={childList:!0,subtree:!0};observer.observe(b,config)}},!1)</script><script data-no-minify="1" async src="https://obshee-delo.ru/wp-content/plugins/wp-rocket/assets/js/lazyload/17.5/lazyload.min.js"></script><script>function lazyLoadThumb(e){var t='<img data-lazy-src="https://i.ytimg.com/vi/ID/hqdefault.jpg" alt="" width="480" height="360"><noscript><img src="https://i.ytimg.com/vi/ID/hqdefault.jpg" alt="" width="480" height="360"></noscript>',a='<button class="play" aria-label="play Youtube video"></button>';return t.replace("ID",e)+a}function lazyLoadYoutubeIframe(){var e=document.createElement("iframe"),t="ID?autoplay=1";t+=0===this.parentNode.dataset.query.length?'':'&'+this.parentNode.dataset.query;e.setAttribute("src",t.replace("ID",this.parentNode.dataset.src)),e.setAttribute("frameborder","0"),e.setAttribute("allowfullscreen","1"),e.setAttribute("allow", "accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"),this.parentNode.parentNode.replaceChild(e,this.parentNode)}document.addEventListener("DOMContentLoaded",function(){var e,t,p,a=document.getElementsByClassName("rll-youtube-player");for(t=0;t<a.length;t++)e=document.createElement("div"),e.setAttribute("data-id",a[t].dataset.id),e.setAttribute("data-query", a[t].dataset.query),e.setAttribute("data-src", a[t].dataset.src),e.innerHTML=lazyLoadThumb(a[t].dataset.id),a[t].appendChild(e),p=e.querySelector('.play'),p.onclick=lazyLoadYoutubeIframe});</script>
+
+
+<!-- Google Analytics снят 07.08.2026 (решение владельца): передача данных за пределы РФ без необходимости; счётчик — только Яндекс.Метрика в header.php -->
+
+
+
+
+
+<!-- Пиксель ретаргетинга ВКонтакте снят 07.08.2026: собирал аудиторию в чужой рекламный кабинет, в политике ПДн не описан -->
+
+
+</body>
+</html>
+
+<!-- This website is like a Rocket, isn't it? Performance optimized by WP Rocket. Learn more: https://wp-rocket.me - Debug: cached@1786614889 -->

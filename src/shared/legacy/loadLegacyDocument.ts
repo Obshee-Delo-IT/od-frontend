@@ -1,0 +1,189 @@
+import { siteUrl } from '@/shared/config/site';
+import { legacyWarn } from './legacyLog';
+import { legacyOrigin } from './legacyOrigin';
+import { buildLegacyUrl, legacyPathname } from './legacyPath';
+import { legacyGate, legacyStore, type ConcurrencyGate, type LegacyStore } from './legacyStore';
+import { transformLegacyHtml } from './transformLegacyHtml';
+import type { LegacyLoad } from './types';
+
+/**
+ * Fetching one legacy page and turning it into the document we serve
+ * (LCP-002 … LCP-004, LCP-010).
+ *
+ * Shared by both surfaces on purpose: the proxy route serves the iframe's
+ * document, and the catch-all's page + `generateMetadata` need the same page's
+ * title. They are separate HTTP requests, so React's `cache()` cannot join
+ * them — the store can, and does.
+ *
+ * A bare `fetch`, never `wpFetch`: that one attaches the WordPress application
+ * password to every request it makes, and the legacy origin is a different host
+ * that has no business seeing it.
+ */
+
+/** Node's `fetch` has no default timeout; an origin that accepts and never answers would hold a request forever. */
+export const LEGACY_TIMEOUT_MS = 8000;
+
+/** Followed only when the `Location` stays on the configured origin, and only once. */
+const MAX_REDIRECTS = 1;
+
+/** Fixed, so the upstream has nothing to vary on and the stored document has one variant. */
+const USER_AGENT = 'od-frontend/1.0 (legacy-page fallback)';
+
+const REDIRECT_STATUSES = new Set([301, 302, 303, 307, 308]);
+
+export interface LegacyLoaderDeps {
+  origin: string | null;
+  fetch: typeof fetch;
+  store: LegacyStore;
+  gate: ConcurrencyGate;
+  siteOrigin: string;
+  timeoutMs: number;
+}
+
+const isHtml = (contentType: string | null): boolean => /^text\/html\b/i.test((contentType ?? '').trim());
+
+export const createLegacyLoader = (overrides: Partial<LegacyLoaderDeps> = {}) => {
+  const deps: LegacyLoaderDeps = {
+    origin: legacyOrigin,
+    fetch: (...args) => globalThis.fetch(...args),
+    store: legacyStore,
+    gate: legacyGate,
+    siteOrigin: siteUrl,
+    timeoutMs: LEGACY_TIMEOUT_MS,
+    ...overrides,
+  };
+
+  /**
+   * Requests for the same cold path share one upstream attempt. This is
+   * deduplication of a single in-flight fetch, not reuse of a result: nothing
+   * is stored unless it succeeded, and the next request after this one settles
+   * starts afresh.
+   */
+  const inflight = new Map<string, Promise<LegacyLoad>>();
+
+  const fetchUpstream = async (url: string, signal: AbortSignal): Promise<Response | null> => {
+    let current = url;
+    for (let hop = 0; hop <= MAX_REDIRECTS; hop += 1) {
+      const response = await deps.fetch(current, {
+        // Uncached at every layer we do not own, so no framework cache can
+        // retain a failure behind our back (decision D13).
+        cache: 'no-store',
+        // Manual, so a redirect off the origin is refused rather than followed.
+        redirect: 'manual',
+        signal,
+        // Constructed, never copied from the inbound request: that is what
+        // guarantees no cookie and no `Authorization` goes out.
+        headers: { accept: 'text/html,application/xhtml+xml', 'user-agent': USER_AGENT },
+      });
+
+      if (!REDIRECT_STATUSES.has(response.status)) {
+        return response;
+      }
+
+      const location = response.headers.get('location');
+      if (!location) {
+        return response;
+      }
+      let next: URL;
+      try {
+        next = new URL(location, current);
+      } catch (_error) {
+        return null;
+      }
+      if (next.origin !== deps.origin) {
+        return null;
+      }
+      current = next.toString();
+    }
+    return null;
+  };
+
+  const attempt = async (path: string, url: string): Promise<LegacyLoad> => {
+    const release = await deps.gate.acquire();
+    if (!release) {
+      legacyWarn(`upstream busy for ${path}`);
+      return { status: 'unavailable' };
+    }
+
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), deps.timeoutMs);
+
+    try {
+      const response = await fetchUpstream(url, controller.signal);
+      if (!response) {
+        legacyWarn(`upstream redirect refused for ${path}`);
+        return { status: 'missing' };
+      }
+      if (response.status === 404 || response.status === 410) {
+        legacyWarn(`upstream ${response.status} for ${path}`);
+        return { status: 'missing' };
+      }
+      if (!response.ok) {
+        legacyWarn(`upstream ${response.status} for ${path}`);
+        return { status: 'unavailable' };
+      }
+      if (!isHtml(response.headers.get('content-type'))) {
+        legacyWarn(`upstream non-HTML for ${path}`);
+        return { status: 'unavailable' };
+      }
+
+      const html = await response.text();
+      const result = transformLegacyHtml(html, {
+        // `buildLegacyUrl` already asserted the origin, so this cannot be null
+        // by the time we get here.
+        origin: deps.origin as string,
+        path,
+        siteOrigin: deps.siteOrigin,
+      });
+
+      if (result.boundaryMiss) {
+        legacyWarn(`boundary miss for ${path}`);
+      }
+      for (const element of result.unbalanced) {
+        legacyWarn(`unbalanced ${element} for ${path}`);
+      }
+
+      const document = { html: result.html, title: result.title, description: result.description };
+      // Success only. A failure is never written and therefore never reused.
+      deps.store.set(path, document);
+      return { status: 'ok', document };
+    } catch (error) {
+      legacyWarn(`upstream error for ${path}: ${error instanceof Error ? error.message : String(error)}`);
+      return { status: 'unavailable' };
+    } finally {
+      clearTimeout(timer);
+      release();
+    }
+  };
+
+  return async (segments: readonly string[] | undefined): Promise<LegacyLoad> => {
+    if (!deps.origin) {
+      return { status: 'disabled' };
+    }
+
+    const path = legacyPathname(segments ?? []);
+    const url = buildLegacyUrl(segments, deps.origin);
+    if (!url) {
+      legacyWarn(`rejected path ${path}`);
+      return { status: 'missing' };
+    }
+
+    const cached = deps.store.get(path);
+    if (cached) {
+      return { status: 'ok', document: cached };
+    }
+
+    const existing = inflight.get(path);
+    if (existing) {
+      return existing;
+    }
+
+    const pending = attempt(path, url);
+    inflight.set(path, pending);
+    pending.finally(() => inflight.delete(path)).catch(() => undefined);
+    return pending;
+  };
+};
+
+/** The instance both surfaces share, so they share one store and one concurrency budget. */
+export const loadLegacyDocument = createLegacyLoader();

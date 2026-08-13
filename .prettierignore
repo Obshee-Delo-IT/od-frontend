@@ -1,3 +1,14 @@
 # Ignore artifacts:
 build
 coverage
+
+# A6 legacy-page fixtures: byte-for-byte captures of the live WordPress site.
+# Reformatting them is editing them — the transform tests assert their measured
+# script counts and DOM boundaries. Re-capture, never reformat. (Prettier does
+# not merely reformat these: it fails on the theme's unclosed <li> markup.)
+src/shared/legacy/__fixtures__/*.html
+
+# OpenSpec planning artefacts are hand-wrapped prose with wide reference tables.
+# Prettier's table reflow pads every column to the widest cell, which turns a
+# reviewable spec diff into a wall of whitespace.
+openspec/
