@@ -255,6 +255,7 @@ Verified against the fetchers 2026-08-13. Everything goes through the single `op
 | `GET /wp/v2/menus?slug=main-navigation` | `fetchMenus` | Main navigation (plugin-provided — core REST doesn't ship menus). |
 | `GET /wp/v2/menu-items?menus={id}` | `fetchMenuItems` | Menu nodes; `parent === 0` is root, `menu_order` is a depth-first walk (§6.3). |
 | `GET /wp/v2/widgets?sidebar=…` | `fetchFooter` | The footer, per the §6.3 widget pattern — this one is **built**, not just planned. |
+| `GET /wp/v2/search` | `fetchSearch` | B7's data layer. **No UI calls it yet** — the search input lives in `header-v2`, which is C9. Probed on od-dev 2026-08-13: sends `X-WP-Total{,Pages}`, honours `subtype=page`, and answers an out-of-range page with `200 []` rather than the 400 `/wp/v2/posts` gives. Returns id/title/url/type/subtype only — no excerpt or thumbnail. |
 | `HEAD <media-cdn>/<key>` | `resolveMediaUrl` | Not WP: an existence probe against the object-storage bucket, 1 h cached, 200-only (§6.4). |
 
 **Auth note:** every one of these is authenticated with the application password even though the content is public, because `httpClient` injects the header unconditionally. On a CI build with no `WP_*` env, a stub client returns `[]` so compilation still validates.
@@ -265,7 +266,7 @@ Verified against the fetchers 2026-08-13. Everything goes through the single `op
 
 - `GET /wp/v2/profile` (139 published) + `GET /wp/v2/profile/{id}` + `GET /wp/v2/pl-categs` — team members / coordinators (D3)
 - `GET /wp/v2/pages` (**174** published) — generic pages (about, FAQ, contacts, materials landing — depending on how content is organised). Also the denominator for the A6 fallback.
-- `GET /wp/v2/search` — generic site-wide search (see §6.3; B7 is now in scope)
+- ~~`GET /wp/v2/search`~~ — **now consumed**, see §6.1. Fetcher only; the results page and the header input are still to build (B7 UI, gated on C9)
 - `GET /wp/v2/settings` — site metadata (`.description` is the line under the logo)
 - `GET /wp/v2/sidebars/{id}` — the explicit widget-id list, if we ever want a separate cache key (the footer itself already uses `/widgets` — see §6.1)
 - `GET /wp/v2/tags?search=...` + `GET /wp/v2/posts?tags={id}` — curated post lists by tag (see §6.3)
