@@ -28,6 +28,11 @@
  * With either of the first two undefined the plugin does nothing at all, which
  * is the wanted state on an instance whose frontend isn't deployed yet.
  *
+ * **The PHP here is deliberately old-fashioned** — no typed properties, no
+ * `str_starts_with`, no `void` returns. One file has to run on both installs,
+ * and prod is WordPress 5.5.5 on PHP 7.x (`mod_php7`), where 7.4+ syntax is a
+ * parse error that would take the whole site down as soon as this file loads.
+ *
  * @package od-frontend
  */
 
@@ -43,7 +48,7 @@ if ( is_readable( __DIR__ . '/od-revalidate/config.php' ) ) {
  *
  * Batching is the whole reason this is a class and not two functions: a bulk
  * trash fires `trashed_post` twenty times in a single request, and trashing a
- * published post fires both that and `wp_after_insert_post` for the same id.
+ * published post fires both that and `transition_post_status` for the same id.
  * Sending per hook would mean twenty HTTP requests where one will do, and would
  * purge the same tag repeatedly.
  *
@@ -72,22 +77,27 @@ final class OD_Revalidate {
 	const BREAKER_KEY = 'od_revalidate_unreachable';
 
 	/** @var int[] */
-	private static array $post_ids = array();
+	private static $post_ids = array();
 
 	/** @var string[] */
-	private static array $tags = array();
+	private static $tags = array();
 
-	private static bool $scheduled = false;
+	/** @var bool */
+	private static $scheduled = false;
 
-	public static function boot(): void {
+	public static function boot() {
 		if ( ! self::configured() ) {
 			return;
 		}
 
-		// `wp_after_insert_post`, not `save_post`: it runs after terms and meta
-		// are written, so an ACF field saved alongside the post is already in
-		// the database by the time the frontend refetches. `save_post` is not.
-		add_action( 'wp_after_insert_post', array( __CLASS__, 'on_save' ), 10, 4 );
+		// `transition_post_status`, which has existed since WP 2.3 and hands over
+		// both the new and the old status — the two facts the draft rule below
+		// needs. `wp_after_insert_post` would read better but arrived in 5.6, and
+		// **prod is pinned to 5.5.5**, where it would silently never fire; this
+		// hook also catches a scheduled post going live through cron, which
+		// `wp_after_insert_post` misses. Firing before terms and meta are written
+		// costs nothing here, because nothing is sent until `shutdown`.
+		add_action( 'transition_post_status', array( __CLASS__, 'on_transition' ), 10, 3 );
 		add_action( 'trashed_post', array( __CLASS__, 'on_gone' ), 10, 2 );
 		add_action( 'untrashed_post', array( __CLASS__, 'on_gone' ), 10, 2 );
 		add_action( 'deleted_post', array( __CLASS__, 'on_gone' ), 10, 2 );
@@ -95,27 +105,25 @@ final class OD_Revalidate {
 		add_action( 'updated_option', array( __CLASS__, 'on_option' ) );
 	}
 
-	public static function configured(): bool {
+	public static function configured() {
 		return defined( 'OD_REVALIDATE_URL' ) && OD_REVALIDATE_URL
 			&& defined( 'OD_REVALIDATE_SECRET' ) && OD_REVALIDATE_SECRET;
 	}
 
 	/**
-	 * @param int      $post_id     Post id.
-	 * @param WP_Post  $post        Post after the write.
-	 * @param bool     $update      Whether this was an update.
-	 * @param WP_Post|null $post_before Post before the write, null on create.
+	 * @param string  $new_status Status after the write.
+	 * @param string  $old_status Status before it — `new` for an insert.
+	 * @param WP_Post $post       Post.
 	 */
-	public static function on_save( $post_id, $post, $update = true, $post_before = null ): void {
-		if ( ! $post instanceof WP_Post || self::is_noise( $post_id ) ) {
+	public static function on_transition( $new_status, $old_status, $post ) {
+		if ( ! $post instanceof WP_Post || self::is_noise( $post->ID ) ) {
 			return;
 		}
 
 		// Draft churn never reached the frontend, so purging on it would just
 		// throw away a warm cache. A post that *was* published still counts:
 		// that is how «снять с публикации» reaches the site.
-		$was_published = $post_before instanceof WP_Post && 'publish' === $post_before->post_status;
-		if ( 'publish' !== $post->post_status && ! $was_published ) {
+		if ( 'publish' !== $new_status && 'publish' !== $old_status ) {
 			return;
 		}
 
@@ -125,24 +133,26 @@ final class OD_Revalidate {
 	/**
 	 * Trash, restore, permanent delete.
 	 *
-	 * The second argument differs per hook — `deleted_post` passes the WP_Post,
-	 * the trash hooks pass the previous status as a string — hence the type
-	 * check rather than a signature that trusts it. After a permanent delete
+	 * The second argument differs per hook and per WordPress version —
+	 * `deleted_post` passes the WP_Post, the trash hooks pass the previous status
+	 * as a string on 6.x and **nothing at all on 5.5.5** — hence the type check
+	 * rather than a signature that trusts it. After a permanent delete
 	 * `get_post()` can no longer answer, which is why the passed object wins.
 	 *
 	 * @param int                 $post_id Post id.
 	 * @param WP_Post|string|null $context Post object on `deleted_post`, else the previous status.
 	 */
-	public static function on_gone( $post_id, $context = null ): void {
+	public static function on_gone( $post_id, $context = null ) {
 		$post = $context instanceof WP_Post ? $context : get_post( $post_id );
 		if ( ! $post instanceof WP_Post || self::is_noise( $post_id ) ) {
 			return;
 		}
 
-		// Same rule as on_save: a draft moving in and out of the bin was never
-		// on the site, so purging for it would only cost a warm cache. Only the
-		// trash hooks know the previous status; on a permanent delete there is
-		// no way to tell, and purging is the safe side of that guess.
+		// Same rule as on_transition: a draft moving in and out of the bin was
+		// never on the site, so purging for it would only cost a warm cache. Only
+		// a 6.x trash hook says what the status used to be; on a permanent delete,
+		// or anywhere on 5.5.5, there is no way to tell and purging is the safe
+		// side of the guess.
 		$previous_status = is_string( $context ) ? $context : null;
 		if ( null !== $previous_status && 'publish' !== $previous_status && 'publish' !== $post->post_status ) {
 			return;
@@ -151,7 +161,7 @@ final class OD_Revalidate {
 		self::queue_post( $post );
 	}
 
-	public static function on_menu(): void {
+	public static function on_menu() {
 		self::queue_tag( 'wp:menus' );
 	}
 
@@ -162,8 +172,8 @@ final class OD_Revalidate {
 	 *
 	 * @param string $option Option name.
 	 */
-	public static function on_option( $option ): void {
-		if ( 'sidebars_widgets' === $option || str_starts_with( (string) $option, 'widget_' ) ) {
+	public static function on_option( $option ) {
+		if ( 'sidebars_widgets' === $option || 0 === strpos( (string) $option, 'widget_' ) ) {
 			self::queue_tag( 'wp:widgets' );
 		}
 	}
@@ -176,7 +186,7 @@ final class OD_Revalidate {
 	 * @param array $body Request body — postIds, tags or paths.
 	 * @return bool Whether the purge landed.
 	 */
-	public static function send( array $body ): bool {
+	public static function send( array $body ) {
 		if ( ! self::configured() ) {
 			return false;
 		}
@@ -221,7 +231,7 @@ final class OD_Revalidate {
 	}
 
 	/** Sends everything this request collected, deduplicated, in chunks. */
-	public static function flush(): void {
+	public static function flush() {
 		$post_ids = array_values( array_unique( self::$post_ids ) );
 		$tags     = array_values( array_unique( self::$tags ) );
 
@@ -271,7 +281,7 @@ final class OD_Revalidate {
 	 *
 	 * @param WP_Post $post Post.
 	 */
-	private static function queue_post( WP_Post $post ): void {
+	private static function queue_post( WP_Post $post ) {
 		if ( 'post' !== $post->post_type ) {
 			return;
 		}
@@ -279,12 +289,12 @@ final class OD_Revalidate {
 		self::schedule();
 	}
 
-	private static function queue_tag( string $tag ): void {
+	private static function queue_tag( string $tag ) {
 		self::$tags[] = $tag;
 		self::schedule();
 	}
 
-	private static function schedule(): void {
+	private static function schedule() {
 		if ( self::$scheduled ) {
 			return;
 		}
@@ -299,13 +309,13 @@ final class OD_Revalidate {
 	 *
 	 * @param int $post_id Post id.
 	 */
-	private static function is_noise( $post_id ): bool {
+	private static function is_noise( $post_id ) {
 		return ( defined( 'WP_IMPORTING' ) && WP_IMPORTING )
 			|| (bool) wp_is_post_revision( $post_id )
 			|| (bool) wp_is_post_autosave( $post_id );
 	}
 
-	private static function log( string $message ): void {
+	private static function log( string $message ) {
 		error_log( '[od-revalidate] ' . $message ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions
 	}
 }

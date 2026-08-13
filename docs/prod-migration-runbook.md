@@ -12,7 +12,7 @@ Related: [`implementation-plan.md`](./implementation-plan.md) (task state) · [`
 
 | # | Blocker | Why it stops the migration | Owner |
 |---|---|---|---|
-| **B1** | **REST is disabled on prod and stage.** `/wp-json/…` redirects to the homepage — a `clearfy-pro` feature. | The entire app is REST-only (`httpClient.ts` → `WP_BASE/wp-json`). Zero pages render. **This is the single largest blocker.** | WP admin |
+| **B1** | **REST is disabled on prod and stage.** On prod it is exactly one stored option — **`clearfy_option.disable_json_rest_api = 'on'`** (read 2026-08-13; `/wp-json/wp/v2/pages` answers **404**). | The entire app is REST-only (`httpClient.ts` → `WP_BASE/wp-json`). Zero pages render. **This is the single largest blocker** — but see §2.1: it no longer needs anyone's admin login. | ~~WP admin~~ **us, over SSH** |
 | **B2** | **Content is CMSMasters shortcodes on prod, Gutenberg on od-dev.** Confirmed for `wp/v2/pages`; **unverified for posts**. | If film/news bodies are `[cmsms_*]`, then `parsePost`, `GutenbergProvider`, `extractFilmPoster` and `absolutizeWpMedia` all degrade to raw shortcode text. See §1.4 — this is the highest-risk unknown. | verify in §1 |
 | **B3** | **ACF is not installed on prod/stage.** | No `group_film_meta` ⇒ no `acf` object in REST ⇒ every film affordance disappears. | §2.2 |
 | **B4** | **Post ids are per-environment.** | The worksheet we filled holds od-dev ids; importing it into prod would write to unrelated posts. Mitigated by `pnpm film:remap` (§3.2). | §3 |
@@ -74,7 +74,9 @@ od-dev: 203 `format=video` posts, 99 in the four film sub-categories.
 
 ## 2. WordPress preparation
 
-**2.1 Enable REST (B1).** A `clearfy-pro` setting, not code — turn off its "disable REST API" toggle in the WP admin (Clearfy → API). Re-run §1.1 to confirm. If REST must stay closed to the public, allowlist by path rather than disabling wholesale; the app needs `wp/v2/posts`, `wp/v2/media`, `wp/v2/menus`, `wp/v2/menu-items`.
+**2.1 Enable REST (B1).** A `clearfy-pro` setting, not code — its "disable REST API" toggle in the WP admin (Clearfy → API). **It does not require the admin UI**, which matters because prod admin was the item this blocker was waiting on: the toggle is the single key `disable_json_rest_api` inside the `clearfy_option` array, and WP-CLI over `ssh timeweb` can flip it (`'on'` → unset/`''`). The F6 pass used exactly that mechanism to switch on a different clearfy option, so the path is proven. Re-run §1.1 to confirm.
+
+⚠️ **This one is a decision, not a chore** — it opens prod's REST surface to the public internet, so it wants a deliberate go-ahead rather than being flipped in passing. If REST must stay closed to the public, allowlist by path rather than disabling wholesale; the app needs `wp/v2/posts`, `wp/v2/media`, `wp/v2/menus`, `wp/v2/menu-items`.
 
 > Basic auth also requires the **application password** to exist on the target env — generate one per environment ([WP guide](https://make.wordpress.org/core/2020/11/05/application-passwords-integration-guide/)) and never reuse od-dev's.
 
@@ -98,6 +100,52 @@ ssh timeweb 'cd ~/od-stage/public_html && wp eval-file - --url=https://<stage-ho
 curl -s -u "$WP_USER:$WP_PASSWORD" "https://<stage-host>/wp-json/wp/v2/posts?format=video&per_page=1&_fields=acf" | head -c 600
 ```
 
+**2.5 Install the revalidation mu-plugin (B4).** Without it an editor publishes and then waits out the hour; with it the page is gone from the cache before they can reload. Source and full reference: [`wp/mu-plugins/od-revalidate.php`](../wp/mu-plugins/od-revalidate.php) and [`wp-backend.md` §6.5](./wp-backend.md). It was installed and tested on od-dev on 2026-08-13; **prod differs in four ways that matter.**
+
+- **Prod is WordPress 5.5.5** (pinned by an active `wp-downgrade`) and its site PHP is **7.x** — `.htaccess` carries an `<IfModule mod_php7.c>` block, while the *CLI* php is 8.2. The plugin is written for that floor on purpose: it hooks `transition_post_status` because **`wp_after_insert_post` does not exist before WP 5.6** and would silently never fire here, and it uses no typed properties, no `str_starts_with` and no `void` returns, because 7.4+ syntax is a **parse error that takes the whole site down** the moment a mu-plugin loads. Don't modernise it, and re-read this line before editing it.
+- **The path is `~/public_html/`** — not `~/obshee-delo.ru/` — and every WP-CLI call there needs `--skip-plugins --skip-themes` (§2 of `wp-backend.md`). Verified: a bare `--skip-plugins` skips *regular* plugins only, so the mu-plugin still loads and the checks below work.
+- **`wp-content/mu-plugins/` does not exist on prod yet**; it has to be created, as it did on od-dev.
+- **No php-fpm.** Prod is Apache mod_php, so `fastcgi_finish_request()` is unavailable and the 5-minute breaker is the only thing standing between a dead frontend and a 5 s penalty on every save. On od-dev that measured 6630 ms for the first save, then 795–1765 ms. Prod carries 25 active plugins and is slower to begin with — budget accordingly, and if editors ever report slow saves, `grep -F "[od-revalidate]" wp-content/debug.log` is the first place to look.
+
+Egress is fine: `wp_remote_get('https://example.com/')` from prod answered **200 in 0.25 s** (checked 2026-08-13), and no `WP_HTTP_BLOCK_EXTERNAL` is defined.
+
+```bash
+# 1. Upload, into a directory that does not exist yet
+ssh timeweb 'mkdir -p ~/public_html/wp-content/mu-plugins/od-revalidate'
+scp wp/mu-plugins/od-revalidate.php timeweb:public_html/wp-content/mu-plugins/od-revalidate.php
+ssh timeweb 'chmod 600 ~/public_html/wp-content/mu-plugins/od-revalidate.php && php -l ~/public_html/wp-content/mu-plugins/od-revalidate.php'
+
+# 2. Config, secret over stdin so it never reaches a command line or a shell
+#    history. Install it INERT first — URL commented out, secret in place — so
+#    the file is in prod before cutover without doing anything.
+S=$(openssl rand -hex 32)   # prod's own secret; never stage's, never od-dev's
+printf '<?php\ndefined( '"'"'ABSPATH'"'"' ) || exit;\n// defined( '"'"'OD_REVALIDATE_URL'"'"' ) || define( '"'"'OD_REVALIDATE_URL'"'"', '"'"'https://obshee-delo.ru/api/revalidate/'"'"' );\ndefined( '"'"'OD_REVALIDATE_SECRET'"'"' ) || define( '"'"'OD_REVALIDATE_SECRET'"'"', '"'"'%s'"'"' );\n' "$S" \
+  | ssh timeweb 'T=~/public_html/wp-content/mu-plugins/od-revalidate/config.php; cat > $T && chmod 600 $T && php -l $T'
+# …and put the same $S into the deployment's REVALIDATE_SECRET (§4.1).
+
+# 3. Loaded, and inert as intended?
+ssh timeweb 'cd ~/public_html && wp --skip-plugins --skip-themes eval "
+  var_dump( class_exists( \"OD_Revalidate\" ), OD_Revalidate::configured() );"'   # true, false
+```
+
+**At cutover**, once the frontend is deployed and holds the matching secret, uncomment `OD_REVALIDATE_URL` and verify in this order — **do not test by publishing something on the live site**:
+
+```bash
+# a. the two secrets are the same one — compare digests, never values
+ssh timeweb 'cd ~/public_html && wp --skip-plugins --skip-themes eval "echo hash( \"sha256\", OD_REVALIDATE_SECRET );"'
+node --env-file=.env -e "console.log(require('node:crypto').createHash('sha256').update(process.env.REVALIDATE_SECRET).digest('hex'))"
+
+# b. a purge by hand: expects bool(true), and the frontend answers 200
+ssh timeweb 'cd ~/public_html && wp --skip-plugins --skip-themes eval "
+  var_dump( OD_Revalidate::send( array( \"tags\" => array( \"wp:menus\" ) ) ) );"'
+
+# c. only then, a real edit — retitle a post to the same title and watch
+#    x-nextjs-cache on its page go HIT → MISS
+```
+
+**Rollback is deletion.** `rm ~/public_html/wp-content/mu-plugins/od-revalidate.php` and the `od-revalidate/` directory beside it; nothing else in WordPress references either, and the only DB row it can leave is one transient (`wp --skip-plugins --skip-themes transient delete od_revalidate_unreachable`). Deleting the config alone is enough to make it inert.
+
+⚠️ **Two known gaps, both about legacy pages, both live only once A6 ships.** The plugin reports post type `post` only, so **editing a legacy page purges nothing** — the fallback route would serve its cached render for up to an hour. And prod caches its own HTML with **WP Rocket** (§2 of `wp-backend.md`), which the fallback fetches: purging Next before WP Rocket just re-caches the stale copy. When A6 lands, the order is WP Rocket first, then the frontend, and the plugin needs to start sending `paths` for pages — the endpoint already accepts them.
 ---
 
 ## 3. Film data — applying the filled worksheet
@@ -263,7 +311,7 @@ Migrating the data and pointing the app at prod is **not** launch. Still require
 - **A6 legacy-page fallback.** ~170 of 174 pages have no redesigned route; without the catch-all iframe proxy they 404. Needs the frozen copy stood up with a chromeless template + REST, `WP_LEGACY_BASE`, the proxy route and the catch-all. See [`legacy-page-fallback.md` §5](./legacy-page-fallback.md). Those 170 pages are **13.5 % of entry traffic — but 20.0 % of pageviews**, so the fallback's rendering fidelity matters more than the entry share alone suggests. See the tiering in [`implementation-plan.md`](./implementation-plan.md#launch-priority) for which deserve a native route before prod (Materials index + `plakati`/`zakladki`/`metodichki`, `/contacts/`, `/profile/[slug]`) and which stay on the fallback.
 - ~~**A8 URL compatibility.**~~ **Done 2026-08-13** (`1bd016d`, `f0ac6a9`, `cbfc8d5`, `908b292`, `ea290ac`) — `/<id>` and `/video/<segment>/` are served natively, the proxy redirects the whole `/category/*` family plus the `/video/short/` and `/page/N/` shapes at one 301 each, and gate 12 measured **84.2 %** entry-traffic coverage locally with no shape failures. **Two loose ends, both operational:** re-run gate 12 against a real deploy (od-dev lacks recent posts, so five `/<id>` rows can only settle on prod), and set `SITE_URL` per tier (§4.1).
 - ~~**F4 SEO baseline**~~ — **the URL-facing half is done** (`ea290ac`): `sitemap.xml` (8 248 URLs), `robots.txt`, `metadataBase` and self-referential canonicals on every route, per-page OG on the indexes. **Still open before launch: JSON-LD** (`NewsArticle` / `VideoObject` / `Organization`) and an OG image fallback.
-- **A4 Yandex Metrica + consent banner**, **F6 152-FZ privacy page** (port the live text, strip the stale Google Analytics reference, keep the СМИ registration line + 12+ badge). **A2 is decided** — Beget VPS + Coolify — but the deploy half of **A3** (docker build + push to GHCR, incl. the Dockerfile build-args in §4.7) is still open.
+- **A4 Yandex Metrica + consent banner** — the counter is **34478865** (read off prod's live tag). ~~**F6** 152-FZ privacy page~~ ✅ **done on prod 2026-08-13**, not ported into the repo: `/conf_politics/` is Tier 4, so the A6 fallback serves prod's own page and prod is where the text was corrected (notes §5). The СМИ registration line and 12+ badge come from od-dev widget `block-27` and are already rendered by C9's footer — but **two hrefs in that widget break on this origin**, see F6 in the plan. **A2 is decided** — Beget VPS + Coolify — but the deploy half of **A3** (docker build + push to GHCR, incl. the Dockerfile build-args in §4.7) is still open.
 - ~~**B4 on-demand revalidation.**~~ **Done 2026-08-13** — both halves ship and were tested against od-dev (egress works; the mu-plugin is installed there). What is left is not a build task but two lines of per-tier config at deploy time, in §4.8: `REVALIDATE_SECRET` on the frontend and `OD_REVALIDATE_URL` on the WP install that feeds it. Skip that and editors wait an hour.
 - **B8 WordPress plugin cleanup** is **not** required for the frontend, with one exception: removing `clearfy-pro` is what permanently fixes both the REST block (B1) and the WP-CLI redirect gotcha. Everything else in B8 is hygiene.
 
