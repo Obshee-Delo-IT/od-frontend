@@ -1,7 +1,10 @@
 /* Colours and states are the Figma `Links` matrix (`1330:36653`), read off the
-   component set: 3 colours × 4 states. Each colour is a plain class so it beats
-   Radix's `:where()`-wrapped defaults and the global `.rt-Link` hover/active in
-   theme-override.css, which otherwise paints every link red on hover. */
+   component set: 3 colours × 4 states.
+
+   Every colour selector is doubled (`.link.primary`). theme-override.css paints
+   `.rt-Text:where([data-accent-color])` red-8 and every `.rt-Link:hover`
+   red-10; those are (0,1,0) like a single class, so a lone `.primary` ties and
+   loses on source order — measured, not guessed: it rendered red-8. */
 
 .link {
   display: inline;
@@ -14,54 +17,54 @@
 }
 
 /* Figma `Color=Primary` */
-.primary {
+.link.primary {
   color: var(--gray-9);
 }
 
-.primary:hover {
+.link.primary:hover {
   color: var(--red-6);
 }
 
-.primary:active {
+.link.primary:active {
   color: var(--red-8);
 }
 
 /* Figma `Color=red` */
-.red {
+.link.red {
   color: var(--red-8);
 }
 
-.red:hover {
+.link.red:hover {
   color: var(--red-10);
 }
 
-.red:active {
+.link.red:active {
   color: var(--red-8);
 }
 
 /* Figma `Color=white` */
-.white {
+.link.white {
   color: var(--white);
 }
 
-.white:hover {
+.link.white:hover {
   color: var(--gray-4);
 }
 
-.white:active {
+.link.white:active {
   color: var(--gray-4);
 }
 
 /* Repo extra — the `_Breadcrumbs Base` gray and secondary consent copy. */
-.gray {
+.link.gray {
   color: var(--gray-6);
 }
 
-.gray:hover {
+.link.gray:hover {
   color: var(--red-10);
 }
 
-.gray:active {
+.link.gray:active {
   color: var(--red-8);
 }
 
@@ -71,19 +74,19 @@
   pointer-events: none;
 }
 
-.primary.disabled,
-.primary.disabled:hover,
-.gray.disabled,
-.gray.disabled:hover {
+.link.primary.disabled,
+.link.primary.disabled:hover,
+.link.gray.disabled,
+.link.gray.disabled:hover {
   color: var(--gray-4);
 }
 
-.red.disabled,
-.red.disabled:hover {
+.link.red.disabled,
+.link.red.disabled:hover {
   color: var(--red-3);
 }
 
-.white.disabled,
-.white.disabled:hover {
+.link.white.disabled,
+.link.white.disabled:hover {
   color: var(--gray-5);
 }

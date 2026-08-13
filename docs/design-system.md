@@ -189,7 +189,11 @@ Figma reality (from the explicit `1200` and `900` demo frames inside the `naviga
 | 900–1199 | full nav row, slightly compressed | **20 / 20** (sharp drop) | `text/2/regular` (14) |
 | < 900 (`header-mob`) | compact 48-tall bar with logo + search icon + menu icon | 16 | — |
 
-This is **real drift** — `media.css` needs an intermediate breakpoint (e.g. `--tablet (900px–1200px)`). Renaming/restructuring `--small-desktop` is the cleanest path.
+**Half of this closed with C9.** `media.css` now carries a fourth tier, `--tablet (width < 1200px)`, added rather than renamed so the existing `--mobile ⊂ --tablet ⊂ --small-desktop` max-width tiers keep nesting and no shipped rule changed meaning. The header reads them as: side padding 100 → 20 at `--tablet`, nav label 16 → 14 at `--small-desktop`.
+
+Note the two thresholds are **not** the same: the type steps down at 1440, the padding at 1200. That's what the table above says, and it matters — the 1200 tier has the tightest column of all (1000px against a 1240px one at 1440), so it is the width where the nav row runs out of room first.
+
+Still open (A1b): the multiples-of-4 vs multiples-of-5 spacing scale in §2.2.
 
 ---
 
@@ -223,8 +227,8 @@ Status column reflects the **repo as of 2026-08-13**. Where a shipped component 
 | `_Dropdown List Item` | `1324:15694` (set) | 2 | ✅ | The menu row inside an opened dropdown — realized by Radix's `Select.Item` inside `Dropdown/`. |
 | `Checkbox` | `1323:257` (set) | 2 Checked × 3 State × 2 Label = 12 | ✅ `Checkbox/` | 16×16 base, `cornerRadius:4`, gray-4 stroke, white fill. Optional Label slot. Shipped with D1 for the newsletter consent (C7). |
 | `Breadcrumbs` | `1321:5894` (set) | 3 (Number of Links = 2/3/4) | ✅ via `Breadcrumbs/` | Existing component covers it. |
-| `header-v2` | `1229:4371` | (component, not set) | ⚠️ | **Now a real component, not a loose frame.** Full composition: top row (logo lockup + "Поиск по сайту" Input + "Оказать помощь" white Button) + nav row (8 menu items as `_Button Groups Base` instances: ГЛАВНАЯ / О НАС / ПРОГРАММЫ / ВИДЕО / ПРИМИ УЧАСТИЕ / МАТЕРИАЛЫ / ОБЩЕЕ ДЕЛО-ПРО / КОНТАКТЫ). Fill `brand/red/8` (`#AE0A04`). Active nav item highlighted with `brand/red/6` (`#D83030`). Existing `modules/Header` is on older `header` / `header-scroll` components — **needs migration**. |
-| `header-mob` | `1248:4486` | component | ❌ | 360×48 compact bar: logo (scaled) + search Icon Button + menu Icon Button. No mobile header in repo today. |
+| `header-v2` | `1229:4371` | (component, not set) | ✅ `modules/Header` | Shipped in C9. 1440×128: 12 top → 57-tall logo lockup → 11 → 42-tall nav row → 6. Content column 1240 (`--container-4`) at 100px side padding; top row is the logo against a 505-wide group (320 Input + 8 + Button). Nav row is **space-between across the full column**, not centred — the eight cells measure 1027 in Figma and the remaining 213 spreads at 30.4 a gap. Fill `brand/red/8`, active cell `brand/red/6` + bold. Responsive demos `1620:15285` (1200) and `1620:15287` (900) carry the 14px label and the 20px side padding. |
+| `header-mob` | `1248:4486` | component | ✅ `modules/Header` | 360×48: the logo lockup at 0.56×, then a 32×32 outline search button (white hairline, white glyph) and a 32×32 white-filled menu button, 8 apart, 16 from the edge. Its open state (`1336:10153`, and `1336:10127` with a group expanded) is `MobileMenu`: a white sheet under the bar, 15px side padding, 42-tall rows (`Links`/Small/Primary) each closed by a gray-4 rule, children indented 15 on a 10 gap, the current section in the Active red, and a Small contained Button 25 above and below. |
 | `footer` | `838:1631` | component | ⚠️ | Existing `modules/Footer` likely consumes an older variant. Structure: logo + social icons row (VK / OK / YouTube) + "КОНТАКТЫ РЕДАКЦИИ" column (chief editor, email, phone) + "ОТЗЫВЫ" column (6 link buttons) + "ССЫЛКИ" column (9 link buttons) + bottom legal block (СМИ registration + ОГРН + 12+ + privacy link). Fill `gray-9` (`#202B37`), text mostly `gray-3`/white. |
 | `footer-mob` | `1261:7985` | component | ❌ | 360-wide stacked layout. |
 | `page header` | `1335:7682` (set, 1 variant) | 1 | ✅ `PageHeader/` | **It's not a hero — it's the entire top-of-page block.** Composition: header-v2 (instance) + breadcrumbs row + page heading "Header" (`text/9/bold` = PT Sans Narrow Bold 48, fill `brand/red/7` `#BE1710`) + tabs row (6 `_Button Groups Base (tabs)` instances inside a 5-padded white rounded wrapper). Shipped as a layout shell: optional `<Breadcrumbs>` + the red uppercase H1 + optional `tabs` slot (C3). The header-v2 instance is **not** re-rendered — that's the global `modules/Header` from the root layout. Note the shipped H1 uses `--red-8` where Figma specs `brand/red/7`. |
@@ -302,7 +306,10 @@ The high-leverage edits are in `theme-override.css`. Every Radix component re-th
 
 The eight primitives this section used to list as "next builds" — `Button`, `IconButton`, `PageHeader`, `Pagination`, `Tabs`, `Dropdown`, `Checkbox`, `Carousel` — **all shipped between 2026-05-30 and 2026-06-04** (C1–C8). What remains, in dependency order:
 
-1. **Promote `header-v2` + `header-mob` to live `modules/Header`** (C9) — the current implementation still consumes the older `header` / `header-scroll` masters. Note `header-mob` is a **separate 48-tall component**, not a CSS-responsive collapse of the desktop bar, so the swap changes structure and not just styles. `header-v2` also embeds the search input, which pulls in B7.
+1. ~~**Promote `header-v2` + `header-mob` to live `modules/Header`** (C9).~~ ✅ **Shipped 2026-08-13.** Three things the measurement turned up that the mocks don't say out loud:
+   - **The nav row does not fit below 1440 at Figma's own padding.** Eight WordPress labels plus three chevrons measure 1126px at `padding: 10px 20px`, and the 1200 tier's column is 1000 — Figma's 1200 and 900 frames both overflow their own column rather than solve it. The repo drops the horizontal padding to 8px under `--small-desktop` (→ 934) and lets the row `flex-wrap` as a safety valve, because the labels are editorial: a longer one must fall to a second line, never be clipped. With `navOverrides` hiding ОБЩЕЕДЕЛО-ПРО the live row is 783 and wraps at no width.
+   - **The search field stays presentational.** `fetchSearch` (B7) exists, a `/search/` route does not, so a submit would only 404.
+   - **The mobile drawer is derived, not effect-driven** — it stores the pathname it was opened at, so any navigation (link tap, back button) closes it without a `setState` in an effect.
 2. **Promote `footer` + `footer-mob` to live `modules/Footer`** (C10 in Figma terms) — same situation.
 3. ~~**Align the `Link` wrapper enum** to the Figma `Links` matrix (C11).~~ ✅ **Shipped 2026-08-13** — see the matrix in §3.2.
 4. **Add the 4th breakpoint** (A1b) — `media.css` is 3-tier, the design is 4-tier. Affects every responsive component, which is why it's worth doing before more pages land.

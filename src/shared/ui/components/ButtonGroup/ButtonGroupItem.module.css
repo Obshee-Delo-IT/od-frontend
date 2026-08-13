@@ -60,6 +60,10 @@
   }
 }
 
+/* `_Button Groups Base` (`1326:17229`): radius 6, padding 10/20, `text/3` at
+   1440. The 900 demo (`1620:15302`) steps the label down to `text/2` and, once
+   eight items have to share 860px, the horizontal padding has to give too —
+   Figma's own frame overflows at that width. */
 .base {
   display: flex;
   height: 100%;
@@ -76,6 +80,15 @@
 
   &[data-state='open'] .icon {
     transform: rotate(-180deg);
+  }
+
+  /* Below 1440 Figma steps the label to `text/2`. The horizontal padding has to
+     come down with it: eight WordPress-authored labels plus three chevrons
+     measure 1126px at 20px padding, and the 1200 tier only has a 1000px column
+     — Figma's own 1200 and 900 frames overflow rather than solve this. */
+  @media (--small-desktop) {
+    padding: 10px 8px;
+    font-size: var(--font-size-2);
   }
 }
 

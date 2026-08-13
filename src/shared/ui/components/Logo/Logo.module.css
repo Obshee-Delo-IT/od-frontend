@@ -25,10 +25,16 @@
   margin-right: 13.7px;
 }
 
+/* Figma draws the lockup in PT Sans Caption Bold with 4% tracking (`1326:6890`
+   in header-v2, same text node in the footer and at 0.56× in header-mob). The
+   Caption cut isn't loaded — issue #27 will bring the families local — so this
+   is PT Sans Bold with the tracking, which is what makes the three lines line
+   up with the mark instead of running narrow. */
 .name {
   color: var(--white);
   font-family: var(--font-pt-sans);
   font-weight: 700;
+  letter-spacing: 0.04em;
   line-height: var(--line-height-8);
   text-transform: uppercase;
 }

@@ -46,4 +46,29 @@ describe('toNavItems', () => {
 
     expect(result).toEqual([]);
   });
+
+  it('rewrites internal absolute URLs to paths, children included', () => {
+    const result = toNavItems(
+      [
+        wpItem(1, 0, 'О нас', 'https://wp.test/about/'),
+        wpItem(2, 1, 'Команда', 'https://wp.test/about/team/'),
+        wpItem(3, 0, 'Общее дело-ПРО', 'https://od-pro.example/'),
+      ],
+      ['https://wp.test']
+    );
+
+    expect(result[0].href).toBe('/about/');
+    expect(result[0].content[0].href).toBe('/about/team/');
+    expect(result[1].href).toBe('https://od-pro.example/');
+  });
+
+  it('drops the entries navOverrides hides, children with them', () => {
+    const result = toNavItems([
+      wpItem(1, 0, 'ГЛАВНАЯ', '/'),
+      wpItem(56658, 0, 'ОБЩЕЕДЕЛО-ПРО', 'https://общеедело-про.рф'),
+      wpItem(2, 56658, 'Конкурс', 'https://общеедело-про.рф/contest/'),
+    ]);
+
+    expect(result.map((item) => item.text)).toEqual(['ГЛАВНАЯ']);
+  });
 });

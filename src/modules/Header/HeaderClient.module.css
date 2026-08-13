@@ -1,124 +1,103 @@
+/* Geometry is Figma `header-v2` (`1229:4371`), 1440×128:
+   12 top → 57-tall logo lockup → 11 → 42-tall nav row → 6 bottom.
+   The content column is 1240 (`--container-4`) with 100px of side padding; the
+   1200 demo (`1620:15285`) keeps the 100 and the 900 one (`1620:15287`) drops
+   to 20, which is what `--tablet` switches. */
+
 .header {
   width: 100%;
-  padding: 6px 20px 0px 20px;
   background-color: var(--red-8);
-
-  @media (--mobile) {
-    padding: 6px 20px;
-  }
 }
 
-.headerMobile {
-  display: none;
-
+/* While the drawer is open the bar has to sit at the top of the viewport, the
+   way the open-state mock (`1336:10127`) shows it — otherwise opening the menu
+   half-way down a page leaves the ✕ off-screen. Body scroll is already locked,
+   so nothing shifts underneath. */
+.open {
   @media (--mobile) {
-    display: flex;
-    justify-content: space-between;
-  }
-}
-
-.menuMobile {
-  display: none;
-
-  @media (--mobile) {
-    position: absolute;
-    z-index: 100;
-    top: 49.78px;
+    position: fixed;
+    z-index: 110;
+    top: 0;
+    right: 0;
     left: 0;
-    display: flex;
-    width: 100%;
-    max-height: 95vh;
-    flex-direction: column;
-    padding: 0px 15px;
-    background-color: var(--white);
-    overflow-y: scroll;
   }
 }
 
-.input {
-  width: 320px;
-  margin-right: 8px;
+.desktop {
+  padding: 0 100px;
+
+  @media (--tablet) {
+    padding: 0 20px;
+  }
+
+  @media (--mobile) {
+    display: none;
+  }
+}
+
+.inner {
+  max-width: var(--container-4);
+  margin: 0 auto;
 }
 
 .top {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
+  padding-top: 12px;
 }
 
-.searchBar {
+.logoLink {
+  color: inherit;
+  text-decoration: none;
+}
+
+.actions {
   display: flex;
+  align-items: flex-start;
+  gap: 8px;
 }
 
-.bottom div ul {
-  justify-content: center;
-}
+/* `Input Field` instance inside `Frame 33790` — 320×48. */
+.search {
+  width: 320px;
 
-.bottom div ul li a {
-  @media (--small-desktop) {
-    padding: 5px;
-    font-size: var(--font-size-2);
+  @media (--tablet) {
+    width: 260px;
   }
 }
 
-.menuMobile_overlay {
+.nav {
+  padding-bottom: 6px;
+  margin-top: 11px;
+}
+
+/* `header-mob` (`1248:4486`) — 360×48, 16px side padding, two 32×32 buttons
+   with an 8px gap. */
+.mobileBar {
   display: none;
 
   @media (--mobile) {
-    position: fixed;
-    z-index: 90;
-    display: block;
-    backdrop-filter: blur(2px);
-    background: rgba(0, 0, 0, 0.4);
-    inset: 49.78px 0 0 0;
-  }
-}
-
-.menuMobile_link {
-  @media (--mobile) {
-    padding: 10px 0px;
-    border-bottom: 1px solid var(--gray-4);
-  }
-}
-
-.menuMobile_accordion {
-  @media (--mobile) {
-    border-bottom: 1px solid var(--gray-4);
-  }
-}
-
-.accordion_link {
-  @media (--mobile) {
-    padding: 10px 15px;
-  }
-}
-
-.menuMobile_button {
-  @media (--mobile) {
-    padding: 25px 0px;
-    text-align: center;
-  }
-}
-
-.mobileButtons {
-  @media (--mobile) {
     display: flex;
+    height: 48px;
     align-items: center;
+    justify-content: space-between;
+    padding: 0 16px;
   }
 }
 
-.searchBtn {
-  @media (--mobile) {
-    margin-right: 8px !important;
-  }
+.mobileActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
-.headerDesktop {
-  @media (--mobile) {
-    display: none !important;
-  }
-}
-
-.link {
-  text-decoration: none;
+/* The search button is the one control that is *not* the shipped outline
+   variant: on the red bar Figma draws it as a white hairline with a white
+   glyph, while the menu button next to it keeps the white fill + red glyph the
+   outline variant already gives. */
+.searchButton.searchButton {
+  background-color: transparent;
+  box-shadow: inset 0 0 0 1px var(--white);
+  color: var(--white);
 }
