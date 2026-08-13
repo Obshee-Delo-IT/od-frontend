@@ -38,25 +38,32 @@ The redesign is replacing an existing site. Key facts harvested from a live read
 
 91 days of live-site analytics (`Популярное` + `Страницы входа` exports): **22 881 visitors · 27 076 visits · 58 916 pageviews** — about **250 visitors/day**. Small in absolute terms, which is itself a finding: this is not a property where a launch-day SEO dip is existential. The prioritisation below is about not discarding the ~30 % of visits that arrive from search straight onto a deep page.
 
-**Rank sections by *entry visits*, not pageviews.** Pageviews measure what people browse to once they're inside (the new header/footer serves that fine either way). Entry visits measure what search engines send traffic to — and that is exactly the traffic the **A6 legacy-iframe fallback degrades**, since embedded pages get no real SSR SEO. A page with many views but few entries is a safe fallback candidate; a page with few views but many entries is not.
+**Rank by *entry visits* first, then re-read the same list by *pageviews*.** They answer different questions and they rank differently, which is why every table below carries both columns.
 
-| Section | Views | Entries | % of all entries | Status |
-|---|---:|---:|---:|---|
-| Post detail `/<id>/` | 23 529 | 12 530 | **46.5 %** | ✅ built (news + film) — **and `/<id>` is now the served URL, see A8** |
-| Home `/` | 8 890 | 6 989 | **25.9 %** | ✅ D1 |
-| `/video/*` (5 sub-pages) | 12 789 | 3 328 | **12.3 %** | ✅ D7 — **served as real routes `/video/<segment>/`, see A8** |
-| `/materials/*` (14 sub-pages) | 3 981 | 1 327 | 4.9 % | ❌ D8 |
-| `/profile/*` (205 records) | 925 | 565 | 2.1 % | ❌ D3 |
-| `/contacts/` | 1 519 | 545 | 2.0 % | ❌ D4 |
-| `/about/*` (11 sub-pages) | 1 771 | 345 | 1.3 % | ❌ D3 |
-| `/category/*` | 1 019 | 301 | 1.1 % | WordPress's own URL space — **redirect the whole family, build none of it**; ✅ A8 |
-| `/get-involved/*` (18 pages) | 932 | 262 | 1.0 % | ❌ D9 |
-| `/healthy-russia|youth|kids/` | 701 | 254 | 0.9 % | ❌ D6 (these *are* the «программы») |
-| `/projects/` | 794 | 85 | 0.3 % | ❌ D6 index |
-| `/team/` | 326 | 65 | 0.2 % | ❌ D3 |
-| `/actual/`, `/faq/`, `/sitemap/`, `/sp/`, `/sms/`, `/conf_politics/`, `/rekvizit/`, … | < 300 each | < 50 each | < 0.2 % each | ❌ |
+- **Entry visits** = what search engines send traffic to. This is the traffic the **A6 legacy-iframe fallback degrades**, since embedded pages get no real SSR SEO. It is the primary ranking: a page with few views but many entries must not be an iframe.
+- **Pageviews** = what visitors consult once they are already inside. Under A6 this is *not* free. The header and footer are ours, but the body is the old design in an iframe — so a heavily-browsed page shows a visible design seam to exactly the people who already trust the site.
 
-**The headline: what is already built covers 85 % of entries and 77 % of views.** Home + `/video/*` + post detail = 22 847 of 26 956 entries. Everything unbuilt in Workstream D put together is the remaining ~15 %. The launch blocker is therefore **not** an unbuilt page — it was A8 (URL compatibility, now implemented) plus B-VIDEO2 (film data, editorial) and A6 (the fallback for the ~15 %).
+**The gap between the two is big enough to change decisions.** The fallback carries **13.5 % of entries but 20.0 % of views** — one pageview in five. And its most-used page is not a search landing at all: `/about/` takes **1 036 views against 230 entries** (4.5×). Ratio is the tell — `/projects/` is 9.3×, `/materials/` 8.8×, `/contacts/` and `/get-involved/` 7.0× each, `/news/` 21×. These are nav destinations, reached by clicking, and entry-visit ranking alone makes them look negligible when they are not.
+
+Sorted by entries. **`v/e`** is views ÷ entries — how much of a section's traffic arrives from inside the site rather than from search. High `v/e` = a nav destination; low = a search landing.
+
+| Section | Views | Entries | % of all entries | `v/e` | Status |
+|---|---:|---:|---:|---:|---|
+| Post detail `/<id>/` | 23 529 | 12 530 | **46.5 %** | 1.9 | ✅ built (news + film) — **and `/<id>` is now the served URL, see A8** |
+| Home `/` | 8 890 | 6 989 | **25.9 %** | 1.3 | ✅ D1 |
+| `/video/*` (5 sub-pages) | 12 789 | 3 328 | **12.3 %** | 3.8 | ✅ D7 — **served as real routes `/video/<segment>/`, see A8** |
+| `/materials/*` (14 sub-pages) | 3 981 | 1 327 | 4.9 % | 3.0 | ❌ D8 — except `/materials/articles/`, ✅ shipped as an alias |
+| `/profile/*` (140 URLs seen) | 926 | 566 | 2.1 % | **1.6** | ❌ D3 — lowest ratio on the site: landed on, then left |
+| `/contacts/` (index + 124 regions) | 1 521 | 547 | 2.0 % | 2.8 | ❌ D4 |
+| `/about/*` (11 sub-pages) | **1 771** | 345 | 1.3 % | 5.1 | ❌ D3 — **most-viewed section behind the A6 fallback** |
+| `/category/*` | 1 019 | 301 | 1.1 % | 3.4 | WordPress's own URL space — **redirect the whole family, build none of it**; ✅ A8 |
+| `/get-involved/*` (18 pages) | 932 | 262 | 1.0 % | 3.6 | ❌ D9 |
+| `/healthy-russia\|youth\|kids/` | 701 | 258 | 0.9 % | 2.7 | ❌ D6 (these *are* the «программы») |
+| `/projects/` | 794 | 85 | 0.3 % | **9.3** | ❌ D6 index — highest ratio of any real page |
+| `/team/` | 326 | 65 | 0.2 % | 5.0 | ❌ D3 |
+| `/actual/`, `/faq/`, `/sitemap/`, `/sp/`, `/sms/`, `/conf_politics/`, `/rekvizit/`, … | < 300 each | < 50 each | < 0.2 % each | — | ❌ |
+
+**The headline: what is already built covers 85.1 % of entries and 77.2 % of views**; the legacy redirects take another 1.5 % / 2.7 %, leaving **13.5 % of entries and 20.0 % of views** for the A6 fallback. The launch blocker is therefore **not** an unbuilt page — it was A8 (URL compatibility, now implemented) plus B-VIDEO2 (film data, editorial) and A6 (the fallback for that remainder). Read the two numbers together, though: the SEO exposure is 13.5 %, the *visible* exposure is 20.0 %, so the fallback's rendering quality is a bigger deal than the entry share alone suggests.
 
 **Video is 44 % of the whole site.** `/video/*` 12 789 + film detail pages 12 557 + `/category/video/*` 792 = **26 138 views**, **8 236 entries (30.6 %)**. D7 was the right thing to build first, and finishing B-VIDEO2 protects the largest single block of traffic on the site.
 
@@ -65,8 +72,8 @@ The redesign is replacing an existing site. Key facts harvested from a live read
 **Three corrections to assumptions in this plan:**
 
 1. **Materials is under-prioritised.** The plan says "build last" (Block 6), but it is the #3 section by entries and `/materials/plakati/` is the **#6 entry page on the entire site** (501 entries, 13 % bounce, 1.8 pages deep) — a strong search landing that would be a poor iframe. It doesn't need all 14 sub-pages, though: **4 of them carry 62 % of the section's entries** (plakati 501 · zakladki 150 · articles 114 · metodichki 56).
-2. **`/materials/articles/` is not a D8 build at all.** Its contents are ordinary posts in category **578**, which the D2 index already filters (`/news?category=578`) and the news detail route already renders — the top non-film post pages are exactly these («Что такое современные сигареты?» 397 entries, «Правда об алкоголе» 201, «Курение и голос», «Эндогенный алкоголь», «Курение и волосы»). A thin alias route is enough.
-3. **Profiles outrank the team page and most of About.** `/profile/*` takes 565 entries vs `/team/` 65 and all 11 `/about/` sub-pages 345 combined — though 334 of the 565 are one record (`moiseev-oleg-olegovich`). D3's value is the **profile detail template**, not the team index. Likewise **D6 has no project-detail traffic at all** — zero `/projects/<something>/` URLs appear in 91 days; the real «программы» are the three top-level `/healthy-*` pages. That corroborates B-CPT's finding that the `project` CPT is 21 Lorem-ipsum drafts.
+2. ~~**`/materials/articles/` is not a D8 build at all.**~~ — **shipped 2026-08-13** as `app/materials/articles/page.tsx`. Verified against WP first: the live page is a hand-curated list of **14** links, every one a post in category **578**, and the category holds **19** — so a listing of the category is that page's superset and nothing curated is lost. It is a real route rather than a 301 to `/news/?category=articles` because **114 entry visits** land on this URL from search; it self-canonicalises, and the index's «Статьи» chip canonicalises *onto* it (page 2+ still self-canonicalises — a different slice, not a duplicate) so the collection keeps one address. `/category/articles/` was repointed here too. Its five child pages (`about-beer`, `need-to-know`, `main-factor`, `russia-power`, `what-is-going-on` — 12 views or fewer each) are real WP pages and stay on the A6 fallback with the rest of `/materials/`.
+3. **Profiles win on entries; About wins on views — D3 needs to hear both.** By **entry visits** `/profile/*` leads: **566** against `/about/*` **345** and `/team/` **65**, so the **profile detail template** is what protects search traffic — though 334 of the 566 are one record (`moiseev-oleg-olegovich`) and the other 139 URLs average 1.7 entries each. By **pageviews the order reverses**: `/about/*` **1 771** against `/profile/*` **926**, and the single page `/about/` (1 036) outdraws the entire 140-URL profile section. The ratios say why — profiles are 1.6 views per entry, the lowest of any section (landed on from search, then left), while About is 5.1× (reached by clicking, from inside). Both readings are correct and they imply different work: **build the profile template for the search traffic** (it is Tier 2 already), and treat **`/about/` as the first page to lift off the A6 fallback** once Tier 2 lands, because it is the most-seen page behind it. Likewise **D6 has no project-detail traffic at all** — zero `/projects/<something>/` URLs appear in 91 days; the real «программы» are the three top-level `/healthy-*` pages. That corroborates B-CPT's finding that the `project` CPT is 21 Lorem-ipsum drafts — though `/projects/` itself is 794 views against 85 entries (**9.3×**, the most purely-internal page on the site), so the index is worth more than its entry count implies even if the detail template is worth nothing.
 
 ### Tiering
 
@@ -75,11 +82,13 @@ The redesign is replacing an existing site. Key facts harvested from a live read
 **Tier 1 — ship natively before prod; already done.** D1 Home · D7 `/video` index + film detail · D2 `/news` + post detail. Remaining work on these is data and URLs, not markup.
 
 **Tier 2 — ship natively before prod; not done.** In order:
-1. **`/materials/` index + the 4 top sub-pages** (partial D8) — protects 62 % of the section's entries for ~30 % of the build.
+1. **`/materials/` index + the 3 remaining top sub-pages** (partial D8) — protects 62 % of the section's entries for ~30 % of the build. `articles`, the fourth, is ✅ done as an alias route; `plakati` · `zakladki` · `metodichki` are left. The **index** carries only 107 entries but **939 views (8.8×)** — it is the hub the section is browsed from, so it is worth building for the second reason, not the first.
 2. **`/contacts/`** (D4, directory only — the live page has no form, so B6 is *not* a dependency; defer the form).
 3. **`/profile/[slug]`** detail template (D3 subset — the CPT is already Gutenberg per B8, so this is one template over existing data).
 
 **Tier 3 — legacy fallback at launch, redesign after prod.** `/about/*` · `/get-involved/*` · `/projects/` + `/healthy-*` · `/team/` · `/actual/` · the remaining 10 `/materials/` sub-pages. Together ~2 800 views and ~1 100 entries (4 % of the site). Each becomes a normal D-item once traffic or editorial priority justifies it; a redesigned route auto-shadows its fallback, so this is reversible page-by-page with no migration step.
+
+**Within Tier 3, order by *views*, not entries** — everything here is already low-entry by construction, so the remaining question is how many people will *see* an iframe. That puts **`/about/` first** (1 036 views, the most-viewed page behind the fallback), then `/projects/` (794) and `/get-involved/` (586). `/team/` (326) and `/actual/` (134) are genuinely last. This is the ordering the entry-only read got backwards.
 
 **Tier 4 — leave on the fallback indefinitely.** `/faq/` (70 views — **D5 moves from Block 4 to last**), `/sitemap/`, `/sp/`, `/sms/`, `/rekvizit/`, `/my-account/`, `/campaign/`, `/pl-categs/`, WP account/preview URLs. Combined they are under 0.5 % of the site.
 
@@ -263,7 +272,9 @@ Each item is "build the route + connect it to WP + ship desktop + mobile". Order
   - **8 films exist on prod but not od-dev** and sit in the worksheet with a blank `id` (2 already have a Kinescope id resolved). Fill their ids when the sheet is run against prod.
 
 - [ ] **B-CPT (note, not yet scoped). Existing `project` / `profile` CPTs.** WP-CLI recon (2026-06-04) found od-dev already exposes public **`project` (Projects)** and **`profile` (Profiles)** custom post types (project sample id 56057). This means **D6 (Projects) and D3 (About/team) are more CMS-ready than assumed** — they likely don't need hard-coded entries. Before building D3/D6, do a focused read-only recon of these CPTs (fields, REST exposure, taxonomy, counts, whether ACF is wanted on them) and resolve the D6 "hard-coded vs CMS" question accordingly. Deferred per scope (films-only this pass).
-- [ ] **D8. Materials (`app/materials/`)** — biggest section. Confirmed Figma page templates: `article` (`1012:10934`), `article-content` (`966:8461`), `ads` (`778:2206`), `handbooks` (`779:4133`), `books` (`966:6650`), `disks` (`966:8062`), `printing` (`966:2949`), `flyers` (`966:7747`), `social-ads` (`966:8538`), `social-posters` (`998:9524`), `social-sticker` (`1013:11191`), `social-banners` (`1009:10590`), `social-video` (`1012:11084`), `social-audio` (`1009:10756`), `car sticker` (`966:8388`). Live site confirms taxonomy: methodical guides, printed (DVDs / books / bookmarks / flyers / car stickers), social advertising (posters / billboards / stickers / LED clips / audio clips), articles. ~14 sub-pages, asset volumes up to 88 items per page (social-posters). Depends on C4 (pagination), C5 (tabs — top-of-page material-type switcher), and a clear asset-hosting story (see Workstream E). **Split, don't build whole — and it is no longer "build last".** Metrica ranks Materials #3 by search entries (1 327, 4.9 %), and **4 of the 14 sub-pages carry 62 % of them**: `plakati` **501 entries** (the #6 entry page on the entire site, 13 % bounce), `zakladki` 150, `articles` 114, `metodichki` 56. Those four plus the section index are **Tier 2 — before prod**; the other ten (`social-reklama`, `printed-products`, `booklet`, `billboards`, `sticker`, `books`, `disk`, `autosticker`, `led-board-roliki`, `audio-roliki-social-reklama`) are Tier 3 on the A6 fallback. **`/materials/articles/` is not a build at all** — its contents are ordinary posts in category **578**, already filtered by the D2 index (`/news?category=578`) and rendered by the news detail route; a thin alias route suffices.
+- [ ] **D8. Materials (`app/materials/`)** — biggest section. Confirmed Figma page templates: `article` (`1012:10934`), `article-content` (`966:8461`), `ads` (`778:2206`), `handbooks` (`779:4133`), `books` (`966:6650`), `disks` (`966:8062`), `printing` (`966:2949`), `flyers` (`966:7747`), `social-ads` (`966:8538`), `social-posters` (`998:9524`), `social-sticker` (`1013:11191`), `social-banners` (`1009:10590`), `social-video` (`1012:11084`), `social-audio` (`1009:10756`), `car sticker` (`966:8388`). Live site confirms taxonomy: methodical guides, printed (DVDs / books / bookmarks / flyers / car stickers), social advertising (posters / billboards / stickers / LED clips / audio clips), articles. ~14 sub-pages, asset volumes up to 88 items per page (social-posters). Depends on C4 (pagination), C5 (tabs — top-of-page material-type switcher), and a clear asset-hosting story (see Workstream E). **Split, don't build whole — and it is no longer "build last".** Metrica ranks Materials #3 by search entries (1 327, 4.9 %), and **4 of the 14 sub-pages carry 62 % of them**: `plakati` **501 entries** (the #6 entry page on the entire site, 13 % bounce), `zakladki` 150, `articles` 114, `metodichki` 56. Those four plus the section index are **Tier 2 — before prod**; the other ten (`social-reklama`, `printed-products`, `booklet`, `billboards`, `sticker`, `books`, `disk`, `autosticker`, `led-board-roliki`, `audio-roliki-social-reklama`) are Tier 3 on the A6 fallback. Also note the index itself is **939 views against 107 entries (8.8×)** — it barely registers as a search landing but is how the section is browsed.
+
+  **`/materials/articles/` is ✅ done** (2026-08-13) and was never a D8 build: `app/materials/articles/page.tsx` lists category **578** in full (19 posts, a superset of the legacy page's 14 curated links) through the shared `NewsGrid`, self-canonicalises, and is seeded into `sitemap.ts`. See correction 2 above. Its five child pages stay on the fallback.
 - [ ] **D9. Volunteer / participation page** — the loose `1101:*` scratch in Figma. Confirm with Design whether this is still in scope and where it lives (`/volunteer`? `/participation`? part of `/about`?).
 
 ---
@@ -398,12 +409,12 @@ Workstream D entries above cite the GitHub sub-issues they decompose into. Most-
 > **Superseded for launch ordering by [Launch priority](#launch-priority--measured-from-real-traffic-yandex-metrica-2026-05-14--2026-08-13).** The blocks below are a *dependency* order (what must exist before what can be built). The tiering above is a *shipping* order (what must exist before prod, measured against real traffic). Where they disagree — D8 Materials in Block 6 vs Tier 2, D5 FAQ in Block 4 vs Tier 4 — the traffic tiering wins.
 >
 > **Shortest honest path to prod, given Blocks 1–3 are largely done:**
-> 1. ~~**A8** URL compatibility~~ — **done 2026-08-13**, along with F4's sitemap/robots/canonicals: `/<id>` and `/video/<segment>/` are served, everything legacy is one 301, and gate 12 measured 83.7 % locally. Only the prod re-run of gate 12 is left.
+> 1. ~~**A8** URL compatibility~~ — **done 2026-08-13**, along with F4's sitemap/robots/canonicals: `/<id>` and `/video/<segment>/` are served, everything legacy is one 301, and gate 12 measures **84.2 %** locally (83.7 % before the `/materials/articles/` alias). Only the prod re-run of gate 12 is left.
 > 2. **A6** legacy fallback — the mechanism that lets Tiers 3–4 ship as-is; it now only has to fill the catch-all's non-numeric branch.
 > 3. **B-VIDEO2** film data — protects the 44 % of the site that is video.
 > 4. **A7 / [`prod-migration-runbook.md`](./prod-migration-runbook.md)** — REST on prod, ACF, the worksheet, deploy, verification gates.
 > 5. **A4 + F6** Metrica + consent + the corrected privacy text (legally required, traffic-irrelevant).
-> 6. **Tier 2 pages**: partial D8 (index + 4 sub-pages), D4 contacts directory, D3's `/profile/[slug]`.
+> 6. **Tier 2 pages**: partial D8 (index + `plakati`/`zakladki`/`metodichki`; `articles` ✅ done), D4 contacts directory, D3's `/profile/[slug]`.
 >
 > Everything else is post-prod, replaced page-by-page behind the fallback.
 

@@ -44,9 +44,9 @@ ssh timeweb 'cd ~/od-stage/public_html && wp --skip-plugins=clearfy-pro plugin l
 
 **1.3 Taxonomy ids — do not assume they match od-dev.**
 ```bash
-ssh timeweb 'cd ~/od-stage/public_html && wp --skip-plugins=clearfy-pro term list category --fields=term_id,slug,name,parent,count --format=csv | grep -E "video|movies|mult|roliki|famous|actual"'
+ssh timeweb 'cd ~/od-stage/public_html && wp --skip-plugins=clearfy-pro term list category --fields=term_id,slug,name,parent,count --format=csv | grep -E "video|movies|mult|roliki|famous|actual|novosti|articles"'
 ```
-Expected on od-dev: parent «Видео» `85`; children Фильмы `581`, Мультфильмы `580`, Ролики `86`, Известные люди `559`; sibling «Видео события» `52`. **Record the real numbers** — §4.3 depends on them.
+Expected on od-dev: parent «Видео» `85`; children Фильмы `581`, Мультфильмы `580`, Ролики `86`, Известные люди `559`; sibling «Видео события» `52`. **Also the two news ids** — Новости `47`, Статьи `578` (count 19) — which drive the `/news/` chips and `/materials/articles/`. **Record the real numbers and their counts** — §4.3 needs the ids, and §5 gates 1–2 and 7 compare against the counts.
 
 **1.4 Film body format — the B2 check.** This decides how much of the film page survives:
 ```bash
@@ -181,7 +181,7 @@ pnpm generate:types && pnpm type-check
 **4.3 Apply the real category ids (B5)** if §1.3 differed from od-dev. **One file since 2026-08-13** — `src/shared/config/filmCategories.ts`, which holds `FILM_CATEGORIES` (URL segment → id: `filmy` 581, `multy` 580, `roliki` 86, `famous-people` 559) and is read by `/video/` and `/video/<segment>/`, the related-films scope on a film page, the catch-all's SSG seed, `sitemap.xml` and the A8 redirect table. Change the four numbers there and every consumer follows. **Do not rename the keys** — they are the live site's URL segments, and `/video/multy/` and `/video/filmy/` are the #2 and #3 entry pages on the site.
 
 Two things that are *not* in that file and still need a look:
-- **`src/app/news/page.tsx`** — `CATEGORY_IDS` holds the news chips (`47` Новости / `578` Статьи), equally environment-specific. `legacyRedirects.ts` points `/category/{novosti,articles}` at the chip **keys** (`nashi-dela` / `articles`), not at ids, so it follows this file automatically.
+- **`src/shared/config/newsCategories.ts`** — the news equivalent, `NEWS_CATEGORIES` (`nashi-dela` 47 / `articles` 578), equally environment-specific. Read by the `/news/` chips **and** by `/materials/articles/`, so 578 being wrong empties that page as well as the chip. `legacyRedirects.ts` points `/category/novosti/` at the chip **key** and `/category/articles/` at `ARTICLES_HREF`, never at an id, so it follows this file automatically.
 - **`scripts/lib/wp.mjs`** — its own `FILM_CATEGORY_IDS` copy, because the scripts are zero-dep Node and can't import TypeScript. ⚠️ **This one is used in §3, before you get here** — a wrong id makes `film:export` write an empty worksheet, which looks like "no films need data" rather than an error. Fix it during §1.3, not §4.3.
 
 A wrong id here **fails quietly rather than loudly**: the catalogue answers 200 with an empty or unfiltered result rather than 404ing, so §5 gates 1–2 (card counts matching WP) are what actually catch it.
@@ -227,6 +227,8 @@ Post detail lives at the bare **`/<id>`** since A8 — that is the *only* addres
 5. `/<id>` for a film with a poster — the sidebar плакат card renders with «Скачать плакат».
 6. Card thumbnails resolve (covers from §3.5) — no broken images, no `wp.invalid`.
 7. `/` and `/news/` still render, and `/<id>` for a **news** post renders the article (not the film layout) — the news path shares `resolveMediaUrl` and `parsePost` with video.
+    - `/materials/articles/` — 200, and the card count equals the «Статьи» category count from §1.3 (od-dev: **19**). A count of 0 or of *every* post means `NEWS_CATEGORIES.articles` has the wrong id for this environment (§4.3) — both answer 200, so only the count catches it.
+    - Its `<link rel="canonical">` is `<SITE_URL>/materials/articles/`, and `/news/?category=articles` carries **the same** canonical while `/news/?category=articles&page=2` carries its own. That pair is the whole point of the alias; if the first two diverge the collection has two addresses again.
 8. A film with **no** ACF data degrades gracefully: no empty pill strip, no phantom poster card.
 9. `pnpm film:import --in <sheet>` reports `0 field(s)` — data landed and persisted.
 10. 375px and 1440px on `/video/` and one film page.
@@ -245,7 +247,7 @@ Post detail lives at the bare **`/<id>`** since A8 — that is the *only* addres
 
     **Also verify what the site advertises** (F4, shipped with A8): `/sitemap.xml` is a well-formed XML with ~8 000 `<loc>` entries, every one slash-terminated and none of them a URL that redirects; `/robots.txt` names that sitemap at the **production** host — which comes from `SITE_URL` (§4.1), so a missing env var here publishes 8 000 canonical URLs pointing at the wrong domain.
 
-    **Baseline to beat — localhost against od-dev, 2026-08-13: `83.7 %` coverage** (124/200 URLs, 17 492/20 907 visits), zero shape failures. The 16.3 % that failed was 3 190 visits of not-yet-redesigned sections (Materials biggest at 1 280) plus 225 visits of five post ids absent from od-dev (`73381`, `73084`, `72705`, `74794`, `74557` — all `rest_post_invalid_id`). **Against prod those five should resolve, so a prod run before A6 should land near 85 %, and near 100 % after it.** A number materially below that means something is wrong with the URL layer, not with the content.
+    **Baseline to beat — localhost against od-dev, 2026-08-13: `84.2 %` coverage** (125/200 URLs, 17 606/20 907 visits), zero shape failures. It was 83.7 % before the `/materials/articles/` alias route added its 114 visits. The 15.8 % that failed is 3 076 visits of not-yet-redesigned sections (Materials still biggest at 1 166) plus 225 visits of five post ids absent from od-dev (`73381`, `73084`, `72705`, `74794`, `74557` — all `rest_post_invalid_id`). **Against prod those five should resolve, so a prod run before A6 should land near 85 %, and near 100 % after it.** A number materially below that means something is wrong with the URL layer, not with the content.
 
 ---
 
@@ -254,7 +256,7 @@ Post detail lives at the bare **`/<id>`** since A8 — that is the *only* addres
 Migrating the data and pointing the app at prod is **not** launch. Still required:
 
 - **A6 legacy-page fallback.** ~170 of 174 pages have no redesigned route; without the catch-all iframe proxy they 404. Needs the frozen copy stood up with a chromeless template + REST, `WP_LEGACY_BASE`, the proxy route and the catch-all. See [`legacy-page-fallback.md` §5](./legacy-page-fallback.md). Those 170 pages are only **~15 % of entry traffic** — see the traffic tiering in [`implementation-plan.md`](./implementation-plan.md#launch-priority--measured-from-real-traffic-yandex-metrica-2026-05-14--2026-08-13) for which of them deserve a native route before prod (Materials index + 4 sub-pages, `/contacts/`, `/profile/[slug]`) and which stay on the fallback.
-- ~~**A8 URL compatibility.**~~ **Done 2026-08-13** (`1bd016d`, `f0ac6a9`, `cbfc8d5`, `908b292`, `ea290ac`) — `/<id>` and `/video/<segment>/` are served natively, the proxy redirects the whole `/category/*` family plus the `/video/short/` and `/page/N/` shapes at one 301 each, and gate 12 measured **83.7 %** entry-traffic coverage locally with no shape failures. **Two loose ends, both operational:** re-run gate 12 against a real deploy (od-dev lacks recent posts, so five `/<id>` rows can only settle on prod), and set `SITE_URL` per tier (§4.1).
+- ~~**A8 URL compatibility.**~~ **Done 2026-08-13** (`1bd016d`, `f0ac6a9`, `cbfc8d5`, `908b292`, `ea290ac`) — `/<id>` and `/video/<segment>/` are served natively, the proxy redirects the whole `/category/*` family plus the `/video/short/` and `/page/N/` shapes at one 301 each, and gate 12 measured **84.2 %** entry-traffic coverage locally with no shape failures. **Two loose ends, both operational:** re-run gate 12 against a real deploy (od-dev lacks recent posts, so five `/<id>` rows can only settle on prod), and set `SITE_URL` per tier (§4.1).
 - ~~**F4 SEO baseline**~~ — **the URL-facing half is done** (`ea290ac`): `sitemap.xml` (8 248 URLs), `robots.txt`, `metadataBase` and self-referential canonicals on every route, per-page OG on the indexes. **Still open before launch: JSON-LD** (`NewsArticle` / `VideoObject` / `Organization`) and an OG image fallback.
 - **A4 Yandex Metrica + consent banner**, **F6 152-FZ privacy page** (port the live text, strip the stale Google Analytics reference, keep the СМИ registration line + 12+ badge). **A2 is decided** — Beget VPS + Coolify — but the deploy half of **A3** (docker build + push to GHCR, incl. the Dockerfile build-args in §4.7) is still open.
 - **B4 on-demand revalidation** — otherwise editors wait an hour (§4.6).

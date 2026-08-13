@@ -1,34 +1,26 @@
-import dayjs from 'dayjs';
-import 'dayjs/locale/ru';
-import { NewsFilter, type NewsFilterOption } from '@/modules/News';
+import { NewsFilter, NewsGrid, type NewsFilterOption } from '@/modules/News';
 import { NewsletterSignup } from '@/modules/NewsletterSignup';
 import { fetchNewsList } from '@/shared/api';
+import { ARTICLES_HREF, NEWS_CATEGORIES, resolveNewsCategory } from '@/shared/config/newsCategories';
 import { canonicalUrl } from '@/shared/config/site';
 import { Box } from '@/shared/ui/components/Box';
-import { NewsCard } from '@/shared/ui/components/NewsCard';
 import { PageHeader } from '@/shared/ui/components/PageHeader';
 import { Pagination } from '@/shared/ui/components/Pagination';
-import css from './NewsListPage.module.css';
 import type { Metadata } from 'next';
 
 export const revalidate = 3600;
-
-dayjs.locale('ru');
 
 const PER_PAGE = 15;
 
 // «Наши дела» has no dedicated WP category, so it maps to the main «Новости»
 // category (47); «Статьи» is the articles category (578); «Все» is unfiltered.
+// The ids live in `newsCategories.ts` — see the note there on why nothing may
+// point at them directly.
 const FILTER_OPTIONS: NewsFilterOption[] = [
   { label: 'Все', value: null },
   { label: 'Наши дела', value: 'nashi-dela' },
   { label: 'Статьи', value: 'articles' },
 ];
-
-const CATEGORY_IDS: Record<string, number> = {
-  'nashi-dela': 47,
-  articles: 578,
-};
 
 const DESCRIPTION = 'Новости и статьи общероссийской общественной организации «Общее дело»';
 
@@ -59,10 +51,9 @@ const buildHref = ({ category, page }: { category: string | null; page: number }
  * rather than advertising a filter that isn't applied.
  */
 const resolveParams = ({ category, page }: Awaited<NewsPageProps['searchParams']>) => {
-  const categoryParam = firstParam(category);
   const pageParam = Number(firstParam(page));
   return {
-    activeCategory: categoryParam && categoryParam in CATEGORY_IDS ? categoryParam : null,
+    activeCategory: resolveNewsCategory(firstParam(category)),
     currentPage: Number.isFinite(pageParam) && pageParam > 1 ? Math.floor(pageParam) : 1,
   };
 };
@@ -71,10 +62,18 @@ const resolveParams = ({ category, page }: Awaited<NewsPageProps['searchParams']
  * Every filtered and paginated variant self-canonicalises. Collapsing them onto
  * `/news/` instead would drop pages 2+ out of the index entirely, and they are
  * the only path to older posts for a crawler that doesn't read the sitemap.
+ *
+ * The one exception is the unpaginated «Статьи» view, which points at
+ * `/materials/articles/`: that route lists the same category in full, and it is
+ * the address search engines already hold. Page 2+ still self-canonicalises —
+ * it is a different slice of posts, not a duplicate of the alias.
  */
 export const generateMetadata = async ({ searchParams }: NewsPageProps): Promise<Metadata> => {
   const { activeCategory, currentPage } = resolveParams(await searchParams);
-  const url = canonicalUrl(buildHref({ category: activeCategory, page: currentPage }));
+  const isArticlesIndex = activeCategory === 'articles' && currentPage === 1;
+  const url = canonicalUrl(
+    isArticlesIndex ? ARTICLES_HREF : buildHref({ category: activeCategory, page: currentPage })
+  );
 
   const label = FILTER_OPTIONS.find((option) => option.value === activeCategory)?.label;
   const scope = activeCategory && label ? `Новости: ${label}` : 'Новости';
@@ -94,7 +93,7 @@ const Page = async ({ searchParams }: NewsPageProps) => {
   const { items, totalPages } = await fetchNewsList({
     page: currentPage,
     perPage: PER_PAGE,
-    category: activeCategory ? CATEGORY_IDS[activeCategory] : undefined,
+    category: activeCategory ? NEWS_CATEGORIES[activeCategory] : undefined,
   });
 
   const breadcrumbItems = [{ label: 'Главная', href: '/' }, { label: 'Новости' }];
@@ -109,22 +108,7 @@ const Page = async ({ searchParams }: NewsPageProps) => {
         buildHref={(value) => buildHref({ category: value, page: 1 })}
       />
 
-      {items.length > 0 ? (
-        <div className={css.grid}>
-          {items.map((post) => (
-            <NewsCard
-              key={post.id}
-              href={`/${post.id}`}
-              title={post.title}
-              date={post.date ? dayjs(post.date).format('DD.MM.YYYY') : undefined}
-              imageSrc={post.thumbnailUrl}
-              imageAlt={post.title}
-            />
-          ))}
-        </div>
-      ) : (
-        <p className={css.empty}>Новостей не найдено.</p>
-      )}
+      <NewsGrid items={items} />
 
       <Pagination
         currentPage={currentPage}

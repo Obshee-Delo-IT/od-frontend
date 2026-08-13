@@ -51,7 +51,13 @@ describe('resolveLegacyUrl', () => {
     // The ids (47 / 578) are not filter keys — pointing at them would answer
     // 200 with an unfiltered list, the same silent failure the catalogue had.
     expect(resolveLegacyUrl('/category/novosti/')).toBe('/news/?category=nashi-dela');
-    expect(resolveLegacyUrl('/category/articles/')).toBe('/news/?category=articles');
+  });
+
+  it('sends the «Статьи» archive to the page that collection actually has', () => {
+    // Not `/news/?category=articles`: `/materials/articles/` is the live-site
+    // URL search engines hold (114 entries in 91 days) and the canonical of the
+    // pair, so the WP archive lands on it rather than on its twin.
+    expect(resolveLegacyUrl('/category/articles/')).toBe('/materials/articles/');
   });
 
   it('closes the whole /category/ family — no WP archive is left to 404', () => {
@@ -86,6 +92,7 @@ describe('resolveLegacyUrl', () => {
     expect(resolveLegacyUrl('/67400/')).toBeNull();
     expect(resolveLegacyUrl('/about/')).toBeNull();
     expect(resolveLegacyUrl('/materials/plakati/')).toBeNull();
+    expect(resolveLegacyUrl('/materials/articles/')).toBeNull();
     expect(resolveLegacyUrl('/health/')).toBeNull();
     expect(resolveLegacyUrl('/page/')).toBeNull();
   });
@@ -99,6 +106,7 @@ describe('resolveLegacyUrl', () => {
       '/category/video/mult/',
       '/category/video/movies/page/2/',
       '/category/novosti/',
+      '/category/articles/',
     ].map((path) => resolveLegacyUrl(path));
 
     destinations.forEach((destination) => {

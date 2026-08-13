@@ -1,5 +1,6 @@
 import { wpFetch } from '@/shared/api/httpClient';
 import { catalogueHref, FILM_CATEGORIES, type FilmCategorySegment } from '@/shared/config/filmCategories';
+import { ARTICLES_HREF } from '@/shared/config/newsCategories';
 import { canonicalUrl } from '@/shared/config/site';
 import type { MetadataRoute } from 'next';
 
@@ -172,6 +173,9 @@ const sitemap = async (): Promise<MetadataRoute.Sitemap> => {
   const staticEntries: MetadataRoute.Sitemap = [
     { url: canonicalUrl('/'), changeFrequency: 'daily', priority: 1 },
     { url: canonicalUrl('/news/'), changeFrequency: 'daily', priority: 0.8 },
+    // The «Статьи» collection's own address — a live-site URL with real search
+    // traffic, and the canonical target of the index's «Статьи» chip.
+    { url: canonicalUrl(ARTICLES_HREF), changeFrequency: 'monthly', priority: 0.6 },
     { url: canonicalUrl(catalogueHref({ segment: null })), changeFrequency: 'weekly', priority: 0.8 },
     // Enumerated from the shared map, and addressed through the same helper the
     // catalogue links with, so a new segment can't be forgotten here or drift

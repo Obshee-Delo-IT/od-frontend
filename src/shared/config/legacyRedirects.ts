@@ -1,4 +1,5 @@
 import { catalogueHref, resolveFilmCategory, type FilmCategorySegment } from './filmCategories';
+import { ARTICLES_HREF } from './newsCategories';
 
 /**
  * WordPress's own catalogue alias `/category/video/<segment>/` spells the
@@ -12,10 +13,17 @@ const WP_CATEGORY_ALIASES: Record<string, FilmCategorySegment> = {
   famous: 'famous-people',
 };
 
-/** `/category/<slug>/` for news → the filter key the `/news/` chips use. */
+/**
+ * `/category/<slug>/` for news → where that archive is served now.
+ *
+ * «Наши дела» is a filter state of the index, so it points at the query form.
+ * «Статьи» has a page of its own — `/materials/articles/` is the legacy address
+ * search engines hold for that collection, and sending the WP archive to the
+ * `?category=` form instead would leave the two competing.
+ */
 const NEWS_CATEGORY_ALIASES: Record<string, string> = {
-  novosti: 'nashi-dela',
-  articles: 'articles',
+  novosti: '/news/?category=nashi-dela',
+  articles: ARTICLES_HREF,
 };
 
 /** A legacy path segment as a page number; junk and «page 1» alike mean 1. */
@@ -84,7 +92,7 @@ export const resolveLegacyUrl = (pathname: string): string | null => {
     }
     const news = NEWS_CATEGORY_ALIASES[second];
     if (news) {
-      return `/news/?category=${news}`;
+      return news;
     }
     // Every other WP category archive lands on the news index. `/category/` is
     // WordPress's own URL space — the redesign has no per-region or per-tag
