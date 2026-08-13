@@ -62,20 +62,19 @@ describe('toNavItems', () => {
     expect(result[1].href).toBe('https://external.example/');
   });
 
-  it('drops the entries navOverrides hides, children with them', () => {
+  it('drops the hidden entries, children with them', () => {
     const result = toNavItems([
       wpItem(1, 0, 'ГЛАВНАЯ', '/'),
-      wpItem(56658, 0, 'ОБЩЕЕДЕЛО-ПРО', 'https://общеедело-про.рф'),
-      wpItem(2, 56658, 'Конкурс', 'https://общеедело-про.рф/contest/'),
+      wpItem(56658, 0, 'ОБЩЕЕДЕЛО-ПРО', 'https://pro.obshee-delo.ru/'),
+      wpItem(2, 56658, 'Конкурс', 'https://pro.obshee-delo.ru/contest/'),
     ]);
 
     expect(result.map((item) => item.text)).toEqual(['ГЛАВНАЯ']);
   });
 
-  it('drops it on the address prod carries as well, not just od-dev’s', () => {
-    // The regression this guards: prod's menu points «ОБЩЕЕДЕЛО-ПРО» at
-    // od-pro.ru, so an override keyed only on od-dev's общеедело-про.рф let the
-    // entry back into the header the moment WP_BASE was repointed.
+  it('drops it whatever URL the install happens to store', () => {
+    // od-dev and prod disagree about this entry's URL — matching the label is
+    // what keeps it hidden on both.
     const result = toNavItems([wpItem(1, 0, 'ГЛАВНАЯ', '/'), wpItem(56658, 0, 'ОБЩЕЕДЕЛО-ПРО', 'https://od-pro.ru/')]);
 
     expect(result.map((item) => item.text)).toEqual(['ГЛАВНАЯ']);

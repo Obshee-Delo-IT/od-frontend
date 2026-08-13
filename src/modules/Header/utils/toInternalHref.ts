@@ -5,7 +5,7 @@
  * (`https://od-dev.tmweb.ru/video/`). Rendered as-is, every nav click walks the
  * visitor off the frontend and onto the WordPress host — which on prod is the
  * old site. Editors also mix in relative paths (`/materials/`) and genuinely
- * external destinations (`https://общеедело-про.рф`), so this only strips the
+ * external destinations (`https://pro.obshee-delo.ru`), so this only strips the
  * origin when it is one of ours.
  *
  * Internal = the WordPress origin (`WP_BASE`) or the site's own public origin

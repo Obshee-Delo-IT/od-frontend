@@ -19,7 +19,7 @@ describe('toInternalHref', () => {
   });
 
   it('leaves genuinely external links alone', () => {
-    expect(toInternalHref('https://общеедело-про.рф', ORIGINS)).toBe('https://общеедело-про.рф');
+    expect(toInternalHref('https://pro.obshee-delo.ru', ORIGINS)).toBe('https://pro.obshee-delo.ru');
     expect(toInternalHref('http://od1.reformal.ru/', ORIGINS)).toBe('http://od1.reformal.ru/');
   });
 

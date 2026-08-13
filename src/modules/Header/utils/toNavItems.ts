@@ -1,4 +1,4 @@
-import { resolveNavOverride } from '@/shared/config/navOverrides';
+import { isNavLabelHidden } from '@/shared/config/navOverrides';
 import { NavItem, SourceNavItem } from '../types';
 import { mapWpMenuItemToNavItem } from './mapWpMenuItemToNavItem';
 import { sortNavItems } from './sortNavItems';
@@ -9,14 +9,14 @@ import { sortNavItems } from './sortNavItems';
  * instead of sending visitors to the CMS. See {@link toInternalHref}.
  *
  * Entries WordPress carries but this site doesn't surface are dropped here per
- * {@link resolveNavOverride}. A hidden top-level item takes its children with
- * it: they land in the same orphan branch as a child whose parent was never in
- * the input, so nothing leaks into the nav without its heading.
+ * {@link isNavLabelHidden}. A hidden top-level item takes its children with it:
+ * they land in the same orphan branch as a child whose parent was never in the
+ * input, so nothing leaks into the nav without its heading.
  */
 export const toNavItems = (wpItems: SourceNavItem[] = [], internalOrigins: string[] = []): NavItem[] => {
   const map = new Map();
   sortNavItems(wpItems).forEach((item) => {
-    if (resolveNavOverride(item.url)?.hidden) {
+    if (isNavLabelHidden(item.title.rendered)) {
       return;
     }
 

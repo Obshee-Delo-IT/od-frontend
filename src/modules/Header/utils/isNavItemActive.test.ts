@@ -22,7 +22,7 @@ describe('isNavItemActive', () => {
   });
 
   it('never lights an external destination', () => {
-    expect(isNavItemActive('/', 'https://общеедело-про.рф')).toBe(false);
+    expect(isNavItemActive('/', 'https://pro.obshee-delo.ru')).toBe(false);
   });
 
   it('ignores query and hash on the current path', () => {
