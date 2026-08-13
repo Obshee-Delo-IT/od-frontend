@@ -1,27 +1,60 @@
+/* Figma `footer` (`838:1631`), 1440×442: 32 top, a 1240 column at 100px side
+   padding, four columns, a gray-6 rule 25 below them and the legal row 25 under
+   that. `footer-1200` keeps the four columns; `footer-900` lifts the logo onto
+   its own row and leaves three; `footer-mob` stacks everything and sets ОТЗЫВЫ
+   and ССЫЛКИ side by side.
+
+   The markup is WordPress's — the widgets of `sidebar_bottom`, one `<aside>`
+   each, in order:
+     1 logo + socials · 2 КОНТАКТЫ РЕДАКЦИИ · 3 ОТЗЫВЫ · 4 ССЫЛКИ ·
+     5 separator · 6 legal
+   so the grid is placed by `nth-child`. The Gutenberg classes carry no styling
+   of their own here: the footer sits outside `GutenbergProvider`, so every
+   `wp-block-*` rule below is ours. */
+
 .footer {
-  padding: 32px 16px;
+  padding: 32px 100px 40px;
   background-color: var(--gray-9);
-  color: white;
+  color: var(--white);
+
+  @media (--tablet) {
+    padding: 32px 20px 40px;
+  }
+}
+
+.inner {
+  max-width: var(--container-4);
+  margin: 0 auto;
 }
 
 .footerWrap {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  column-gap: 20px;
+  grid-template-columns: repeat(4, 1fr);
+
+  @media (--tablet) {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  @media (--mobile) {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 
+/* 1 — logo lockup + social row. */
 .footer aside:nth-child(1) {
-  width: 25%;
+  @media (--tablet) {
+    margin-bottom: 40px;
+    grid-column: 1 / -1;
+  }
 
   p {
     margin: 0;
     color: var(--white);
     font-family: var(--font-pt-sans);
     font-weight: 700;
+    letter-spacing: 0.04em;
     line-height: var(--line-height-8);
-  }
-
-  @media (--small-desktop) {
-    width: 100%;
   }
 
   :global(.wp-block-group .wp-block-group__inner-container .wp-block-columns) {
@@ -29,8 +62,11 @@
     align-items: center;
   }
 
-  :global(.wp-block-group) {
-    margin-bottom: 30px;
+  /* `Frame 39` — three 30px marks, 15 apart, 30 under the lockup. */
+  :global(.wp-block-heading) {
+    display: flex;
+    margin: 30px 0 0;
+    gap: 15px;
   }
 
   :global(.wp-block-group .wp-block-group__inner-container .wp-block-columns .wp-block-column .wp-block-image) {
@@ -51,179 +87,111 @@
   :global(.wp-block-column:nth-child(1)) {
     flex-basis: 0 !important;
   }
+}
 
-  :global(.wp-block-heading) {
-    display: flex;
+.socialLink {
+  display: inline-flex;
+  line-height: 0;
+}
+
+/* 2–4 — heading + rows. `text/3` throughout: gray-3 heading 15 above the list,
+   white rows on a 5px gap (22-tall lines on a 27 rhythm). */
+.footer aside:nth-child(2),
+.footer aside:nth-child(3),
+.footer aside:nth-child(4) {
+  h2,
+  h3 {
+    margin: 0 0 15px;
+    color: var(--gray-3);
+    font-family: var(--font-pt-sans);
+    font-size: var(--font-size-3);
+    font-weight: 400;
+    line-height: var(--line-height-3);
+  }
+
+  p {
+    margin: 0 0 5px;
+    color: var(--white);
+    font-size: var(--font-size-3);
+    line-height: var(--line-height-3);
+  }
+
+  ul {
+    padding: 0;
     margin: 0;
+    list-style: none;
+  }
 
-    :global(.cmsms-icon-vkontakte) {
-      display: block;
-      width: 30px;
-      height: 30px;
-      margin-right: 15px;
-      background-image: url(../../shared/ui/assets/icons/vk.svg);
-      background-repeat: no-repeat;
-    }
+  li:not(:last-child) {
+    margin-bottom: 5px;
+  }
 
-    :global(.cmsms-icon-odnoklassniki) {
-      display: block;
-      width: 30px;
-      height: 30px;
-      margin-right: 15px;
-      background-image: url(../../shared/ui/assets/icons/odnoklassniki.svg);
-      background-repeat: no-repeat;
-    }
-
-    :global(.cmsms-icon-youtube-2) {
-      display: block;
-      width: 30px;
-      height: 30px;
-      background-image: url(../../shared/ui/assets/icons/youtube.svg);
-      background-repeat: no-repeat;
-    }
-
-    @media (--small-desktop) {
-      margin-bottom: 60px;
-    }
+  a {
+    color: var(--white);
+    font-size: var(--font-size-3);
+    line-height: var(--line-height-3);
+    text-decoration: none;
   }
 }
 
 .footer aside:nth-child(2) {
-  width: 25%;
-
-  h3 {
-    margin: 0;
-    margin-bottom: 15px;
-    color: var(--gray-3);
-    font-family: var(--font-pt-sans);
-    font-size: var(--font-size-3);
-    font-weight: 400;
-    line-height: var(--line-height-1);
-  }
-
-  :global(p) {
-    margin: 0;
-    color: var(--white);
-    font-size: var(--font-size-3);
-    line-height: var(--line-height-1);
-
-    &:not(:last-child) {
-      margin-bottom: 5px;
-    }
-  }
-
-  @media (--small-desktop) {
-    width: 33%;
-  }
-
   @media (--mobile) {
-    width: 100%;
     margin-bottom: 40px;
+    grid-column: 1 / -1;
   }
 }
 
-.footer aside:nth-child(3) {
-  width: 25%;
-
-  h2 {
-    margin: 0;
-    margin-bottom: 15px;
-    color: var(--gray-3);
-    font-family: var(--font-pt-sans);
-    font-size: var(--font-size-3);
-    font-weight: 400;
-    line-height: var(--line-height-1);
-  }
-
-  :global(a) {
-    margin: 0;
-    color: var(--white);
-    font-size: var(--font-size-3);
-    line-height: var(--line-height-1);
-    text-decoration: none;
-
-    &:not(:last-child) {
-      margin-bottom: 5px;
-    }
-  }
-
-  li {
-    list-style: none;
-  }
-
-  ul {
-    padding: 0;
-    margin: 0;
-  }
-
-  @media (--small-desktop) {
-    width: 33%;
-  }
-
-  @media (--mobile) {
-    width: 60%;
-  }
-}
-
-.footer aside:nth-child(4) {
-  width: 25%;
-
-  li {
-    list-style: none;
-  }
-
-  ul {
-    padding: 0;
-    margin: 0;
-  }
-
-  @media (--small-desktop) {
-    width: 33%;
-  }
-
-  @media (--mobile) {
-    width: 40%;
-  }
-
-  :global(h2) {
-    margin: 0;
-    margin-bottom: 15px;
-    color: var(--gray-3);
-    font-family: var(--font-pt-sans);
-    font-size: var(--font-size-3);
-    font-weight: 400;
-    line-height: var(--line-height-1);
-  }
-
-  :global(a) {
-    margin: 0;
-    color: var(--white);
-    font-size: var(--font-size-3);
-    line-height: var(--line-height-1);
-    text-decoration: none;
-
-    &:not(:last-child) {
-      margin-bottom: 5px;
-    }
-  }
-}
-
+/* 5 — the rule under the columns (`Line 31`, gray-6). */
 .footer aside:nth-child(5) {
-  width: 100%;
+  grid-column: 1 / -1;
 
   hr {
     height: 1px;
     border: none;
-    margin: 24px 0;
+    margin: 25px 0;
     background-color: var(--gray-6);
   }
 }
 
+/* 6 — the legal block: three groups on the same column grid as above, with the
+   third one under ССЫЛКИ. 12px gray-4, and the privacy link 14 underlined. */
 .footer aside:nth-child(6) {
   color: var(--gray-4);
+  font-size: var(--font-size-1);
+  grid-column: 1 / -1;
+  line-height: var(--line-height-1);
+
+  > :global(.wp-block-group) {
+    display: grid;
+    column-gap: 20px;
+    grid-template-columns: repeat(4, 1fr);
+
+    > :global(*:nth-child(3)) {
+      grid-column: 4;
+    }
+
+    @media (--tablet) {
+      grid-template-columns: repeat(3, 1fr);
+
+      > :global(*:nth-child(3)) {
+        grid-column: 3;
+      }
+    }
+
+    @media (--mobile) {
+      grid-template-columns: 1fr;
+      row-gap: 24px;
+
+      > :global(*:nth-child(3)) {
+        grid-column: 1;
+      }
+    }
+  }
 
   p {
     margin: 0;
+    font-size: var(--font-size-1);
+    line-height: var(--line-height-1);
   }
 
   b {
@@ -232,62 +200,29 @@
 
   a {
     color: var(--gray-4);
-    text-decoration: none;
+    text-decoration: underline;
   }
 
-  :global(.wp-block-group:nth-child(1)) {
-    display: flex;
-
-    :global(.wp-block-group) {
-      width: 25%;
-    }
-
-    @media (--mobile) {
-      flex-wrap: wrap;
-    }
-
-    @media (--small-desktop) {
-      justify-content: space-between;
-    }
-  }
-
-  p:nth-child(1) {
-    width: 30%;
-    margin-right: 30px;
-
-    @media (--small-desktop) {
-      margin-right: 0;
-    }
-
-    @media (--mobile) {
-      width: 100%;
-      margin-bottom: 24px;
-    }
-  }
-
-  p:nth-child(2) {
-    width: 30%;
-    margin-right: 15%;
-
-    @media (--mobile) {
-      width: 100%;
-      margin-right: 0;
-      margin-bottom: 24px;
-    }
-
-    @media (--small-desktop) {
-      margin-right: 0;
-    }
-  }
-
+  /* The two-line block in the fourth column: the 12+ notice, then the privacy
+     link a line lower at `text/2`. */
   :global(.wp-block-group .wp-block-group) {
-    a {
-      text-decoration: underline;
-    }
-
-    p {
-      width: 100%;
-      margin: 0;
-    }
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
   }
+}
+
+/* Hover last: stylelint's `no-descending-specificity` wants the pseudo-class
+   rules after every plain `a` above, including the legal block's. */
+.footer aside:nth-child(2) a:hover,
+.footer aside:nth-child(3) a:hover,
+.footer aside:nth-child(4) a:hover {
+  color: var(--gray-4);
+}
+
+/* Last, and deliberately: `no-descending-specificity` wants every `a` rule in
+   ascending specificity order, and this is the most specific one. */
+.footer aside:nth-child(6) :global(.wp-block-group .wp-block-group) a {
+  font-size: var(--font-size-2);
+  line-height: var(--line-height-2);
 }
