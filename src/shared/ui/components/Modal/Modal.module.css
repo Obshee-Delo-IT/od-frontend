@@ -1,40 +1,11 @@
-.overlay {
-  position: fixed;
-  z-index: 1000;
-  top: 0;
-  left: 0;
-  display: flex;
-  width: 100%;
-  height: 100%;
-  align-items: center;
-  justify-content: center;
-  animation: fadeIn 200ms ease-out;
-  background-color: rgb(0 0 0 / 80%);
-}
-
+/* Radix's dialog panel is a padded, rounded, shadowed white card. A lightbox is
+   none of those: the child supplies its own frame, so everything here is a
+   reset of that chrome, keeping only the size cap the old portal had. */
 .content {
-  position: relative;
   max-width: 90vw;
   max-height: 90vh;
-  animation: scaleIn 200ms ease-out;
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
-@keyframes scaleIn {
-  from {
-    opacity: 0;
-    transform: scale(0.95);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
+  padding: 0;
+  border-radius: 0;
+  background-color: transparent;
+  box-shadow: none;
 }

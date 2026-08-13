@@ -266,7 +266,7 @@ Two things this replaced: `lightgrey` (a duplicate of `gray`) and `darkgrey` (`p
 | `Container` | `src/shared/ui/components/Container/` | Plain `<main>`-or-similar wrapper. Distinct from Radix's `<Container>`. |
 | `Link` | `src/shared/ui/components/Link/` | Composes Next.js `<Link>` + Radix `<Link>` + the Figma `Links` colour enum (§3.2). |
 | `Logo` | `src/shared/ui/components/Logo/` | Brand logo rendered with `logo.webp`. |
-| `Modal` | `src/shared/ui/components/Modal/` | Custom portal-based modal — `useClickAway` + Escape + body-scroll lock. Not on Radix Dialog. Worth revisiting if Radix Dialog covers the use cases. |
+| `Modal` | `src/shared/ui/components/Modal/` | Radix `Dialog` under a small API (`isOpen` / `onClose` / `title`). Its content chrome is reset to nothing — the child owns its frame — and it requires a `title`, rendered visually hidden, because a dialog with no accessible name is the one thing Radix can't supply for you. |
 | `Accordion` | `src/shared/ui/components/Accordion/` | Wrapper over `@radix-ui/react-accordion` primitive. Used for FAQ. |
 | `Icons/*` | `src/shared/ui/components/Icons/` | Typed wrappers around each SVG. Adding an icon = drop SVG into `assets/icons/` + export wrapper here. |
 
@@ -319,7 +319,7 @@ The eight primitives this section used to list as "next builds" — `Button`, `I
 5. **`Tabs`, controlled variant** — a client-state sibling for the D9 participation-form role tabs; today's link-based form covers every other use.
 6. **`Dropdown`, multi-select variant** — checkbox list + removable chips, needed when Materials filtering lands.
 7. **`Accordion`, `Add Circle` expand-icon variant** — D4 contacts and D5 FAQ both use it.
-8. **Decide `Modal`'s future** — it's a custom portal (`useClickAway` + Escape + scroll lock) in an otherwise-Radix stack; migrating to `@radix-ui/react-dialog` would buy focus-trap and a11y parity.
+8. ~~**Decide `Modal`'s future.**~~ ✅ **Migrated 2026-08-13 (C10)** — to Radix's Dialog, and with **no new dependency**: `@radix-ui/themes` already ships one, so the primitive package was never needed. The hand-rolled portal kept click-away, Escape and a scroll lock but could not trap focus or take the page behind it out of the accessibility tree; both come free now, and `--color-overlay` in `theme-override.css` carries the 80% scrim the custom overlay painted (Radix defaults to 40%).
 
 ---
 

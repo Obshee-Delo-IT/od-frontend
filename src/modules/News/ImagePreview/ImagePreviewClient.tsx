@@ -73,7 +73,7 @@ export const ImagePreviewClient = ({ children }: ImagePreviewClientProps) => {
   return (
     <>
       {processedChildren}
-      <Modal isOpen={!!selectedImage} onClose={handleClose}>
+      <Modal isOpen={!!selectedImage} onClose={handleClose} title="Просмотр изображения">
         {selectedImage && (
           <div className={css.imageWrapper}>
             <Image src={selectedImage} alt="" fill style={{ objectFit: 'contain' }} quality={80} />

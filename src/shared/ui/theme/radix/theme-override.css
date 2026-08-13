@@ -13,6 +13,11 @@
   --white: #fff;
   --color-background: var(--gray-2);
 
+  /* The scrim behind a Dialog. Radix defaults to 40% black; the image lightbox
+     C10 replaced painted 80%, and a photo needs the darker ground to read
+     against. Every dialog shares it — override locally if one wants lighter. */
+  --color-overlay: rgb(0 0 0 / 80%);
+
   --red-1: #ffeaea;
   --red-2: #ffcfcf;
   --red-3: #ffb2b2;
