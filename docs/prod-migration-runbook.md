@@ -12,7 +12,7 @@ Related: [`implementation-plan.md`](./implementation-plan.md) (task state) · [`
 
 | # | Blocker | Why it stops the migration | Owner |
 |---|---|---|---|
-| **B1** | **REST is disabled on prod and stage.** `/wp-json/…` redirects to the homepage — a `clearfy-pro` feature. | The entire app is REST-only (`httpClient.ts` → `WP_BASE/wp-json`). Zero pages render. **This is the single largest blocker.** | WP admin |
+| **B1** | **REST is disabled on prod and stage.** On prod it is exactly one stored option — **`clearfy_option.disable_json_rest_api = 'on'`** (read 2026-08-13; `/wp-json/wp/v2/pages` answers **404**). | The entire app is REST-only (`httpClient.ts` → `WP_BASE/wp-json`). Zero pages render. **This is the single largest blocker** — but see §2.1: it no longer needs anyone's admin login. | ~~WP admin~~ **us, over SSH** |
 | **B2** | **Content is CMSMasters shortcodes on prod, Gutenberg on od-dev.** Confirmed for `wp/v2/pages`; **unverified for posts**. | If film/news bodies are `[cmsms_*]`, then `parsePost`, `GutenbergProvider`, `extractFilmPoster` and `absolutizeWpMedia` all degrade to raw shortcode text. See §1.4 — this is the highest-risk unknown. | verify in §1 |
 | **B3** | **ACF is not installed on prod/stage.** | No `group_film_meta` ⇒ no `acf` object in REST ⇒ every film affordance disappears. | §2.2 |
 | **B4** | **Post ids are per-environment.** | The worksheet we filled holds od-dev ids; importing it into prod would write to unrelated posts. Mitigated by `pnpm film:remap` (§3.2). | §3 |
@@ -74,7 +74,9 @@ od-dev: 203 `format=video` posts, 99 in the four film sub-categories.
 
 ## 2. WordPress preparation
 
-**2.1 Enable REST (B1).** A `clearfy-pro` setting, not code — turn off its "disable REST API" toggle in the WP admin (Clearfy → API). Re-run §1.1 to confirm. If REST must stay closed to the public, allowlist by path rather than disabling wholesale; the app needs `wp/v2/posts`, `wp/v2/media`, `wp/v2/menus`, `wp/v2/menu-items`.
+**2.1 Enable REST (B1).** A `clearfy-pro` setting, not code — its "disable REST API" toggle in the WP admin (Clearfy → API). **It does not require the admin UI**, which matters because prod admin was the item this blocker was waiting on: the toggle is the single key `disable_json_rest_api` inside the `clearfy_option` array, and WP-CLI over `ssh timeweb` can flip it (`'on'` → unset/`''`). The F6 pass used exactly that mechanism to switch on a different clearfy option, so the path is proven. Re-run §1.1 to confirm.
+
+⚠️ **This one is a decision, not a chore** — it opens prod's REST surface to the public internet, so it wants a deliberate go-ahead rather than being flipped in passing. If REST must stay closed to the public, allowlist by path rather than disabling wholesale; the app needs `wp/v2/posts`, `wp/v2/media`, `wp/v2/menus`, `wp/v2/menu-items`.
 
 > Basic auth also requires the **application password** to exist on the target env — generate one per environment ([WP guide](https://make.wordpress.org/core/2020/11/05/application-passwords-integration-guide/)) and never reuse od-dev's.
 

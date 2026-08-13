@@ -213,7 +213,7 @@ Each of these blocks a named item:
 
 1. **A frozen-copy host for A6** + permission to add a chromeless template and enable REST on it → sets `WP_LEGACY_BASE`. **Blocks the whole legacy fallback.**
 2. **Go-ahead to write to od-stage.** A7 cannot be rehearsed anywhere else, and prod must not be the rehearsal.
-3. **Prod/stage WP admin** to turn off clearfy-pro's REST block — runbook blocker **B1**, the single largest migration blocker.
+3. ~~**Prod/stage WP admin** to turn off clearfy-pro's REST block~~ — **not an access problem after all.** On prod the block is one stored option (`clearfy_option.disable_json_rest_api = 'on'`, read 2026-08-13), and WP-CLI over `ssh timeweb` can flip it without the admin UI. Runbook blocker **B1** is now a **decision** — it exposes prod's REST surface publicly — rather than a credential we're waiting on. Runbook §2.1.
 4. **Editorial film data** (B-VIDEO2) — one video link per film, plus posters and featured images. A content problem, but it blocks the largest traffic block on the site.
 5. **Yandex Metrica account access** for **A4** — the **counter id is known (34478865**, read off prod's own tag), so what's missing is rights on the account. The consent-banner copy no longer needs sign-off: prod publishes it («Этот сайт использует cookie для хранения данных. Продолжая использовать сайт, Вы даете свое согласие на работу с этими файлами.»), so the app can reuse that wording verbatim.
 6. **Forms backend details** for **B6** — CF7 form ids, notification targets, SmartCaptcha keys.
