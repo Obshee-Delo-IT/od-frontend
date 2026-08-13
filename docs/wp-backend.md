@@ -7,7 +7,7 @@ The Next.js app in this repo consumes a WordPress install hosted on **Timeweb sh
 | **od-dev** | `~/od-dev/public_html/` | `https://od-dev.tmweb.ru` (matches `redocly.yml`) | The instance this repo points at via `WP_BASE`. **The only one we write to** — REST is on, content is migrated to Gutenberg, ACF is installed. |
 | **od-stage** | `~/od-stage/public_html/` | `https://stage.od.webtm.ru` (probed for the A6 research — confirm it's the same install as this directory) | Staging. **REST disabled** (clearfy-pro), content is cmsms shortcodes. Read-only so far; it is the rehearsal target for [`prod-migration-runbook.md`](./prod-migration-runbook.md). |
 | **od-test** | `~/od-test/public_html/` | unknown — confirm with the org | Test. Never probed; unclear how it differs from od-dev. |
-| **prod** | `~/obshee-delo.ru/` | `https://obshee-delo.ru` | Live site. **REST disabled**, cmsms shortcodes, no ACF. **Now in scope** — the migration path is the runbook; nothing has been written to it. |
+| **prod** | **`~/public_html/`** — the account's default root, *not* `~/obshee-delo.ru/`, which holds only a stub and search-engine verification files | `https://obshee-delo.ru` | Live site. **WordPress 5.5.5**, pinned by an active `wp-downgrade`. **REST disabled**, cmsms shortcodes, no ACF. First writes landed 2026-08-13 (F6 — the privacy page and clearfy's cookie notice); everything else still goes through the runbook. |
 
 **Read this alongside two things:** [`prod-migration-runbook.md`](./prod-migration-runbook.md) (what has to change on stage/prod, in order) and [`legacy-page-fallback.md` §2](./legacy-page-fallback.md) (the read-only probe that established the prod/stage facts above). The redesign started dev-first but is no longer dev-only.
 
@@ -48,6 +48,16 @@ ssh timeweb 'cd ~/od-dev/public_html && wp --skip-plugins=clearfy-pro <command>'
 ```
 
 Without that flag the output is unusable. With it, all commands run cleanly.
+
+**On prod, `--skip-themes` is required as well** — the CLI's PHP is 8.2 while the site itself runs older, so the `welfare` theme fatals (`functions.php:754`, an optional-parameter-before-required signature) on every command and even `option get` fails:
+
+```bash
+ssh timeweb 'cd ~/public_html && wp --skip-plugins --skip-themes <command>'
+```
+
+Skipping plugins wholesale is also the safer default there: prod carries 25 active plugins on WP 5.5.5, and a DB-only write (`post update`, `option get/update`) needs none of them. Content written that way still goes through core, so **revisions are created** — page 36316's F6 edit is revertible from `wp post list --post_type=revision --post_parent=36316`.
+
+⚠️ **Prod caches pages with WP Rocket** (10-hour lifespan, `wp rocket` CLI **not** registered). After editing a page, delete `wp-content/cache/wp-rocket/obshee-delo.ru/<slug>/index-https.html*` or the old HTML keeps serving. Its **"delay JavaScript execution"** also rewrites inline scripts to `type="rocketlazyloadscript"`, deferring them until the first user interaction — anything that must run on load needs a pattern in `wp_rocket_settings.delay_js_exclusions`.
 
 ---
 

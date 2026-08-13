@@ -308,6 +308,43 @@ It shipped with A8 because a URL layer nothing advertises is only half a migrati
 
 ⚠️ **`SITE_URL` fails silently when unset** — it defaults to prod, so a stage tier that doesn't set it advertises **prod's** canonicals and sitemap. Visible only through a crawler. Runbook §4.1.
 
+### F6. 152-FZ compliance — the privacy page and the legacy consent, 2026-08-13
+
+The plan called for porting the live privacy text into a new route with the Google Analytics reference stripped. That framing was wrong in a useful way: **the text belongs on prod, not in this repo.** `/conf_politics/` is Tier 4 — it stays on the A6 fallback indefinitely, and the fallback serves prod's content, so prod's page *is* the deliverable. Editing it there fixes the live site today and the new site at cutover, in one write. Prod page id **36316**; before/after content and the two option backups are in `/.scratch/f6-conf-politics/`.
+
+**Already done by the owner, 2026-08-07/08** — found, not performed, during this pass: the GA tag and the VK retargeting pixel are gone from prod's HTML (each left a dated comment saying why — «передача данных за пределы РФ без необходимости»), §5.6 was rewritten to name Яндекс.Метрика only and assert that no data leaves the Russian Federation, and §§5.11/5.12/10.2/10.10/12.3 plus four cookie paragraphs were added. So the GA half of F6 was closed before this work started; what follows is the residue of that edit.
+
+**Five defects fixed** — all mechanical, none of them a rewording of anyone's legal intent:
+
+| | was | now |
+|---|---|---|
+| 1 | The cookie-retention sentence linked «целей обработки персональных данных» to **`https://nkopskov.ru/policy`** — a different NGO's policy, template residue on a registered СМИ's legal page | link removed, text kept |
+| 2 | **§12.3 sat inside section 11**, before the «Трансграничная передача» heading — numbering ran `11.1, 11.2, 12.3, 12.1, 12.2` | re-seated after §12.2 |
+| 3 | **§5.10.4 cited «п. 5.8.3»**, which does not exist — the block is numbered 5.10.x | «п. 5.10.3»; it was the document's only broken cross-reference |
+| 4 | **§14.3** gave the policy's address as `https://общее-дело.рф/conf_politics/`, which 301s | `https://obshee-delo.ru/conf_politics/`, the canonical this repo advertises |
+| 5 | Four cookie paragraphs dangled **unnumbered after §14.3** | **§15 «Файлы cookie»**, 15.1–15.4, in the document's own `<ol start="N">` style |
+
+**§1.3 «Сведения об Операторе» added** — name, ОГРН 1127799010624, ИНН 7721490700, 109443 г. Москва, Волгоградский проспект д. 135 корп. 3, web@obshee-delo.ru. Roskomnadzor practice expects the operator to be identifiable from the policy itself; every value is already published on prod's own `/rekvizit/`.
+
+**§2.3's domain list was deliberately left alone.** It omits `od-pro.ru`, which prod's own nav links to — but that host is a landing page; the contest data is collected at `reg.pro.obshee-delo.ru`, which the existing `*.obshee-delo.ru` wildcard already covers. Widening a legal scope statement to a site that collects nothing would be worse than leaving it. (Answers an open question, so it is not carried forward.)
+
+**The cookie consent is now real, and it cost nothing to build.** §15.2 claims the Operator asks for consent; prod had no banner, which made the sentence false the moment it was published. **clearfy-pro — already active — ships a cookie notice, fully configured in Russian and simply never switched on** (`clearfy_option.message_cookie` was unset). Switching it on beats writing one: no new plugin on a WP 5.5.5 install, and it is discarded with the rest of the legacy theme at cutover. The banner text gained a link to `/conf_politics/`.
+
+⚠️ **WP Rocket's "delay JavaScript execution" silently neutered it.** The notice's inline script was rewritten to `type="rocketlazyloadscript"`, so the banner stayed `translateY(150%)` off-screen until the visitor's first mousemove/scroll/touch — present in the DOM, invisible on load, and unclickable to anything that doesn't interact. Fixed by adding **`clearfy_cookie_hide`** (the cookie name, unique to that script) to `wp_rocket_settings.delay_js_exclusions`, which was empty. Verified with Playwright: banner visible before any interaction, «OK» removes it and sets a year-long `clearfy_cookie_hide=yes`. **Any inline script that must run on load needs this exclusion** — the trap applies to anything else added to the legacy site.
+
+**Rollout is lazy, by design.** WP Rocket's lifespan is **10 hours**, so `/conf_politics/` was purged by hand and every other page picks the banner up as its cache expires. A full purge would have rebuilt 3 506 cached pages for no gain.
+
+**The footer half needed verification, not building.** The СМИ registration line, ОГРН and **12+** live in od-dev widget `block-27` of `sidebar_bottom`, which C9's footer renders verbatim — so they are WordPress data and already present. Two hrefs in that widget do **not** survive the origin change, and both are recorded against F6 in the plan: the «Политика конфиденциальности» link is the absolute `https://od-dev.tmweb.ru/conf_politics/`, and the СМИ выписка PDF is a root-relative `/wp-content/uploads/…` — the file itself is on the media CDN, and only a WP origin 301s to it.
+
+**Prod facts learned the hard way** (also folded into [`wp-backend.md`](./wp-backend.md)):
+
+- **Prod's WP root is `~/public_html`**, not `~/obshee-delo.ru/` — that directory holds only a stub and verification files.
+- **Prod runs WordPress 5.5.5**, pinned by the active `wp-downgrade` plugin, against 25 plugins including `wp-rocket` 3.10.5.1 and `clearfy-pro` 3.5.3.
+- **WP-CLI needs `--skip-themes` there**, not just `--skip-plugins=clearfy-pro`: the CLI's PHP is 8.2 while the site runs older, so `welfare/functions.php:754` fatals on every command otherwise.
+- **The Yandex Metrica counter is `34478865`**, read off prod's own tag — A4 no longer has to wait for someone to look it up.
+- **od-dev's page 36316 is a *different, older document***, last touched 2017-11-18: a generic template naming «**ООО** «Общее дело»» — not even the right legal form. The current legal text exists only on prod. Anything that serves `/conf_politics/` must read the frozen copy or prod, never od-dev.
+- **Prod still loads `fonts.googleapis.com` + `fonts.gstatic.com`** on every page. That is the same cross-border request pattern GA and the VK pixel were removed for, and it is not disclosed in the policy. Not fixed here — it is legacy-theme work with a short shelf life — but it is the honest next candidate if anyone revisits prod's compliance. The app is unaffected: `next/font` self-hosts at build time.
+
 ---
 
 ## 6. Research — the live site (2026-05-29)
@@ -318,7 +355,7 @@ The redesign replaces an existing site. Facts harvested from a live read, used t
 - **No on-site search.** Header search on the redesign is **net-new**. *Since resolved as in-scope* — the canonical `header-v2` component embeds a styled search input, so it's part of the header design rather than an optional icon (B7).
 - **No language switcher.** Russian-only is permanent — no `next-intl`/`i18next`.
 - **No embedded forms anywhere.** Contact, participation, "leave a review" and "suggest an idea" all route via email or external services (`reformal.ru`). Every form in the redesign is **net-new** (B6).
-- **Analytics.** The live privacy policy names **Yandex Metrica + Google Analytics**, but **GA is no longer usable** under current Russian regulations. Redesign drops GA. The ported privacy copy must lose the GA reference — the live page is stale on this.
+- **Analytics.** The live privacy policy named **Yandex Metrica + Google Analytics**, but **GA is no longer usable** under current Russian regulations. *Since resolved* — GA and the VK pixel were removed from prod on 2026-08-07 and the policy's §5.6 now names Метрика alone (counter **34478865**); see the F6 note in §5.
 - **Foreign-service caveat — narrower than first framed.** The site serves **public content only**, so hosting, CDN, image optimisation and asset delivery can sit abroad without 152-FZ data-localisation concerns. The restrictions bite at **PII entry points and PII-touching telemetry**: analytics (→ Metrica only), captcha (→ Yandex SmartCaptcha, not reCAPTCHA), and where form data lands. Form submissions are settled: they post into the existing RU-hosted WordPress (B6).
 - **Legal posture.** Registered СМИ under Roskomnadzor (cert Эл № ФC77-72346, 14 Feb 2018), "12+" content rating — the footer must preserve both. Privacy policy is **152-FZ only; no GDPR**. Legal entity: «Общероссийская общественная организация поддержки президентских инициатив в области здоровьесбережения нации "Общее дело"», ОГРН 1127799010624.
 - **Content taxonomy is firmer than Figma suggests.** Films split into 5 sub-categories (matches `video-filter` intent); Materials into ~14 sub-pages; About has **11** sub-pages on the live site (organisation, team, activist stories, media coverage, partners, certificate, charter, expert reviews, thank-you letters, documents, statistics) — more than Figma mocks.
