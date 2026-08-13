@@ -259,6 +259,8 @@ Verified against the fetchers 2026-08-13. Everything goes through the single `op
 
 **Auth note:** every one of these is authenticated with the application password even though the content is public, because `httpClient` injects the header unconditionally. On a CI build with no `WP_*` env, a stub client returns `[]` so compilation still validates.
 
+**Cache note (B3, 2026-08-13):** every runtime call above carries `next: { revalidate, tags }` built by `wpCache()` in `src/shared/api/cacheTags.ts` — `wp` on everything, plus `wp:posts` / `wp:films` / `wp:menus` / `wp:widgets` / `wp:post:<id>` as applicable. The tags are what make the rendered pages purgeable, not just the JSON; §6.5 is the WordPress half.
+
 ### 6.2 Available but unused — relevant to upcoming work
 
 - `GET /wp/v2/profile` (139 published) + `GET /wp/v2/profile/{id}` + `GET /wp/v2/pl-categs` — team members / coordinators (D3)
@@ -329,6 +331,64 @@ The resolution pipeline (all under `src/shared/api/`, applied at fetch/render ti
 
 If the WP side later makes the origin reliable or returns CDN URLs directly in the API, set `WP_MEDIA_CDN=""` to disable the rewrite.
 
+### 6.5 On-demand revalidation — the WordPress half (B4)
+
+The frontend half shipped 2026-08-13: **`POST /api/revalidate/`**, in `src/app/api/revalidate/route.ts`. Nothing calls it yet — this section is what has to be installed on WP to close the loop, and it needs WP admin access.
+
+**The contract.** POST JSON, authenticated by a shared secret in the `x-revalidate-secret` header (header only — a `?secret=` would land in every access log). The body names what changed:
+
+| Body | Purges |
+| --- | --- |
+| `{"postId": 39664}` | that post's page (`wp:post:39664`) and every listing that can show it (`wp:posts`) |
+| `{"tags": ["wp:menus"]}` | an explicit tag — `wp`, `wp:posts`, `wp:films`, `wp:menus`, `wp:widgets`, `wp:post:<id>` |
+| `{"paths": ["/news/"]}` | a route by path, for pages no WP fetch tags (the A6 fallback, mainly) |
+
+Answers `200` with what it purged, `401` on a bad secret, `503` when the deployment has no `REVALIDATE_SECRET` (so a half-configured tier is inert rather than open), `400` for anything else. Only `wp*` tags are accepted: Next's own implicit route tags (`_N_T_/…`) are addressable through the same API, and taking them would turn a leaked secret into a purge of the whole render cache.
+
+**Two traps.** Post to the URL **with the trailing slash** — `trailingSlash: true` makes the slashless form a 308 (verified: `POST /api/revalidate` → 308 → `/api/revalidate/`), and a client that doesn't re-POST on redirect never arrives. And the secret must match the frontend's `REVALIDATE_SECRET` env var, which is per-deployment: stage and prod each get their own, and stage must never hold prod's.
+
+**The hook.** A must-use plugin, so it survives the theme swap in §4.5 — `wp-content/mu-plugins/od-revalidate.php`:
+
+```php
+<?php
+/**
+ * Plugin Name: OD — notify the frontend on content change
+ * Define OD_REVALIDATE_URL + OD_REVALIDATE_SECRET in wp-config.php.
+ */
+add_action( 'save_post', 'od_revalidate_post', 10, 1 );
+add_action( 'trashed_post', 'od_revalidate_post', 10, 1 );
+add_action( 'wp_update_nav_menu', function () { od_revalidate_send( array( 'tags' => array( 'wp:menus' ) ) ); } );
+
+function od_revalidate_post( $post_id ) {
+	if ( wp_is_post_revision( $post_id ) || wp_is_post_autosave( $post_id ) ) {
+		return;
+	}
+	if ( 'post' !== get_post_type( $post_id ) ) {
+		return; // pages are served by the A6 fallback, not from tagged fetches
+	}
+	od_revalidate_send( array( 'postId' => (int) $post_id ) );
+}
+
+function od_revalidate_send( $body ) {
+	if ( ! defined( 'OD_REVALIDATE_URL' ) || ! defined( 'OD_REVALIDATE_SECRET' ) ) {
+		return;
+	}
+	wp_remote_post( OD_REVALIDATE_URL, array(
+		'timeout'  => 5,
+		'blocking' => false, // an editor never waits on the frontend
+		'headers'  => array(
+			'content-type'        => 'application/json',
+			'x-revalidate-secret' => OD_REVALIDATE_SECRET,
+		),
+		'body'     => wp_json_encode( $body ),
+	) );
+}
+```
+
+Widgets have no single reliable action hook (`update_option_sidebars_widgets` fires on reorder, not on edit); if the footer ever needs it, hook `updated_option` and match `widget_*`. Until then a `{"tags":["wp:widgets"]}` curl covers it.
+
+**Before installing, confirm outbound HTTP works from WP** — the open question in §8. Timeweb shared hosting may block egress, in which case the loop can't close from the WP side at all and the fallback is a cron/CLI curl after publishing.
+
 ---
 
 ## 7. Known gotchas
@@ -352,7 +412,7 @@ These are real decisions the org/team has to make — the WP install alone doesn
 - **Materials section model** — there's no `material` CPT today. Materials currently live as static WP pages or as ad-hoc posts. The redesign's tab-by-tab structure (books, disks, flyers, posters, …) probably needs a real CPT + taxonomy. **This is now the critical-path content question**: partial D8 is Tier 2 (before prod) on traffic grounds, and it can't start without this.
 - **News regions in the UI.** The topic side is settled (chips → 47 / 578). What is *not*: WP has ~80 region categories under «Региональные новости» `547` (1 886 posts; e.g. Ростовская обл. 322) and the design specs no region control. Does `/news` get a region dropdown?
 - **`od-test` — how does it differ from od-dev?** Same plugins? Same DB? Still never probed. Worth 5 minutes if it's ever going to be a target.
-- **Webhook capability for on-demand revalidation (B4).** Does the Timeweb shared host let outbound HTTP fire from WP hooks (e.g. `save_post` → `wp_remote_post(NEXT_REVALIDATE_URL)`)? Probably yes, but worth confirming there's no egress restriction. Until B4 lands, editors wait up to an hour (`revalidate = 3600`).
+- **Webhook capability for on-demand revalidation (B4).** Does the Timeweb shared host let outbound HTTP fire from WP hooks (e.g. `save_post` → `wp_remote_post(OD_REVALIDATE_URL)`)? Probably yes, but worth confirming there's no egress restriction — it is now the *only* thing between editors and instant publishing. The frontend half shipped 2026-08-13 and the mu-plugin is written out in §6.5; if egress turns out to be blocked, the fallback is a WP-CLI/cron curl after publishing. Until it is installed, editors wait up to an hour (`revalidate = 3600`).
 - **Are od-dev's `page` and `profile` bodies representative of prod?** Partly answered and the answer is *no* for pages — od-dev is a migrated-to-Gutenberg copy while prod stores cmsms shortcodes ([`legacy-page-fallback.md` §2](./legacy-page-fallback.md)). **Unverified for `format=video` posts**, which is runbook blocker B2 and the highest-risk unknown in the whole migration.
 
 **Answered since this list was written**
