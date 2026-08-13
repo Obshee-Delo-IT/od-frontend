@@ -8,7 +8,14 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-const eslintConfig = [...nextCoreWebVitals, ...nextTypescript, eslintConfigPrettier, {
+const eslintConfig = [{
+  // Global ignores (an `ignores`-only entry). `/.scratch/` is the sanctioned
+  // dumping ground for transient local artefacts — prototypes, Figma exports,
+  // smoke-run scripts — and is gitignored, so CI never sees it. Without this,
+  // `pnpm lint` fails locally on throwaway code while passing in CI, which
+  // makes the gate useless exactly where it runs most often.
+  ignores: ['.scratch/**'],
+}, ...nextCoreWebVitals, ...nextTypescript, eslintConfigPrettier, {
   ignores: ['./.next/**/*.ts', './.next/**/*.js'],
   rules: {
     ...reactHooksPlugin.configs.recommended.rules,
