@@ -1,6 +1,6 @@
 # Legacy-page fallback — old inner content inside the new-design shell
 
-**Status:** decided (2026-06-08); ready to prototype. No code yet.
+**Status:** decided (2026-06-08). **The catch-all route this design hangs off now exists** — A8 landed `app/[...slug]/page.tsx` on 2026-08-13 to serve legacy `/<id>` post URLs, and it `notFound()`s on every non-numeric path. **That `notFound()` branch is exactly the seam this document fills.** Still to build: the proxy route, the `LegacyEmbed` component, the denylist, and the frozen copy itself.
 **Goal:** ship the new-design Next.js site to production **before** every page is redesigned, and serve the not-yet-redesigned pages as their **old inner content embedded inside the new header/footer**, proxied from a frozen copy of the old site. Migrate page-by-page; each redesigned page is published as it's finished and automatically replaces its embedded fallback. (The aim is **design** migration — *not* a Gutenberg/content migration; the cmsms-vs-Gutenberg detail below only dictates *how* we embed.)
 
 ## Decision
@@ -11,7 +11,9 @@
 
 ## 1. Why a fallback at all
 
-A probe of od-dev found **174 published `wp/v2/pages`** — regional pages (~40), programmes (`/projects`, `/healthy-russia`, …), materials (`/printed-products`, `/social-reklama`, …), legal (`/conf_politics`, `/rekvizit`, …), team, plus a long tail. The Figma redesign covers a fraction (D1–D9). Redesigning all 174 before launch isn't realistic, and "build everything, publish once at the end" is too slow — so we publish now and let un-redesigned pages fall back to their embedded old content, replacing them one at a time.
+A probe of od-dev found **174 published `wp/v2/pages`** (re-confirmed 2026-08-13) — regional pages (~40), programmes (`/projects`, `/healthy-russia`, …), materials (`/printed-products`, `/social-reklama`, …), legal (`/conf_politics`, `/rekvizit`, …), team, plus a long tail. The Figma redesign covers a fraction (D1–D9). Redesigning all 174 before launch isn't realistic, and "build everything, publish once at the end" is too slow — so we publish now and let un-redesigned pages fall back to their embedded old content, replacing them one at a time.
+
+**How much traffic this actually carries — measured, not assumed.** 91 days of Yandex Metrica put every page that would sit behind the fallback at **~15 % of entry visits** combined; the redesigned routes already cover ~85 %. That reframes the SEO trade in §4 from "risky" to "priced": it is 15 % of entries on pages we are actively replacing. It also says *which* of them shouldn't wait — `/materials/plakati/` alone is the #6 entry page on the whole site and deserves a native route before prod, not an iframe. The tiering is in [`implementation-plan.md` → Launch priority](./implementation-plan.md#launch-priority--measured-from-real-traffic-yandex-metrica-2026-05-14--2026-08-13).
 
 ## 2. What the old content actually is (why iframe, not injection)
 
@@ -37,27 +39,30 @@ The old design's look is produced by the theme, not the page body:
 ```
 ┌─ Next.js (new design, prod) ───────────────────────────────┐
 │  app/[...slug]/page.tsx        ← catch-all, lowest priority │
-│    <Header/>  (new)                                         │
-│    <LegacyEmbed src="/legacy/<path>"/>   ← iframe, auto-h   │
-│    <Footer/>  (new)                                         │
+│    ✅ /<id>  → NewsArticle | FilmPage   (A8, built)         │
+│    ⬜ else   → <Header/>                (A6, to build)      │
+│                <LegacyEmbed src="/legacy/<path>"/> iframe   │
+│                <Footer/>                                    │
 │                                                             │
-│  app/legacy/[...slug]/route.ts ← same-origin proxy          │
+│  app/legacy/[...slug]/route.ts ← same-origin proxy  ⬜       │
 │    fetch  https://<frozen-copy>/<path>?embed=1              │
 │    → return chromeless HTML (theme CSS/JS kept)             │
 └──────────────────────────────┬──────────────────────────────┘
                                 │ server-side fetch
                     ┌───────────▼───────────┐
-                    │ frozen copy (welfare + │
+                    │ frozen copy (welfare + │  ⬜ not stood up
                     │ cmsms), chromeless     │
                     │ template + REST on     │
                     └────────────────────────┘
 ```
 
+**Note the catch-all is now shared.** It was written for A8 (serving legacy `/<id>` post URLs) and already carries `revalidate = 3600`, `dynamicParams`, and a `generateStaticParams` that seeds 20 films + 20 posts. A6 adds a branch, not a route — but it also means the two features share a cache policy and a `generateMetadata`, so changes to either need to keep the numeric path working.
+
 - **Frozen copy (small WP-side changes, allowed):**
   - **Chromeless render mode** — a page template `embed` (or a `?embed=1` switch) that outputs `wp_head()` + `the_content()` + `wp_footer()` with **no** header/footer/sidebar. ~20 lines; this lets WP define the exact "inner content" boundary instead of us guessing a DOM selector. It still enqueues the welfare/cmsms CSS + JS, so the content looks and behaves like the old site.
   - **REST on** — optional but cheap; useful for pulling each page's `<title>`/meta for our `generateMetadata`, and for listing/denylisting.
 - **Next proxy route `app/legacy/[...slug]/route.ts`:** server-fetches the chromeless URL, rewrites asset URLs to absolute (`//frozen-copy/...` for CSS/JS/images), rewrites in-content links from the copy origin → **relative** (so a link to `/team` stays in the new site and re-falls-back or hits the redesigned route), injects a small height-`postMessage` script + `<base target="_parent">` if not already in the template, and returns the HTML. Served from our origin ⇒ the iframe is **same-origin**.
-- **Catch-all `app/[...slug]/page.tsx`:** renders `<Header/>` + `<LegacyEmbed/>` + `<Footer/>`. `<LegacyEmbed>` is a small client component: an `<iframe src="/legacy/…">` that listens for the height message and sets its own height (same-origin, so no postMessage origin limits). Explicit redesigned routes (`/news`, `/video`, the next Figma pages) **always win** over the catch-all, so finishing a page automatically retires its fallback.
+- **Catch-all `app/[...slug]/page.tsx`:** for a non-numeric path, renders `<Header/>` + `<LegacyEmbed/>` + `<Footer/>` (today it `notFound()`s there). `<LegacyEmbed>` is a small client component: an `<iframe src="/legacy/…">` that listens for the height message and sets its own height (same-origin, so no postMessage origin limits). Explicit redesigned routes (`/news`, `/video`, the next Figma pages) **always win** over the catch-all, so finishing a page automatically retires its fallback. Two consequences of A8 landing first: the site now runs with **`trailingSlash: true`**, so proxied paths arrive slashed and the rewriter must not double up; and `next.config.ts` already holds a `redirects()` table, which takes effect **before** the catch-all — check it before debugging a "page falls through to the fallback" report.
 
 ## 4. Caveats & mitigations
 
@@ -74,15 +79,18 @@ The old design's look is produced by the theme, not the page body:
 
 ## 5. Suggested first slice (prototype)
 
+Step 3 got cheaper — the catch-all is already there from A8.
+
 1. Stand up / point at the **frozen copy**; add the chromeless `embed` template (+ enable REST).
 2. `app/legacy/[...slug]/route.ts` — proxy + asset/link rewrite + height script.
-3. `LegacyEmbed` client component (auto-height iframe) + `app/[...slug]/page.tsx` catch-all with `<Header/>`/`<Footer/>` and a denylist.
+3. `LegacyEmbed` client component (auto-height iframe), and swap the catch-all's `notFound()` branch for `<Header/>` + `<LegacyEmbed/>` + `<Footer/>` behind a denylist. **Keep the numeric-id branch first** — it carries 46 % of site entries.
 4. Validate against ~5 representative pages (`/team`, `/projects`, a region, `/printed-products`, `/rekvizit`); confirm height-sync, link navigation, and that `/news` & `/video` still take precedence.
-5. `generateMetadata` from the copy's REST (title/description) for the embedded pages.
+5. Extend the existing `generateMetadata` to pull title/description from the copy's REST for embedded pages (it currently returns `{}` for anything non-numeric).
 
 ## 6. Open questions for the team
 
-- **Frozen copy host:** where does it live and on what URL (so `WP_LEGACY_BASE` can be set)? Can we add the chromeless template + enable REST there?
-- **Hosting topology:** is Next the apex origin in prod, with the frozen copy on a separate host reachable server-side by the proxy route?
+- **Frozen copy host:** where does it live and on what URL (so `WP_LEGACY_BASE` can be set)? Can we add the chromeless template + enable REST there? **This is the blocking one** — nothing else in §5 can start without it.
+- **Hosting topology:** Next is the apex origin in prod (A2: Beget VPS + Coolify). Confirm the frozen copy sits on a separate host reachable **server-side** by the proxy route, and that outbound HTTPS from the container to it is allowed.
 - **Retired pages:** which legacy slugs should 404 rather than embed?
-- **SEO window:** any high-value legacy page where iframe-SEO is unacceptable and we should prioritise its redesign (or proxy-with-SSR) first?
+- ~~**SEO window:** any high-value legacy page where iframe-SEO is unacceptable?~~ — **answered by the Metrica read.** Four pages clear the bar and should get native routes instead of an iframe: `/materials/plakati/` (501 entries, the #6 entry page on the site), `/materials/zakladki/` (150), `/contacts/` (545) and the `/profile/*` detail template (565). They're Tier 2 in the plan. Everything else behind the fallback is under 0.2 % of entries each, where iframe SEO is an acceptable trade.
+- **Legacy URL shapes are already handled elsewhere.** A8 owns the `/<id>` posts, the `/video/*` catalogue aliases and the `/page/N/` families. Don't re-solve them here; check `next.config.ts` first.

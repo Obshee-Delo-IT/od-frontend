@@ -19,8 +19,8 @@ Related: [`implementation-plan.md`](./implementation-plan.md) (task state) · [`
 | **B5** | **Category ids may differ.** `581/580/86/559` are hardcoded in two files. | A wrong id silently empties the catalogue and the related-films strip. | §1.3 + §4.3 |
 | **B6** | **Media offload origin unconfirmed for prod.** | `WP_MEDIA_CDN` defaults to the od-dev bucket; a different prod bucket breaks every image. | §1.5 + §4.1 |
 | ~~B7~~ | ~~Hosting/deploy target undecided~~ — **decided: Beget VPS + Coolify, images built in GitHub Actions → GHCR.** | Remaining work is the CI push step (§4.7), not a decision. | §4 |
-| **B8** | **Only ~4 routes are redesigned** (`/`, `/news`, `/news/[id]`, `/video`, `/video/[id]`). | Launching without the A6 legacy fallback means 170 pages 404. **Launch gate, not a migration step** — see §6. Those 170 pages are ~15 % of entry traffic. | A6 |
-| **B9** | **The redesigned routes don't match live URLs.** Live serves posts at `/<id>/` and films at `/video/filmy|multy|…/`; we serve `/news\|video/<id>` and `/video?category=`. No `redirects()` exists. | **59 % of all site entries** (Metrica, 91 days) would 404 — bigger than B8. Fix as an `/<id>` dispatch inside A6's catch-all, not a redirect table. | A8 |
+| **B8** | **Only 4 content routes are redesigned** — `/` (home), `/news` (index), `/video` (catalogue) and the post detail at `/<id>`. | Launching without the A6 legacy fallback means ~170 pages 404. **Launch gate, not a migration step** — see §6. Those ~170 pages are ~15 % of entry traffic. | A6 |
+| ~~B9~~ | ~~The redesigned routes don't match live URLs.~~ — **FIXED 2026-08-13 (A8).** `/<id>` is now served directly by `app/[...slug]/page.tsx`; `next.config.ts` carries a 16-entry `redirects()` table for the `/video/*`, `/category/video/*` and `/page/N/` families; `trailingSlash: true` matches the live URL form. | Was **59 % of all site entries**. Now a **verification** concern rather than a build one — gate 12 in §5 is what proves it. | verify in §5 |
 
 ---
 
@@ -177,9 +177,12 @@ pnpm generate:types && pnpm type-check
 ```
 > Note: `redocly.yml`'s `output` currently contains a stray space (`./src/types/generated /wp-json-openapi.ts`). Fix it before relying on this step.
 
-**4.3 Apply the real category ids (B5)** if §1.3 differed from od-dev. Two places, and they must agree:
+**4.3 Apply the real category ids (B5)** if §1.3 differed from od-dev. **Three places now, and they must agree** (od-dev values: Фильмы `581`, Мультфильмы `580`, Ролики `86`, Известные люди `559`):
 - `src/app/video/page.tsx` — `CATEGORY_IDS` (drives the switcher and the «Все» union)
-- `src/app/video/[id]/page.tsx` — `VIDEO_CATEGORY_IDS` (related strip + SSG seed)
+- `src/modules/Video/FilmPage/FilmPage.tsx` — `VIDEO_CATEGORY_IDS` (related strip; also imported by the catch-all's SSG seed)
+- `next.config.ts` — `FILM_CATEGORIES` (slug → id for the A8 legacy redirects; a stale id here sends `/video/filmy/` to an empty filter instead of 404ing, so it fails quietly)
+
+Also check `src/app/news/page.tsx` — `CATEGORY_IDS` there holds the news chips (`47` / `578`), which are equally environment-specific.
 
 **4.4 Image hosts.** `WP_BASE` and `WP_MEDIA_CDN` are allowlisted automatically. The Punycode legacy domain `xn----9sbkcac6brh7h.xn--p1ai` is hardcoded and still in use (70199's poster image) — keep it until those assets are re-hosted.
 
@@ -195,11 +198,15 @@ pnpm lint && pnpm type-check && pnpm test && pnpm build
 - **Runtime env in Coolify:** the §4.1 table, plus `WP_LEGACY_BASE` once A6 lands.
 - **Container:** port 3000, `HOSTNAME=0.0.0.0`, non-root `nextjs` user. **512 MB – 1 GB**, hard `mem_limit`, `--max-old-space-size` 256–384 (idle is 80–150 MB but `sharp` peaks 300–500 MB; 256 MB risks OOM, and V8 will otherwise grow to fill the host).
 - **Persistent volume on `/app/.next/cache`** — without it every redeploy cold-starts into a request burst against the slow WP plus full image re-encoding.
-- **Health check → `/health`** (added 2026-08-04). It never touches WP on purpose: a WP hiccup must not make Coolify restart a healthy container. Do not point the probe at `/`.
+- **Health check → `/health/`** (added 2026-08-04). ⚠️ **With the trailing slash** — A8 turned on `trailingSlash: true`, so a probe of `/health` gets a 308 to `/health/`; whether that counts as healthy depends on the probe's redirect handling, so configure the slashed form and don't rely on it. It never touches WP on purpose: a WP hiccup must not make Coolify restart a healthy container. Do not point the probe at `/`.
 - **Pin the Next minor** — 16.1.0 has a known Docker memory-leak thread (vercel/next.js#88603).
 - **WordPress stays on timeweb.** The container reaches it over public HTTPS.
 
-**4.7 Remaining CI work.** `.github/workflows/ci.yml` still ends at `pnpm build` — **add the docker build + push-to-GHCR step**, passing the two build-args above. `.dockerignore` was fixed on 2026-08-04 (it had been named `.docerkignore`, so Docker ignored it entirely while the Dockerfile does `COPY . .` — a local build would have baked `.env` into a layer). Building in CI avoids that class of leak anyway, which is a further argument for never building on a developer machine.
+**4.7 Remaining CI work.** `.github/workflows/ci.yml` runs `next typegen` → `lint` → `type-check` → `test` → `build` and **stops there** — the docker build + push-to-GHCR step is still to add, passing the two build-args above.
+
+⚠️ **The Dockerfile can't accept those build-args yet.** It has no `ARG WP_BASE` / `ARG WP_MEDIA_CDN` (nor the matching `ENV` in the `builder` stage), so `docker build --build-arg WP_BASE=…` would be silently ignored, `next.config.ts` would fall back to `https://wp.invalid`, and **every `next/image` request on the deployed site would 400**. Add the two `ARG`/`ENV` lines in the same change as the GHCR push, and verify by grepping the built `.next` output or by loading one remote image on a preview deploy.
+
+`.dockerignore` was fixed on 2026-08-04 (it had been named `.docerkignore`, so Docker ignored it entirely while the Dockerfile does `COPY . .` — a local build would have baked `.env` into a layer). Building in CI avoids that class of leak anyway, which is a further argument for never building on a developer machine.
 
 **4.8 ISR caveat.** The ISR cache lives on the container filesystem, so it is **per-replica**. Scaling past one instance needs a shared `cacheHandler`. `revalidate = 3600` everywhere and there is **no on-demand revalidation** (B4 in the plan is open), so WP edits take up to an hour to appear — tell the editors, or ship the revalidate webhook first.
 
@@ -209,18 +216,28 @@ pnpm lint && pnpm type-check && pnpm test && pnpm build
 
 Run against the deployed target, not localhost.
 
-1. `/video` — 200, ten cards, pagination present. Card count should equal §1.6's four-category total (od-dev: 99), **not** the full `format=video` count.
+Post detail lives at the bare **`/<id>`** since A8 — `/video/<id>` and `/news/<id>` 308 there, so gates 3–5 can be run against either shape (checking both proves the redirect too).
+
+1. `/video/` — 200, ten cards, pagination present. Card count should equal §1.6's four-category total (od-dev: 99), **not** the full `format=video` count.
 2. Each category tab returns results and its count matches WP.
-3. `/video/<id>` for a film with downloads — pills render with durations; share tiles show the VK/Rutube/YouTube brand marks; breadcrumbs «Видео → title».
-4. `/video/<id>` for a film with `kinescope_id` — the Kinescope iframe plays. 70 of 99 qualify on od-dev after §3.6.
-5. `/video/<id>` for a film with a poster — the sidebar плакат card renders with «Скачать плакат».
+3. `/<id>` for a film with downloads — pills render with durations; share tiles show the VK/Rutube/YouTube brand marks; breadcrumbs «Видео → title».
+4. `/<id>` for a film with `kinescope_id` — the Kinescope iframe plays. 70 of 99 qualify on od-dev after §3.6.
+5. `/<id>` for a film with a poster — the sidebar плакат card renders with «Скачать плакат».
 6. Card thumbnails resolve (covers from §3.5) — no broken images, no `wp.invalid`.
-7. `/`, `/news`, `/news/<id>` still render — the news route shares `resolveMediaUrl` and `parsePost` with video.
+7. `/` and `/news/` still render, and `/<id>` for a **news** post renders the article (not the film layout) — the news path shares `resolveMediaUrl` and `parsePost` with video.
 8. A film with **no** ACF data degrades gracefully: no empty pill strip, no phantom poster card.
 9. `pnpm film:import --in <sheet>` reports `0 field(s)` — data landed and persisted.
-10. 375px and 1440px on `/video` and one film page.
-11. `/health` returns a plain `ok` (Coolify's probe target).
-12. **No 404 on the live site's real URLs (A8).** Take the top ~200 URLs by entry visits from the Yandex Metrica `Страницы входа` export and request each against the deploy; every one must answer 200 or 308-to-200. This is the gate that catches the URL-shape change — the live site serves every post at `/<id>/` and the film catalogue at `/video/filmy|multy|roliki|short|famous-people/`, which together are **59 % of all site entries**. Include at least one `/category/video/mult/` (256 entries on its own) and one `/page/N/`.
+10. 375px and 1440px on `/video/` and one film page.
+11. `/health/` returns a plain `ok` (Coolify's probe target — **note the trailing slash**, see §4.6).
+12. **No 404 on the live site's real URLs (A8) — the gate that proves the biggest change. Automated: `pnpm url:check`.**
+    ```bash
+    pnpm url:check                                       # against localhost:3000
+    pnpm url:check -- --base https://<stage-host>        # against a deploy
+    pnpm url:check -- --top 500 --fail-under 95
+    ```
+    It replays the real entry URLs from the Yandex Metrica **«Страницы входа»** export (Отчёты → Стандартные отчёты → Содержание → Страницы входа → export; `--csv` to point at a specific file, otherwise the newest export under `~/Documents/od/ya.metrika/`), **ranked by the entry visits each URL actually earns**, and reports results weighted by traffic rather than by URL count. Flags: `--base`, `--csv`, `--top` (default 200), `--concurrency` (default 8), `--fail-under` (exit 1 below that coverage %). The headline number is **«Entry-traffic coverage»**, and failures are automatically grouped by section — no flag needed.
+
+    **Reading the output — two classes of 404 are expected and fine:** pages not yet redesigned (every `/about/*`, `/materials/*`, … until A6 lands), and posts missing from the environment under test (od-dev is a stale copy, so recent ids 404 locally and resolve on prod). **What must never appear is a *shape* failure** — `/<id>/` or `/video/<slug>/` failing across the board, which is the difference between "this section isn't built" and "A8 is broken". Sanity-check that the run covered: one `/category/video/mult/` (256 entries on its own), one `/page/N/`, one `/news/<id>` and one `/video/<id>` (proving the fold into `/<id>`), and — because it has **no redirect entry today** — `/category/video/famous/`.
 
 ---
 
@@ -229,8 +246,8 @@ Run against the deployed target, not localhost.
 Migrating the data and pointing the app at prod is **not** launch. Still required:
 
 - **A6 legacy-page fallback.** ~170 of 174 pages have no redesigned route; without the catch-all iframe proxy they 404. Needs the frozen copy stood up with a chromeless template + REST, `WP_LEGACY_BASE`, the proxy route and the catch-all. See [`legacy-page-fallback.md` §5](./legacy-page-fallback.md). Those 170 pages are only **~15 % of entry traffic** — see the traffic tiering in [`implementation-plan.md`](./implementation-plan.md#launch-priority--measured-from-real-traffic-yandex-metrica-2026-05-14--2026-08-13) for which of them deserve a native route before prod (Materials index + 4 sub-pages, `/contacts/`, `/profile/[slug]`) and which stay on the fallback.
-- **A8 URL compatibility.** Separate from A6 and larger: the redesigned routes themselves don't match the live URL shape (`/<id>/` → `/news|video/<id>`, `/video/filmy/` → `/video?category=`). 59 % of entries. Best folded into A6's catch-all as an `/<id>` dispatch rather than a redirect table — see A8 in the plan. Gate 12 in §5 verifies it.
-- **A2 hosting decision**, **A4 Yandex Metrica + consent banner**, **F6 152-FZ privacy page**, **F4 SEO baseline** (`robots.txt`, `sitemap.xml`, OG beyond news).
+- ~~**A8 URL compatibility.**~~ **Done 2026-08-13** — `/<id>` is served natively and the redirect table covers the `/video/*`, `/category/video/*` and `/page/N/` families. Two loose ends: commit the change, and run **gate 12** in §5 against a real deploy. Note that **F4's sitemap and canonical tags must emit `/<id>`** or the duplicate-URL problem comes straight back.
+- **A4 Yandex Metrica + consent banner**, **F6 152-FZ privacy page** (port the live text, strip the stale Google Analytics reference, keep the СМИ registration line + 12+ badge), **F4 SEO baseline** (`robots.txt`, `sitemap.xml`, OG on the index pages). **A2 is decided** — Beget VPS + Coolify — but the deploy half of **A3** (docker build + push to GHCR, incl. the Dockerfile build-args in §4.7) is still open.
 - **B4 on-demand revalidation** — otherwise editors wait an hour (§4.6).
 - **B8 WordPress plugin cleanup** is **not** required for the frontend, with one exception: removing `clearfy-pro` is what permanently fixes both the REST block (B1) and the WP-CLI redirect gotcha. Everything else in B8 is hygiene.
 

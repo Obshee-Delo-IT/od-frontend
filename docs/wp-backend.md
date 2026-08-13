@@ -2,15 +2,16 @@
 
 The Next.js app in this repo consumes a WordPress install hosted on **Timeweb shared hosting**. There are three OD-related WP instances on the same account (`cs16182@vh426.timeweb.ru`):
 
-| Instance | Path on server | URL (presumed) | Status |
+| Instance | Path on server | URL | Status |
 | --- | --- | --- | --- |
-| **od-dev** | `~/od-dev/public_html/` | `https://od-dev.tmweb.ru` (matches `redocly.yml`) | The instance this repo currently points at via `WP_BASE` |
-| **od-stage** | `~/od-stage/public_html/` | unknown — confirm with the org | Staging, presumably one rung above dev |
-| **od-test** | `~/od-test/public_html/` | unknown — confirm with the org | Test |
+| **od-dev** | `~/od-dev/public_html/` | `https://od-dev.tmweb.ru` (matches `redocly.yml`) | The instance this repo points at via `WP_BASE`. **The only one we write to** — REST is on, content is migrated to Gutenberg, ACF is installed. |
+| **od-stage** | `~/od-stage/public_html/` | `https://stage.od.webtm.ru` (probed for the A6 research — confirm it's the same install as this directory) | Staging. **REST disabled** (clearfy-pro), content is cmsms shortcodes. Read-only so far; it is the rehearsal target for [`prod-migration-runbook.md`](./prod-migration-runbook.md). |
+| **od-test** | `~/od-test/public_html/` | unknown — confirm with the org | Test. Never probed; unclear how it differs from od-dev. |
+| **prod** | `~/obshee-delo.ru/` | `https://obshee-delo.ru` | Live site. **REST disabled**, cmsms shortcodes, no ACF. **Now in scope** — the migration path is the runbook; nothing has been written to it. |
 
-Production (`obshee-delo.ru`) lives in `~/obshee-delo.ru/` on the same account but is not currently a target of this Next.js build-out (the redesign is dev-first).
+**Read this alongside two things:** [`prod-migration-runbook.md`](./prod-migration-runbook.md) (what has to change on stage/prod, in order) and [`legacy-page-fallback.md` §2](./legacy-page-fallback.md) (the read-only probe that established the prod/stage facts above). The redesign started dev-first but is no longer dev-only.
 
-Last verified: 2026-05-29.
+Last verified: **2026-08-13** (core/plugin/CPT/taxonomy numbers below re-probed on that date; the §4 cleanup plan and §6.3 patterns date from 2026-05-29 and are unchanged).
 
 ---
 
@@ -33,7 +34,7 @@ ssh timeweb '<command>'        # one-off remote command
 
 | Component | Version | Notes |
 | --- | --- | --- |
-| WordPress core | **6.8.5** | Russian-localised admin (post-type labels are in Russian). |
+| WordPress core | **6.8.8** | Russian-localised admin (post-type labels are in Russian). Auto-updating on the minor line — it was 6.8.5 on 2026-05-29. |
 | PHP | **8.2.30 (NTS)** | CLI build dated Jan 2026 — recent. |
 | MySQL | (via WP — confirm name in `wp-config.php` if needed) | Connects over unix socket; stream-local SSH forwarding is disabled, so query the DB by running `mysql` server-side, not via tunnels. See `servers-agent/docs/timeweb-pro-moodle.md` §"Querying the DB" for the heredoc pattern. |
 | WP-CLI | **2.8.1** at `/usr/local/bin/wp` | Works out-of-the-box. |
@@ -58,8 +59,8 @@ Beyond core (`post`, `page`, `attachment`, …), od-dev registers:
 
 | CPT | Source plugin | Public | Records | Verdict |
 | --- | --- | --- | --- | --- |
-| `project` | **cmsms-content-composer** | ✅ | **21** — all `draft`, all from April–May 2015 | **Demo content from the welfare theme installation.** Titles in English ("Special Needs Assistance", "Disabled People Assistance"), bodies are literal Lorem ipsum. Never published, never used in production. **Delete entirely with cmsms.** Live site's «Программы / Проекты» section is served by plain WP pages, not this CPT. |
-| `profile` | **cmsms-content-composer** | ✅ | **205** — mostly `publish`, ongoing through 2024 | Real OD regional coordinators / team members. **`post_content` is already clean Gutenberg-block markup** (image + columns + paragraph), thanks to `cmsms-gutenberg-upgrade` having already run a migration. The original cmsms shortcodes survive only as a backup in the `nvp_content_copy` meta field. **Keep — renders like any other Gutenberg post.** |
+| `project` | **cmsms-content-composer** | ✅ | **21** — all `draft`, all from April–May 2015 (`/wp/v2/project` returns **0**, since REST only serves `publish`) | **Demo content from the welfare theme installation.** Titles in English ("Special Needs Assistance", "Disabled People Assistance"), bodies are literal Lorem ipsum. Never published, never used in production. **Delete entirely with cmsms.** Live site's «Программы / Проекты» section is served by plain WP pages, not this CPT. |
+| `profile` | **cmsms-content-composer** | ✅ | **205 total, 139 `publish`** — ongoing through 2024 (`/wp/v2/profile` returns the 139) | Real OD regional coordinators / team members. **`post_content` is already clean Gutenberg-block markup** (image + columns + paragraph), thanks to `cmsms-gutenberg-upgrade` having already run a migration. The original cmsms shortcodes survive only as a backup in the `nvp_content_copy` meta field. **Keep — renders like any other Gutenberg post.** Mind the two counts: WP-CLI's `post list --format=count` reports all statuses, REST reports only published, and D3 will surface 139. |
 | `cmsms_like`, `cmsms_view`, `content_template` | cmsms-content-composer | ❌ | (engagement / template plumbing) | Disappear with cmsms. Not used. |
 | `leyka_donation` | **leyka** | ✅ | | Donation records — likely surfaces on the donation subdomain, not in this redesign. Keep only if donations stay on this WP. |
 | `leyka_campaign` | leyka | ✅ | | Same. |
@@ -81,7 +82,41 @@ Beyond core (`post`, `page`, `attachment`, …), od-dev registers:
 | `pl-categs` | profile | cmsms-content-composer |
 | `Carousel` | (carousel slides) | owl-carousel |
 
-Standard WP taxonomies (`category`, `post_tag`, `nav_menu`, `post_format`) are also present and used for the news flow already wired in this repo.
+Standard WP taxonomies (`category`, `post_tag`, `nav_menu`, `post_format`) are also present and carry most of the model this repo actually consumes.
+
+### 3.3 Category ids the frontend hardcodes
+
+Re-verified 2026-08-13. **These ids are per-environment** — see runbook blocker B5 before pointing the app at stage or prod.
+
+| id | slug | name | parent | posts | used by |
+| ---: | --- | --- | ---: | ---: | --- |
+| `85` | `video` | Видео | — | 12 | parent of the film categories (not queried directly) |
+| `581` | `movies` | Фильмы | 85 | 23 | `/video` catalogue + tab |
+| `580` | `mult` | Мультфильмы | 85 | 8 | same |
+| `86` | `roliki` | Ролики | 85 | 15 | same |
+| `559` | `famous` | Известные люди | 85 | 55 | same |
+| `52` | `actual` | Видео события | — | 115 | **excluded** from the catalogue — event reports, not films |
+| `47` | `novosti` | Новости | — | 7 876 | `/news` «Наши дела» chip |
+| `578` | `articles` | Статьи | — | 19 | `/news` «Статьи» chip; also what `/materials/articles/` is made of |
+| `547` | `oblast` | Региональные новости | — | 1 886 | not yet surfaced — ~80 region children under it (open question in §8) |
+
+The catalogue is the **union** of `581,580,86,559` = **99 unique films** (the four counts sum to 101 because two posts are double-filed). `format=video` across all posts is **203** — the difference is mostly the 115 «Видео события» reports.
+
+### 3.4 Film metadata — the `group_film_meta` ACF group
+
+The one place the content model is *not* core WP. Films are ordinary posts with `post_format=video`; everything the player page needs beyond title/date/excerpt/featured-image lives in a flat ACF group, **`group_film_meta`** (field-group post id `72999` on od-dev), created via WP-CLI by `setup-film-acf.php` in the ops repo.
+
+**18 REST-exposed keys**, verified over `/wp/v2/posts?format=video&_fields=acf` on 2026-08-13:
+
+`kinescope_id` · `watch_url` · `trailer_url` · `download_{1..5}_url` · `download_{1..5}_label` · `share_vk` · `share_youtube` · `share_rutube` · `poster_image_url` · `poster_download_url`
+
+Three things to know:
+
+- **ACF is canonical; body-parsing is a fallback.** Films' legacy bodies contain the same links as free-form HTML, and the frontend still mines them (`extractFilmPoster`, in-body Яндекс.Диск anchors) — but only to fill what data entry hasn't covered yet, deduped by URL with the ACF value winning. That precedence was a deliberate decision («parsing is not stable»), so don't invert it.
+- **Five generic download slots, not a full/short pair.** The label carries the whole pill text (e.g. «Полн. версия • 35 мин • 1,5 Гб») because 11 films ship 2–5 same-duration size/format variants.
+- **Population is incomplete and editorial.** 70 of 99 films have a `kinescope_id`, 0 have a `watch_url`. Current numbers and what editors must supply are in [`implementation-plan.md` → B-VIDEO2](./implementation-plan.md); the CSV round-trip tooling is `pnpm film:export` / `film:import` (see the README).
+
+**Consequence for §4:** ACF is no longer an optional nicety on this install — `/video` does not work without it.
 
 ---
 
@@ -101,6 +136,7 @@ These earn their place because they expose data or capability to the REST/GraphQ
 
 | Plugin | Version | Why it stays |
 | --- | --- | --- |
+| **advanced-custom-fields** | 6.8.3 | **Required, not optional.** Holds `group_film_meta` (§3.4) — the canonical data model behind `/video` and the film player. Installed 2026-06-04 for B-VIDEO, after this table was first written. Free tier suffices (flat fields, no repeater). |
 | **contact-form-7** | 6.1.6 | Forms backend (B6). Mainstream, actively maintained, has its own REST endpoint. |
 | **wp-openapi** | 1.0.21 | Generates the OpenAPI schema feeding `pnpm generate:types`. *Conditional*: monitor for upstream maintenance; if it breaks under a WP update, fall back to wp-graphql or hand-written types. |
 | **wp-graphql** | 2.3.3 | Alternative API surface; useful for the deep-taxonomy Materials section and complex queries. *Conditional*: keep only if we plan to use it. If we commit to REST-only, drop. |
@@ -112,13 +148,15 @@ These earn their place because they expose data or capability to the REST/GraphQ
 
 | Current plugin | Replace with | Why |
 | --- | --- | --- |
-| **cmsms-content-composer** + **cmsms-gutenberg-upgrade** | Re-register the `profile` CPT (and its taxonomy `pl-categs` if used) in the **custom headless theme's `functions.php`** — about 15 lines of `register_post_type` / `register_taxonomy`. **No ACF strictly needed**: `profile` records are already plain Gutenberg-block posts (title + featured image + `post_content`). ACF stays *optional* for surfacing structured side-fields (e.g. `region`, `phone`, `email` as top-level fields instead of buried in the body) — install only if editors want that. `project` CPT and its taxonomies (`pj-categs`, `pj-tags`) are **not** re-registered — that data is deleted. `cmsms-gutenberg-upgrade` already did the actual content migration and is no longer needed. | CMSMasters is a paid page-builder we don't want; the content it owned is already converted to core Gutenberg by `cmsms-gutenberg-upgrade`. So the cleanup is "remove the registration shell + drop the migrator", not "rebuild the data model". Theme `functions.php` is the lighter-touch option than installing ACF just for two `register_post_type` calls. |
+| **cmsms-content-composer** + **cmsms-gutenberg-upgrade** | Re-register the `profile` CPT (and its taxonomy `pl-categs` if used) in the **custom headless theme's `functions.php`** — about 15 lines of `register_post_type` / `register_taxonomy`. **No ACF fields needed for `profile` itself**: those records are already plain Gutenberg-block posts (title + featured image + `post_content`). Adding a `profile` **field group** (e.g. `region`, `phone`, `email` as top-level API fields instead of buried in the body) stays optional — the ACF *plugin* is present either way, since films depend on it (§3.4). `project` CPT and its taxonomies (`pj-categs`, `pj-tags`) are **not** re-registered — that data is deleted. `cmsms-gutenberg-upgrade` already did the actual content migration and is no longer needed. | CMSMasters is a paid page-builder we don't want; the content it owned is already converted to core Gutenberg by `cmsms-gutenberg-upgrade`. So the cleanup is "remove the registration shell + drop the migrator", not "rebuild the data model". Keep the CPT registration in theme code rather than leaning on ACF's CPT UI, so the two concerns stay separable. |
 | **wysija-newsletters** (legacy MailPoet) | Either modern **MailPoet** (separate plugin family) or move newsletters to a Russian email-marketing SaaS (Unisender, SendPulse RU). | Wysija is unmaintained; if "subscribe to news" actually ships, it needs a current backend. |
 | **welfare** theme + `welfare-old/` + `welfare-ver-1-0-9 /` | A stock theme (e.g. **Twenty Twenty-Five** or a 50-line custom minimal theme that just provides `style.css` + `index.php`). | Theme is invisible to end users in headless mode; the only thing it has to do is satisfy WP's "active theme required" check and not interfere with admin. |
 
 ### 4.3 Drop — UI-side plugins with no headless purpose
 
-All of these can be deactivated and deleted. The only consequence is that **legacy WP-rendered pages will lose their shortcodes / blocks** — irrelevant once Next is in front.
+All of these can be deactivated and deleted. The only consequence is that **legacy WP-rendered pages will lose their shortcodes / blocks** — mostly irrelevant once Next is in front, with one live caveat: the **A6 legacy fallback proxies a frozen copy** of the old site, and *that* copy needs cmsms + welfare + these UI plugins to keep rendering. So drop them on od-dev/stage/prod as planned, and leave the frozen copy alone.
+
+**Four of the rows below are already inactive** (verified 2026-08-13) — installed but switched off, so they only need deleting: `debug` 1.12, `infogram` 1.6.1, `loco-translate` 2.6.7, `wp-category-posts-list` 2.0.3.
 
 | Plugin | What it does | Why it goes |
 | --- | --- | --- |
@@ -170,25 +208,28 @@ Either is fine; the minimal custom theme is cleaner if we want frontend bouncing
 
 ## 5. Plugin inventory snapshot (as it is right now)
 
-For reference until cleanup lands — versions as of 2026-05-29:
+For reference until cleanup lands — **active** plugins on od-dev, versions as of **2026-08-13**:
 
 ```
-all_in_one_bannerWithPlaylist 3.6      author-avatars 2.1.20
-carousel-block 2.0.5                    cimy-user-manager 1.5.0
-classic-editor 1.7.0                    clearfy-pro 3.5.3
-cmsms-content-composer 1.6.2            cmsms-gutenberg-upgrade 1.0.0
-contact-form-7 6.1.6                    display-categories-widget 3.1
-ewww-image-optimizer 8.7.0              google-sitemap-generator 4.1.23
-leyka 3.30.3                            owl-carousel 0.5.3
-page-list 6.3                           query-monitor 3.19.0
-shortcodes-ultimate 7.5.3               simple-blog-stats 20260418
-simple-lightbox 2.9.5                   taxonomy-terms-order 1.9.9.1
-wp-code-highlightjs 0.6.2                wp-downgrade 1.2.6
-wp-graphql 2.3.3                        wp-openapi 1.0.21
-wp-optimize 3.5.0                       wysija-newsletters 2.21
+advanced-custom-fields 6.8.3            all_in_one_bannerWithPlaylist 3.6
+author-avatars 2.1.20                   carousel-block 2.0.5
+cimy-user-manager 1.5.0                 classic-editor 1.7.0
+clearfy-pro 3.5.3                       cmsms-content-composer 1.6.2
+cmsms-gutenberg-upgrade 1.0.0           contact-form-7 6.1.6
+display-categories-widget 3.1           ewww-image-optimizer 8.7.5
+google-sitemap-generator 4.1.24         leyka 3.30.3
+owl-carousel 0.5.3                      page-list 6.3
+query-monitor 3.19.0                    shortcodes-ultimate 7.8.4
+simple-blog-stats 20260809              simple-lightbox 2.9.5
+taxonomy-terms-order 1.9.9.1            wp-code-highlightjs 0.6.2
+wp-downgrade 1.2.6                      wp-graphql 2.3.3
+wp-openapi 1.0.21                       wp-optimize 3.5.0
+wysija-newsletters 2.21
 ```
 
-26 active plugins now → target **~5 after cleanup**: **CF7** (forms), **wp-openapi** (schema), **wp-optimize** (backend hygiene), **query-monitor** (dev-only), plus **leyka** and **wp-graphql** if those stay. **ACF is optional** (only if editors want structured side-fields on profiles); the `profile` CPT registration goes into the custom theme's `functions.php`.
+Plus **4 installed-but-inactive**: `debug` 1.12, `infogram` 1.6.1, `loco-translate` 2.6.7, `wp-category-posts-list` 2.0.3.
+
+**27 active now** (26 at the 2026-05-29 audit, + ACF for B-VIDEO) → target **~6 after cleanup**: **ACF** (film fields — required, see §3.4), **CF7** (forms), **wp-openapi** (schema), **wp-optimize** (backend hygiene), **query-monitor** (dev-only), plus **leyka** and **wp-graphql** if those stay. The `profile` CPT registration goes into the custom theme's `functions.php`, not into ACF.
 
 ---
 
@@ -196,20 +237,30 @@ wp-optimize 3.5.0                       wysija-newsletters 2.21
 
 ### 6.1 Currently consumed (from `src/shared/api/`)
 
-- `GET /wp/v2/posts` — news listings
-- `GET /wp/v2/posts/{id}` — news detail
-- `GET /wp/v2/menus?slug=main-navigation` — main navigation menu (provided by a plugin, since core REST doesn't ship menus)
-- `GET /wp/v2/menu-items?menus={id}` — menu item nodes
-- Footer fetcher (see `src/shared/api/fetchFooter.ts`)
+Verified against the fetchers 2026-08-13. Everything goes through the single `openapi-fetch` client in `httpClient.ts` (Basic auth + throw-on-non-2xx middleware), except where noted.
+
+| Endpoint | Fetcher | Notes |
+| --- | --- | --- |
+| `GET /wp/v2/posts` | `fetchNewsList`, `fetchLatestNews`, `fetchSimilarNews`, `fetchFilms`, `fetchVideoList` | Paginated via `per_page`/`page`, filtered by `categories` and `format`. **Reads `X-WP-Total` / `X-WP-TotalPages`** for pagination — those headers are part of the contract. |
+| `GET /wp/v2/posts/{id}` | `fetchNews` / `cachedFetchNews`, `fetchVideo` / `cachedFetchVideo` | Post detail for both kinds. |
+| `GET /wp/v2/posts/{id}?_fields=id,format` | `app/[...slug]/page.tsx` | The A8 dispatch probe — deliberately a **raw `wpFetch`**, not the typed client, because a 404 is an expected answer here rather than an error. |
+| `GET /wp/v2/posts?format=video&categories=…` + `.acf` | `fetchVideoList`, `fetchVideo` | The film catalogue and player. Reads the 18 `group_film_meta` keys (§3.4). |
+| `GET /wp/v2/menus?slug=main-navigation` | `fetchMenus` | Main navigation (plugin-provided — core REST doesn't ship menus). |
+| `GET /wp/v2/menu-items?menus={id}` | `fetchMenuItems` | Menu nodes; `parent === 0` is root, `menu_order` is a depth-first walk (§6.3). |
+| `GET /wp/v2/widgets?sidebar=…` | `fetchFooter` | The footer, per the §6.3 widget pattern — this one is **built**, not just planned. |
+| `HEAD <media-cdn>/<key>` | `resolveMediaUrl` | Not WP: an existence probe against the object-storage bucket, 1 h cached, 200-only (§6.4). |
+
+**Auth note:** every one of these is authenticated with the application password even though the content is public, because `httpClient` injects the header unconditionally. On a CI build with no `WP_*` env, a stub client returns `[]` so compilation still validates.
 
 ### 6.2 Available but unused — relevant to upcoming work
 
-- `GET /wp/v2/profile` + `GET /wp/v2/profile/{id}` + `GET /wp/v2/pl-categs` — team members
-- `GET /wp/v2/pages` — generic pages (about, FAQ, contacts, materials landing — depending on how content is organised)
-- `GET /wp/v2/search` — generic site-wide search (see §6.3 for the design decision)
+- `GET /wp/v2/profile` (139 published) + `GET /wp/v2/profile/{id}` + `GET /wp/v2/pl-categs` — team members / coordinators (D3)
+- `GET /wp/v2/pages` (**174** published) — generic pages (about, FAQ, contacts, materials landing — depending on how content is organised). Also the denominator for the A6 fallback.
+- `GET /wp/v2/search` — generic site-wide search (see §6.3; B7 is now in scope)
 - `GET /wp/v2/settings` — site metadata (`.description` is the line under the logo)
-- `GET /wp/v2/widgets?sidebar=sidebar_bottom` + `GET /wp/v2/sidebars/{id}` — widget-based footer (see §6.3)
+- `GET /wp/v2/sidebars/{id}` — the explicit widget-id list, if we ever want a separate cache key (the footer itself already uses `/widgets` — see §6.1)
 - `GET /wp/v2/tags?search=...` + `GET /wp/v2/posts?tags={id}` — curated post lists by tag (see §6.3)
+- `GET /wp/v2/categories` — would let the `/news` chips and `/video` tabs resolve ids by **slug** instead of hardcoding them, which is what runbook blocker **B5** is about
 - `POST /contact-form-7/v1/contact-forms/{id}/feedback` — form submissions (CF7)
 - `POST /wp/v2/...` for write operations (requires the same Basic auth currently used)
 - `/graphql` — full GraphQL endpoint (alternative)
@@ -227,11 +278,11 @@ These patterns are pre-designed by the WP-side engineer (issues #8, #9, #45, #50
 
 **Header navigation (menu).** Already wired. Hierarchy rule: `parent === 0` = root; nested items reference their parent by id. `menu_order` is a depth-first walk over the tree — usable as the canonical sort. GraphQL was tried and is **buggy** for nested menus (returns null `childItems` past one level) — REST is the right call here. Source: #8.
 
-**Footer = widgets in `sidebar_bottom`.** `GET /wp/v2/widgets?sidebar=sidebar_bottom` returns an array of widgets in order, each carrying its own `rendered` HTML. The order in the array is authoritative — no need to call `/sidebars/sidebar_bottom` first unless we want the explicit list of widget ids for a separate cache key. Render each `widget.rendered` through the same `html-react-parser` path that news bodies use. Source: #8.
+**Footer = widgets in `sidebar_bottom`.** ✅ **Implemented** (`fetchFooter`). `GET /wp/v2/widgets?sidebar=sidebar_bottom` returns an array of widgets in order, each carrying its own `rendered` HTML. The order in the array is authoritative — no need to call `/sidebars/sidebar_bottom` first unless we want the explicit list of widget ids for a separate cache key. Render each `widget.rendered` through the same `html-react-parser` path that news bodies use. Source: #8.
 
-**Search (header).** `GET /wp/v2/search?search=...`. This is the standard WP REST search endpoint — fast enough for the org's content volume (~500–1000 URLs per the live sitemap). Defer Algolia/Meilisearch/Yandex Search unless relevance becomes a problem. Source: #8.
+**Search (header).** `GET /wp/v2/search?search=...`. This is the standard WP REST search endpoint — fast enough for the org's content volume (~500–1000 URLs per the live sitemap). Defer Algolia/Meilisearch/Yandex Search unless relevance becomes a problem. Source: #8. **Now in scope** — `header-v2` ships a search input, so this is B7 rather than a maybe.
 
-**Films list.** `GET /wp/v2/posts?format=video` — uses WP's built-in `post_format` taxonomy, no custom CPT. The 5-category split on the live site (full films / animated / clips / shorts / "famous people") layers on top via `categories` query params, same pattern as news regions below. Source: #8.
+**Films list.** ✅ **Implemented** (`fetchVideoList` / `fetchVideo`). `GET /wp/v2/posts?format=video` — WP's built-in `post_format` taxonomy, no custom CPT. Categories layer on top via `categories` (OR-matched when passed a list). **One correction to the original design note:** the live site's "5th" film category, *shorts / короткометражки*, **does not exist in WP** — there are only four children of «Видео» 85, and the live `/video/short/` page is a curated list, so A8 redirects it to the unfiltered catalogue. See §3.3. Source: #8.
 
 **News listings.** Two modes, switched by config (single env var or feature flag):
 - **Default (latest):** `GET /wp/v2/posts` — what the home news grid (§7 in the home composition) ships with day-one.
@@ -287,15 +338,21 @@ If the WP side later makes the origin reliable or returns CDN URLs directly in t
 
 ## 8. Outstanding questions the WP state doesn't answer
 
-These are real decisions the org/team has to make — the WP install alone doesn't tell us:
+These are real decisions the org/team has to make — the WP install alone doesn't tell us. Reviewed 2026-08-13; answered items struck through rather than deleted, so the reasoning stays findable.
 
-- **Which staging level does Next.js point at for what?** Right now `WP_BASE` → `od-dev`. Should there be a `WP_BASE` per Next deployment tier (dev → od-dev, stage → od-stage, prod → obshee-delo.ru)? `od-stage` and `od-test` directories exist but their URLs / purposes aren't documented.
-- **Are projects and profiles in od-dev representative of prod content,** or is dev a stale snapshot? Affects whether we can develop against real shapes or need to seed test data.
-- **Will the redesign keep CMSMasters Content Composer** as the content model, or migrate `project` / `profile` to plain WP custom post types managed via ACF / Meta Box? CMSMasters is a paid page-builder; if the team wants to ditch it, the CPT registrations need to move into a small mu-plugin or theme code.
-- **Materials section model** — there's no `material` CPT today. Materials currently live as static WP pages or as ad-hoc posts. The redesign's tab-by-tab structure (books, disks, flyers, posters, …) probably needs a real CPT + taxonomy. Concrete proposal needed before D8 starts.
-- **News categories / regions** — `cachedFetchNews` currently grabs `data.categories`. Confirm whether categories carry region/topic and whether Next should expose category-filtered news pages.
-- **What does `od-test` differ from `od-dev`?** Same plugins? Same DB? Worth a quick comparison if either is going to be a target.
-- **Webhook capability for on-demand revalidation (B4).** Does the Timeweb shared host let outbound HTTP fire from WP hooks (e.g. `save_post` → `wp_remote_post(NEXT_REVALIDATE_URL)`)? Probably yes, but worth confirming there's no egress restriction.
+**Still open**
+
+- **Materials section model** — there's no `material` CPT today. Materials currently live as static WP pages or as ad-hoc posts. The redesign's tab-by-tab structure (books, disks, flyers, posters, …) probably needs a real CPT + taxonomy. **This is now the critical-path content question**: partial D8 is Tier 2 (before prod) on traffic grounds, and it can't start without this.
+- **News regions in the UI.** The topic side is settled (chips → 47 / 578). What is *not*: WP has ~80 region categories under «Региональные новости» `547` (1 886 posts; e.g. Ростовская обл. 322) and the design specs no region control. Does `/news` get a region dropdown?
+- **`od-test` — how does it differ from od-dev?** Same plugins? Same DB? Still never probed. Worth 5 minutes if it's ever going to be a target.
+- **Webhook capability for on-demand revalidation (B4).** Does the Timeweb shared host let outbound HTTP fire from WP hooks (e.g. `save_post` → `wp_remote_post(NEXT_REVALIDATE_URL)`)? Probably yes, but worth confirming there's no egress restriction. Until B4 lands, editors wait up to an hour (`revalidate = 3600`).
+- **Are od-dev's `page` and `profile` bodies representative of prod?** Partly answered and the answer is *no* for pages — od-dev is a migrated-to-Gutenberg copy while prod stores cmsms shortcodes ([`legacy-page-fallback.md` §2](./legacy-page-fallback.md)). **Unverified for `format=video` posts**, which is runbook blocker B2 and the highest-risk unknown in the whole migration.
+
+**Answered since this list was written**
+
+- ~~Which staging level does Next.js point at for what?~~ — one `WP_BASE` per deployment tier; dev → od-dev, stage → od-stage, prod → `obshee-delo.ru`, with a **separate application password per environment**. See §1 and [`prod-migration-runbook.md` §4.1](./prod-migration-runbook.md).
+- ~~Will the redesign keep CMSMasters Content Composer?~~ — **no.** It goes to trash along with the welfare theme; `profile` gets re-registered in a minimal headless theme's `functions.php`, `project` is deleted. §4.2 has the plan. Note the frozen copy for A6 keeps cmsms — that's the one place it survives.
+- ~~Should Next expose category-filtered news pages?~~ — **yes, shipped.** `/news?category=` with `Все / Наши дела / Статьи` chips (D2).
 
 ---
 
@@ -319,8 +376,18 @@ ssh timeweb 'cd ~/od-dev/public_html && wp --skip-plugins=clearfy-pro taxonomy l
 # Count posts per post type (without loading bodies)
 ssh timeweb 'cd ~/od-dev/public_html && wp --skip-plugins=clearfy-pro post list --post_type=project --format=count'
 
+# Video category ids (the ones the frontend hardcodes — see §3.3)
+ssh timeweb 'cd ~/od-dev/public_html && wp --skip-plugins=clearfy-pro term list category --fields=term_id,slug,name,parent,count --format=csv | grep -E "video|movies|mult|roliki|famous|actual"'
+
+# ACF field groups (expect group_film_meta, id 72999 on od-dev)
+ssh timeweb 'cd ~/od-dev/public_html && wp --skip-plugins=clearfy-pro post list --post_type=acf-field-group --fields=ID,post_title,post_name,post_status --format=csv'
+
 # Probe an API endpoint
 curl -s -u "$WP_USER:$WP_PASSWORD" "$WP_BASE/wp-json/wp/v2/project?per_page=5" | jq .
+
+# The 18 film ACF keys, plus catalogue totals from the X-WP-Total header
+curl -s -u "$WP_USER:$WP_PASSWORD" "$WP_BASE/wp-json/wp/v2/posts?format=video&per_page=1&_fields=acf" | jq '.[0].acf | keys'
+curl -sI -u "$WP_USER:$WP_PASSWORD" "$WP_BASE/wp-json/wp/v2/posts?format=video&categories=581,580,86,559&per_page=1" | grep -i x-wp-total
 
 # Regenerate OpenAPI types in the frontend repo (must be done from od-frontend)
 cd ~/Projects/od-frontend && pnpm generate:types

@@ -72,7 +72,7 @@ The repo `--red-N` numbers roughly track Figma's `brand/red/N` scale but are not
 
 #### Un-tokenized colors in shipped code
 
-The home **StatsRow** "+" accents render four hard-coded hexes — `#42C880` (green), `#C383D9` (purple), `#FFC33F` (yellow), `#6692FD` (blue) — that map to **no token**. Only `red`/`gray` (+ `white`/`danger`) are ported to `theme-override.css`; Figma has `Warning` (yellow-ish) and `Success` (green) scales but **no purple or blue scale at all**. Until Design confirms a palette these stay as literals (the one place in the home page that violates the "never hard-code colors" rule below). Tracked in [`questions-for-designer.md`](./questions-for-designer.md) §1.
+The home **StatsRow** "+" accents render four hard-coded hexes — `#42C880` (green), `#C383D9` (purple), `#FFC33F` (yellow), `#6692FD` (blue) — that map to **no token**. Only `red`/`gray` (+ `white`/`danger`) are ported to `theme-override.css`; Figma has `Warning` (yellow-ish) and `Success` (green) scales but **no purple or blue scale at all**. Until Design confirms a palette these stay as literals (the one place in shipped code that violates the "never hard-code colors" rule below). Tracked in [`questions-for-designer.md`](./questions-for-designer.md) §1.1.
 
 #### What the old docs got wrong
 
