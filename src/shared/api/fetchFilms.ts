@@ -1,3 +1,4 @@
+import { WP_TAGS, wpCache } from './cacheTags';
 import { extractFirstImage } from './extractFirstImage';
 import { wpBaseUrl, wpFetch } from './httpClient';
 import { resolveMediaUrl } from './mediaUrl';
@@ -19,7 +20,10 @@ interface RawPost {
 }
 
 export const fetchFilms = async (limit = 6): Promise<FilmSummary[]> => {
-  const res = await wpFetch(`/wp/v2/posts?format=video&per_page=${limit}&_embed=1`);
+  const res = await wpFetch(
+    `/wp/v2/posts?format=video&per_page=${limit}&_embed=1`,
+    wpCache([WP_TAGS.posts, WP_TAGS.films])
+  );
   if (!res.ok) {
     return [];
   }

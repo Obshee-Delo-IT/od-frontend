@@ -1,3 +1,4 @@
+import { WP_TAGS, wpCache } from './cacheTags';
 import { extractFirstImage } from './extractFirstImage';
 import { wpBaseUrl, wpFetch } from './httpClient';
 import { resolveMediaUrl } from './mediaUrl';
@@ -157,7 +158,7 @@ export const fetchVideoList = async ({
     query.set('categories', categories.join(','));
   }
 
-  const res = await wpFetch(`/wp/v2/posts?${query.toString()}`, { next: { revalidate: 3600 } });
+  const res = await wpFetch(`/wp/v2/posts?${query.toString()}`, wpCache([WP_TAGS.posts, WP_TAGS.films]));
   if (!res.ok) {
     return { items: [], totalPages: 0, total: 0 };
   }

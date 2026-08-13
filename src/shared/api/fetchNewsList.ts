@@ -1,3 +1,4 @@
+import { WP_TAGS, wpCache } from './cacheTags';
 import { extractFirstImage } from './extractFirstImage';
 import { wpBaseUrl, wpFetch } from './httpClient';
 import { resolveMediaUrl } from './mediaUrl';
@@ -42,7 +43,7 @@ export const fetchNewsList = async ({
 
   // The listing route is dynamic (driven by search params), so cache the WP
   // response per (page, category) for an hour instead of refetching every hit.
-  const res = await wpFetch(`/wp/v2/posts?${query.toString()}`, { next: { revalidate: 3600 } });
+  const res = await wpFetch(`/wp/v2/posts?${query.toString()}`, wpCache([WP_TAGS.posts]));
   if (!res.ok) {
     return { items: [], totalPages: 0, total: 0 };
   }

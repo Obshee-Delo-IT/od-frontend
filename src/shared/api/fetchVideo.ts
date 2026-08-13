@@ -1,4 +1,5 @@
 import { cache } from 'react';
+import { postTag, WP_TAGS, wpCache } from './cacheTags';
 import { mapVideoSummary, type RawVideoPost, type VideoSummary } from './fetchVideoList';
 import { wpFetch } from './httpClient';
 
@@ -17,7 +18,7 @@ export const fetchVideo = async (id: string): Promise<VideoDetail | null> => {
     return null;
   }
 
-  const res = await wpFetch(`/wp/v2/posts/${id}?_embed=1`, { next: { revalidate: 3600 } });
+  const res = await wpFetch(`/wp/v2/posts/${id}?_embed=1`, wpCache([WP_TAGS.posts, WP_TAGS.films, postTag(id)]));
   if (!res.ok) {
     return null;
   }

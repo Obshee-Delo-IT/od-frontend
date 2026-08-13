@@ -1,3 +1,4 @@
+import { WP_TAGS, wpCache } from './cacheTags';
 import { extractFirstImage } from './extractFirstImage';
 import { wpBaseUrl, wpFetch } from './httpClient';
 import { resolveMediaUrl } from './mediaUrl';
@@ -24,7 +25,7 @@ interface RawPost {
 }
 
 export const fetchLatestNews = async (limit = 4): Promise<NewsSummary[]> => {
-  const res = await wpFetch(`/wp/v2/posts?per_page=${limit}&_embed=1`);
+  const res = await wpFetch(`/wp/v2/posts?per_page=${limit}&_embed=1`, wpCache([WP_TAGS.posts]));
   if (!res.ok) {
     return [];
   }

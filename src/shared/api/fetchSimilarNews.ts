@@ -1,3 +1,4 @@
+import { WP_TAGS, wpCache } from './cacheTags';
 import { client } from './httpClient';
 
 interface fetchSimilarNewsProps {
@@ -10,4 +11,5 @@ export const fetchSimilarNews = async ({ category, region }: fetchSimilarNewsPro
     params: {
       query: { categories: [category, region] },
     },
+    ...wpCache([WP_TAGS.posts]),
   });

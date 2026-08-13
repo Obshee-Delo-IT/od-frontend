@@ -1,3 +1,4 @@
+import { WP_TAGS, wpCache } from '@/shared/api/cacheTags';
 import { wpFetch } from '@/shared/api/httpClient';
 import { catalogueHref, FILM_CATEGORIES, type FilmCategorySegment } from '@/shared/config/filmCategories';
 import { ARTICLES_HREF } from '@/shared/config/newsCategories';
@@ -75,7 +76,7 @@ const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 const fetchPostPage = async (page: number): Promise<Response | null> => {
   for (let attempt = 1; attempt <= ATTEMPTS; attempt += 1) {
     try {
-      const res = await wpFetch(postsPath(page), { next: { revalidate } });
+      const res = await wpFetch(postsPath(page), wpCache([WP_TAGS.posts], revalidate));
       if (res.ok) {
         return res;
       }

@@ -1,4 +1,5 @@
 import { cache } from 'react';
+import { postTag, WP_TAGS, wpCache } from './cacheTags';
 import { client } from './httpClient';
 
 export const fetchNews = async (id: string) => {
@@ -8,6 +9,7 @@ export const fetchNews = async (id: string) => {
         id,
       },
     },
+    ...wpCache([WP_TAGS.posts, postTag(id)]),
   });
 
   return data;

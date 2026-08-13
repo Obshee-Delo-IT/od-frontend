@@ -1,3 +1,4 @@
+import { WP_TAGS, wpCache } from './cacheTags';
 import { client } from './httpClient';
 
 export const fetchFooter = () =>
@@ -7,4 +8,6 @@ export const fetchFooter = () =>
         sidebar: 'sidebar_bottom',
       },
     },
+    // Root-layout fetch, like the header's — see fetchMenus.
+    ...wpCache([WP_TAGS.widgets]),
   });

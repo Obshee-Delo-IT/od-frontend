@@ -3,6 +3,7 @@ import { cache } from 'react';
 import { NewsArticle, newsMetadata } from '@/modules/News/NewsArticle';
 import { FilmPage, filmMetadata } from '@/modules/Video/FilmPage';
 import { cachedFetchVideo } from '@/shared/api';
+import { postTag, WP_TAGS, wpCache } from '@/shared/api/cacheTags';
 import { cachedFetchNews } from '@/shared/api/fetchNews';
 import { client, wpFetch } from '@/shared/api/httpClient';
 import { ALL_FILM_CATEGORY_IDS } from '@/shared/config/filmCategories';
@@ -37,7 +38,7 @@ const legacyPostId = (slug: string[] | undefined) => (slug?.length === 1 && /^\d
  * throws on a non-2xx — here a 404 is an expected answer, not an error.
  */
 const resolvePostKind = cache(async (id: string): Promise<'film' | 'news' | null> => {
-  const res = await wpFetch(`/wp/v2/posts/${id}?_fields=id,format`, { next: { revalidate: 3600 } });
+  const res = await wpFetch(`/wp/v2/posts/${id}?_fields=id,format`, wpCache([WP_TAGS.posts, postTag(id)]));
   if (!res.ok) {
     return null;
   }
@@ -48,6 +49,13 @@ const resolvePostKind = cache(async (id: string): Promise<'film' | 'news' | null
   return post.format === 'video' ? 'film' : 'news';
 });
 
+/**
+ * Untagged on purpose, unlike every other WP call (B3): this runs once per
+ * build to pick the ISR seed, and its result is a list of ids rather than
+ * rendered content — there is nothing for `/api/revalidate/` to usefully purge,
+ * and a cache window here would only risk a rebuild reusing a stale seed. Posts
+ * that miss the seed are served on demand via `dynamicParams`.
+ */
 export async function generateStaticParams() {
   const [films, posts] = await Promise.all([
     wpFetch(`/wp/v2/posts?format=video&categories=${ALL_FILM_CATEGORY_IDS.join(',')}&per_page=20&_fields=id`)
