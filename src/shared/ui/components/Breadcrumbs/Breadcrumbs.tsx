@@ -26,7 +26,7 @@ export const Breadcrumbs: React.FC<BreadcrumbsProps> = ({
         <Fragment key={index}>
           <>
             {item.href ? (
-              <Link href={item.href} size="3" color="lightgrey">
+              <Link href={item.href} size="3" color="gray">
                 {item.label}
               </Link>
             ) : (

@@ -30,11 +30,11 @@ export const Accordion: React.FC<AccordionProps> = ({ items, ...props }) => (
       <AccordionItem key={value} className={css.item} value={`${value}`}>
         <AccordionTrigger className={css.trigger}>
           {href ? (
-            <Link href={href} size="3" color="gray">
+            <Link href={href} size="3" color="primary">
               {text}
             </Link>
           ) : (
-            <Text size="3" color="gray">
+            <Text size="3" className={css.label}>
               {text}
             </Text>
           )}

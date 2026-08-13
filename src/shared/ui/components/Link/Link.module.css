@@ -1,3 +1,8 @@
+/* Colours and states are the Figma `Links` matrix (`1330:36653`), read off the
+   component set: 3 colours × 4 states. Each colour is a plain class so it beats
+   Radix's `:where()`-wrapped defaults and the global `.rt-Link` hover/active in
+   theme-override.css, which otherwise paints every link red on hover. */
+
 .link {
   display: inline;
   align-items: center;
@@ -8,38 +13,77 @@
   display: inline-flex;
 }
 
-.whiteLink {
-  color: var(--white);
-}
-
-.whiteLink:hover {
-  color: var(--gray-4);
-}
-
-.whiteLink:active {
-  color: var(--gray-4);
-}
-
-.lightgrey {
-  color: var(--gray-6);
-}
-
-.lightgrey:hover {
-  color: var(--gray-7);
-}
-
-.lightgrey:active {
-  color: var(--gray-8);
-}
-
-.darkgrey {
+/* Figma `Color=Primary` */
+.primary {
   color: var(--gray-9);
 }
 
-.darkgrey:hover {
+.primary:hover {
+  color: var(--red-6);
+}
+
+.primary:active {
+  color: var(--red-8);
+}
+
+/* Figma `Color=red` */
+.red {
+  color: var(--red-8);
+}
+
+.red:hover {
   color: var(--red-10);
 }
 
-.darkgrey:active {
+.red:active {
   color: var(--red-8);
+}
+
+/* Figma `Color=white` */
+.white {
+  color: var(--white);
+}
+
+.white:hover {
+  color: var(--gray-4);
+}
+
+.white:active {
+  color: var(--gray-4);
+}
+
+/* Repo extra — the `_Breadcrumbs Base` gray and secondary consent copy. */
+.gray {
+  color: var(--gray-6);
+}
+
+.gray:hover {
+  color: var(--red-10);
+}
+
+.gray:active {
+  color: var(--red-8);
+}
+
+/* Figma `State=Disabled`, one value per colour. */
+.disabled {
+  cursor: default;
+  pointer-events: none;
+}
+
+.primary.disabled,
+.primary.disabled:hover,
+.gray.disabled,
+.gray.disabled:hover {
+  color: var(--gray-4);
+}
+
+.red.disabled,
+.red.disabled:hover {
+  color: var(--red-3);
+}
+
+.white.disabled,
+.white.disabled:hover {
+  color: var(--gray-5);
 }

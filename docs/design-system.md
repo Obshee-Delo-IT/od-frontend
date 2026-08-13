@@ -213,7 +213,7 @@ Status column reflects the **repo as of 2026-08-13**. Where a shipped component 
 | Figma component | ID | Variants | Status | Notes |
 | --- | --- | --- | --- | --- |
 | `Button` (canonical) | `1297:4792` (set) | 3 Variant × 3 Size × 3 State = 27 | ✅ `Button/` | **Geometry confirmed:** `cornerRadius:9999`, fill `#AE0A04` (brand/red/8), padding 12/24, label `text/4/regular` (PT Sans 18). Variants: `Contained`, `Outline`, `white`. Sizes: `Large`, `Small`, `Extra Small`. States: `Default`, `Hover`, `Disabled`. The `white` variant is the donation CTA on the red header. Shipped as a wrapper mapping intent → Radix variant + size (C1). |
-| `Links` (text-link buttons) | `1330:36653` (set) | 3 Size × 3 Color × 4 State = 36 | ⚠️ | Existing `src/shared/ui/components/Link/` covers the cases but with a different prop shape (`color: red | gray | white | lightgrey | darkgrey`). The Figma colors are `Primary`, `red`, `white` — close but not identical. Worth aligning the enum. |
+| `Links` (text-link buttons) | `1330:36653` (set) | 3 Size × 3 Color × 4 State = 36 | ✅ `Link/` | Aligned in C11. `color` is now `primary \| red \| white` — Figma's three — plus `gray`, kept as a documented extra for `_Breadcrumbs Base` and consent copy. Full matrix below. **Sizes:** Large = 18 (`text/4`), Small = 16 (`text/3`), **Extra Small is byte-identical to Small** in the component set, so the repo keeps the Radix `size` prop (4 → Large, 3 → Small) rather than inventing a third step. No state is underlined. |
 | `Button` (legacy) | `1321:5304` (set) | 2 | superseded | Old master with `cornerRadius:5`. Ignore — replaced by `1297:4792`. |
 | `_Button Groups Base` (nav) | `1326:17229` (set) | 3 (Default / Hover / Active) | ✅ via `ButtonGroup` | The horizontal nav-link cell. `cornerRadius:6`, padding 10/20, `text/3/regular`, fill transparent (hover/active: `brand/red/6` = `#D83030`). |
 | `_Button Groups Base` (tabs) | `1321:5108` (set) | 12 | ✅ `Tabs/` | A different tab cell. `cornerRadius:8`. Two color variants × two sizes × three states. Wraps in a white rounded container (`Frame 33786`). Used in the `page header` block. Shipped **link-based** (each tab a `<NextLink>`, zero client JS) since every confirmed use is URL-driven (C5). **Gap:** the *controlled* client variant needed by the D9 participation-form role tabs isn't built. |
@@ -237,6 +237,21 @@ Status column reflects the **repo as of 2026-08-13**. Where a shipped component 
 | ↳ `_Carousel Page Indicator Base/Small/Dot` | `1326:2122` | component | ✅ | 6 8×8 dots, active = `brand/red/7` (`#BE1710`), idle = `gray-5` (`#97A1AF`). |
 | `Status` (tracking) | `1350:13908` (set) | 7 (What × Status) | n/a | **Workflow component, not UI.** Tags screens on the `design` page as Design/Text/Dev done/in-progress/not-started. Read it as Design's signal of which mocks are ready. Ignore when building. |
 
+#### The `Links` colour matrix
+
+Read off the component set 2026-08-13. Every cell is text-only — **no state underlines** — and the colour is the only thing that changes across states:
+
+| `color` | Default | Hover | Active | Disabled |
+| --- | --- | --- | --- | --- |
+| `primary` (Figma `Primary`) | `gray-9` `#202B37` | `red-6` `#D83030` | `red-8` `#AE0A04` | `gray-4` `#CED2DA` |
+| `red` | `red-8` `#AE0A04` | `red-10` `#5C0302` | `red-8` `#AE0A04` | `red-3` `#FFB2B2` |
+| `white` | `#FFFFFF` | `gray-4` `#CED2DA` | `gray-4` `#CED2DA` | `gray-5` `#97A1AF` |
+| `gray` *(repo extra)* | `gray-6` `#637083` | `red-10` | `red-8` | `gray-4` |
+
+Two things this replaced: `lightgrey` (a duplicate of `gray`) and `darkgrey` (`primary` with a red-10 hover instead of Figma's red-6). Each colour is a plain CSS-module class, because `theme-override.css` paints *every* `.rt-Link:hover` red-10 through a `:where()` selector — a single class outranks it.
+
+`primary` is what the header flyout (`1336:10006`), the mobile menu rows (`1336:10032`) and the footer link columns are built from in Figma; they were all on `gray` (`#637083`) before C11.
+
 ### 3.3 Repo components not on the `👉 UI` page
 
 | Repo component | Location | What it does |
@@ -244,7 +259,7 @@ Status column reflects the **repo as of 2026-08-13**. Where a shipped component 
 | `Box` | `src/shared/ui/components/Box/` | Responsive layout primitive. **Spacing scale is multiples-of-4 (0/4/8/…/64) while Figma's `spacing/*` variables are multiples-of-5 (0/5/10/…/80) — round when implementing.** |
 | `NewsCard` | `src/shared/ui/components/NewsCard/` | The card primitive that recurs in the home news section, the `/news` grid and the contacts socials grid (`Frame 33827/28/29`). Extracted during D1; lives on the `design` page rather than the `👉 UI` page, which is why it isn't in §3.2. |
 | `Container` | `src/shared/ui/components/Container/` | Plain `<main>`-or-similar wrapper. Distinct from Radix's `<Container>`. |
-| `Link` | `src/shared/ui/components/Link/` | Composes Next.js `<Link>` + Radix `<Link>` + project color enum. Covers but does not strictly mirror the Figma `Links` component matrix. |
+| `Link` | `src/shared/ui/components/Link/` | Composes Next.js `<Link>` + Radix `<Link>` + the Figma `Links` colour enum (§3.2). |
 | `Logo` | `src/shared/ui/components/Logo/` | Brand logo rendered with `logo.webp`. |
 | `Modal` | `src/shared/ui/components/Modal/` | Custom portal-based modal — `useClickAway` + Escape + body-scroll lock. Not on Radix Dialog. Worth revisiting if Radix Dialog covers the use cases. |
 | `Accordion` | `src/shared/ui/components/Accordion/` | Wrapper over `@radix-ui/react-accordion` primitive. Used for FAQ. |
@@ -289,7 +304,7 @@ The eight primitives this section used to list as "next builds" — `Button`, `I
 
 1. **Promote `header-v2` + `header-mob` to live `modules/Header`** (C9) — the current implementation still consumes the older `header` / `header-scroll` masters. Note `header-mob` is a **separate 48-tall component**, not a CSS-responsive collapse of the desktop bar, so the swap changes structure and not just styles. `header-v2` also embeds the search input, which pulls in B7.
 2. **Promote `footer` + `footer-mob` to live `modules/Footer`** (C10 in Figma terms) — same situation.
-3. **Align the `Link` wrapper enum** to the Figma `Links` matrix (C11) — repo has `red | gray | white | lightgrey | darkgrey`, Figma has `Primary | red | white` × 3 sizes × 4 states.
+3. ~~**Align the `Link` wrapper enum** to the Figma `Links` matrix (C11).~~ ✅ **Shipped 2026-08-13** — see the matrix in §3.2.
 4. **Add the 4th breakpoint** (A1b) — `media.css` is 3-tier, the design is 4-tier. Affects every responsive component, which is why it's worth doing before more pages land.
 5. **`Tabs`, controlled variant** — a client-state sibling for the D9 participation-form role tabs; today's link-based form covers every other use.
 6. **`Dropdown`, multi-select variant** — checkbox list + removable chips, needed when Materials filtering lands.

@@ -17,7 +17,7 @@ export const ButtonGroupSubMenu: React.FC<ButtonGroupSubMenuProps> = ({ links = 
       <NavigationMenuList className={css.list}>
         {links?.map(({ href, id, text }) => (
           <NavigationMenuItem key={id} className={css.item}>
-            <Link color="gray" href={href} className={css.link}>
+            <Link color="primary" size="3" href={href} className={css.link}>
               {text}
             </Link>
           </NavigationMenuItem>
