@@ -1,10 +1,11 @@
 import { notFound } from 'next/navigation';
 import { cache } from 'react';
 import { NewsArticle, newsMetadata } from '@/modules/News/NewsArticle';
-import { FilmPage, filmMetadata, VIDEO_CATEGORY_IDS } from '@/modules/Video/FilmPage';
+import { FilmPage, filmMetadata } from '@/modules/Video/FilmPage';
 import { cachedFetchVideo } from '@/shared/api';
 import { cachedFetchNews } from '@/shared/api/fetchNews';
 import { client, wpFetch } from '@/shared/api/httpClient';
+import { ALL_FILM_CATEGORY_IDS } from '@/shared/config/filmCategories';
 import type { Metadata } from 'next';
 
 /**
@@ -49,7 +50,7 @@ const resolvePostKind = cache(async (id: string): Promise<'film' | 'news' | null
 
 export async function generateStaticParams() {
   const [films, posts] = await Promise.all([
-    wpFetch(`/wp/v2/posts?format=video&categories=${VIDEO_CATEGORY_IDS.join(',')}&per_page=20&_fields=id`)
+    wpFetch(`/wp/v2/posts?format=video&categories=${ALL_FILM_CATEGORY_IDS.join(',')}&per_page=20&_fields=id`)
       .then((res) => (res.ok ? (res.json() as Promise<Array<{ id?: number }>>) : []))
       .catch(() => []),
     client

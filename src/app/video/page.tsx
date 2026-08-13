@@ -1,6 +1,7 @@
 import { NewsletterSignup } from '@/modules/NewsletterSignup';
 import { VideoCard, VideoFilter, type VideoFilterOption } from '@/modules/Video';
 import { fetchVideoList } from '@/shared/api';
+import { ALL_FILM_CATEGORY_IDS, FILM_CATEGORY_IDS, type FilmCategorySlug } from '@/shared/config/filmCategories';
 import { Box } from '@/shared/ui/components/Box';
 import { PageHeader } from '@/shared/ui/components/PageHeader';
 import { Pagination } from '@/shared/ui/components/Pagination';
@@ -19,18 +20,6 @@ const FILTER_OPTIONS: { label: string; value: string }[] = [
   { label: 'Ролики', value: 'roliki' },
   { label: 'Известные люди', value: 'famous' },
 ];
-
-const CATEGORY_IDS: Record<string, number> = {
-  movies: 581,
-  mult: 580,
-  roliki: 86,
-  famous: 559,
-};
-
-// «Все» is the union of the four sub-categories, not every `format=video`
-// post: the unfiltered query is dominated by «Видео события» (52) event
-// reports, which aren't part of the film catalogue.
-const ALL_CATEGORY_IDS = Object.values(CATEGORY_IDS);
 
 export const metadata: Metadata = {
   title: 'Фильмы — ОБЩЕЕ ДЕЛО',
@@ -60,7 +49,7 @@ const Page = async ({ searchParams }: VideoPageProps) => {
   const params = await searchParams;
 
   const categoryParam = firstParam(params.category);
-  const activeCategory = categoryParam && categoryParam in CATEGORY_IDS ? categoryParam : 'all';
+  const activeCategory = categoryParam && categoryParam in FILM_CATEGORY_IDS ? categoryParam : 'all';
 
   const pageParam = Number(firstParam(params.page));
   const currentPage = Number.isFinite(pageParam) && pageParam > 1 ? Math.floor(pageParam) : 1;
@@ -68,7 +57,7 @@ const Page = async ({ searchParams }: VideoPageProps) => {
   const { items, totalPages } = await fetchVideoList({
     page: currentPage,
     perPage: PER_PAGE,
-    category: activeCategory === 'all' ? ALL_CATEGORY_IDS : CATEGORY_IDS[activeCategory],
+    category: activeCategory === 'all' ? ALL_FILM_CATEGORY_IDS : FILM_CATEGORY_IDS[activeCategory as FilmCategorySlug],
   });
 
   const breadcrumbItems = [{ label: 'Главная', href: '/' }, { label: 'Фильмы' }];

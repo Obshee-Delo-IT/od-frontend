@@ -3,6 +3,7 @@ import { ImagePreviewClient } from '@/modules/News/ImagePreview';
 import { parsePost, resolveContentImages } from '@/modules/News/utils';
 import { cachedFetchVideo, fetchVideoList, resolveMediaUrl } from '@/shared/api';
 import { wpBaseUrl } from '@/shared/api/httpClient';
+import { ALL_FILM_CATEGORY_IDS } from '@/shared/config/filmCategories';
 import { Box } from '@/shared/ui/components/Box';
 import { Breadcrumbs } from '@/shared/ui/components/Breadcrumbs';
 import { GutenbergProvider } from '@/shared/ui/theme';
@@ -14,14 +15,6 @@ import { RelatedFilms } from '../RelatedFilms';
 import { absolutizeWpMedia, aspectRatioFromUrl, extractFilmPoster } from '../utils';
 import css from './FilmPage.module.css';
 import type { Metadata } from 'next';
-
-/**
- * Children of «Видео» (85) — the film catalogue. Used to pick the sub-category
- * the related strip is scoped to, and to seed SSG with real films rather than
- * the «Видео события» event reports that dominate an unfiltered query. Same set
- * as the /video index filter.
- */
-export const VIDEO_CATEGORY_IDS = [581, 580, 86, 559];
 
 export interface FilmPageProps {
   /** WP post id, from the legacy `/<id>` URL. */
@@ -53,10 +46,10 @@ export const FilmPage = async ({ id }: FilmPageProps) => {
   }
 
   // Same sub-category when the film has one, otherwise the catalogue at large.
-  const relatedCategory = film.categories.find((category) => VIDEO_CATEGORY_IDS.includes(category));
+  const relatedCategory = film.categories.find((category) => ALL_FILM_CATEGORY_IDS.includes(category));
   const { items: relatedItems } = await fetchVideoList({
     perPage: 4,
-    category: relatedCategory ?? VIDEO_CATEGORY_IDS,
+    category: relatedCategory ?? ALL_FILM_CATEGORY_IDS,
   });
   const related = relatedItems
     .filter((item) => item.id !== film.id)

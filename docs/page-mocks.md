@@ -2,7 +2,7 @@
 
 This is the companion to [`design-system.md`](./design-system.md). That file maps the `👉 UI` page (the design system). **This file maps the `design` page** — the page mocks that consume the design system — and tracks which mocks have been built as Next.js routes.
 
-Last verified against Figma: 2026-05-30 (deep scout via the `figma-mcp-go` MCP on the `design` page itself, page id `168:717`).
+Last verified against Figma: **2026-05-30** (deep scout via the `figma-mcp-go` MCP on the `design` page itself, page id `168:717`). Repo-side status last verified against the code: **2026-08-13**.
 
 ---
 
@@ -104,13 +104,13 @@ Plus 5 `Status` badges.
 | Video index | `video` (`706:3315`, 2940×1440) | — |
 | Video filter / catalog view | `video-filter` (`1554:17574`, 2968×1440) | — |
 | Video page (player) | `video-page` (`1566:10433`, 3072×1440) | `video-page-mob` (`1567:10735`, `1567:11844`) |
-| "Скачать фильм" (download film modal/page) | (`1581:10334`) | — |
+| "Скачать фильм" (download film modal/page) | (`1581:10334`) | — · **not built as a separate surface** — the fidelity pass folded downloads into the player page's hero card as pills, which is what the `video-page` mock itself shows |
 
 Plus 3 `Status` badges.
 
 **Notes from the scout.** Card pattern repeats across the catalog: `Frame 21/26/27/29/30` rows (each 309×1242) each containing a `Frame 8` thumbnail (249×532) + tags row (`Frame 33957` 40×282) + share-block (`Frame 33958` 101×218, with `Frame 36` 64×218 and `Frame 33967` 68×204 vk / youtube / rutube icons). Each video card has its **own** social-share row — three icons (vk, logo-youtube, rutube), 30/30 in small chips at 22.4×22.4 inner size. `video-filter` adds a `Dropdown Menu` (`With Label/Dropdown Content` 40×426) above the card grid; the catalog views show 5 cards visible. The newsletter signup (`Frame 33837`, same as home §8) appears at the bottom of both `video` and `video-filter`.
 
-**Repo:** ⚠️ index shipped (D7, 2026-06-04) — `app/video/page.tsx` + `src/modules/Video/` (`VideoCard`, `VideoFilter`) + `fetchVideoList`, reading the `group_film_meta` ACF fields. Desktop = C6 `Dropdown`, mobile = C5 `Tabs`. Cards render downloads / share / watch only when the field is set (graceful degrade). **Player page `/video/[id]` shipped 2026-07-02** — `FilmPlayer` (Kinescope embed via the `kinescope_id` ACF field, populated on 70570 so far) + `FilmActions` + `FilmPosterCard` + `CollapsibleBody` + `RelatedFilms`; catalogue/home film cards repointed to `/video/{id}`. **Figma fidelity pass done 2026-07-02** vs `video-page` (`1566:10433`) + `video-page-mob` (`1567:10735`): breadcrumbs-only header, white hero card (player + share/download strip), two-column body with the плакат card extracted from legacy content (`extractFilmPoster`), 22px body behind a «Развернуть» clamp, «Рекомендуем к посмотру» mock cards, newsletter dropped. See [`implementation-plan.md` §D7/§E4](./implementation-plan.md).
+**Repo:** ✅ both surfaces shipped. Index (D7, 2026-06-04) — `app/video/page.tsx` + `src/modules/Video/` (`VideoCard`, `VideoFilter`) + `fetchVideoList`, reading the `group_film_meta` ACF fields. Desktop = C6 `Dropdown`, mobile = C5 `Tabs`. Cards render downloads / share / watch only when the field is set (graceful degrade). The catalogue is scoped to the **99** films in the four «Видео» sub-categories, not all 203 `format=video` posts. **Player page shipped 2026-07-02** — `FilmPlayer` (Kinescope embed via `kinescope_id`, now populated for **70 of 99** films) + `FilmActions` + `FilmPosterCard` + `CollapsibleBody` + `RelatedFilms`, all under `src/modules/Video/FilmPage/`. **Figma fidelity pass done 2026-07-02** vs `video-page` (`1566:10433`) + `video-page-mob` (`1567:10735`): breadcrumbs-only header, white hero card (player + share/download strip), two-column body with the плакат card extracted from legacy content (`extractFilmPoster`), 22px body behind a «Развернуть» clamp, «Рекомендуем к посмотру» cards, newsletter dropped. **Since A8 (2026-08-13) the player answers at `/<id>`, not `/video/<id>`** — the latter 308s in. See [`implementation-plan.md` §D7/§E4/§A8](./implementation-plan.md).
 
 ### 2.5 контакты — Contacts (SECTION `1227:4299`, 4 children, ~80 frames deep)
 
@@ -141,9 +141,9 @@ Plus 3 `Status` badges.
 **Notes from the scout.** `news` index uses 6 rows × 3 cards (`Frame 33834/35/36/38/39`, each 328×1240 holding three `Frame 33827/28/29` cards 387×328 with `Frame 170/171/172` 90-tall title overlay). The same card primitive lives in home §7 and the contacts socials grid — there is a **single News Card** to extract. News index header includes a search/filter row (`Frame 121` 50×1440 with `Frame 33786` 296×50 filter chip), then `Frame 33788` pagination (36×342) below the grid, then newsletter signup (`Frame 33837`). Article pages have a 387-wide sidebar (`Frame 34005`) with related-article list `Frame 161/165/166/167` (each 67×347) and an embedded newsletter Input + Checkbox.
 
 **Repo:** ⚠️ partial.
-- ✅ `app/news/[id]/page.tsx` exists — handles the article variants. Currently uses `parsePost` to extract the first carousel/gallery from WP post HTML as a header (see `src/modules/News/utils/parsePost.tsx`). The two "images" and "video" article variants probably both serve from this route depending on WP content.
+- ✅ The article detail is built — `src/modules/News/NewsArticle/`, rendered at the bare `/<id>` by `app/[...slug]/page.tsx` (A8; it used to be `app/news/[id]/page.tsx`). Uses `parsePost` to lift the first carousel/gallery out of the WP post HTML as a header slot (see `src/modules/News/utils/parsePost.tsx`), and `resolveContentImages` to repoint body images at the media CDN. The two "images" and "video" article variants both serve from here depending on WP content.
 - ✅ `app/news/page.tsx` (news index `753:418`) shipped 2026-06-03 — breadcrumbs + `НОВОСТИ` heading + `Все / Наши дела / Статьи` filter chips (`?category=`) + 3-col `NewsCard` grid (15/page) + `Pagination` (`?page=`, real `X-WP-TotalPages`) + `NewsletterSignup`. Data via `fetchNewsList`. See implementation-plan D2 / C4.
-- ❌ The "Скачать фильм" download flow is not built either.
+- ✅ The "Скачать фильм" CTA (`1581:10269`) — **resolved without a dedicated flow.** The D7 fidelity pass put downloads inline as pills in the film page's hero card, so there's no modal and no separate route to build. Same conclusion as the видео section's `1581:10334` frame.
 
 ### 2.7 Ответы на частые вопросы — FAQ (SECTION `1227:4301`, 2 children, ~34 frames deep)
 
@@ -181,7 +181,9 @@ A media-asset catalog. Many sub-frames have dozens of children each — these ar
 
 Plus 7 `Status` badges.
 
-**Repo:** ❌ none. This section has the largest design surface and likely the heaviest CMS / media integration. Component prerequisites are now all built (`Pagination` ✅ C4, `Carousel` ✅ C8, `Tabs` ✅ C5 — for switching between material types); what remains blocking is the asset-hosting story (Workstream E) and the CMS taxonomy.
+**Repo:** ❌ none. This section has the largest design surface and likely the heaviest CMS / media integration. Component prerequisites are now all built (`Pagination` ✅ C4, `Carousel` ✅ C8, `Tabs` ✅ C5 — for switching between material types); what remains blocking is the CMS taxonomy (no `material` CPT exists) and the asset-hosting capacity plan (Workstream E1).
+
+> **Don't read the size of this section as permission to defer it.** Real traffic puts Materials **#3 by search entries**, and `/materials/plakati/` is the #6 entry page on the whole site. **4 of the 14 sub-pages carry 62 % of the section's entries** (plakati · zakladki · articles · metodichki), so the index plus those four are **Tier 2 — before prod**; the other ten ride the A6 fallback. And `/materials/articles/` needs no build at all — its contents are category-578 posts the `/news` index already filters and the detail route already renders. See [`implementation-plan.md` §D8](./implementation-plan.md) and the launch tiering.
 
 ---
 
@@ -250,11 +252,15 @@ This is likely the body of a future `/participation` or `/volunteer` route. Plau
 
 ### 4.1 Routes that exist vs. designs that exist
 
+Repo side verified 2026-08-13.
+
 | Designed | Built |
 | --- | --- |
-| ~30+ distinct page mocks across 7 sections + home, most with mobile variants | **3 routes**: `app/page.tsx` (home, D1), `app/news/page.tsx` (news index, D2), `app/news/[id]/page.tsx` (article detail) |
+| ~30+ distinct page mocks across 7 sections + home, most with mobile variants | **4 content routes + 1 ops route**: `app/page.tsx` (home, D1) · `app/news/page.tsx` (news index, D2) · `app/video/page.tsx` (film catalogue, D7) · `app/[...slug]/page.tsx` (post detail — dispatches to the news article or the film page) · `app/health/route.ts` (container probe) |
 
-The repo is early in build-out — home, the news index, and the news article detail are wired. Everything else in §2 is still a Figma-only proposal.
+**Note the detail-route shape (A8).** There is no `app/news/[id]/` or `app/video/[id]/` any more: post detail is served at the **bare `/<id>`** — the URL the live site uses and 46 % of entries land on — by the catch-all, which picks the news or film body by `post_format`. The two bodies live in `src/modules/News/NewsArticle/` and `src/modules/Video/FilmPage/`, and `/news/<id>` / `/video/<id>` 308 into `/<id>`. That same catch-all is where the A6 legacy fallback will render un-redesigned pages, so the route count above will stop tracking "how much of the design is built".
+
+Against the mocks: home, the news index, the news article, the film catalogue and the film player are wired. Everything else in §2 is still a Figma-only proposal.
 
 ### 4.2 Mobile variants
 
@@ -268,7 +274,7 @@ Probably means responsive-only (single design that adapts) for the latter set, b
 
 ### 4.3 Component dependencies
 
-Components that block specific mocks (all spec'd in Figma — see [`design-system.md` §3](./design-system.md#3-component-inventory)). ✅ rows shipped with D1 (2026-05-30 … 06-01) or D2 (2026-06-03); the rest are still missing:
+Components that block specific mocks (all spec'd in Figma — see [`design-system.md` §3](./design-system.md#3-component-inventory)). ✅ rows shipped between 2026-05-30 and 2026-06-04 with D1 / D2 / C3–C6; only the header and footer swaps and the Accordion variant are still outstanding:
 
 | Component | Blocks | Status |
 | --- | --- | --- |
@@ -286,18 +292,19 @@ Components that block specific mocks (all spec'd in Figma — see [`design-syste
 | Accordion item with `Add Circle` expand icon | FAQ, contacts index — `Frame 33976/77/78/85-97` use the same expand/collapse pattern. The repo already has a Radix-based `Accordion`; spec just needs aligning. | ⚠️ `Accordion` exists; needs `Add Circle` variant |
 | Newsletter signup block | Home §8, every catalog page (`Frame 33837`). Re-uses `Input Field` + `Button` + `Checkbox` primitives — likely a `<NewsletterSignup>` shared module. | ✅ D1 — `src/modules/NewsletterSignup/` (reused by D2) |
 
-### 4.4 Suggested build order
+### 4.4 Build order — dependency vs. shipping
 
-If shipping incrementally, the dependency chain points to:
+This section is a **dependency** order: what must exist before what *can* be built. It is **not** the shipping order — that is decided by measured traffic in [`implementation-plan.md` → Launch priority](./implementation-plan.md#launch-priority--measured-from-real-traffic-yandex-metrica-2026-05-14--2026-08-13), and **where the two disagree, traffic wins.** The two known disagreements: **Materials** is last here but Tier 2 there (partially, 4 sub-pages), and **FAQ** is step 5 here but Tier 4 there (70 views in 91 days — it stays on the fallback indefinitely).
 
-1. **Home** (frames in §2.1) + **PageHeader** + **Button** wrapper + **Carousel** (chrome) + **Checkbox** (for §8 newsletter) — unblocks the canonical entry point and the most-reused chrome. The home composition pulls in nearly every primitive — building it early forces them into shape.
-2. **News index** (`новости/news` `753:418`) + **Pagination** — completes the news flow that's currently dangling. Re-uses the News Card extracted in step 1.
-3. **About** landing + sub-pages — biggest sub-tree, lots of content but mostly composition of existing primitives once PageHeader exists.
-4. **Contacts** (`контакты/contact-page`) + Accordion alignment — small and unblocks the contact form (form itself depends on B6).
-5. **FAQ** + use of existing `Accordion`.
-6. **Projects** + per-project pages + **Tabs** (project-detail tab strip).
-7. **Video** (incl. `video-filter` → also delivers `Dropdown` + remaining `Checkbox` patterns).
-8. **Materials** — by far the largest, lots of CMS work; build last once the asset-listing pattern is settled.
+1. ✅ **Home** (frames in §2.1) + **PageHeader** + **Button** + **Carousel** chrome + **Checkbox** — done 2026-05-30…06-01. As predicted, the home composition pulled nearly every primitive into shape.
+2. ✅ **News index** (`новости/news` `753:418`) + **Pagination** — done 2026-06-03, reusing the News Card extracted in step 1.
+3. ✅ **Video** (`video` + `video-filter` + `video-page`) — done 2026-06-04 / 07-02, and it delivered **Dropdown** and **Tabs** along the way. It jumped the queue because it is 44 % of all site traffic.
+4. **Materials** index + `plakati` / `zakladki` / `metodichki` — **next by traffic**, blocked on the CMS taxonomy decision, not on components.
+5. **Contacts** (`контакты/contact-page`) + the Accordion `Add Circle` variant — the *directory* has no form on the live site, so it does **not** depend on B6; defer the form.
+6. **`/profile/[slug]`** detail template — more search traffic than `/team/` and all of `/about/*` combined, and the CPT is already Gutenberg.
+7. **About** landing + sub-pages — biggest sub-tree, mostly composition of existing primitives now that PageHeader exists.
+8. **Projects** + per-project pages — confirm with Design that `project-1/2/3` correspond to anything real first; there is no project-detail traffic at all.
+9. **FAQ** — cheap once content is wired, but nothing is waiting on it.
 
 ---
 
