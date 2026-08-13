@@ -35,6 +35,8 @@ const MAX_ITEMS = 50;
 interface RevalidateBody {
   /** A WP post id — purges its page and every listing it can appear in. */
   postId?: number | string;
+  /** The same, batched: one WP request can change many posts (a bulk trash). */
+  postIds?: (number | string)[];
   /** Explicit `wp:*` tags, for changes a post id doesn't describe. */
   tags?: string[];
   /** Route paths, for pages no WP fetch tags — the A6 fallback, mainly. */
@@ -109,14 +111,31 @@ export const POST = async (request: Request): Promise<Response> => {
     return json({ error: '`tags` and `paths` must be arrays of non-empty strings' }, 400);
   }
 
-  const tags = new Set(requestedTags);
-  if (body.postId !== undefined) {
-    if (!/^\d+$/.test(String(body.postId))) {
-      return json({ error: '`postId` must be a positive integer' }, 400);
+  const ids: unknown[] = body.postId === undefined ? [] : [body.postId];
+  if (body.postIds !== undefined) {
+    if (!Array.isArray(body.postIds)) {
+      return json({ error: '`postIds` must be an array of post ids' }, 400);
     }
-    tags.add(postTag(body.postId));
-    // The post's own listings — /news/, the catalogue, the home feed — hold a
-    // copy of its title and thumbnail, so they go stale with it.
+    ids.push(...body.postIds);
+  }
+  if (ids.some((id) => !/^\d+$/.test(String(id)))) {
+    return json({ error: '`postId` and `postIds` must be positive integers' }, 400);
+  }
+
+  // Bound the *inputs*, not the tag set they expand into: 50 ids expand to 51
+  // tags, and a cap read off the expansion would reject the batch WordPress is
+  // allowed to send.
+  if (ids.length > MAX_ITEMS || requestedTags.length > MAX_ITEMS || requestedPaths.length > MAX_ITEMS) {
+    return json({ error: `at most ${MAX_ITEMS} post ids, ${MAX_ITEMS} tags and ${MAX_ITEMS} paths per request` }, 400);
+  }
+
+  const tags = new Set(requestedTags);
+  for (const id of ids) {
+    tags.add(postTag(id as number | string));
+  }
+  if (ids.length > 0) {
+    // The posts' own listings — /news/, the catalogue, the home feed — hold a
+    // copy of each title and thumbnail, so they go stale with them.
     tags.add(WP_TAGS.posts);
   }
 
@@ -136,10 +155,7 @@ export const POST = async (request: Request): Promise<Response> => {
   if (tags.size === 0 && paths.length === 0) {
     // A bodiless POST meaning «something changed» would have to purge
     // everything; make the caller say so with `{"tags":["wp"]}` instead.
-    return json({ error: 'nothing to revalidate — pass postId, tags or paths' }, 400);
-  }
-  if (tags.size > MAX_ITEMS || paths.length > MAX_ITEMS) {
-    return json({ error: `at most ${MAX_ITEMS} tags and ${MAX_ITEMS} paths per request` }, 400);
+    return json({ error: 'nothing to revalidate — pass postId, postIds, tags or paths' }, 400);
   }
 
   for (const tag of tags) {

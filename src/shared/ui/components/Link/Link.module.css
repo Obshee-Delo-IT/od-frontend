@@ -1,3 +1,11 @@
+/* Colours and states are the Figma `Links` matrix (`1330:36653`), read off the
+   component set: 3 colours × 4 states.
+
+   Every colour selector is doubled (`.link.primary`). theme-override.css paints
+   `.rt-Text:where([data-accent-color])` red-8 and every `.rt-Link:hover`
+   red-10; those are (0,1,0) like a single class, so a lone `.primary` ties and
+   loses on source order — measured, not guessed: it rendered red-8. */
+
 .link {
   display: inline;
   align-items: center;
@@ -8,38 +16,77 @@
   display: inline-flex;
 }
 
-.whiteLink {
-  color: var(--white);
-}
-
-.whiteLink:hover {
-  color: var(--gray-4);
-}
-
-.whiteLink:active {
-  color: var(--gray-4);
-}
-
-.lightgrey {
-  color: var(--gray-6);
-}
-
-.lightgrey:hover {
-  color: var(--gray-7);
-}
-
-.lightgrey:active {
-  color: var(--gray-8);
-}
-
-.darkgrey {
+/* Figma `Color=Primary` */
+.link.primary {
   color: var(--gray-9);
 }
 
-.darkgrey:hover {
+.link.primary:hover {
+  color: var(--red-6);
+}
+
+.link.primary:active {
+  color: var(--red-8);
+}
+
+/* Figma `Color=red` */
+.link.red {
+  color: var(--red-8);
+}
+
+.link.red:hover {
   color: var(--red-10);
 }
 
-.darkgrey:active {
+.link.red:active {
   color: var(--red-8);
+}
+
+/* Figma `Color=white` */
+.link.white {
+  color: var(--white);
+}
+
+.link.white:hover {
+  color: var(--gray-4);
+}
+
+.link.white:active {
+  color: var(--gray-4);
+}
+
+/* Repo extra — the `_Breadcrumbs Base` gray and secondary consent copy. */
+.link.gray {
+  color: var(--gray-6);
+}
+
+.link.gray:hover {
+  color: var(--red-10);
+}
+
+.link.gray:active {
+  color: var(--red-8);
+}
+
+/* Figma `State=Disabled`, one value per colour. */
+.disabled {
+  cursor: default;
+  pointer-events: none;
+}
+
+.link.primary.disabled,
+.link.primary.disabled:hover,
+.link.gray.disabled,
+.link.gray.disabled:hover {
+  color: var(--gray-4);
+}
+
+.link.red.disabled,
+.link.red.disabled:hover {
+  color: var(--red-3);
+}
+
+.link.white.disabled,
+.link.white.disabled:hover {
+  color: var(--gray-5);
 }

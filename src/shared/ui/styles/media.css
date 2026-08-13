@@ -1,3 +1,10 @@
+/* The design is 4-tier, not 3 (see design-system.md §2.8): Figma ships the
+   header at 1440, demo frames at 1200 and 900, and a separate 360-wide mobile
+   component. `--tablet` is the 1200 tier those demos introduce — below it the
+   page column drops from 100px side padding to 20px and the nav type steps
+   down from 16 to 14. Every rule reads as a max-width threshold, so the tiers
+   nest: mobile ⊂ tablet ⊂ small-desktop. */
 @custom-media --mobile (width < 900px);
+@custom-media --tablet (width < 1200px);
 @custom-media --small-desktop (width < 1440px);
 @custom-media --desktop (width >= 1440px);

@@ -46,4 +46,37 @@ describe('toNavItems', () => {
 
     expect(result).toEqual([]);
   });
+
+  it('rewrites internal absolute URLs to paths, children included', () => {
+    const result = toNavItems(
+      [
+        wpItem(1, 0, 'О нас', 'https://wp.test/about/'),
+        wpItem(2, 1, 'Команда', 'https://wp.test/about/team/'),
+        wpItem(3, 0, 'Партнёры', 'https://external.example/'),
+      ],
+      ['https://wp.test']
+    );
+
+    expect(result[0].href).toBe('/about/');
+    expect(result[0].content[0].href).toBe('/about/team/');
+    expect(result[1].href).toBe('https://external.example/');
+  });
+
+  it('drops the hidden entries, children with them', () => {
+    const result = toNavItems([
+      wpItem(1, 0, 'ГЛАВНАЯ', '/'),
+      wpItem(56658, 0, 'ОБЩЕЕДЕЛО-ПРО', 'https://pro.obshee-delo.ru/'),
+      wpItem(2, 56658, 'Конкурс', 'https://pro.obshee-delo.ru/contest/'),
+    ]);
+
+    expect(result.map((item) => item.text)).toEqual(['ГЛАВНАЯ']);
+  });
+
+  it('drops it whatever URL the install happens to store', () => {
+    // od-dev and prod disagree about this entry's URL — matching the label is
+    // what keeps it hidden on both.
+    const result = toNavItems([wpItem(1, 0, 'ГЛАВНАЯ', '/'), wpItem(56658, 0, 'ОБЩЕЕДЕЛО-ПРО', 'https://od-pro.ru/')]);
+
+    expect(result.map((item) => item.text)).toEqual(['ГЛАВНАЯ']);
+  });
 });

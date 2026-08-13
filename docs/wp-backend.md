@@ -373,61 +373,77 @@ If the WP side later makes the origin reliable or returns CDN URLs directly in t
 
 ### 6.5 On-demand revalidation — the WordPress half (B4)
 
-The frontend half shipped 2026-08-13: **`POST /api/revalidate/`**, in `src/app/api/revalidate/route.ts`. Nothing calls it yet — this section is what has to be installed on WP to close the loop, and it needs WP admin access.
+**Installed on od-dev 2026-08-13** and inert there on purpose: the plugin is in place, the secret is set, and `OD_REVALIDATE_URL` is one commented-out line, because od-dev has no frontend deployment to purge yet. Uncomment it when the tier deploys and the loop closes.
 
-**The contract.** POST JSON, authenticated by a shared secret in the `x-revalidate-secret` header (header only — a `?secret=` would land in every access log). The body names what changed:
+The plugin's source lives in **this repo** — [`wp/mu-plugins/od-revalidate.php`](../wp/mu-plugins/od-revalidate.php) — not inline here, so there is one copy to edit. Installed at `wp-content/mu-plugins/od-revalidate.php` (a *must-use* plugin, so it survives the §4.5 theme swap and can't be deactivated from the admin by accident), with its config in the not-autoloaded `mu-plugins/od-revalidate/config.php` — template at [`wp/mu-plugins/od-revalidate/config.example.php`](../wp/mu-plugins/od-revalidate/config.example.php). Keeping the secret out of `wp-config.php` means a rotation touches one small file that nothing else reads.
+
+**The contract.** POST JSON to `/api/revalidate/` **with the trailing slash** — `trailingSlash: true` makes the bare form a 308 (measured), and this client does not re-POST on a redirect. Authenticated by a shared secret in the `x-revalidate-secret` header (header only — a `?secret=` would land in every access log). The body names what changed:
 
 | Body | Purges |
 | --- | --- |
-| `{"postId": 39664}` | that post's page (`wp:post:39664`) and every listing that can show it (`wp:posts`) |
+| `{"postIds": [39664]}` | each post's page (`wp:post:39664`) and every listing that can show it (`wp:posts`). What the plugin sends. |
+| `{"postId": 39664}` | the singular form, kept for hand-written curl |
 | `{"tags": ["wp:menus"]}` | an explicit tag — `wp`, `wp:posts`, `wp:films`, `wp:menus`, `wp:widgets`, `wp:post:<id>` |
 | `{"paths": ["/news/"]}` | a route by path, for pages no WP fetch tags (the A6 fallback, mainly) |
 
-Answers `200` with what it purged, `401` on a bad secret, `503` when the deployment has no `REVALIDATE_SECRET` (so a half-configured tier is inert rather than open), `400` for anything else. Only `wp*` tags are accepted: Next's own implicit route tags (`_N_T_/…`) are addressable through the same API, and taking them would turn a leaked secret into a purge of the whole render cache.
+Answers 200 with what it purged, 401 on a bad secret, **503 when the deployment has no `REVALIDATE_SECRET`** (so a half-configured tier is inert rather than open), 400 for anything else — including any tag outside the `wp*` namespace, since Next's own implicit route tags (`_N_T_/…`) are addressable through the same API and taking them would turn a leaked secret into a purge of the whole render cache. At most 50 ids, 50 tags and 50 paths per request; the plugin chunks larger batches rather than dropping them.
 
-**Two traps.** Post to the URL **with the trailing slash** — `trailingSlash: true` makes the slashless form a 308 (verified: `POST /api/revalidate` → 308 → `/api/revalidate/`), and a client that doesn't re-POST on redirect never arrives. And the secret must match the frontend's `REVALIDATE_SECRET` env var, which is per-deployment: stage and prod each get their own, and stage must never hold prod's.
+**What WordPress reports.** `transition_post_status`, plus `trashed_post` / `untrashed_post` / `deleted_post`, `wp_update_nav_menu` → `wp:menus`, and `updated_option` matching `widget_*` or `sidebars_widgets` → `wp:widgets`. Only post type `post` is tagged, which covers films (`format=video`); pages belong to the A6 fallback and will want `paths` when that route exists.
 
-**The hook.** A must-use plugin, so it survives the theme swap in §4.5 — `wp-content/mu-plugins/od-revalidate.php`:
+`transition_post_status` rather than the better-named `wp_after_insert_post` for a hard reason: **that hook arrived in WP 5.6 and prod is pinned to 5.5.5**, where it would silently never fire — the plugin would look installed and report nothing. The old hook also hands over both the new and the previous status, which is exactly what the draft rule needs, and it catches a **scheduled post going live through cron** (verified: `wp cron event run publish_future_post` produced the purge), which `wp_after_insert_post` misses. Firing before terms and meta are written costs nothing, because nothing is sent until `shutdown`. The same constraint governs the PHP itself — no typed properties, no `str_starts_with`, no `void` returns, because prod's site PHP is 7.x (`mod_php7`) and 7.4+ syntax in a mu-plugin is a parse error that takes the whole site down.
 
-```php
-<?php
-/**
- * Plugin Name: OD — notify the frontend on content change
- * Define OD_REVALIDATE_URL + OD_REVALIDATE_SECRET in wp-config.php.
- */
-add_action( 'save_post', 'od_revalidate_post', 10, 1 );
-add_action( 'trashed_post', 'od_revalidate_post', 10, 1 );
-add_action( 'wp_update_nav_menu', function () { od_revalidate_send( array( 'tags' => array( 'wp:menus' ) ) ); } );
+Everything one request collects is deduplicated and sent **once, on `shutdown`**. That matters more than the choice of hook: by then every write in the request is committed, so the frontend can't refetch ahead of the data. A bulk trash of three posts is one POST carrying three ids, not three POSTs.
 
-function od_revalidate_post( $post_id ) {
-	if ( wp_is_post_revision( $post_id ) || wp_is_post_autosave( $post_id ) ) {
-		return;
-	}
-	if ( 'post' !== get_post_type( $post_id ) ) {
-		return; // pages are served by the A6 fallback, not from tagged fetches
-	}
-	od_revalidate_send( array( 'postId' => (int) $post_id ) );
-}
+Two things it deliberately stays quiet about: a post that was never published (draft → draft, or a draft moving in and out of the bin) never reached the frontend, so purging for it would only throw away a warm cache; and a successful purge writes nothing to `debug.log` unless `OD_REVALIDATE_DEBUG` is on. **Failures always log**, breaker included.
 
-function od_revalidate_send( $body ) {
-	if ( ! defined( 'OD_REVALIDATE_URL' ) || ! defined( 'OD_REVALIDATE_SECRET' ) ) {
-		return;
-	}
-	wp_remote_post( OD_REVALIDATE_URL, array(
-		'timeout'  => 5,
-		'blocking' => false, // an editor never waits on the frontend
-		'headers'  => array(
-			'content-type'        => 'application/json',
-			'x-revalidate-secret' => OD_REVALIDATE_SECRET,
-		),
-		'body'     => wp_json_encode( $body ),
-	) );
-}
+#### The thing that surprised us: `blocking => false` does not make the request fire-and-forget
+
+WordPress's curl transport still calls `curl_exec()` for a non-blocking request and merely throws the response away (`wp-includes/class-wp-http-curl.php`, «We don't need to return the body»). The caller pays the whole connect-and-timeout cost regardless. Measured on od-dev, five identical REST title edits:
+
+| Setup | median save |
+| --- | --- |
+| plugin inert (baseline) | 2607 ms |
+| reachable endpoint | 2771 ms |
+| **unreachable endpoint, `blocking => false`** | **8216 ms — every save** |
+| unreachable endpoint, with the breaker | 6630 ms once, then 795–1765 ms |
+
+So the plugin is blocking on purpose (the response is the only way to know a purge landed) and protects the editor two other ways: `fastcgi_finish_request()` when the SAPI has it, and a **breaker** — one failure sets a 5-minute transient (`od_revalidate_unreachable`) and no purge is attempted until it expires. **od-dev runs `apache2handler`, not php-fpm**, so `fastcgi_finish_request()` does not exist there and the breaker is the entire protection; expect the same wherever WP stays on this hosting. The cost of the breaker is that edits made during a frontend outage are never purged — the hourly ISR window is the backstop.
+
+#### Install / verify
+
+```bash
+# 1. Upload (the mu-plugins dir did not exist on od-dev until this landed)
+ssh timeweb 'mkdir -p ~/od-dev/public_html/wp-content/mu-plugins/od-revalidate'
+scp wp/mu-plugins/od-revalidate.php timeweb:od-dev/public_html/wp-content/mu-plugins/od-revalidate.php
+ssh timeweb 'chmod 600 ~/od-dev/public_html/wp-content/mu-plugins/od-revalidate.php'
+
+# 2. config.php — write it over stdin so the secret never lands in a command
+#    line, a shell history or a process list. Template: config.example.php.
+S=$(node --env-file=.env -p 'process.env.REVALIDATE_SECRET')
+printf '<?php\ndefine( '"'"'OD_REVALIDATE_URL'"'"', '"'"'%s'"'"' );\ndefine( '"'"'OD_REVALIDATE_SECRET'"'"', '"'"'%s'"'"' );\n' \
+  'https://<frontend-host>/api/revalidate/' "$S" \
+  | ssh timeweb 'T=~/od-dev/public_html/wp-content/mu-plugins/od-revalidate/config.php; cat > $T && chmod 600 $T && php -l $T'
+
+# 3. Is it loaded, configured, hooked? And does WP hold the *same* secret as
+#    the frontend — compare digests, never the value.
+ssh timeweb 'cd ~/od-dev/public_html && wp --skip-plugins=clearfy-pro plugin list --status=must-use'
+ssh timeweb 'cd ~/od-dev/public_html && wp --skip-plugins=clearfy-pro eval "
+  var_dump( OD_Revalidate::configured(), has_action( \"wp_after_insert_post\", array( \"OD_Revalidate\", \"on_save\" ) ) );
+  echo hash( \"sha256\", OD_REVALIDATE_SECRET ) . PHP_EOL;"'
+node --env-file=.env -e "console.log(require('node:crypto').createHash('sha256').update(process.env.REVALIDATE_SECRET).digest('hex'))"
+
+# 4. Purge by hand — after a bulk import, or to test the wire
+ssh timeweb 'cd ~/od-dev/public_html && wp --skip-plugins=clearfy-pro eval "
+  var_dump( OD_Revalidate::send( array( \"tags\" => array( \"wp\" ) ) ) );"'
+
+# 5. When something is wrong
+ssh timeweb 'grep -F "[od-revalidate]" ~/od-dev/public_html/wp-content/debug.log | tail'
+ssh timeweb 'cd ~/od-dev/public_html && wp --skip-plugins=clearfy-pro transient delete od_revalidate_unreachable'
 ```
 
-Widgets have no single reliable action hook (`update_option_sidebars_widgets` fires on reorder, not on edit); if the footer ever needs it, hook `updated_option` and match `widget_*`. Until then a `{"tags":["wp:widgets"]}` curl covers it.
+**Outbound HTTP from WP works** — that §8 open question is closed. `wp_remote_get('https://example.com/')` answers 200 in 0.26 s and `wp_remote_post` to an external host in 0.54 s, from both the CLI and a web request. No `WP_HTTP_BLOCK_EXTERNAL`.
 
-**Before installing, confirm outbound HTTP works from WP** — the open question in §8. Timeweb shared hosting may block egress, in which case the loop can't close from the WP side at all and the fallback is a cron/CLI curl after publishing.
+How the install was tested, since the frontend has no deployment yet and the shared host has no Node to run one: a listener on od-dev's loopback recorded exactly what the plugin sends for every content transition, and those bodies were then replayed against the real route on a production build. Both halves are proven; the one hop nobody has exercised is WP → a *deployed* frontend over the network. Record, with the captures: [`servers-agent/tasks/2026-08-13-od-revalidate-mu-plugin/`](../../servers-agent/tasks/2026-08-13-od-revalidate-mu-plugin/README.md).
 
 ---
 
@@ -453,7 +469,6 @@ These are real decisions the org/team has to make — the WP install alone doesn
 - **News regions in the UI.** The topic side is settled (chips → 47 / 578). What is *not*: WP has ~80 region categories under «Региональные новости» `547` (1 886 posts; e.g. Ростовская обл. 322) and the design specs no region control. Does `/news` get a region dropdown?
 - **Profile side-fields (D3).** Narrowed, not answered, by the §3.5 recon: **region is already structured** and in REST (`meta.cmsms_profile_subtitle`, 130/139 filled — though as free-text place names, 89 distinct, so grouping by it needs normalisation), while **phone and email are prose in the body** (92 and 113 of 139). So the live question is only about those two: parse them out at render time and accept a two-thirds hit rate, have editors backfill them into ACF fields, or drop the contact row from the mock? Design and the coordinators' own preference decide, not the WP state.
 - **`od-test` — how does it differ from od-dev?** Same plugins? Same DB? Still never probed. Worth 5 minutes if it's ever going to be a target.
-- **Webhook capability for on-demand revalidation (B4).** Does the Timeweb shared host let outbound HTTP fire from WP hooks (e.g. `save_post` → `wp_remote_post(OD_REVALIDATE_URL)`)? Probably yes, but worth confirming there's no egress restriction — it is now the *only* thing between editors and instant publishing. The frontend half shipped 2026-08-13 and the mu-plugin is written out in §6.5; if egress turns out to be blocked, the fallback is a WP-CLI/cron curl after publishing. Until it is installed, editors wait up to an hour (`revalidate = 3600`).
 - **Are od-dev's `page` and `profile` bodies representative of prod?** Partly answered and the answer is *no* for pages — od-dev is a migrated-to-Gutenberg copy while prod stores cmsms shortcodes ([`legacy-page-fallback.md` §2](./legacy-page-fallback.md)). **Unverified for `format=video` posts**, which is runbook blocker B2 and the highest-risk unknown in the whole migration.
 
 **Answered since this list was written**

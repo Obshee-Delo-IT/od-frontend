@@ -4,8 +4,19 @@
   cursor: var(--cursor-button);
 }
 
-.radius-curved {
-  border-radius: 8px;
+/* Doubled with the class that always rides along on the same element: Radix
+   resolves its own radius to `max(var(--radius-2), var(--radius-full))`, which is
+   one class' worth of specificity and ships after the CSS modules — a lone
+   `.radius-curved` compiled, matched and lost, leaving every curved icon button
+   at Radix's 4px.
+
+   6px, not the 8 the Figma property is *named*: the `Icon Button` set
+   (`1327:14092`) labels the option `Radius=Curved (8px)` and then draws all
+   twelve variants at `cornerRadius: 6`, as does every frame that places one
+   (`header-mob` `1248:4486`). 6 is also `radius/2` in the token collection.
+   Flagged for Design — the label is the thing that's wrong. */
+.iconButton.radius-curved {
+  border-radius: var(--radius-2);
 }
 
 .radius-circle {

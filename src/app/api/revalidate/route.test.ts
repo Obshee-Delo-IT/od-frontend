@@ -93,6 +93,20 @@ describe('POST /api/revalidate — what it purges', () => {
     expect(revalidatePath.mock.calls.map(([path]) => path)).toEqual(['/']);
   });
 
+  it('takes a batch of ids, since one WP request can change many posts', async () => {
+    const response = await post({ postIds: [11, 22, 11] });
+
+    expect(response.status).toBe(200);
+    expect(purgedTags()).toEqual(['wp:post:11', 'wp:post:22', 'wp:posts']);
+  });
+
+  it('accepts a full batch of ids, whose expansion is one tag over the cap', async () => {
+    const response = await post({ postIds: Array.from({ length: 50 }, (_, index) => index + 1) });
+
+    expect(response.status).toBe(200);
+    expect(purgedTags()).toHaveLength(51);
+  });
+
   it('deduplicates a post id that is also passed as a tag', async () => {
     await post({ postId: 7, tags: ['wp:post:7'] });
 
@@ -134,10 +148,16 @@ describe('POST /api/revalidate — refusals', () => {
     expect(revalidateTag).not.toHaveBeenCalled();
   });
 
-  it('caps how much one request can ask for', async () => {
-    const response = await post({ tags: Array.from({ length: 51 }, (_, index) => `wp:post:${index}`) });
+  it('refuses a non-numeric id inside a batch', async () => {
+    expect((await post({ postIds: [1, 'all'] })).status).toBe(400);
+    expect((await post({ postIds: 42 })).status).toBe(400);
+    expect(revalidateTag).not.toHaveBeenCalled();
+  });
 
-    expect(response.status).toBe(400);
+  it('caps how much one request can ask for', async () => {
+    expect((await post({ tags: Array.from({ length: 51 }, (_, index) => `wp:post:${index}`) })).status).toBe(400);
+    expect((await post({ postIds: Array.from({ length: 51 }, (_, index) => index + 1) })).status).toBe(400);
+    expect((await post({ paths: Array.from({ length: 51 }, (_, index) => `/${index}/`) })).status).toBe(400);
     expect(revalidateTag).not.toHaveBeenCalled();
   });
 });

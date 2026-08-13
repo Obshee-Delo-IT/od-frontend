@@ -18,6 +18,8 @@ interface AccordionItemData {
   href?: string;
   text?: string;
   content?: ReactNode;
+  /** Marks the row as the one the reader is currently on — the header's mobile menu uses it for the open section. */
+  active?: boolean;
 }
 
 type AccordionProps = (AccordionSingleProps | AccordionMultipleProps) & {
@@ -26,15 +28,15 @@ type AccordionProps = (AccordionSingleProps | AccordionMultipleProps) & {
 
 export const Accordion: React.FC<AccordionProps> = ({ items, ...props }) => (
   <Root {...props} className={clsx(css.root, props.className)}>
-    {items.map(({ content, href, text, value }) => (
+    {items.map(({ content, href, text, value, active }) => (
       <AccordionItem key={value} className={css.item} value={`${value}`}>
-        <AccordionTrigger className={css.trigger}>
+        <AccordionTrigger className={css.trigger} aria-current={active ? 'page' : undefined}>
           {href ? (
-            <Link href={href} size="3" color="gray">
+            <Link href={href} size="3" color={active ? 'red' : 'primary'}>
               {text}
             </Link>
           ) : (
-            <Text size="3" color="gray">
+            <Text size="3" className={clsx(css.label, { [css.labelActive]: active })}>
               {text}
             </Text>
           )}

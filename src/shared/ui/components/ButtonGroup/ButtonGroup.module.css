@@ -5,11 +5,25 @@
   width: 100%;
 }
 
+/* Figma `Frame 33792` — the nav row spreads its items across the full 1240
+   content column (space-between, no padding of its own); `gap` is only the
+   floor for narrow viewports. The red comes from the header band above. */
 .list {
   display: flex;
-  padding: 10px;
+  justify-content: space-between;
+  padding: 0;
   margin: 0;
-  background-color: var(--red-8);
   gap: var(--space-3);
   list-style: none;
+
+  /* Below 1440 the items need every pixel of the column, so space-between
+     distributes what is left instead of reserving a floor. `wrap` is the safety
+     valve: labels come from WordPress, so a longer one must drop to a second
+     line rather than be clipped off the edge — which is what the 900 column
+     does today, one row short of fitting. */
+  @media (--small-desktop) {
+    flex-wrap: wrap;
+    gap: 0;
+    row-gap: 4px;
+  }
 }

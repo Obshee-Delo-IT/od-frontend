@@ -26,6 +26,19 @@
   background-color: var(--gray-a2);
 }
 
+/* Same gray-9 as a `Link color="primary"`, so a trigger with an href and one
+   without read identically — Figma's mobile menu (`1336:10034`) uses the
+   `Links`/`Color=Primary` cell for both. */
+.label {
+  color: var(--gray-9);
+}
+
+/* The `Links`/Active cell — same red the drawer's leaf rows use for the current
+   section (`1336:10038`). */
+.labelActive {
+  color: var(--red-8);
+}
+
 .content {
   overflow: hidden;
 }

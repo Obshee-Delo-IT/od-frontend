@@ -17,7 +17,7 @@ Status legend: `[ ]` not started · `[~]` partial or blocked · `[x]` done.
 | **A2** | Hosting decided: Beget VPS + Coolify, images built in GH Actions → GHCR. `/health` + `.dockerignore` fixed. |
 | **A3** | CI runs lint · type-check · test · build on every PR and on `main`, without WP secrets. |
 | **A8** | URL compatibility — 59 % of entries. `/<id>` and `/video/<segment>/` served; the whole `/category/*` family, `/video/short/` and every `/page/N/` at one 301 each. |
-| **C1–C8** | Button · IconButton · PageHeader · Pagination · Tabs · Dropdown · Checkbox · Carousel. |
+| **C1–C11** | Button · IconButton · PageHeader · Pagination · Tabs · Dropdown · Checkbox · Carousel, then header-v2 + header-mob + footer + footer-mob · Modal on Radix Dialog · the `Links` colour matrix. **Workstream C is closed.** |
 | **D1** | Home, desktop + mobile, nine sections. |
 | **D2** | News index + post detail. |
 | **D7** | Film catalogue + film page (Kinescope player, downloads, poster card, related films). |
@@ -62,8 +62,8 @@ A redesigned route auto-shadows its fallback, so Tier 3 is reversible page-by-pa
 
 ## Workstream A — Foundations
 
-- [ ] **A1b. Foundation drift** — two structural mismatches between Figma's tokens and the repo. **Blocks nothing but compounds.**
-  - **Breakpoints are 4-tier in Figma, 3-tier in code.** Figma ships `header-v2` at 1440 + demos at 1200 and 900, plus `header-mob` < 900; `media.css` has only `--mobile <900 / --small-desktop <1440 / --desktop ≥1440`. Add a `--tablet` at 1200 (or rename). Affects every responsive component.
+- [~] **A1b. Foundation drift** — one structural mismatch left between Figma's tokens and the repo. **Blocks nothing but compounds.**
+  - ~~**Breakpoints are 4-tier in Figma, 3-tier in code.**~~ ✅ **Done with C9, 2026-08-13** — `media.css` gained `--tablet (width < 1200px)`, *added* rather than renamed so the existing max-width tiers keep nesting. Note the design's two thresholds are not the same one: nav type steps down at 1440, side padding at 1200.
   - **Spacing: multiples of 4 vs 5.** Figma `spacing/*` is `0/5/10/15/20/25/35/45/65/80`; `Box` is `0/4/8/…/64`. Rebase `Box` or accept rounding — either way, document it.
 - [~] **A3 remainder.** CI ends at `pnpm build`; the **docker build + push-to-GHCR** step is missing, and the **Dockerfile has no `ARG WP_BASE` / `ARG WP_MEDIA_CDN`** in the `builder` stage, so `--build-arg` currently reaches nothing and `next/image` would 400 on remote images. Both land together.
 - [ ] **A4. Observability.** **Yandex Metrica only** (GA is excluded under current Russian regulations, and was removed from prod on 2026-08-07). **Counter id `34478865`** — prod's own, so the new site inherits the history rather than starting a fresh counter. Wire into `app/layout.tsx` behind a 152-FZ consent banner (F6); the legacy site already shows one, so the app must not ship without it. **Error tracking deferred** — rely on standalone-server stdout/stderr until traffic justifies a tool.
@@ -75,10 +75,9 @@ A redesigned route auto-shadows its fallback, so Tier 3 is reversible page-by-pa
 
 ## Workstream B — WordPress / data layer
 
-**B2, B3 and B-CPT shipped 2026-08-13**, plus B4's and B7's frontend halves — type generation unblocked, cache tags on every WP request, `POST /api/revalidate/`, `fetchSearch`, and the `profile`/`project` recon behind D3. Detail in [notes §4](./implementation-notes.md#4-shipped--data--media-b-e). Everything below is what's left, and **the two biggest items are not code**: B1's content shape and B-VIDEO2's film data.
+**B2, B3, B4 and B-CPT shipped 2026-08-13**, plus B7's frontend half — type generation unblocked, cache tags on every WP request, `POST /api/revalidate/` with the WordPress mu-plugin that calls it installed on od-dev, `fetchSearch`, and the `profile`/`project` recon behind D3. Detail in [notes §4](./implementation-notes.md#4-shipped--data--media-b-e). Everything below is what's left, and **the two biggest items are not code**: B1's content shape and B-VIDEO2's film data.
 
 - [~] **B1 remainder.** CPT inventory is done ([`wp-backend.md`](./wp-backend.md) §3–4). **Left:** decide the content shape for **materials** (D8) and **FAQ** (D5) — plain pages, a taxonomy on a generic CPT, or widgets. See [`wp-backend.md` §8](./wp-backend.md#8-outstanding-questions-the-wp-state-doesnt-answer). **This is the biggest unanswered content question and it blocks Tier 2.**
-- [~] **B4 remainder.** The frontend half shipped — `POST /api/revalidate/`, verified against a production build ([notes](./implementation-notes.md#b4-on-demand-revalidation--the-frontend-half-2026-08-13)). **Left, and it needs WP access:** install the mu-plugin from [`wp-backend.md` §6.5](./wp-backend.md), set `REVALIDATE_SECRET` per tier, and first confirm Timeweb allows outbound HTTP from WP hooks. Until then editors still wait out the 1-hour window.
 - [ ] **B6. Forms backend.** Every form in the redesign is **net-new** — the live site has none. Submissions land in the existing RU-hosted WordPress (152-FZ), via a WP plugin endpoint (CF7 / Gravity / WPForms) or an `app/api/*` proxy. Spam protection: **Yandex SmartCaptcha**, not reCAPTCHA. Email via WP's existing mail config.
 - [~] **B7 remainder.** `fetchSearch` shipped ([notes](./implementation-notes.md#b7-search--the-data-layer-2026-08-13)) — endpoint probed, paging and `subtype` filtering work. **Left:** the UI. The input ships with `header-v2` (**C9**), and a results page has no mock yet — two design questions before any of it: what search covers (posts only? pages too?) and what a result looks like, given WP returns no excerpt or thumbnail. Also still open: routing the legacy `?s=` URLs, which need a destination that exists.
 - [ ] **B8. WP cleanup — kill the page-builder and unsupported UI plugins.** Headless means WP only serves data, so most of the **27** active plugins are dead weight. Target list and ordering in [`wp-backend.md` §4](./wp-backend.md). Critical path:
@@ -119,11 +118,14 @@ A redesigned route auto-shadows its fallback, so Tier 3 is reversible page-by-pa
 
 ## Workstream C — Design system
 
-**C1–C8 shipped.** What's left, per [`design-system.md` §4.4](./design-system.md#44-whats-left-to-build):
+**Closed 2026-08-13.** C1–C8 shipped earlier; **C9 · C10 · C11 shipped** — header-v2 + header-mob + footer + footer-mob promoted to the live modules, `Modal` moved onto Radix Dialog, and `Link` aligned to the `Links` matrix. Detail, the three bugs C9 turned up, and a second Figma pass that measured the shipped result node by node and corrected four more, in [notes §2](./implementation-notes.md#2-shipped--design-system-c).
 
-- [ ] **C9. Promote `header-v2` + `header-mob` + `footer` + `footer-mob` to live `modules/`.** All four are now real Figma COMPONENTS (`1229:4371`, `1248:4486`, `838:1631`, `1261:7985`); `modules/Header` still consumes the older `header`/`header-scroll` masters. Two structural notes: **header-v2 includes the styled search input** (B7), and **header-mob is a separate 48-tall component**, not a CSS-responsive version — that changes how the swap is structured.
-- [ ] **C10. Modal review.** The current `Modal` is a custom portal — fine, but inconsistent with the otherwise-Radix stack. Decide whether to migrate to `@radix-ui/react-dialog` for focus-trap and a11y parity.
-- [ ] **C11. `Link` wrapper alignment.** Figma `Links` (`1330:36653`) is 3 Size × 3 Color (`Primary`/`red`/`white`) × 4 State = 36 cells; the repo's colour enum is different (`red | gray | white | lightgrey | darkgrey`). Align names + variants so calls match the spec.
+What the section leaves behind, tracked with the pages that need it rather than here:
+
+- **`Tabs`, controlled variant** — a client-state sibling for D9's role tabs; today's link-based form covers every other use.
+- **`Dropdown`, multi-select** — checkbox list + removable chips, when Materials filtering lands (D8).
+- **`Accordion`, `Add Circle` expand icon** — D4 contacts and D5 FAQ both want it.
+- **The header search field is presentational** until a `/search/` route exists (B7).
 
 ---
 
@@ -174,12 +176,14 @@ Real decisions needing a human (Design / PM / org leadership). Questions already
 - **Two reds.** `2_main_red` is `#F4322A`; `brand/red/8` is `#AE0A04` (canonical CTA / header fill). Where does `2_main_red` render? If nowhere, drop the style.
 - **`1_main_black` (`#151313`) and `4_line_gray` (`#BDBDBD`)** — neither is wired into the override. Confirm as canonical and wire up, or drop.
 - **Spacing scale** — rebase `Box` on multiples of 5, or round in-implementation? (A1b.)
-- **Breakpoint set** — add the 1200 tier? (A1b.)
+- ~~**Breakpoint set** — add the 1200 tier?~~ ✅ Added with C9. What Design still owes an answer on: **the nav row doesn't fit its own column below 1440** — eight labels plus chevrons measure 1126px against the 1200 frame's 1000px column, and Figma's 1200 and 900 frames simply overflow. Shipped compressed (8px padding) with wrap as the fallback; if the menu grows, this needs a real answer.
 - Are the Inter type styles on the `👉 UI` page deprecated or in use? (One known binding: the breadcrumb separator label in `page header`.)
 - For pages without an explicit `-mob` frame, is it responsive-only or are mobile mocks coming?
 - Status of the «Стань волонтером» iterations and the `1101:*` scratch — still in scope? (D9.)
 - **About sub-page scope** — 11 live sub-pages vs 9 Figma mocks, and not the same 9 (D3).
 - **Pagination cell geometry** — shipped 40×40/r8 vs the canonical component's 36×36/r6 (C4). Which wins?
+- **`Icon Button`'s radius option is named `Curved (8px)` and drawn at 6** in all twelve variants and in every frame that places one. Shipped 6 (`radius/2`); rename the property, or tell us the variants are stale.
+- **Three small footer / header colour splits**, all shipped one way and none blocking: the footer's ССЫЛКИ heading is `gray-4` where the other two are `gray-3`; the header search glyph is `gray-1` in `header-v2` and `red-1` in the `Input Field` component; the WordPress legal notice is a link that Figma draws as plain text.
 
 ### Content modelling
 
@@ -199,7 +203,7 @@ Real decisions needing a human (Design / PM / org leadership). Questions already
 ### Infra
 
 - Who holds the Coolify / GHCR credentials, and are stage and prod two apps on one VPS? (The A2 sizing assumes yes.)
-- Acceptable cache staleness for editors — is the 1-hour window enough, or must the B4 webhook be installed before launch? The frontend side is built and verified; what's left is a WP change (mu-plugin + `REVALIDATE_SECRET`) and confirming Timeweb allows outbound HTTP from hooks. Worth asking the editors, not guessing: it is the difference between "publish, then wait an hour" and "publish, then reload".
+- ~~Acceptable cache staleness for editors — is the 1-hour window enough, or must the B4 webhook be installed before launch?~~ **Moot: both halves are built and tested, so instant publishing is now the cheaper option.** It costs two lines of per-tier config at deploy time ([runbook §4.8](./prod-migration-runbook.md)) rather than a decision.
 - Backup / disaster-recovery story for WP and uploads?
 - Are the sibling properties (`od-pro.ru`, `помоги.общее-дело.рф`, `статы.общее-дело.рф`, the punycode alt) part of this redesign, or strictly cross-links?
 
@@ -246,4 +250,4 @@ Real, but they live in the issue tracker. Pulled 2026-05-30.
 
 Everything else is post-prod, replaced page-by-page behind the fallback.
 
-**Parallel tracks that don't block the path:** A1b (breakpoints + spacing — the earlier it lands the less rework), A3's GHCR step, B8's WP cleanup, C9–C11, F1–F3, F5.
+**Parallel tracks that don't block the path:** A1b's remaining half (the spacing scale), A3's GHCR step, B8's WP cleanup, F1–F3, F5. ~~C9–C11~~ ✅ closed 2026-08-13.

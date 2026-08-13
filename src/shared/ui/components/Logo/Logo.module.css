@@ -25,10 +25,22 @@
   margin-right: 13.7px;
 }
 
-.name {
+/* Figma draws the lockup in PT Sans Caption Bold with 4% tracking and 130%
+   leading (`1326:6890` in header-v2, the same text node in the footer and at
+   0.56× in header-mob). The Caption cut isn't loaded — issue #27 will bring the
+   families local — so this is PT Sans Bold with the tracking, which is what
+   makes the three lines line up with the mark instead of running narrow.
+
+   `.logo .name`, not `.name`: the lines are Radix `<Text>` spans, and
+   `.rt-Text{letter-spacing:var(--letter-spacing,inherit);line-height:var(--line-height,…)}`
+   is a single class like `.name` is, shipped after the CSS modules. With no
+   `size` prop those variables are undefined, so the fallbacks — `normal` and
+   140% — were winning both declarations outright. */
+.logo .name {
   color: var(--white);
   font-family: var(--font-pt-sans);
   font-weight: 700;
+  letter-spacing: 0.04em;
   line-height: var(--line-height-8);
   text-transform: uppercase;
 }

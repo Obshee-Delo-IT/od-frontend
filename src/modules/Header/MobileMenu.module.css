@@ -1,0 +1,64 @@
+/* `header-mob` open state (`1336:10127`): a white sheet under the 48-tall bar,
+   330 wide inside 360 → 15px of side padding, rows of 42 (10 + 22 + 10) each
+   closed by a gray-4 rule.
+
+   The sheet and its scrim are guarded with the bar they belong to. `MobileMenu`
+   renders on `isOpen` alone, so without the guard the sheet paints over the
+   desktop layout for the frame between a resize past 900 and the media-query
+   listener in `HeaderClient` closing it. */
+
+.menu {
+  display: none;
+
+  @media (--mobile) {
+    position: fixed;
+    z-index: 100;
+    top: 48px;
+    left: 0;
+    display: flex;
+    width: 100%;
+    max-height: calc(100dvh - 48px);
+    flex-direction: column;
+    padding: 0 15px;
+    background-color: var(--white);
+    overflow-y: auto;
+  }
+}
+
+.row {
+  padding: 10px 0;
+  border-bottom: 1px solid var(--gray-4);
+}
+
+.group {
+  border-bottom: 1px solid var(--gray-4);
+}
+
+/* `Frame 33794` — children indent 15 and stack on a 10px gap, with the same 10
+   between the group label and the first child. */
+.submenu {
+  display: flex;
+  flex-direction: column;
+  padding: 10px 0 10px 15px;
+  gap: 10px;
+}
+
+/* `Button` instance at `1336:10030` — Small (40 tall), centred, 25 above and
+   below. */
+.donate {
+  padding: 25px 0;
+  text-align: center;
+}
+
+.overlay {
+  display: none;
+
+  @media (--mobile) {
+    position: fixed;
+    z-index: 90;
+    display: block;
+    backdrop-filter: blur(2px);
+    background: rgb(0 0 0 / 40%);
+    inset: 48px 0 0 0;
+  }
+}

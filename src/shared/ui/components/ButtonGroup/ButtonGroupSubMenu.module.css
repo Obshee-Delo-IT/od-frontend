@@ -19,7 +19,10 @@
   text-overflow: ellipsis;
 }
 
-.link {
+/* Doubled: `Link` ships `.link { display: inline }` from its own module, which is
+   the same one class and won on source order — so the row's hit area was the
+   width of its text (109px of a 185px row) and this rule did nothing. */
+.link.link {
   display: block;
   width: 100%;
 }
