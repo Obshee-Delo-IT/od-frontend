@@ -1,5 +1,4 @@
 import { getWpMediaCdn } from './src/shared/api/mediaCdn';
-import { legacyRedirects } from './src/shared/config/legacyRedirects';
 import type { NextConfig } from 'next';
 
 const mediaCdn = getWpMediaCdn();
@@ -12,10 +11,11 @@ const nextConfig: NextConfig = {
   // through a 308 — and a rollback to the old site keeps working. Note this
   // makes `/health` redirect to `/health/`; point the Coolify probe at the
   // latter (see the runbook).
+  //
+  // The legacy redirects that go with this live in `src/middleware.ts`, NOT in
+  // a `redirects()` table here: a table would emit a slashless destination that
+  // this setting then 308s again, doubling every hop.
   trailingSlash: true,
-
-  // URL compatibility with the live site — see the module for the reasoning.
-  redirects: async () => legacyRedirects(),
   // webpack: (config) => {
   //   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   //   const fileLoaderRule = config.module.rules.find((rule: any) => rule.test?.test?.('.svg'));
