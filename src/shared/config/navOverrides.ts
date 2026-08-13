@@ -2,32 +2,56 @@
  * Per-destination corrections applied to the WordPress main navigation.
  *
  * The menu is editorial data — editors own it in WP — but a handful of entries
- * are wrong in ways an editor can't fix from here, or point at properties this
- * site deliberately doesn't advertise. Rather than fork the menu, each stale
- * **destination** gets an entry below and `toNavItems` applies it on the way
- * through.
+ * point at addresses that are stale, or at properties this site deliberately
+ * doesn't advertise. Rather than fork the menu, each destination gets an
+ * override below and `toNavItems` applies it on the way through.
  *
- * **Keyed by host, not by menu-item id.** Item ids are per-install, so an
- * id-keyed table would need re-checking on every `WP_BASE` repoint (the trap
- * `filmCategories.ts` documents); a host survives that, survives a retitle, and
- * says what the rule is actually about. Keys may be written in Unicode — they
- * are normalised to Punycode at load, so `общеедело-про.рф` also matches the
- * `xn--` spelling WordPress sometimes stores.
+ * **An override lists every host its destination is known by.** That plural is
+ * the whole point: the same nav entry carries a *different* URL on each
+ * WordPress install, so an override keyed on one spelling quietly stops applying
+ * the moment `WP_BASE` is repointed — which is the migration this project is
+ * planning for. Menu-item ids would be worse still; they are per-install by
+ * definition, the trap `filmCategories.ts` documents. Hosts may be written in
+ * Unicode, and are normalised to Punycode at load, so `общеедело-про.рф` also
+ * matches the `xn--` spelling WordPress sometimes stores.
+ *
+ * ⚠️ **An override that matches nothing fails open** — the entry reappears in
+ * the header carrying its uncorrected URL, and nothing errors. So repointing
+ * `WP_BASE` at a new install means re-reading `/wp/v2/menu-items` and checking
+ * every `hosts` list still matches, exactly like the film category ids.
  */
 export type NavOverride = {
+  /** Every host this destination is reachable at — installs disagree, see above. */
+  hosts: string[];
   /** Replaces the WordPress URL. Relative paths and absolute URLs both work. */
   href?: string;
-  /** Keep the item — and, being top-level, its children — out of the nav. */
+  /** Keep the entry — and, being top-level, its children — out of the nav. */
   hidden?: boolean;
 };
 
-const OVERRIDES_BY_HOST: Record<string, NavOverride> = {
-  // «ОБЩЕЕДЕЛО-ПРО» — the sibling PRO property. It moved to a subdomain, so
-  // the address WordPress carries is dead; it's also not a top-level section of
-  // this site, so it is corrected *and* dropped from the nav. The home page's
-  // own PRO links are separate and unaffected.
-  'общеедело-про.рф': { href: 'https://pro.obshee-delo.ru/', hidden: true },
-};
+/**
+ * Whether «ОБЩЕЕДЕЛО-ПРО» appears in the header. Suppressed for now — the PRO
+ * property isn't one this site advertises yet — and this is the one switch that
+ * brings it back. Its destination is corrected either way, so flipping this to
+ * `true` needs no other edit.
+ */
+export const SHOW_PRO_IN_NAV: boolean = false;
+
+const OVERRIDES: NavOverride[] = [
+  {
+    // «ОБЩЕЕДЕЛО-ПРО» — the sibling PRO property, and the reason `hosts` is a
+    // list. All three addresses were probed 2026-08-13:
+    //   общеедело-про.рф    what od-dev's menu carries; DNS no longer resolves
+    //   od-pro.ru           what *prod's* menu carries; live, but it serves
+    //                       «Всероссийский конкурс социальных проектов» — the
+    //                       contest landing, a different site
+    //   pro.obshee-delo.ru  the property itself, «В начало | ОбщееДелоПРО»
+    // Correcting all three is what makes unhiding safe on either install.
+    hosts: ['общеедело-про.рф', 'od-pro.ru', 'pro.obshee-delo.ru'],
+    href: 'https://pro.obshee-delo.ru/',
+    hidden: !SHOW_PRO_IN_NAV,
+  },
+];
 
 const toHostname = (value: string): string | null => {
   try {
@@ -37,11 +61,13 @@ const toHostname = (value: string): string | null => {
   }
 };
 
-const overrides = new Map(
-  Object.entries(OVERRIDES_BY_HOST).flatMap(([host, override]) => {
-    const hostname = toHostname(host);
-    return hostname ? [[hostname, override] as const] : [];
-  })
+const overridesByHost = new Map<string, NavOverride>(
+  OVERRIDES.flatMap((override) =>
+    override.hosts.flatMap((host) => {
+      const hostname = toHostname(host);
+      return hostname ? [[hostname, override] as const] : [];
+    })
+  )
 );
 
 /**
@@ -54,5 +80,5 @@ export const resolveNavOverride = (url: string): NavOverride | undefined => {
   }
 
   const hostname = toHostname(url);
-  return hostname ? overrides.get(hostname) : undefined;
+  return hostname ? overridesByHost.get(hostname) : undefined;
 };
