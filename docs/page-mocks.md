@@ -142,7 +142,8 @@ Plus 3 `Status` badges.
 
 **Repo:** ⚠️ partial.
 - ✅ The article detail is built — `src/modules/News/NewsArticle/`, rendered at the bare `/<id>` by `app/[...slug]/page.tsx` (A8; it used to be `app/news/[id]/page.tsx`). Uses `parsePost` to lift the first carousel/gallery out of the WP post HTML as a header slot (see `src/modules/News/utils/parsePost.tsx`), and `resolveContentImages` to repoint body images at the media CDN. The two "images" and "video" article variants both serve from here depending on WP content.
-- ✅ `app/news/page.tsx` (news index `753:418`) shipped 2026-06-03 — breadcrumbs + `НОВОСТИ` heading + `Все / Наши дела / Статьи` filter chips (`?category=`) + 3-col `NewsCard` grid (15/page) + `Pagination` (`?page=`, real `X-WP-TotalPages`) + `NewsletterSignup`. Data via `fetchNewsList`. See implementation-plan D2 / C4.
+- ✅ `app/news/page.tsx` (news index `753:418`) shipped 2026-06-03 — breadcrumbs + `НОВОСТИ` heading + `Все / Наши дела / Статьи` filter chips (`?category=`) + 3-col `NewsCard` grid (15/page) + `Pagination` (`?page=`, real `X-WP-TotalPages`) + `NewsletterSignup`. Data via `fetchNewsList`; the grid is shared with `/materials/articles/` as `modules/News/NewsGrid`. See [`implementation-notes.md` §3](./implementation-notes.md#3-shipped--pages-d).
+- ✅ `app/materials/articles/page.tsx` — the «Статьи» chip's collection also answers at its **legacy** URL, `/materials/articles/` (114 entries/91 days), which is the canonical of the pair. Not a mock in this section and not a D8 build — see [`implementation-notes.md` §3](./implementation-notes.md#3-shipped--pages-d).
 - ✅ The "Скачать фильм" CTA (`1581:10269`) — **resolved without a dedicated flow.** The D7 fidelity pass put downloads inline as pills in the film page's hero card, so there's no modal and no separate route to build. Same conclusion as the видео section's `1581:10334` frame.
 
 ### 2.7 Ответы на частые вопросы — FAQ (SECTION `1227:4301`, 2 children, ~34 frames deep)

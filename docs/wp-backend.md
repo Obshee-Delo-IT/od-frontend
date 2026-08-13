@@ -88,6 +88,13 @@ Standard WP taxonomies (`category`, `post_tag`, `nav_menu`, `post_format`) are a
 
 Re-verified 2026-08-13. **These ids are per-environment** — see runbook blocker B5 before pointing the app at stage or prod.
 
+**Where they live in code** — three places, and only the first two are obvious:
+- `src/shared/config/filmCategories.ts` — `FILM_CATEGORIES`, keyed by **URL segment**. Read by both video routes, the related-films scope, the SSG seed, `sitemap.ts` and the redirect table. Renaming a key 404s live traffic; the keys *are* the URLs.
+- `src/shared/config/newsCategories.ts` — `NEWS_CATEGORIES` (`nashi-dela` 47 / `articles` 578). Read by the `/news/` chips **and** `/materials/articles/`.
+- ⚠️ `scripts/lib/wp.mjs` — its own copy of the film ids, because the zero-dep Node scripts can't import TypeScript. It runs in runbook §3, *before* the §4.3 id fix-up, and a wrong id there makes `film:export` write an empty worksheet that reads as "no films need data" rather than an error.
+
+Nothing anywhere should point at a raw id in a URL: both indexes resolve `?category=` by **key**, so an id answers **200 with an unfiltered list** instead of erroring.
+
 | id | slug | name | parent | posts | used by |
 | ---: | --- | --- | ---: | ---: | --- |
 | `85` | `video` | Видео | — | 12 | parent of the film categories (not queried directly) |
