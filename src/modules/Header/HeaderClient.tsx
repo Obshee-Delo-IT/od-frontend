@@ -135,7 +135,7 @@ const HeaderClient = ({ navItems }: HeaderClientProps) => {
           <Logo size="sm" />
         </Nextlink>
         <div className={css.mobileActions}>
-          <IconButton aria-label="Поиск по сайту" className={css.searchButton}>
+          <IconButton aria-label="Поиск по сайту" variant="contained" className={css.searchButton}>
             <SearchIcon />
           </IconButton>
           <IconButton

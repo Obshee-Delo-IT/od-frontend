@@ -69,7 +69,6 @@
   height: 100%;
   align-items: center;
   padding: 10px 20px;
-  border: 1px solid transparent;
   border-radius: var(--radius-2);
   background: transparent;
   color: var(--white);
@@ -93,16 +92,23 @@
   }
 }
 
+/* `State=Active` (`1327:473`): fill red-6, label `text/3/bold`, and no stroke. */
 .baseActive {
-  border-color: var(--red-6);
   background-color: var(--red-6);
   font-weight: 700;
 }
 
+/* `State=Hover` (`1327:477`): the same fill under a red-5 hairline. Figma's
+   frame stays 142×42 with the stroke on, so it is drawn *inside* the box — an
+   `inset` shadow, not a border. A 1px border here made every cell 2px taller
+   and 2px wider than the spec (measured 44.41 against Figma's 42, which is what
+   pushed the whole bar to 131.91 where `header-v2` is 128), and it had to be
+   carried as `transparent` on the resting cell to stop the hover from shifting
+   the row. */
 .base:hover,
 .base:active {
-  border-color: var(--red-5);
   background-color: var(--red-6);
+  box-shadow: inset 0 0 0 1px var(--red-5);
 }
 
 .text {

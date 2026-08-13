@@ -91,12 +91,13 @@
   gap: 8px;
 }
 
-/* The search button is the one control that is *not* the shipped outline
-   variant: on the red bar Figma draws it as a white hairline with a white
-   glyph, while the menu button next to it keeps the white fill + red glyph the
-   outline variant already gives. */
+/* `header-mob` draws the search button as the Icon Button's **Contained**
+   variant — red-8 fill, white glyph (`1327:14557`) — with a white hairline the
+   variant itself doesn't carry, so that ring is all this adds. Overriding the
+   fill here instead (it was `transparent`, which reads identically on a red-8
+   bar) also swallowed the variant's hover, leaving the button with no feedback
+   at all; solid's hover is red-10, which is what `1327:14605` asks for. */
 .searchButton.searchButton {
-  background-color: transparent;
   box-shadow: inset 0 0 0 1px var(--white);
   color: var(--white);
 }

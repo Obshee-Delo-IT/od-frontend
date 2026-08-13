@@ -19,12 +19,24 @@ const variantToRadix: Record<IconButtonVariant, RadixIconButtonProps['variant']>
   outline: 'outline',
 };
 
+/**
+ * `curved` maps to `large`, not `medium`. Radix stamps `data-radius` on the
+ * element and rescales the whole radius scale beneath it, so `--radius-2` — 6px
+ * app-wide, the `radius/2` token Figma draws these buttons with — collapses to
+ * 4px inside a `medium` subtree. `large` carries the same 1.5 factor the app's
+ * `Theme radius="full"` already sets.
+ */
+const radiusToRadix: Record<IconButtonRadius, RadixIconButtonProps['radius']> = {
+  curved: 'large',
+  circle: 'full',
+};
+
 export const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(
   ({ variant = 'outline', radius = 'curved', className, ...props }, ref) => (
     <RadixIconButton
       ref={ref}
       variant={variantToRadix[variant]}
-      radius={radius === 'circle' ? 'full' : 'medium'}
+      radius={radiusToRadix[radius]}
       className={clsx(css.iconButton, css[`variant-${variant}`], css[`radius-${radius}`], className)}
       {...props}
     />

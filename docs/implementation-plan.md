@@ -118,7 +118,7 @@ A redesigned route auto-shadows its fallback, so Tier 3 is reversible page-by-pa
 
 ## Workstream C — Design system
 
-**Closed 2026-08-13.** C1–C8 shipped earlier; **C9 · C10 · C11 shipped** — header-v2 + header-mob + footer + footer-mob promoted to the live modules, `Modal` moved onto Radix Dialog, and `Link` aligned to the `Links` matrix. Detail, and the three bugs C9 turned up, in [notes §2](./implementation-notes.md#2-shipped--design-system-c).
+**Closed 2026-08-13.** C1–C8 shipped earlier; **C9 · C10 · C11 shipped** — header-v2 + header-mob + footer + footer-mob promoted to the live modules, `Modal` moved onto Radix Dialog, and `Link` aligned to the `Links` matrix. Detail, the three bugs C9 turned up, and a second Figma pass that measured the shipped result node by node and corrected four more, in [notes §2](./implementation-notes.md#2-shipped--design-system-c).
 
 What the section leaves behind, tracked with the pages that need it rather than here:
 
@@ -182,6 +182,8 @@ Real decisions needing a human (Design / PM / org leadership). Questions already
 - Status of the «Стань волонтером» iterations and the `1101:*` scratch — still in scope? (D9.)
 - **About sub-page scope** — 11 live sub-pages vs 9 Figma mocks, and not the same 9 (D3).
 - **Pagination cell geometry** — shipped 40×40/r8 vs the canonical component's 36×36/r6 (C4). Which wins?
+- **`Icon Button`'s radius option is named `Curved (8px)` and drawn at 6** in all twelve variants and in every frame that places one. Shipped 6 (`radius/2`); rename the property, or tell us the variants are stale.
+- **Three small footer / header colour splits**, all shipped one way and none blocking: the footer's ССЫЛКИ heading is `gray-4` where the other two are `gray-3`; the header search glyph is `gray-1` in `header-v2` and `red-1` in the `Input Field` component; the WordPress legal notice is a link that Figma draws as plain text.
 
 ### Content modelling
 
