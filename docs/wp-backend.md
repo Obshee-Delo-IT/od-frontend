@@ -75,14 +75,16 @@ Beyond core (`post`, `page`, `attachment`, …), od-dev registers:
 
 ### 3.2 Custom taxonomies
 
-| Taxonomy | Object type | Source |
-| --- | --- | --- |
-| `pj-categs` | project | cmsms-content-composer |
-| `pj-tags` | project | cmsms-content-composer |
-| `pl-categs` | profile | cmsms-content-composer |
-| `Carousel` | (carousel slides) | owl-carousel |
+| Taxonomy | Object type | Source | In REST? |
+| --- | --- | --- | --- |
+| `pj-categs` | project | cmsms-content-composer | ❌ `/wp/v2/pj-categs` → **404** |
+| `pj-tags` | project | cmsms-content-composer | ❌ |
+| `pl-categs` | profile | cmsms-content-composer | ❌ `/wp/v2/pl-categs` → **404** |
+| `Carousel` | (carousel slides) | owl-carousel | ❌ |
 
 Standard WP taxonomies (`category`, `post_tag`, `nav_menu`, `post_format`) are also present and carry most of the model this repo actually consumes.
+
+**None of the cmsms taxonomies are registered with `show_in_rest`** (verified 2026-08-13), so a headless frontend cannot read them at all — `/wp/v2/types/profile` reports its taxonomies as `["post_tag"]` and nothing else. That matters for D3: there is no coordinator-by-region filter to be had from `pl-categs` unless the re-registration in §4.5 adds `'show_in_rest' => true`. See §3.5 for what the data offers instead.
 
 ### 3.3 Category ids the frontend hardcodes
 
@@ -124,6 +126,32 @@ Three things to know:
 - **Population is incomplete and editorial.** 70 of 99 films have a `kinescope_id`, 0 have a `watch_url`. Current numbers and what editors must supply are in [`implementation-plan.md` → B-VIDEO2](./implementation-plan.md#workstream-b--wordpress--data-layer); the CSV round-trip tooling is `pnpm film:export` / `film:import` (see the README).
 
 **Consequence for §4:** ACF is no longer an optional nicety on this install — `/video` does not work without it.
+
+### 3.5 `profile` — what `/profile/[slug]` has to work with (B-CPT)
+
+Recon 2026-08-13, over all 139 published records. `/profile/[slug]` is Tier 2 (566 entry visits), and the point of this pass was to find out how much of D3 is a template over existing data and how much is a content project. Answer: **mostly a template.**
+
+| | |
+| --- | --- |
+| Published / all statuses | **139** / 205 (REST serves only `publish`) |
+| Newest / oldest | 2024-03-31 / 2015-12-09 |
+| Featured image | **136 / 139** — `_embed` returns it, so cards get a photo |
+| `meta.cmsms_profile_subtitle` | **130 / 139** filled, 89 distinct — REST-exposed, see below |
+| Phone in the body text | 92 / 139 |
+| Email in the body text | 113 / 139 (both: 87) |
+| Body | Gutenberg blocks (group → columns → image + paragraph), median 902 chars, one is empty |
+| `acf` | present but `[]` — ACF is active on the type, no field group assigned |
+| Taxonomies in REST | `post_tag` only, and just **2 records** use it — useless as a filter |
+
+**`cmsms_profile_subtitle` is the region field, and it already ships in REST** (`meta.cmsms_profile_subtitle`, no ACF needed). Read it before proposing new fields. The caveat is that it's **free text, not a taxonomy**: of 89 distinct values, only 18 name an oblast/republic/krai — the rest are bare settlements («Екатеринбург», «Томск», «Миасс», «г. Якутск»). Good enough to *display* under a name; not good enough to *group by* without a normalisation pass.
+
+**Contact details are prose inside the body**, in mixed formats (`89185700050`, `+79062755758`, `тел.: …`). A third of the records have no phone at all. Any «телефон / email» field in the D3 mock is therefore either a parsing job with a two-thirds hit rate or a data-entry job — this is the concrete form of the ACF question in §8.
+
+**Slugs: 67 of 139 are percent-encoded Cyrillic**, up to 194 characters (`%d1%80%d0%be%d0%bc…` for `романуша-артем-александрович`); the other 72 are ASCII. None collide. This looks like a trap for a `[slug]` route and turns out not to be one — **WP's `?slug=` matches all four spellings** (stored, stored re-encoded, decoded raw, decoded then `encodeURIComponent`, uppercase or lowercase hex; all verified to return the same single record). So `/profile/[slug]` can pass its route param straight to `` `?slug=${encodeURIComponent(param)}` `` without a lookup table. The *URLs* will still be long percent-encoded strings, because that's what the live site already serves.
+
+`/profile/<slug>/` answers 200 on the WP side and `has_archive` is true, so `/profile/` exists there too — worth knowing when the A6 fallback covers this section.
+
+**`project` stays dead.** Re-verified: `/wp/v2/project` returns **0** (all 21 records are 2015 drafts), it exposes **no** taxonomies in REST, and nothing links to it. D6 «Программы» is served by plain WP pages, not this CPT — §3.1's verdict stands, and B8's "do not re-register `project`" with it.
 
 ---
 
@@ -195,12 +223,13 @@ The dangerous step is removing `cmsms-content-composer` while `profile` posts ex
 
 1. **Build the custom headless theme** (or pick a stock one) and re-register `profile` + `pl-categs` in its `functions.php` with the same slug + `'show_in_rest' => true`. **Skip re-registering `project`** and `pj-categs` / `pj-tags` — the 21 Lorem-ipsum drafts go away with cmsms (no real data to lose).
 2. **Verify** that `/wp/v2/profile` still returns content with cmsms deactivated (toggle in admin, don't delete yet). The Gutenberg-block `post_content` should pass through cleanly — same renderer path as news.
-3. **(Optional) Install ACF** only if editors want structured side-fields (`region`, `phone`, `email`) surfaced as first-class API fields instead of being buried in the body. Not required to ship.
-4. **Switch the active theme** to the new minimal one (welfare goes to trash regardless).
-5. **Delete the 21 `project` drafts** (`wp post delete <id> --force` in a loop) before removing cmsms, so they don't end up as zombie rows with no CPT registration.
-6. **Remove cmsms-content-composer** and **cmsms-gutenberg-upgrade** together. The migrator already did its one job; no reason to keep it around.
-7. **(Optional) Hygiene pass:** bulk-delete dead meta keys with `wp db query` — `cmsms_*` and `nvp_content_copy` rows on profile records are now unused. Roughly: `DELETE FROM wp_postmeta WHERE meta_key LIKE 'cmsms_%' OR meta_key = 'nvp_content_copy';`. Saves a few MB and tidies the API responses.
-8. **Carousel-block:** before deletion, decide what happens to existing news posts that contain `<!-- wp:cb/carousel-v2 ... -->` block markup. Options: (a) keep carousel-block active for legacy posts only (paradoxical — but it's a single plugin), (b) bulk-edit existing posts to replace `wp-block-cb-carousel-v2` with core `wp-block-gallery` (which `parsePost.tsx` also handles), (c) accept that legacy posts lose their carousels visually. Recommend (b) via a one-off WP-CLI script; record under `servers-agent/tasks/`.
+3. **Re-register the `cmsms_profile_subtitle` post meta** with `show_in_rest`, in the same `functions.php`. Easy to miss and it silently breaks D3: that key holds the coordinator's region on **130 of 139** profiles (§3.5) and reaches the API only because cmsms calls `register_post_meta` for it. The *values* survive plugin removal — they're ordinary `wp_postmeta` rows — but the REST exposure does not, so the field would just vanish from `/wp/v2/profile`. It is also why step 7's `DELETE … meta_key LIKE 'cmsms_%'` must **exclude** `cmsms_profile_subtitle`.
+4. **(Optional) Install ACF fields on `profile`** only if editors want structured side-fields surfaced instead of buried in the body. ACF is already active on the type (records carry an empty `acf: []`), so this is configuration, not installation. The candidates are `phone` and `email` — prose in the body today, present on 92 and 113 of 139 records respectively — not `region`, which step 3 already covers. Not required to ship.
+5. **Switch the active theme** to the new minimal one (welfare goes to trash regardless).
+6. **Delete the 21 `project` drafts** (`wp post delete <id> --force` in a loop) before removing cmsms, so they don't end up as zombie rows with no CPT registration.
+7. **Remove cmsms-content-composer** and **cmsms-gutenberg-upgrade** together. The migrator already did its one job; no reason to keep it around.
+8. **(Optional) Hygiene pass:** bulk-delete dead meta keys with `wp db query` — `cmsms_*` and `nvp_content_copy` rows on profile records are now unused. Roughly: `DELETE FROM wp_postmeta WHERE meta_key LIKE 'cmsms_%' OR meta_key = 'nvp_content_copy';`. Saves a few MB and tidies the API responses. **Keep `cmsms_profile_subtitle`** — see step 3; the safe form is `WHERE (meta_key LIKE 'cmsms_%' AND meta_key <> 'cmsms_profile_subtitle') OR meta_key = 'nvp_content_copy'`.
+9. **Carousel-block:** before deletion, decide what happens to existing news posts that contain `<!-- wp:cb/carousel-v2 ... -->` block markup. Options: (a) keep carousel-block active for legacy posts only (paradoxical — but it's a single plugin), (b) bulk-edit existing posts to replace `wp-block-cb-carousel-v2` with core `wp-block-gallery` (which `parsePost.tsx` also handles), (c) accept that legacy posts lose their carousels visually. Recommend (b) via a one-off WP-CLI script; record under `servers-agent/tasks/`.
 
 ### 4.5 Headless-only theme
 
@@ -264,7 +293,7 @@ Verified against the fetchers 2026-08-13. Everything goes through the single `op
 
 ### 6.2 Available but unused — relevant to upcoming work
 
-- `GET /wp/v2/profile` (139 published) + `GET /wp/v2/profile/{id}` + `GET /wp/v2/pl-categs` — team members / coordinators (D3)
+- `GET /wp/v2/profile` (139 published) + `GET /wp/v2/profile/{id}` + `GET /wp/v2/profile?slug=…` — team members / coordinators (D3). ⚠️ **not** `/wp/v2/pl-categs`, which 404s — the cmsms taxonomies aren't in REST (§3.2). What D3 can actually read is inventoried in §3.5
 - `GET /wp/v2/pages` (**174** published) — generic pages (about, FAQ, contacts, materials landing — depending on how content is organised). Also the denominator for the A6 fallback.
 - ~~`GET /wp/v2/search`~~ — **now consumed**, see §6.1. Fetcher only; the results page and the header input are still to build (B7 UI, gated on C9)
 - `GET /wp/v2/settings` — site metadata (`.description` is the line under the logo)
@@ -412,6 +441,7 @@ These are real decisions the org/team has to make — the WP install alone doesn
 
 - **Materials section model** — there's no `material` CPT today. Materials currently live as static WP pages or as ad-hoc posts. The redesign's tab-by-tab structure (books, disks, flyers, posters, …) probably needs a real CPT + taxonomy. **This is now the critical-path content question**: partial D8 is Tier 2 (before prod) on traffic grounds, and it can't start without this.
 - **News regions in the UI.** The topic side is settled (chips → 47 / 578). What is *not*: WP has ~80 region categories under «Региональные новости» `547` (1 886 posts; e.g. Ростовская обл. 322) and the design specs no region control. Does `/news` get a region dropdown?
+- **Profile side-fields (D3).** Narrowed, not answered, by the §3.5 recon: **region is already structured** and in REST (`meta.cmsms_profile_subtitle`, 130/139 filled — though as free-text place names, 89 distinct, so grouping by it needs normalisation), while **phone and email are prose in the body** (92 and 113 of 139). So the live question is only about those two: parse them out at render time and accept a two-thirds hit rate, have editors backfill them into ACF fields, or drop the contact row from the mock? Design and the coordinators' own preference decide, not the WP state.
 - **`od-test` — how does it differ from od-dev?** Same plugins? Same DB? Still never probed. Worth 5 minutes if it's ever going to be a target.
 - **Webhook capability for on-demand revalidation (B4).** Does the Timeweb shared host let outbound HTTP fire from WP hooks (e.g. `save_post` → `wp_remote_post(OD_REVALIDATE_URL)`)? Probably yes, but worth confirming there's no egress restriction — it is now the *only* thing between editors and instant publishing. The frontend half shipped 2026-08-13 and the mu-plugin is written out in §6.5; if egress turns out to be blocked, the fallback is a WP-CLI/cron curl after publishing. Until it is installed, editors wait up to an hour (`revalidate = 3600`).
 - **Are od-dev's `page` and `profile` bodies representative of prod?** Partly answered and the answer is *no* for pages — od-dev is a migrated-to-Gutenberg copy while prod stores cmsms shortcodes ([`legacy-page-fallback.md` §2](./legacy-page-fallback.md)). **Unverified for `format=video` posts**, which is runbook blocker B2 and the highest-risk unknown in the whole migration.
