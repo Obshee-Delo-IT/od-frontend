@@ -46,7 +46,7 @@ const REDIRECT_STATUSES = new Set([301, 302, 303, 307, 308]);
  * origin is a frozen copy someone else stands up: "the origin is ours" is
  * exactly the assumption this change is designed to stop relying on.
  */
-export const LEGACY_MAX_BYTES = 5_000_000;
+const LEGACY_MAX_BYTES = 5_000_000;
 
 /**
  * Read a response body, giving up the moment it exceeds the cap.
@@ -93,7 +93,7 @@ const readBounded = async (response: Response, limit: number): Promise<string | 
   return new TextDecoder('utf-8').decode(body);
 };
 
-export interface LegacyLoaderDeps {
+interface LegacyLoaderDeps {
   origin: string | null;
   fetch: typeof fetch;
   store: LegacyStore;
@@ -126,7 +126,7 @@ export interface LegacyLoaderDeps {
  * The **content** surface keeps `no-store`, so what the visitor actually reads
  * heals the moment the origin does.
  */
-export type LegacyFetchPolicy = 'no-store' | 'revalidate';
+type LegacyFetchPolicy = 'no-store' | 'revalidate';
 
 /** Both of the types the request's own `accept` header asks for, and nothing else. */
 const isHtml = (contentType: string | null): boolean =>

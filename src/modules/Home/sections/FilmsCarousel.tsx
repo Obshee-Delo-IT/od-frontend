@@ -12,7 +12,7 @@ export interface FilmCardData {
   thumbnailUrl?: string | null;
 }
 
-export interface FilmsCarouselProps {
+interface FilmsCarouselProps {
   films: FilmCardData[];
 }
 

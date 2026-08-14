@@ -45,8 +45,6 @@ export const WP_TAGS = {
   search: 'wp:search',
 } as const;
 
-export type WpTag = (typeof WP_TAGS)[keyof typeof WP_TAGS];
-
 /** The tag for one post's detail page, e.g. `wp:post:39664`. */
 export const postTag = (id: number | string): string => `${WP_TAG_PREFIX}:post:${id}`;
 
@@ -59,7 +57,7 @@ export const postTag = (id: number | string): string => `${WP_TAG_PREFIX}:post:$
 export const isWpTag = (tag: string): boolean => tag === WP_TAG_PREFIX || tag.startsWith(`${WP_TAG_PREFIX}:`);
 
 /** A `RequestInit` fragment carrying Next's cache directives. */
-export interface WpCacheInit {
+interface WpCacheInit {
   next: {
     revalidate: number;
     tags: string[];

@@ -31,17 +31,17 @@ export interface LegacyStore {
   clear: () => void;
 }
 
-export interface LegacyStoreOptions {
+interface LegacyStoreOptions {
   capacity?: number;
   ttlMs?: number;
   now?: () => number;
 }
 
 /** ~170 legacy pages exist; 64 covers the trafficked ones without unbounded growth. */
-export const LEGACY_STORE_CAPACITY = 64;
+const LEGACY_STORE_CAPACITY = 64;
 
 /** Matches the catch-all's `revalidate = 3600`, so both surfaces go stale together. */
-export const LEGACY_STORE_TTL_MS = 60 * 60 * 1000;
+const LEGACY_STORE_TTL_MS = 60 * 60 * 1000;
 
 export const createLegacyStore = ({
   capacity = LEGACY_STORE_CAPACITY,
@@ -94,16 +94,16 @@ export interface ConcurrencyGate {
   active: () => number;
 }
 
-export interface ConcurrencyGateOptions {
+interface ConcurrencyGateOptions {
   limit?: number;
   waitMs?: number;
 }
 
 /** What this WordPress host is already asked to tolerate elsewhere (`sitemap.ts`). */
-export const LEGACY_CONCURRENCY_LIMIT = 4;
+const LEGACY_CONCURRENCY_LIMIT = 4;
 
 /** Long enough for a slot to free on a healthy origin, short enough not to pile up. */
-export const LEGACY_QUEUE_WAIT_MS = 4000;
+const LEGACY_QUEUE_WAIT_MS = 4000;
 
 /**
  * Caps simultaneous upstream requests by **queueing**, not shedding.

@@ -256,6 +256,8 @@ Figma reference frames on the `design` page: `home` 1440 (`3614:91040`, canonica
 
 *Resolved along the way:* the 5-vs-3 directions question — 5 is correct; the canonical frame just clips overflow cards.
 
+**Programmes and directions are one carousel (2026-08-14).** Three of the five directions point at pages that 404 on the legacy origin, so they are hidden and the two carousels were merged under «Программы и направления деятельности» — a two-card carousel reads as a stub. That started as a runtime switch (`MERGE_HOME_SECTIONS`) over two components, but `Programs` was a byte-identical copy of `Directions` bar its illustration list and heading, and the switch could only ever be `true` from static config. Both are gone: `app/page.tsx` renders one `Directions` over `[...HOME_PROGRAMS, ...HOME_DIRECTIONS]`. If the missing pages ship and the split comes back, it is the same component rendered twice with different props.
+
 **GitHub:** pre-decomposed into #33 Hero, #34 Statistics, #35 Films carousel, #36 Banner, #37 Programs carousel, #38 Articles, #39 Subscribe — all now have shipped markup. **#32 (open)** still tracks "how do we fetch sections" (working assumption: widgets).
 
 ### D2. News index (`app/news/page.tsx`) — 2026-06-03

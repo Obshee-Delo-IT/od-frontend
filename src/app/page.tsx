@@ -1,9 +1,9 @@
 import dayjs from 'dayjs';
 import 'dayjs/locale/ru';
-import { Directions, FilmsCarousel, Hero, NarrowPromo, NewsGrid, Programs, StatsRow } from '@/modules/Home';
+import { Directions, FilmsCarousel, Hero, NarrowPromo, NewsGrid, StatsRow } from '@/modules/Home';
 import { NewsletterSignup } from '@/modules/NewsletterSignup';
 import { fetchFilms, fetchLatestNews } from '@/shared/api';
-import { HOME_DIRECTIONS, HOME_PROGRAMS, HOME_SECTIONS_TITLE, MERGE_HOME_SECTIONS } from '@/shared/config/homeSections';
+import { HOME_DIRECTIONS, HOME_PROGRAMS, HOME_SECTIONS_TITLE } from '@/shared/config/homeSections';
 import { canonicalUrl } from '@/shared/config/site';
 import { Box } from '@/shared/ui/components/Box';
 import type { Metadata } from 'next';
@@ -43,14 +43,7 @@ const HomePage = async () => {
         }))}
       />
       <NarrowPromo />
-      {MERGE_HOME_SECTIONS ? (
-        <Directions title={HOME_SECTIONS_TITLE} directions={[...HOME_PROGRAMS, ...HOME_DIRECTIONS]} />
-      ) : (
-        <>
-          <Directions directions={HOME_DIRECTIONS} />
-          <Programs programs={HOME_PROGRAMS} />
-        </>
-      )}
+      <Directions title={HOME_SECTIONS_TITLE} directions={[...HOME_PROGRAMS, ...HOME_DIRECTIONS]} />
       <NewsGrid
         items={news.map((post) => ({
           id: post.id,

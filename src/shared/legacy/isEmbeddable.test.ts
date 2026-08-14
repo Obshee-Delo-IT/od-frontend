@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { isEmbeddable, LEGACY_DENYLIST } from './isEmbeddable';
+import { isEmbeddable } from './isEmbeddable';
 
 describe('isEmbeddable (LPF-001)', () => {
   it.each([['team'], ['materials', 'plakati'], ['profile', 'ivanov'], ['about', 'history', 'early']])(
@@ -34,24 +34,5 @@ describe('isEmbeddable (LPF-001)', () => {
   it('rejects absurd depth at the boundary', () => {
     expect(isEmbeddable(['a', 'b', 'c', 'd', 'e', 'f'])).toBe(true);
     expect(isEmbeddable(['a', 'b', 'c', 'd', 'e', 'f', 'g'])).toBe(false);
-  });
-
-  it('ships with an empty denylist, so no path is rejected on those grounds', () => {
-    expect(LEGACY_DENYLIST).toEqual([]);
-  });
-
-  /**
-   * The mechanism, exercised without shipping an opinion about which pages are
-   * dead — that is a content decision nobody has made (decision D12).
-   */
-  it('rejects a denylisted path when one is configured', () => {
-    const denylist = LEGACY_DENYLIST as string[];
-    denylist.push('/retired/page/');
-    try {
-      expect(isEmbeddable(['retired', 'page'])).toBe(false);
-      expect(isEmbeddable(['retired'])).toBe(true);
-    } finally {
-      denylist.length = 0;
-    }
   });
 });

@@ -7,7 +7,7 @@
  * the legacy origin. Keeping the two barrels apart makes the mistake awkward to
  * make by accident.
  */
-export { isEmbeddable, LEGACY_DENYLIST } from './isEmbeddable';
+export { isEmbeddable } from './isEmbeddable';
 export { LEGACY_HEIGHT_MESSAGE, LEGACY_INITIAL_HEIGHT, LEGACY_MAX_HEIGHT } from './legacyMessage';
 export type { LegacyHeightMessage } from './legacyMessage';
 export { legacyOrigin, resolveLegacyOrigin } from './legacyOrigin';

@@ -16,7 +16,7 @@ export const NEWS_CATEGORIES = {
   articles: 578,
 } as const;
 
-export type NewsCategoryKey = keyof typeof NEWS_CATEGORIES;
+type NewsCategoryKey = keyof typeof NEWS_CATEGORIES;
 
 /**
  * The filter a `?category=` value names, or `null` for «Все» — which is what an

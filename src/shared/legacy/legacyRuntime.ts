@@ -18,7 +18,7 @@ import { LEGACY_HEIGHT_MESSAGE } from './legacyMessage';
  *   module-scope helper (object spread, destructuring, `async`), because that
  *   helper would not exist in the browser.
  */
-export interface LegacyRuntimeConfig {
+interface LegacyRuntimeConfig {
   /** The origin the document was fetched from. */
   legacyOrigin: string;
   /** Our own origin — where in-content navigation must land. */

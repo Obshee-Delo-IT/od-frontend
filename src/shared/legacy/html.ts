@@ -203,7 +203,7 @@ export const findTags = (mask: string, tag: string): TagSpan[] => {
   return spans;
 };
 
-export interface AttributeMatch {
+interface AttributeMatch {
   /** Index of the attribute name within the tag text. */
   start: number;
   /** Index just past the attribute (name, or name plus value). */

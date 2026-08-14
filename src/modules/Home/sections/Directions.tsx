@@ -16,7 +16,7 @@ export interface DirectionCardData {
   href: string;
 }
 
-export interface DirectionsProps {
+interface DirectionsProps {
   directions: DirectionCardData[];
   /** Overridden when the programme cards are folded in — see `HOME_SECTIONS_TITLE`. */
   title?: string;

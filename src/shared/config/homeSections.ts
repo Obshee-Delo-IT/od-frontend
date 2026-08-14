@@ -14,8 +14,8 @@
  * edit here — App Router precedence handles it.
  */
 
-/** Shape both `Directions` and `Programs` cards accept. */
-export interface HomeCardData {
+/** Shape the `Directions` cards accept. */
+interface HomeCardData {
   id: string;
   title: string;
   href: string;
@@ -44,14 +44,15 @@ const ALL_DIRECTIONS: HomeCardData[] = [
 
 export const HOME_DIRECTIONS: HomeCardData[] = ALL_DIRECTIONS.filter((card) => !HIDDEN_DIRECTIONS.has(card.title));
 
-/** Below this a carousel reads as a stub — three is one full row on desktop. */
-const MIN_CARDS = 3;
-
-/** Whether the two carousels collapse into one under {@link HOME_SECTIONS_TITLE}. */
-export const shouldMergeHomeSections = (programs: number, directions: number): boolean =>
-  programs < MIN_CARDS || directions < MIN_CARDS;
-
-export const MERGE_HOME_SECTIONS = shouldMergeHomeSections(HOME_PROGRAMS.length, HOME_DIRECTIONS.length);
-
-/** Heading for the merged section. Programmes come first, as the wording says. */
+/**
+ * Heading for the one carousel the home page ships. Programmes come first, as
+ * the wording says.
+ *
+ * Figma draws two carousels — «Программы» and «Направления деятельности» — and
+ * this merges them, because three of the five directions have no page to point
+ * at and a two-card carousel reads as a stub. If those pages ship and the split
+ * comes back, it is one component rendered twice with different props; there
+ * was a second, byte-identical copy of `Directions` here for a while and it was
+ * never worth its own file.
+ */
 export const HOME_SECTIONS_TITLE = 'Программы и направления деятельности';

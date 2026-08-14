@@ -20,7 +20,7 @@ import css from './Link.module.css';
  * **Small** and **Extra Small** = `size="3"` (16px) — the last two are
  * identical in Figma.
  */
-export type LinkColor = 'primary' | 'red' | 'white' | 'gray';
+type LinkColor = 'primary' | 'red' | 'white' | 'gray';
 
 interface LinkProps extends Omit<NextLinkProps, 'passHref'>, Omit<RadixLinkProps, 'href' | 'color' | 'asChild'> {
   color?: LinkColor;

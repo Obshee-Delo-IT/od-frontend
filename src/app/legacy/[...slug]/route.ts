@@ -48,9 +48,9 @@ export const GET = async (
 ): Promise<Response> => {
   const { slug } = await params;
   // The same eligibility test the page applies, so the two surfaces cannot
-  // disagree about which paths exist: a slug retired via `LEGACY_DENYLIST`, or
-  // one the page would refuse for depth or a reserved first segment, must not
-  // still be fetchable here just because this route is the internal one.
+  // disagree about which paths exist: a slug the page would refuse for depth or
+  // a reserved first segment must not still be fetchable here just because this
+  // route is the internal one.
   if (!isEmbeddable(slug)) {
     return new Response(null, { status: 404, headers: FAILURE_HEADERS });
   }

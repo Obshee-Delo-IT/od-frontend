@@ -10,13 +10,13 @@ import type { StaticImageData } from 'next/image';
  * (they are raster image fills there — no vectors exist in the file);
  * `iconSize` is each logo's design size inside the 40px tile.
  */
-export const SHARE_PLATFORMS = [
+const SHARE_PLATFORMS = [
   { key: 'vk', label: 'VK Видео', logo: platformVkVideo as StaticImageData, iconSize: 32 },
   { key: 'youtube', label: 'YouTube', logo: platformYoutube as StaticImageData, iconSize: 28 },
   { key: 'rutube', label: 'Rutube', logo: platformRutube as StaticImageData, iconSize: 32 },
 ] as const;
 
-export interface SharePlatformLink {
+interface SharePlatformLink {
   key: (typeof SHARE_PLATFORMS)[number]['key'];
   label: string;
   logo: StaticImageData;
