@@ -3,6 +3,8 @@ gate: spec-review
 verdict: PASS
 risk_tier: T2
 rounds: 8
+round_findings: "10,8,4,4,3,1,3,0"
+round_criticals: "2,3,1,0,1,0,0,0"
 last_round_new_findings: 0
 unresolved_critical: 0
 unresolved_major: 0
@@ -165,3 +167,31 @@ model, the cache owner and the failure semantics are all different from the firs
 traceable to a specific finding with measured evidence behind it. The one condition attached to this PASS is
 recorded above and carried into the plan: the injected navigation runtime must be verified in a browser
 before it is trusted, because prose review of it has demonstrably reached its limit.
+
+---
+
+## Addendum — 2026-08-14, one requirement re-reviewed after implementation
+
+Implementation forced one amendment to the bundle this gate passed, so the bundle's hash no longer matches
+the `inputs_sha256` in the front matter above. Recorded here rather than silently: **the front-matter hash
+belongs to the bundle as reviewed on 2026-08-13**, and the current bundle hashes to
+`b54687bc0c9676fddb253d5878ab70ff204ebc5afa5fa9828fbf85bfed664f03`
+(`cat proposal.md specs/legacy-content-proxy/spec.md specs/legacy-page-fallback/spec.md design.md
+decisions.md research.md | sha256sum`, run from the change directory). The recipe is stated because the
+original one was not, and could not be reproduced.
+
+**What changed.** LCP-010's invariant said "Every upstream fetch is made uncached (`cache: 'no-store'`)".
+That is impossible on one of the two surfaces: the catch-all page's `revalidate` is module-level and shared
+with the numeric-post branch, so its render must stay statically generatable, and an uncached fetch inside it
+aborts with `DYNAMIC_SERVER_USAGE` — **HTTP 500** in a production build, where `next dev` answers 200.
+`connection()` does not rescue it. The invariant is now per-surface: the proxy route keeps `no-store`, the
+page fetches with `next: { revalidate }`. `verification-plan.md` gained gate 10 (production build + smoke),
+the only gate that can catch this class.
+
+**Re-review.** The amended text plus the requirements it could contradict (LCP-004, LPF-004, LPF-005) and the
+added gate were put to `gemini-3.1-pro-high` through the consistency lens — the family that did not write the
+amendment — with the question stated in the sharpest form available: can a retained failure on the page
+surface produce a wrong 404, a wrong 200, or stale content a visitor sees, rather than only a generic
+`<title>`? Verdict: **"The amendment is sound."** No findings at any severity.
+
+This addendum does not re-open the rest of the bundle, which is unchanged.

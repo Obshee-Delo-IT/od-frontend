@@ -49,7 +49,7 @@
 ## 7. Verification and gate
 
 - [x] 7.1 Run the ASM1/ASM8 sweep: the transform over all 174 legacy URLs, recording the boundary-miss count and asserting zero external script `src` lost on any page. [VER: V19]
-- [ ] 7.2 Run every executable gate from verification-plan.md in order (format, lint, lint:styles, type-check, test, secrets-free build, `test:e2e -- legacy-embed`, `url:check`, the `X-Robots-Tag` curl) and record the real output verbatim.
-- [ ] 7.3 Confirm coverage of changed lines meets the 90 % threshold, and that the injected runtime's exemption is covered by the browser suite rather than skipped.
-- [ ] 7.4 Produce `reviews/impl-review.md` (GATE 2) and loop until it reads PASS, with the mutation table from verification-plan.md checked by the test-integrity lens.
-- [ ] 7.5 Produce `handoff.md`, carrying the six open MINORs from GATE 1 and the frozen-copy swap as named follow-ups.
+- [x] 7.2 Run every executable gate from verification-plan.md in order (format, lint, lint:styles, type-check, test, secrets-free build, `test:e2e -- legacy-embed`, `url:check`, the `X-Robots-Tag` curl) and record the real output verbatim.
+- [x] 7.3 Confirm coverage of changed lines meets the 90 % threshold, and that the injected runtime's exemption is covered by the browser suite rather than skipped.
+- [x] 7.4 Produce `reviews/impl-review.md` (GATE 2) and loop until it reads PASS, with the mutation table from verification-plan.md checked by the test-integrity lens.
+- [x] 7.5 Produce `handoff.md`, carrying the six open MINORs from GATE 1 and the frozen-copy swap as named follow-ups.
