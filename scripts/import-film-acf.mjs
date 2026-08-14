@@ -15,6 +15,7 @@
  */
 
 import fs from 'node:fs';
+import { idSet, readArgs } from './lib/args.mjs';
 import { parseCsvRecords } from './lib/csv.mjs';
 import { ACF_FIELDS, readEnv, wpFetch } from './lib/wp.mjs';
 
@@ -50,28 +51,16 @@ const requestJson = async (env, path, init, attempts = 3) => {
   return { error: lastError };
 };
 
-const parseArgs = (argv) => {
-  const args = { in: '.scratch/film-worksheet.csv', delimiter: ',', apply: false, only: null };
-  for (let i = 0; i < argv.length; i += 1) {
-    const arg = argv[i];
-    if (arg === '--in') {
-      args.in = argv[(i += 1)];
-    } else if (arg === '--delimiter') {
-      args.delimiter = argv[(i += 1)];
-    } else if (arg === '--apply') {
-      args.apply = true;
-    } else if (arg === '--only') {
-      args.only = new Set(argv[(i += 1)].split(',').map((id) => id.trim()));
-    } else if (arg !== '--') {
-      // `pnpm run x -- --flag` forwards the bare separator too.
-      throw new Error(`Unknown argument: ${arg}`);
-    }
-  }
-  return args;
+const OPTIONS = {
+  in: { type: 'string', default: '.scratch/film-worksheet.csv' },
+  delimiter: { type: 'string', default: ',' },
+  apply: { type: 'boolean', default: false },
+  only: { type: 'string' },
 };
 
 const main = async () => {
-  const args = parseArgs(process.argv.slice(2));
+  const args = readArgs(OPTIONS);
+  const only = idSet(args.only);
   const env = readEnv();
 
   const records = parseCsvRecords(fs.readFileSync(args.in, 'utf8'), { delimiter: args.delimiter });
@@ -80,7 +69,7 @@ const main = async () => {
   }
 
   const hasId = (row) => /^\d+$/.test(row.id?.trim() ?? '');
-  const targets = records.filter((row) => hasId(row) && (!args.only || args.only.has(row.id.trim())));
+  const targets = records.filter((row) => hasId(row) && (!only || only.has(row.id.trim())));
   console.log(`${args.apply ? 'APPLY' : 'DRY RUN'} — ${targets.length} rows from ${args.in}`);
 
   // Rows carrying data but no post id (e.g. films that only exist on prod) are

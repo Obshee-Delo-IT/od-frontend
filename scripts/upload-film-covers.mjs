@@ -20,44 +20,33 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
+import { idSet, readArgs } from './lib/args.mjs';
 import { parseCsvRecords } from './lib/csv.mjs';
 import { plainText, readEnv, wpFetch } from './lib/wp.mjs';
 
-const parseArgs = (argv) => {
-  const args = { in: '.scratch/film-worksheet-filled.csv', export: null, delimiter: ',', apply: false, only: null };
-  for (let i = 0; i < argv.length; i += 1) {
-    const arg = argv[i];
-    if (arg === '--in') {
-      args.in = argv[(i += 1)];
-    } else if (arg === '--export') {
-      args.export = argv[(i += 1)];
-    } else if (arg === '--delimiter') {
-      args.delimiter = argv[(i += 1)];
-    } else if (arg === '--apply') {
-      args.apply = true;
-    } else if (arg === '--only') {
-      args.only = new Set(argv[(i += 1)].split(',').map((id) => id.trim()));
-    } else if (arg !== '--') {
-      throw new Error(`Unknown argument: ${arg}`);
-    }
-  }
-  if (!args.export) {
-    throw new Error('--export <path to ChatExport_… directory> is required');
-  }
-  return args;
+const OPTIONS = {
+  in: { type: 'string', default: '.scratch/film-worksheet-filled.csv' },
+  export: { type: 'string' },
+  delimiter: { type: 'string', default: ',' },
+  apply: { type: 'boolean', default: false },
+  only: { type: 'string' },
 };
 
 /** A readable, collision-proof media filename: `film-cover-<postId>.jpg`. */
 const targetFilename = (postId) => `film-cover-${postId}.jpg`;
 
 const main = async () => {
-  const args = parseArgs(process.argv.slice(2));
+  const args = readArgs(OPTIONS);
+  if (!args.export) {
+    throw new Error('--export <path to ChatExport_… directory> is required');
+  }
+  const only = idSet(args.only);
   const env = readEnv();
 
   const rows = parseCsvRecords(fs.readFileSync(args.in, 'utf8'), { delimiter: args.delimiter })
     .filter((row) => /^\d+$/.test(row.id?.trim() ?? ''))
     .filter((row) => (row.hint_featured_image ?? '').trim().endsWith('.jpg'))
-    .filter((row) => !args.only || args.only.has(row.id.trim()));
+    .filter((row) => !only || only.has(row.id.trim()));
 
   console.log(`${args.apply ? 'APPLY' : 'DRY RUN'} — ${rows.length} film(s) with cover art\n`);
 

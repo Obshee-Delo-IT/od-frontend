@@ -32,26 +32,15 @@
  */
 
 import fs from 'node:fs';
+import { readArgs } from './lib/args.mjs';
 import { parseCsv, stringifyCsv } from './lib/csv.mjs';
 import { DOWNLOAD_SLOTS } from './lib/wp.mjs';
 
-const parseArgs = (argv) => {
-  const args = { in: '.scratch/film-worksheet-filled.csv', out: null, delimiter: ',', tolerance: 3 };
-  for (let i = 0; i < argv.length; i += 1) {
-    const arg = argv[i];
-    if (arg === '--in') {
-      args.in = argv[(i += 1)];
-    } else if (arg === '--out') {
-      args.out = argv[(i += 1)];
-    } else if (arg === '--delimiter') {
-      args.delimiter = argv[(i += 1)];
-    } else if (arg === '--tolerance') {
-      args.tolerance = Number(argv[(i += 1)]);
-    } else if (arg !== '--') {
-      throw new Error(`Unknown argument: ${arg}`);
-    }
-  }
-  return args;
+const OPTIONS = {
+  in: { type: 'string', default: '.scratch/film-worksheet-filled.csv' },
+  out: { type: 'string' },
+  delimiter: { type: 'string', default: ',' },
+  tolerance: { type: 'string', default: '3' },
 };
 
 const normalise = (title) =>
@@ -112,7 +101,8 @@ const labelMinutes = (row, col) => {
 };
 
 const main = async () => {
-  const args = parseArgs(process.argv.slice(2));
+  const args = readArgs(OPTIONS);
+  const tolerance = Number(args.tolerance);
   const token = process.env.KINESCOPE_TOKEN;
   if (!token) {
     throw new Error('KINESCOPE_TOKEN is not set — add it to .env and run via `node --env-file=.env …`.');
@@ -222,7 +212,7 @@ const main = async () => {
 
     const expected = labelMinutes(row, col);
     if (expected.length > 0) {
-      const fits = matches.filter((video) => expected.some((m) => Math.abs(video.minutes - m) <= args.tolerance));
+      const fits = matches.filter((video) => expected.some((m) => Math.abs(video.minutes - m) <= tolerance));
       if (fits.length === 0) {
         durationMismatch.push(
           `${id || '(no id)'} ${title} — expected ${expected.join('/')} мин, Kinescope has ` +

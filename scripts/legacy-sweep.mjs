@@ -40,34 +40,13 @@ const DEFAULT_LEGACY = 'https://obshee-delo.ru';
  */
 const EMBED_QUERY = 'od_embed=1';
 
-const parseArgs = (argv) => {
-  const args = {
-    base: 'http://localhost:3000',
-    legacy: DEFAULT_LEGACY,
-    sitemap: null,
-    limit: 0,
-    concurrency: 4,
-    verbose: false,
-  };
-  for (let i = 0; i < argv.length; i += 1) {
-    const arg = argv[i];
-    if (arg === '--base') {
-      args.base = argv[(i += 1)].replace(/\/$/, '');
-    } else if (arg === '--legacy') {
-      args.legacy = argv[(i += 1)].replace(/\/$/, '');
-    } else if (arg === '--sitemap') {
-      args.sitemap = argv[(i += 1)];
-    } else if (arg === '--limit') {
-      args.limit = Number(argv[(i += 1)]);
-    } else if (arg === '--concurrency') {
-      args.concurrency = Number(argv[(i += 1)]);
-    } else if (arg === '--verbose') {
-      args.verbose = true;
-    } else if (arg !== '--') {
-      throw new Error(`Unknown argument: ${arg}`);
-    }
-  }
-  return args;
+const OPTIONS = {
+  base: { type: 'string', default: 'http://localhost:3000' },
+  legacy: { type: 'string', default: DEFAULT_LEGACY },
+  sitemap: { type: 'string' },
+  limit: { type: 'string', default: '0' },
+  concurrency: { type: 'string', default: '4' },
+  verbose: { type: 'boolean', default: false },
 };
 
 const get = async (url) => {
@@ -222,8 +201,11 @@ const inspect = async ({ base, legacy }, path) => {
 };
 
 const run = async () => {
-  const args = parseArgs(process.argv.slice(2));
-  const sitemapUrl = args.sitemap ?? `${args.legacy}/page-sitemap.xml`;
+  const args = readArgs(OPTIONS);
+  const base = origin(args.base);
+  const legacy = origin(args.legacy);
+  const limit = Number(args.limit);
+  const sitemapUrl = args.sitemap ?? `${legacy}/page-sitemap.xml`;
 
   const sitemap = await get(sitemapUrl);
   if (sitemap.status !== 200) {
@@ -233,11 +215,11 @@ const run = async () => {
     .map((match) => new URL(match[1].trim()).pathname)
     .filter((path) => path !== '/');
   paths = [...new Set(paths)];
-  if (args.limit > 0) {
-    paths = paths.slice(0, args.limit);
+  if (limit > 0) {
+    paths = paths.slice(0, limit);
   }
 
-  console.log(`Sweeping ${paths.length} legacy pages: ${args.legacy} → ${args.base}/legacy/*\n`);
+  console.log(`Sweeping ${paths.length} legacy pages: ${legacy} → ${base}/legacy/*\n`);
 
   const results = [];
   let cursor = 0;
@@ -255,7 +237,7 @@ const run = async () => {
       }
     }
   };
-  await Promise.all(Array.from({ length: args.concurrency }, worker));
+  await Promise.all(Array.from({ length: Number(args.concurrency) }, worker));
 
   const failed = results.filter((result) => !result.ok);
   const boundaryMisses = results.filter((result) => result.boundaryMiss);

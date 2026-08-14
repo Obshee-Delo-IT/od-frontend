@@ -648,6 +648,14 @@ what to know before adding any of it back:
   input and the wrapper `<div>` went with them (Radix's `TextFieldRoot` is
   `display: flex` and stretches the same either way). Figma still draws all four
   — see design-system §5's `Input Field` row before rebuilding one.
+- **Seven hand-rolled argv loops → `parseArgs` from `node:util`.** Each script
+  had a ~17-line `for` loop over `process.argv`, and each got the error handling
+  slightly differently: `--top` with no value silently became `Number(undefined)`
+  = `NaN`, and `--out=sheet.csv` wasn't recognised anywhere. `parseArgs` rejects
+  both, so the scripts are down to an option table. The one wrinkle is in
+  `scripts/lib/args.mjs`: `pnpm run x -- --flag` forwards the bare `--` as the
+  *first* argument, which `parseArgs` reads as "the rest are positionals", so it
+  is filtered out before the call. Still zero-dependency.
 - **Barrel lines with no importer.** `shared/legacy/index.ts` re-exported the
   transform, the store, the loader factory and `legacyOrigin`, none of which
   anything imports through the barrel — they are reached by module path from

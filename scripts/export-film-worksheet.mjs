@@ -16,6 +16,7 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
+import { readArgs } from './lib/args.mjs';
 import { stringifyCsv } from './lib/csv.mjs';
 import {
   ACF_FIELDS,
@@ -29,22 +30,10 @@ import {
 const HINT_COLUMNS = ['hint_body_youtube', 'hint_body_rutube', 'hint_body_downloads', 'hint_featured_image'];
 const META_COLUMNS = ['id', 'title', 'category', 'wp_link'];
 
-const parseArgs = (argv) => {
-  const args = { out: '.scratch/film-worksheet.csv', delimiter: ',', all: false };
-  for (let i = 0; i < argv.length; i += 1) {
-    const arg = argv[i];
-    if (arg === '--out') {
-      args.out = argv[(i += 1)];
-    } else if (arg === '--delimiter') {
-      args.delimiter = argv[(i += 1)];
-    } else if (arg === '--all') {
-      args.all = true;
-    } else if (arg !== '--') {
-      // `pnpm run x -- --flag` forwards the bare separator too.
-      throw new Error(`Unknown argument: ${arg}`);
-    }
-  }
-  return args;
+const OPTIONS = {
+  out: { type: 'string', default: '.scratch/film-worksheet.csv' },
+  delimiter: { type: 'string', default: ',' },
+  all: { type: 'boolean', default: false },
 };
 
 /** Links to a video host or a download, harvested from the rendered body. */
@@ -61,7 +50,7 @@ const mineBody = (html = '') => {
 };
 
 const main = async () => {
-  const args = parseArgs(process.argv.slice(2));
+  const args = readArgs(OPTIONS);
   const env = readEnv();
 
   const films = await fetchAllFilms(env, {

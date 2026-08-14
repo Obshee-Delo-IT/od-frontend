@@ -29,29 +29,17 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import { origin, readArgs } from './lib/args.mjs';
 import { parseCsv } from './lib/csv.mjs';
 
 const DEFAULT_CSV = path.join(os.homedir(), 'Documents/od/ya.metrika');
 
-const parseArgs = (argv) => {
-  const args = { base: 'http://localhost:3000', csv: null, top: 200, concurrency: 8, failUnder: 0 };
-  for (let i = 0; i < argv.length; i += 1) {
-    const arg = argv[i];
-    if (arg === '--base') {
-      args.base = argv[(i += 1)].replace(/\/$/, '');
-    } else if (arg === '--csv') {
-      args.csv = argv[(i += 1)];
-    } else if (arg === '--top') {
-      args.top = Number(argv[(i += 1)]);
-    } else if (arg === '--concurrency') {
-      args.concurrency = Number(argv[(i += 1)]);
-    } else if (arg === '--fail-under') {
-      args.failUnder = Number(argv[(i += 1)]);
-    } else if (arg !== '--') {
-      throw new Error(`Unknown argument: ${arg}`);
-    }
-  }
-  return args;
+const OPTIONS = {
+  base: { type: 'string', default: 'http://localhost:3000' },
+  csv: { type: 'string' },
+  top: { type: 'string', default: '200' },
+  concurrency: { type: 'string', default: '8' },
+  'fail-under': { type: 'string', default: '0' },
 };
 
 /** Newest «Страницы входа» export in the directory, or the file itself. */
@@ -123,21 +111,23 @@ const check = async (base, pathname) => {
 };
 
 const main = async () => {
-  const args = parseArgs(process.argv.slice(2));
+  const args = readArgs(OPTIONS);
+  const base = origin(args.base);
+  const failUnder = Number(args['fail-under']);
   const csv = resolveCsv(args.csv);
-  const targets = readEntryPaths(csv).slice(0, args.top);
+  const targets = readEntryPaths(csv).slice(0, Number(args.top));
   if (targets.length === 0) {
     throw new Error('The export produced no obshee-delo.ru entry URLs.');
   }
 
-  console.log(`${path.basename(csv)} → top ${targets.length} entry URLs against ${args.base}\n`);
+  console.log(`${path.basename(csv)} → top ${targets.length} entry URLs against ${base}\n`);
 
   const results = [];
   const queue = targets.slice();
   await Promise.all(
-    Array.from({ length: Math.min(args.concurrency, targets.length) }, async () => {
+    Array.from({ length: Math.min(Number(args.concurrency), targets.length) }, async () => {
       for (let target = queue.shift(); target; target = queue.shift()) {
-        results.push({ ...target, status: await check(args.base, target.pathname) });
+        results.push({ ...target, status: await check(base, target.pathname) });
         process.stderr.write('.');
       }
     })
@@ -183,8 +173,8 @@ const main = async () => {
   }
 
   console.log(`\nEntry-traffic coverage: ${coverage.toFixed(1)}%`);
-  if (args.failUnder > 0 && coverage < args.failUnder) {
-    console.error(`FAIL — below the --fail-under ${args.failUnder}% threshold.`);
+  if (failUnder > 0 && coverage < failUnder) {
+    console.error(`FAIL — below the --fail-under ${failUnder}% threshold.`);
     process.exitCode = 1;
   }
 };

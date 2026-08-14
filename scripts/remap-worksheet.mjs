@@ -23,25 +23,18 @@
  */
 
 import fs from 'node:fs';
+import { readArgs } from './lib/args.mjs';
 import { parseCsv, stringifyCsv } from './lib/csv.mjs';
 import { ACF_FIELDS } from './lib/wp.mjs';
 
-const parseArgs = (argv) => {
-  const args = { from: null, onto: null, out: null, delimiter: ',' };
-  for (let i = 0; i < argv.length; i += 1) {
-    const arg = argv[i];
-    if (arg === '--from') {
-      args.from = argv[(i += 1)];
-    } else if (arg === '--onto') {
-      args.onto = argv[(i += 1)];
-    } else if (arg === '--out') {
-      args.out = argv[(i += 1)];
-    } else if (arg === '--delimiter') {
-      args.delimiter = argv[(i += 1)];
-    } else if (arg !== '--') {
-      throw new Error(`Unknown argument: ${arg}`);
-    }
-  }
+const OPTIONS = {
+  from: { type: 'string' },
+  onto: { type: 'string' },
+  out: { type: 'string' },
+  delimiter: { type: 'string', default: ',' },
+};
+
+const requireArgs = (args) => {
   for (const key of ['from', 'onto', 'out']) {
     if (!args[key]) {
       throw new Error(`--${key} is required`);
@@ -65,7 +58,7 @@ const readSheet = (file, delimiter) => {
 };
 
 const main = () => {
-  const args = parseArgs(process.argv.slice(2));
+  const args = requireArgs(readArgs(OPTIONS));
   const from = readSheet(args.from, args.delimiter);
   const onto = readSheet(args.onto, args.delimiter);
 
