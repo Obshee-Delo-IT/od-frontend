@@ -26,9 +26,8 @@ interface StoreEntry extends LegacyDocument {
 export interface LegacyStore {
   get: (key: string) => LegacyDocument | null;
   set: (key: string, document: LegacyDocument) => void;
-  /** Test seam: how many entries are held right now. */
+  /** How many entries are held right now — the eviction tests assert on it. */
   size: () => number;
-  clear: () => void;
 }
 
 interface LegacyStoreOptions {
@@ -80,7 +79,6 @@ export const createLegacyStore = ({
     },
 
     size: () => entries.size,
-    clear: () => entries.clear(),
   };
 };
 

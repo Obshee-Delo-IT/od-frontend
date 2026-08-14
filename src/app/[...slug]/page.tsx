@@ -157,7 +157,7 @@ const Page = async ({ params }: { params: Promise<{ slug: string[] }> }) => {
     }
 
     // The embed and nothing else: the root layout already supplies the header,
-    // `Container` and footer.
+    // the page column and the footer.
     //
     // Keyed by path so a client-side navigation between two fallback pages
     // remounts it. Without the key React reuses the instance, the frame reloads

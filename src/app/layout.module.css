@@ -1,4 +1,6 @@
-.container {
+/* The page column. Was a one-call-site `Container` component; the layout is the
+   only thing that ever wrapped anything in it. */
+.main {
   max-width: var(--container-4);
   margin: 0 auto;
 

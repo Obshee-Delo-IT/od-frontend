@@ -8,7 +8,7 @@ import css from './LegacyEmbed.module.css';
  * The parent half of the A6 legacy-page fallback (LPF-003, LPF-006).
  *
  * Renders **only** the frame: the root layout already supplies the header,
- * `Container` and footer, so a page that rendered its own would show two of
+ * the page column and the footer, so a page that rendered its own would show two of
  * each. The frame is same-origin — `/legacy/*` is served by this app — so no
  * CORS or `X-Frame-Options` handling is involved.
  */

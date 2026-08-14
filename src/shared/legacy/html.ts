@@ -1,3 +1,5 @@
+import { decodeEntities } from '@/shared/lib/decodeEntities';
+
 /**
  * The small HTML primitives the legacy transform is built from.
  *
@@ -22,50 +24,6 @@
  * both quotes — so this cannot backtrack exponentially.
  */
 const TAG_TAIL = String.raw`(?:[^>"']|"[^"]*"|'[^']*')*`;
-
-/** Entities WordPress actually emits in titles, descriptions and attributes. */
-const NAMED_ENTITIES: Readonly<Record<string, string>> = {
-  amp: '&',
-  lt: '<',
-  gt: '>',
-  quot: '"',
-  apos: "'",
-  nbsp: ' ',
-  laquo: '«',
-  raquo: '»',
-  mdash: '—',
-  ndash: '–',
-  hellip: '…',
-  middot: '·',
-  bull: '•',
-  copy: '©',
-  reg: '®',
-  trade: '™',
-  deg: '°',
-  lsquo: '‘',
-  rsquo: '’',
-  ldquo: '“',
-  rdquo: '”',
-};
-
-/**
- * Decode the entity forms that reach us — numeric (`&#8212;`, `&#x2014;`) and
- * the named handful above. An unrecognised entity is left exactly as written
- * rather than mangled: a title is text we display, and a stray `&foo;` is
- * better than a hole in it.
- */
-export const decodeEntities = (value: string): string =>
-  value.replace(/&(#[0-9]+|#x[0-9a-f]+|[a-z][a-z0-9]*);/gi, (whole, body: string) => {
-    if (body.startsWith('#')) {
-      const hex = body[1] === 'x' || body[1] === 'X';
-      const codePoint = Number.parseInt(hex ? body.slice(2) : body.slice(1), hex ? 16 : 10);
-      if (!Number.isFinite(codePoint) || codePoint <= 0 || codePoint > 0x10ffff) {
-        return whole;
-      }
-      return String.fromCodePoint(codePoint);
-    }
-    return NAMED_ENTITIES[body.toLowerCase()] ?? whole;
-  });
 
 /** Re-encode a value we computed so it is safe inside a double-quoted attribute. */
 export const encodeAttributeValue = (value: string): string =>

@@ -634,3 +634,19 @@ what to know before adding any of it back:
   the scale is gone and every prop survives. Verified by diffing the bounding
   box of every element on five pages at 1440 and 390 before and after — the only
   differences were the x-offsets of the two animated hero marquees.
+- **One entity decoder** (`src/shared/lib/decodeEntities.ts`) — there was a
+  twenty-entry table in `shared/legacy/html.ts` and an eleven-entry one in
+  `shared/api/newsPreview.ts`, the second of which silently dropped anything it
+  didn't know. The two *tag*-strippers stay separate on purpose: one replaces a
+  tag with nothing (preview text, matching `textContent`) and the other with a
+  space (anchor labels), and merging them would move rendered copy.
+- **`Container`** — a `<main>` wrapper with one caller, which the design system
+  had to warn readers not to confuse with Radix's `Container`. It is `.main` in
+  `src/app/layout.module.css` now.
+- **`SHOW_PRO_IN_NAV`** — a `const false` feeding a one-element `Set`.
+- **`legacyStore.clear()`** — on the interface, implemented, never called.
+
+What the audit flagged and measurement **refused**: `createLegacyLoader`'s eight
+injectable deps look like a DI container with one production caller, but
+`loadLegacyDocument.test.ts` overrides all eight — `maxBytes`, `timeoutMs` and
+`revalidateSeconds` included. They stay.

@@ -1,7 +1,7 @@
+import { decodeEntities } from '@/shared/lib/decodeEntities';
 import {
   applyEdits,
   attributeEquals,
-  decodeEntities,
   encodeAttributeValue,
   findAttribute,
   findElementSpans,

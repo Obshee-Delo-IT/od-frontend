@@ -13,10 +13,8 @@
  * it on every `WP_BASE` repoint; the label is the part that stays put.
  */
 
-/** The one switch: `true` puts «ОБЩЕЕДЕЛО-ПРО» back in the header. */
-export const SHOW_PRO_IN_NAV: boolean = false;
-
-const hiddenLabels = new Set((SHOW_PRO_IN_NAV ? [] : ['ОБЩЕЕДЕЛО-ПРО']).map((label) => label.toUpperCase()));
+/** Upper-cased, because WordPress editors type the label however they please. */
+const HIDDEN_LABELS = ['ОБЩЕЕДЕЛО-ПРО'];
 
 /** Whether the menu entry carrying this label should be left out of the nav. */
-export const isNavLabelHidden = (label: string): boolean => hiddenLabels.has(label.trim().toUpperCase());
+export const isNavLabelHidden = (label: string): boolean => HIDDEN_LABELS.includes(label.trim().toUpperCase());

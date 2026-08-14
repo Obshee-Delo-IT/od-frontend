@@ -1,16 +1,4 @@
-const NAMED_ENTITIES: Record<string, string> = {
-  '&nbsp;': ' ',
-  '&amp;': '&',
-  '&lt;': '<',
-  '&gt;': '>',
-  '&quot;': '"',
-  '&apos;': "'",
-  '&laquo;': '«',
-  '&raquo;': '»',
-  '&mdash;': '—',
-  '&ndash;': '–',
-  '&hellip;': '…',
-};
+import { decodeEntities } from '@/shared/lib/decodeEntities';
 
 const MAX_PREVIEW = 300;
 
@@ -23,11 +11,7 @@ export const stripHtml = (html?: string | null): string => {
   if (!html) {
     return '';
   }
-  return html
-    .replace(/<(style|script)\b[^>]*>[\s\S]*?<\/\1>/gi, '')
-    .replace(/<[^>]*>/g, '')
-    .replace(/&#(\d+);/g, (_, code) => String.fromCodePoint(Number(code)))
-    .replace(/&[a-z]+;/gi, (entity) => NAMED_ENTITIES[entity.toLowerCase()] ?? '')
+  return decodeEntities(html.replace(/<(style|script)\b[^>]*>[\s\S]*?<\/\1>/gi, '').replace(/<[^>]*>/g, ''))
     .replace(/\s+/g, ' ')
     .trim();
 };

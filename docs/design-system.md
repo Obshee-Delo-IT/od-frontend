@@ -170,9 +170,7 @@ Repo-only:
 
 The `header-v2` nav row is exactly 1240px wide — matches `--container-4`. The page header's content frame is also 1240px (with 100/100 side padding inside a 1440-wide frame). So `--container-4` is the canonical content-column at the 1440 breakpoint.
 
-There are **two** `Container` components in this codebase, easy to confuse:
-- `<Container>` from `@radix-ui/themes` — uses `--container-N` widths above.
-- `<Container>` from `src/shared/ui/components/Container/` — a plain `<main>` wrapper with a `.container` class. Distinct from Radix's.
+`Container` now means one thing: `<Container>` from `@radix-ui/themes`, which uses the `--container-N` widths above. There used to be a second one in `src/shared/ui/components/Container/` — a `<main>` wrapper the root layout was the only caller of; it is the `.main` rule in `src/app/layout.module.css` now.
 
 ### 2.8 Breakpoints — the system is 4-tier, not 3-tier
 
@@ -265,7 +263,6 @@ Two things this replaced: `lightgrey` (a duplicate of `gray`) and `darkgrey` (`p
 | --- | --- | --- |
 | `Box` | `src/shared/ui/components/Box/` | Responsive layout primitive. Any length: a number is pixels, a string passes through. Each set prop adds one class and one inline custom property. |
 | `NewsCard` | `src/shared/ui/components/NewsCard/` | The card primitive that recurs in the home news section, the `/news` grid and the contacts socials grid (`Frame 33827/28/29`). Extracted during D1; lives on the `design` page rather than the `👉 UI` page, which is why it isn't in §3.2. |
-| `Container` | `src/shared/ui/components/Container/` | Plain `<main>`-or-similar wrapper. Distinct from Radix's `<Container>`. |
 | `Link` | `src/shared/ui/components/Link/` | Composes Next.js `<Link>` + Radix `<Link>` + the Figma `Links` colour enum (§3.2). |
 | `Logo` | `src/shared/ui/components/Logo/` | Brand logo rendered with `logo.webp`. |
 | `Modal` | `src/shared/ui/components/Modal/` | Radix `Dialog` under a small API (`isOpen` / `onClose` / `title`). Its content chrome is reset to nothing — the child owns its frame — and it requires a `title`, rendered visually hidden, because a dialog with no accessible name is the one thing Radix can't supply for you. |

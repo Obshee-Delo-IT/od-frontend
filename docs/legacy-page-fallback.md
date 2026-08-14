@@ -25,7 +25,7 @@ Five things below were measured wrong or turned out differently, and each cost r
    That is a fair trade for the embed, since a lazy-loading script inside a full-height frame loads everything
    at once anyway, but it means the proxied page is not byte-identical to what a visitor sees today.)
 2. **The page renders the embed and nothing else.** §3 and §5 below sketch `<Header/>` + embed + `<Footer/>`;
-   that predates the root layout, which has supplied header, `Container` and footer for every route since C9.
+   that predates the root layout, which has supplied the header, the page column and the footer for every route since C9.
    Rendering them again would show two of each.
 3. **The chrome is *removed*, not extracted.** §3's "keep the inner content" instinct would have kept only
    `section#middle` — which, measured, discards 34 of `/team/`'s 46 script elements, because the `wp_footer`

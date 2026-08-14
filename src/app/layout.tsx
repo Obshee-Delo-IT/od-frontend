@@ -3,8 +3,8 @@ import { PT_Sans as PTSans, PT_Sans_Narrow as PtSansNarrow } from 'next/font/goo
 import { Footer } from '@/modules/Footer';
 import { HeaderServer } from '@/modules/Header';
 import { siteUrl } from '@/shared/config/site';
-import { Container } from '@/shared/ui/components/Container';
 import { RadixProvider } from '@/shared/ui/theme';
+import css from './layout.module.css';
 import type { Metadata } from 'next';
 
 // TODO: install local fonts
@@ -60,7 +60,7 @@ const RootLayout = ({
     <body className={`${ptSansNarrow.variable} ${ptSans.variable}`}>
       <RadixProvider>
         <HeaderServer />
-        <Container>{children}</Container>
+        <main className={css.main}>{children}</main>
         <Footer />
       </RadixProvider>
     </body>
