@@ -126,6 +126,15 @@ after a back-navigation the frame sat at 540px around 2149px of page, with its o
 suppressed on the strength of that unheard report. The settling ticks now force a re-send, and `pageshow`
 covers a bfcache restore.
 
+Then the fonts, which is the one place the `<base href>` design does not reach. Fonts are the only subresource
+a browser always fetches under CORS, and the legacy origin sends no `Access-Control-Allow-Origin` — correct on
+its own site, fatal through ours. Every icon on `/about/`'s cards was missing, because those cards have no
+images: the icons *are* `fontello`. So the theme's five faces are relayed through `/legacy-font/*` (a rewrite
+in `src/proxy.ts`, allowlisted to `woff`/`woff2` under the theme directory) and re-declared by the injected
+runtime against `location.origin`. **Not** `SITE_URL`: it is unset locally and defaults to production, which
+*is* the legacy origin, so a build-time origin would have fixed this everywhere except the machine it was
+being tested on. This is the deliberate exception to invariant 7, and `e2e` V29 asserts it as one.
+
 **It was never actually blocked on the frozen copy**, which is what the plan had said for two months.
 `WP_LEGACY_BASE` points at live production and the proxy removes the chrome itself, so no WordPress-side work
 was needed. Swapping to a frozen copy later is one environment variable.

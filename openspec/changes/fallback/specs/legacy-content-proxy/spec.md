@@ -517,6 +517,44 @@ every `<style>` the upstream page carries, so a rule wins on document order rath
 - **THEN** it drops that rule alone and shows the newsletter block, which is the behaviour before this
   requirement existed
 
+### Requirement: Webfont relay
+
+The system SHALL serve the legacy theme's webfonts from **this** origin, under a fixed prefix relayed to the
+legacy origin, and SHALL re-declare each `@font-face` against this origin from inside the embedded document.
+It SHALL relay nothing but `woff`/`woff2` files under the theme directory.
+
+**ID**: LCP-013
+
+**Invariants**: The relay composes a fixed prefix on the configured legacy origin with a path matched against a
+positive shape — no percent sign, no `..` — so it cannot be turned into a fetch of anything else, and it is
+disabled with the rest of the fallback when `WP_LEGACY_BASE` is unset. The re-declared faces carry the same
+family *and* descriptors as the theme's own, so they replace those faces rather than adding to them.
+
+**NOTE**: this is the one deliberate exception to design invariant 7 ("the framed document requests nothing
+from the site origin"). Fonts are the only subresource a browser always fetches under CORS; the legacy origin
+answers them 200 with no `Access-Control-Allow-Origin`, which is correct on its own site and fatal under our
+`<base href>`. Reported as «images from cards are not showing» on `/about/` — the cards have no images, the
+icons *are* the font.
+
+#### Scenario: Icon font reaches the document
+- **WHEN** an embedded page renders an element in the theme's icon face
+- **THEN** the font is fetched from this origin and the glyph renders
+
+#### Scenario: Relay refuses anything else
+- **WHEN** the relay path is not a `woff`/`woff2` file, or contains a traversal or a percent sign
+- **THEN** it answers 404 without contacting the legacy origin
+
+#### Scenario: Fallback disabled
+- **WHEN** `WP_LEGACY_BASE` is unset
+- **THEN** the relay answers 404, since there are no embedded pages to want fonts
+
+#### Scenario: Origin decided by the document, not by configuration
+- **WHEN** the faces are declared
+- **THEN** the origin comes from the embedded document at run time, never from `SITE_URL`
+- **AND** so a deployment whose `SITE_URL` is unset — every developer's machine, where it defaults to
+  production, i.e. to the legacy origin — still fetches the fonts from the server it is actually being served
+  from
+
 ### Requirement: Proxy response construction
 
 The system SHALL build the response from scratch — never by forwarding upstream response headers — and SHALL

@@ -1,3 +1,4 @@
+import { legacyFontFaces } from './legacyFonts';
 import { LEGACY_HEIGHT_MESSAGE } from './legacyMessage';
 
 /**
@@ -24,6 +25,8 @@ export interface LegacyRuntimeConfig {
   siteOrigin: string;
   /** {@link LEGACY_HEIGHT_MESSAGE}, passed in so the function closes over nothing. */
   messageType: string;
+  /** {@link legacyFontFaces}, with `%SITE%` still in it for the document to fill in. */
+  fontFaces: string;
 }
 
 const legacyRuntime = (config: LegacyRuntimeConfig): void => {
@@ -47,6 +50,20 @@ const legacyRuntime = (config: LegacyRuntimeConfig): void => {
   };
   const LEGACY_HOST = hostOf(LEGACY);
   const SITE_HOST = hostOf(SITE);
+
+  // --- Webfonts -------------------------------------------------------------
+  // Re-declared against whatever origin *this document* came from, because the
+  // `<base href>` makes even a rooted path resolve to the legacy origin, and
+  // fonts are the one subresource that is always fetched under CORS — which the
+  // legacy origin does not answer. Appended last so it wins on document order.
+  // Not gated on being framed: opened directly, this page wants its icons too.
+  try {
+    const faces = doc.createElement('style');
+    faces.textContent = config.fontFaces.split('%SITE%').join(window.location.origin);
+    (doc.head || doc.documentElement).appendChild(faces);
+  } catch (_error) {
+    // Missing icons are worth nothing else on this page breaking.
+  }
 
   // --- Height reporting (LCP-008) -------------------------------------------
   // Only when framed: opened directly this must be an inert no-op.
@@ -242,8 +259,12 @@ const legacyRuntime = (config: LegacyRuntimeConfig): void => {
 };
 
 /** The `<script>` body the transform inlines. */
-export const legacyRuntimeSource = (config: Omit<LegacyRuntimeConfig, 'messageType'>): string => {
-  const full: LegacyRuntimeConfig = { ...config, messageType: LEGACY_HEIGHT_MESSAGE };
+export const legacyRuntimeSource = (config: Omit<LegacyRuntimeConfig, 'messageType' | 'fontFaces'>): string => {
+  const full: LegacyRuntimeConfig = {
+    ...config,
+    messageType: LEGACY_HEIGHT_MESSAGE,
+    fontFaces: legacyFontFaces(),
+  };
   // `<` escaped inside the JSON literal only: a `</script>` in a configured
   // value would otherwise close the element early. The function source itself
   // must not be escaped — it contains `<` as an operator.

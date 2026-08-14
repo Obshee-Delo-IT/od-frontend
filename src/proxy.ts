@@ -1,5 +1,7 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { resolveLegacyUrl } from '@/shared/config/legacyRedirects';
+import { legacyFontTarget } from '@/shared/legacy/legacyFonts';
+import { legacyOrigin } from '@/shared/legacy/legacyOrigin';
 
 /**
  * Legacy-URL redirects (A8).
@@ -18,6 +20,19 @@ import { resolveLegacyUrl } from '@/shared/config/legacyRedirects';
  * traffic — the home page, `/<id>` posts, static assets — never enters here.
  */
 export const proxy = (request: NextRequest) => {
+  /**
+   * The A6 fallback's font relay (see `shared/legacy/legacyFonts.ts`). A rewrite
+   * rather than a redirect on purpose: a redirect would send the browser back to
+   * the legacy origin, which is the cross-origin fetch that is blocked in the
+   * first place. It lives here rather than in `next.config.ts` `rewrites()`
+   * because that table is baked at build time, and `WP_LEGACY_BASE` being
+   * unset — the documented rollback — has to disable this with it.
+   */
+  const font = legacyFontTarget(request.nextUrl.pathname);
+  if (font) {
+    return legacyOrigin ? NextResponse.rewrite(new URL(font, legacyOrigin)) : new NextResponse(null, { status: 404 });
+  }
+
   const destination = resolveLegacyUrl(request.nextUrl.pathname);
   if (!destination) {
     return NextResponse.next();
@@ -33,5 +48,5 @@ export const proxy = (request: NextRequest) => {
 };
 
 export const config = {
-  matcher: ['/video/:path*', '/news/:path*', '/category/:path*', '/page/:path*'],
+  matcher: ['/video/:path*', '/news/:path*', '/category/:path*', '/page/:path*', '/legacy-font/:path*'],
 };

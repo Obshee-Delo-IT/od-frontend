@@ -1,5 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 import { loadFixture } from '../src/shared/legacy/__fixtures__/load';
+import { LEGACY_FONT_PREFIX } from '../src/shared/legacy/legacyFonts';
 import { transformLegacyHtml } from '../src/shared/legacy/transformLegacyHtml';
 
 /**
@@ -515,9 +516,35 @@ test.describe('the invariants prose review kept missing (V27, V28)', () => {
     const fromFrameToSite = harness.requests
       .filter((request) => request.fromFrame)
       .filter((request) => request.url.startsWith(SITE))
-      .filter((request) => request.url !== `${SITE}/legacy/team/`);
+      .filter((request) => request.url !== `${SITE}/legacy/team/`)
+      // The one deliberate exception, and the test below is the reason it is
+      // allowed rather than merely tolerated: fonts are always fetched under
+      // CORS, the legacy origin answers none, so those five come from us.
+      .filter((request) => !request.url.startsWith(`${SITE}${LEGACY_FONT_PREFIX}`));
 
     expect(fromFrameToSite.map((request) => request.url)).toEqual([]);
+  });
+
+  /**
+   * The inverse of the rule above, and the bug it was reported as: every icon
+   * on `/about/`'s cards is a `fontello` glyph, and every one of them was
+   * missing because the font is fetched cross-origin with no
+   * `Access-Control-Allow-Origin` to be had.
+   */
+  test('V29 the frame asks *us* for the theme fonts, never the legacy origin', async ({ page }) => {
+    // A face is only fetched once something is laid out in it — the real pages
+    // do that through the theme's `.cmsms-icon-*` rules, which this harness
+    // stubs out along with every other stylesheet.
+    const needsIcons = MATRIX_PAGE.replace(
+      '<section id="middle">',
+      '<section id="middle"><p style="font-family:fontello">\ue800</p>'
+    );
+    const harness = await openHost(page, transform(needsIcons));
+    await page.waitForTimeout(1500);
+
+    const fonts = harness.requests.filter((request) => request.url.includes('fontello.woff'));
+
+    expect(fonts.map((request) => request.url)).toEqual([`${SITE}${LEGACY_FONT_PREFIX}css/fonts/fontello.woff`]);
   });
 
   test('V28 the real page still asks the legacy origin for its assets', async ({ page }) => {
