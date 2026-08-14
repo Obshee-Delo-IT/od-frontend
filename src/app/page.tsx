@@ -1,10 +1,9 @@
-import dayjs from 'dayjs';
-import 'dayjs/locale/ru';
 import { Directions, FilmsCarousel, Hero, NarrowPromo, NewsGrid, StatsRow } from '@/modules/Home';
 import { NewsletterSignup } from '@/modules/NewsletterSignup';
 import { fetchFilms, fetchLatestNews } from '@/shared/api';
 import { HOME_DIRECTIONS, HOME_PROGRAMS, HOME_SECTIONS_TITLE } from '@/shared/config/homeSections';
 import { canonicalUrl } from '@/shared/config/site';
+import { formatDate } from '@/shared/lib/formatDate';
 import { Box } from '@/shared/ui/components/Box';
 import type { Metadata } from 'next';
 
@@ -24,8 +23,6 @@ export const metadata: Metadata = {
     description: DESCRIPTION,
   },
 };
-
-dayjs.locale('ru');
 
 const HomePage = async () => {
   const [films, news] = await Promise.all([fetchFilms(6), fetchLatestNews(5)]);
@@ -49,7 +46,7 @@ const HomePage = async () => {
           id: post.id,
           title: post.title,
           href: `/${post.id}`,
-          date: post.date ? dayjs(post.date).format('DD.MM.YYYY') : undefined,
+          date: formatDate(post.date) || undefined,
           imageSrc: post.thumbnailUrl,
           imageAlt: post.title,
           excerpt: post.excerpt ?? undefined,

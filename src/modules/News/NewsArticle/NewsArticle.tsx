@@ -1,8 +1,8 @@
 import { Text } from '@radix-ui/themes';
-import dayjs from 'dayjs';
 import { cachedFetchNews } from '@/shared/api/fetchNews';
 import { buildNewsPreview } from '@/shared/api/newsPreview';
 import { canonicalUrl } from '@/shared/config/site';
+import { formatDate } from '@/shared/lib/formatDate';
 import { Box } from '@/shared/ui/components/Box';
 import { Breadcrumbs } from '@/shared/ui/components/Breadcrumbs';
 import { GutenbergProvider } from '@/shared/ui/theme';
@@ -66,7 +66,7 @@ export const NewsArticle = async ({ id }: NewsArticleProps) => {
   ];
 
   const parsed = parsePost(await resolveContentImages(data?.content?.rendered));
-  const date = dayjs(data?.date).format('DD.MM.YYYY');
+  const date = formatDate(data?.date);
 
   return (
     <Box

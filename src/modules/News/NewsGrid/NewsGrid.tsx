@@ -1,10 +1,7 @@
-import dayjs from 'dayjs';
-import 'dayjs/locale/ru';
+import { formatDate } from '@/shared/lib/formatDate';
 import { NewsCard } from '@/shared/ui/components/NewsCard';
 import css from './NewsGrid.module.css';
 import type { NewsSummary } from '@/shared/api';
-
-dayjs.locale('ru');
 
 export interface NewsGridProps {
   items: NewsSummary[];
@@ -30,7 +27,7 @@ export const NewsGrid: React.FC<NewsGridProps> = ({ items, emptyMessage = 'Но�
           key={post.id}
           href={`/${post.id}`}
           title={post.title}
-          date={post.date ? dayjs(post.date).format('DD.MM.YYYY') : undefined}
+          date={formatDate(post.date) || undefined}
           imageSrc={post.thumbnailUrl}
           imageAlt={post.title}
         />

@@ -1,6 +1,6 @@
-import dayjs from 'dayjs';
 import parse from 'html-react-parser';
 import { fetchSimilarNews } from '@/shared/api/fetchSimilarNews';
+import { formatDate } from '@/shared/lib/formatDate';
 import { Link } from '@/shared/ui/components/Link';
 import css from './SimilarNews.module.css';
 
@@ -20,7 +20,7 @@ export const SimilarNews = async ({ category, region }: SimilarNewsProps) => {
       </div>
 
       {data?.map((el) => {
-        const date = dayjs(el.date).format('DD.MM.YYYY');
+        const date = formatDate(el.date);
         if (el.link && el.title?.rendered) {
           return (
             <div className={css.news} key={el.id}>

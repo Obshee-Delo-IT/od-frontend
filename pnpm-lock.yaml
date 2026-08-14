@@ -27,9 +27,6 @@ importers:
       clsx:
         specifier: 2.1.1
         version: 2.1.1
-      dayjs:
-        specifier: 1.11.18
-        version: 1.11.18
       html-react-parser:
         specifier: 5.2.6
         version: 5.2.6(@types/react@19.2.2)(react@19.2.0)
@@ -3945,9 +3942,6 @@ packages:
 
   date-fns@4.3.0:
     resolution: {integrity: sha512-OYcL+3N/jyWbYdFGqoMAhytDgxP9pbYPUUiRCOgn4Fewaadk9l/Wam4Avciiyp2BgkpfQyBV9B+ehnVJych+eQ==}
-
-  dayjs@1.11.18:
-    resolution: {integrity: sha512-zFBQ7WFRvVRhKcWoUh+ZA1g2HVgUbsZm9sbddh8EC5iv93sui8DVVz1Npvz+r6meo9VKfa8NyLWBsQK1VvIKPA==}
 
   debug@2.6.9:
     resolution: {integrity: sha512-bC7ElrdJaJnPbAP+1EotYvqZsb3ecl5wi6Bfi6BJTUcNowp6cvspg0jXznRTKDjm/E7AdgFBVeAPVMNcKGsHMA==}
@@ -11574,8 +11568,6 @@ snapshots:
   date-fns@3.6.0: {}
 
   date-fns@4.3.0: {}
-
-  dayjs@1.11.18: {}
 
   debug@2.6.9:
     dependencies:

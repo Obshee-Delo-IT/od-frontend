@@ -46,7 +46,6 @@
     "@radix-ui/themes": "3.2.1",
     "@wordpress/block-library": "9.32.0",
     "clsx": "2.1.1",
-    "dayjs": "1.11.18",
     "html-react-parser": "5.2.6",
     "next": "16.0.1",
     "normalize.css": "8.0.1",
