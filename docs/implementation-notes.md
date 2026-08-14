@@ -648,6 +648,15 @@ what to know before adding any of it back:
   input and the wrapper `<div>` went with them (Radix's `TextFieldRoot` is
   `display: flex` and stretches the same either way). Figma still draws all four
   — see design-system §5's `Input Field` row before rebuilding one.
+- **`modules/Header/utils/` — five modules and five test files → three.**
+  `sortNavItems` (10 lines) and `mapWpMenuItemToNavItem` (12) had one caller
+  each, `toNavItems`, and its own barrel exported them to nobody. They are local
+  helpers inside `toNavItems.ts` now; `toInternalHref` stays its own file because
+  its URL rules are genuinely separate and its test earns its keep.
+  `mapWpMenuItemToNavItem.test.ts` was three `toInternalHref` assertions in
+  disguise; `sortNavItems.test.ts` asserted that it sorted **in place**, which
+  was a wart — the helper copies now, and `toNavItems.test.ts` gained the case
+  that actually matters: a child WordPress listed before its parent.
 - **Seven hand-rolled argv loops → `parseArgs` from `node:util`.** Each script
   had a ~17-line `for` loop over `process.argv`, and each got the error handling
   slightly differently: `--top` with no value silently became `Number(undefined)`

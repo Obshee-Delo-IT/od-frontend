@@ -41,6 +41,15 @@ describe('toNavItems', () => {
     expect(result[0].content.map((c) => c.id)).toEqual([2, 3]);
   });
 
+  it('nests a child that WordPress listed before its parent', () => {
+    // Editor order interleaves the tiers, so this is the ordinary case, not an
+    // edge one — read in input order the child would be dropped as an orphan.
+    const result = toNavItems([wpItem(2, 1, 'Команда', '/about/team'), wpItem(1, 0, 'О нас', '/about')]);
+
+    expect(result.map((item) => item.id)).toEqual([1]);
+    expect(result[0].content.map((child) => child.id)).toEqual([2]);
+  });
+
   it('drops orphan children whose parent is not in the input', () => {
     const result = toNavItems([wpItem(2, 99, 'Сирота', '/orphan')]);
 
