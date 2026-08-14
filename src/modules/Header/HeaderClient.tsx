@@ -156,6 +156,4 @@ const HeaderClient = ({ navItems }: HeaderClientProps) => {
   );
 };
 
-HeaderClient.displayName = 'HeaderClient';
-
 export { HeaderClient };

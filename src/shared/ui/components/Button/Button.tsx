@@ -1,6 +1,5 @@
 import { Button as RadixButton, ButtonProps as RadixButtonProps } from '@radix-ui/themes';
 import clsx from 'clsx';
-import { forwardRef } from 'react';
 import css from './Button.module.css';
 
 export type ButtonVariant = 'contained' | 'outline' | 'white';
@@ -25,16 +24,11 @@ const sizeToRadix: Record<ButtonSize, RadixButtonProps['size']> = {
   xs: '2',
 };
 
-export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ variant = 'contained', size = 'large', className, ...props }, ref) => (
-    <RadixButton
-      ref={ref}
-      variant={variantToRadix[variant]}
-      size={sizeToRadix[size]}
-      className={clsx(css.button, css[`variant-${variant}`], css[`size-${size}`], className)}
-      {...props}
-    />
-  )
+export const Button: React.FC<ButtonProps> = ({ variant = 'contained', size = 'large', className, ...props }) => (
+  <RadixButton
+    variant={variantToRadix[variant]}
+    size={sizeToRadix[size]}
+    className={clsx(css.button, css[`variant-${variant}`], css[`size-${size}`], className)}
+    {...props}
+  />
 );
-
-Button.displayName = 'Button';

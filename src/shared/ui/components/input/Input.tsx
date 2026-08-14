@@ -4,7 +4,6 @@ import * as React from 'react';
 import css from './Input.module.css';
 
 type RootProps = React.ComponentPropsWithoutRef<typeof TextField.Root>;
-type RootRef = React.ElementRef<typeof TextField.Root>;
 
 /**
  * The two colours the app uses: `gray` on white (the newsletter form), `red` on
@@ -24,14 +23,13 @@ type OwnProps = {
 
 type InputProps = RootProps & OwnProps;
 
-const Input = React.forwardRef<RootRef, InputProps>(({ rightIcon, color, ...props }, ref) => (
+const Input: React.FC<InputProps> = ({ rightIcon, color, ...props }) => (
   <TextField.Root
     size="3"
     className={clsx({
       [css.inputGray]: color === 'gray',
       [css.inputRed]: color === 'red',
     })}
-    ref={ref}
     {...props}
   >
     {rightIcon && (
@@ -46,8 +44,6 @@ const Input = React.forwardRef<RootRef, InputProps>(({ rightIcon, color, ...prop
       </TextField.Slot>
     )}
   </TextField.Root>
-));
-
-Input.displayName = 'Input';
+);
 
 export { Input };

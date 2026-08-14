@@ -648,6 +648,13 @@ what to know before adding any of it back:
   input and the wrapper `<div>` went with them (Radix's `TextFieldRoot` is
   `display: flex` and stretches the same either way). Figma still draws all four
   — see design-system §5's `Input Field` row before rebuilding one.
+- **Four `forwardRef` wrappers and five `displayName` assignments** — `Button`,
+  `IconButton`, `Checkbox`, `Input` (+ `HeaderClient`). No call site passes a
+  `ref`, and Radix's own exported prop types are `ComponentPropsWithoutRef`, so
+  the ref never had a route in from the outside either. Under React 19 `ref` is
+  an ordinary prop: if one is ever needed it is `ref` in the destructure, not a
+  wrapper. `displayName` only ever existed to stop DevTools printing
+  `ForwardRef`.
 - **Repo-invented props on five primitives**, each with zero call sites and no
   cell in the Figma set behind it: `Link`'s `leftIcon`/`rightIcon` (every cell in
   the `Links` matrix is text-only) and the `.inlineFlex` they switched on,
