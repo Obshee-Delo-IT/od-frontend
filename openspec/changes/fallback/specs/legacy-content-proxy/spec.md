@@ -512,10 +512,27 @@ that may run at once.
 **ID**: LCP-010
 
 **Invariants**: Reuse is a property of an explicit, bounded, success-only store keyed by path — not of Next's
-fetch Data Cache, not of the route segment cache, and not of the upstream's own headers. Every upstream fetch
-is made uncached (`cache: 'no-store'`) so that no failed response can be retained by a layer this code does not
-control. **No failure — 404, 5xx, timeout or rejected path — is ever stored or reused.** An unresponsive origin
-can never exhaust the container's sockets or hold a request open indefinitely.
+fetch Data Cache, not of the route segment cache, and not of the upstream's own headers. **No failure — 404,
+5xx, timeout or rejected path — is ever stored or reused** by that store. An unresponsive origin can never
+exhaust the container's sockets or hold a request open indefinitely.
+
+The fetch's own cache mode is **per surface**, and this is the one place the implementation had to diverge from
+the design as written (amended after GATE 1 — see `reviews/impl-review.md`):
+
+- The **proxy route** fetches `cache: 'no-store'`, as originally specified. It is the surface that serves the
+  visitor the content, it is `force-dynamic`, and nothing outside the store may retain its response.
+- The **catch-all page** fetches with `next: { revalidate: 3600 }` instead. It has no choice: the catch-all's
+  `revalidate` is module-level and shared with the numeric branch that carries 46 % of site entries, so its
+  render must stay statically generatable, and an uncached fetch discovered during that render aborts it with
+  `DYNAMIC_SERVER_USAGE` — **HTTP 500** in a production build, where `next dev` answers 200. Measured, not
+  reasoned: `pnpm build && pnpm start` 500s on every legacy path without this. `connection()` does not rescue
+  it either; under a module-level `revalidate` it raises the same error.
+
+The asymmetry is narrower than it looks. The page's only definitive outcome is `missing` (an upstream 404/410),
+and `notFound()` under ISR is cached for the same window regardless; every other failure renders the embed
+anyway. So the most a retained failure can cost on the page surface is a generic `<title>` until the window
+rolls — which LPF-005's last scenario already accepts in writing. What the visitor reads comes from the proxy,
+which still refuses to reuse a failure.
 
 #### Scenario: Repeat request inside the window
 - **WHEN** the same path is requested twice within the reuse window and the first succeeded
@@ -524,6 +541,16 @@ can never exhaust the container's sockets or hold a request open indefinitely.
 #### Scenario: Upstream declares itself uncacheable
 - **WHEN** the upstream sends `cache-control: no-cache` or `Set-Cookie`
 - **THEN** our response is still reusable for the window, because the store is ours
+
+#### Scenario: The page surface fetches cacheably
+- **WHEN** the catch-all page or its `generateMetadata` loads a legacy document
+- **THEN** the upstream fetch carries `next: { revalidate: … }` and **not** `cache: 'no-store'`
+- **AND** a production build serves that path with a 200 rather than a 500
+
+#### Scenario: The proxy surface fetches uncached
+- **WHEN** `/legacy/*` loads a legacy document
+- **THEN** the upstream fetch carries `cache: 'no-store'`
+- **AND** a failure it returns is not reused by the next request
 
 #### Scenario: Failure is never reused
 - **WHEN** a request results in a 404 (missing page, origin down, rejected path, or concurrency shed)

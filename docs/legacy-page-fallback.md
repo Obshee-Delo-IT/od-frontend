@@ -9,6 +9,38 @@
 - **Source: a frozen dedicated copy** of the old (welfare + cmsms) site — stable content for the transition. We *can* make small changes there (enable REST, add a chromeless template).
 - **Not chosen: bare SSR content-injection** — the old content is theme-CSS- and theme-JS-coupled (see §2/§2b), so injecting raw HTML into our React shell would lose styling and break interactive cmsms widgets. The iframe isolates CSS/JS cleanly. SEO is the accepted trade (§4).
 
+## Status — shipped 2026-08-14
+
+**This document is the 2026-06-08 design record.** The fallback is now built, and where the two disagree the
+code wins; the shipped behaviour is specified in [`openspec/changes/fallback/`](../openspec/changes/fallback/)
+(`specs/legacy-content-proxy`, `specs/legacy-page-fallback`, `design.md`). Read this for the *why*, read those
+for the *what*.
+
+Five things below were measured wrong or turned out differently, and each cost real debugging:
+
+1. **`?embed=1` is WordPress core's oEmbed-card parameter**, not a free hook. Measured: `/team/?embed=1`
+   returns 21 685 bytes of `div.wp-embed` excerpt card instead of the 85 641-byte page. The chromeless hint
+   shipped as **`?od_embed=1`**. (It is not inert either: on this origin it bypasses WP Rocket's page cache, so
+   the upstream serves an unoptimised render — 70 130 bytes, 48 script tags, none of wp-rocket's own assets.
+   That is a fair trade for the embed, since a lazy-loading script inside a full-height frame loads everything
+   at once anyway, but it means the proxied page is not byte-identical to what a visitor sees today.)
+2. **The page renders the embed and nothing else.** §3 and §5 below sketch `<Header/>` + embed + `<Footer/>`;
+   that predates the root layout, which has supplied header, `Container` and footer for every route since C9.
+   Rendering them again would show two of each.
+3. **The chrome is *removed*, not extracted.** §3's "keep the inner content" instinct would have kept only
+   `section#middle` — which, measured, discards 34 of `/team/`'s 46 script elements, because the `wp_footer`
+   bootstraps all sit after `</footer>`. That would have killed the cmsms widgets the iframe exists to
+   preserve. Also note `section#bottom` is *nested* inside `section#page`, not a sibling.
+4. **`<base target="_parent">` is a trap.** §3 suggests it. A `target` on `<base>` is the default browsing
+   context for every link *and form* in the document, so a fragment link, a document-relative link or an
+   actionless form would navigate the visitor's **top-level window to the legacy origin**, and a
+   `/wp-content/…` download would replace the whole site with a JPEG. The shipped `<base>` carries no `target`;
+   an injected delegated click handler decides the context instead.
+5. **The frozen copy is not a prerequisite.** `WP_LEGACY_BASE` currently points at live production and the
+   proxy strips the chrome itself, so nothing waited on WP-side work. Pointing it at the frozen copy later is
+   one environment variable. **It must not be left pointing at `obshee-delo.ru` after cutover** — this app
+   becomes that host, and the fallback would proxy itself; the app warns about exactly that at boot.
+
 ## 1. Why a fallback at all
 
 A probe of od-dev found **174 published `wp/v2/pages`** (re-confirmed 2026-08-13) — regional pages (~40), programmes (`/projects`, `/healthy-russia`, …), materials (`/printed-products`, `/social-reklama`, …), legal (`/conf_politics`, `/rekvizit`, …), team, plus a long tail. The Figma redesign covers a fraction (D1–D9). Redesigning all 174 before launch isn't realistic, and "build everything, publish once at the end" is too slow — so we publish now and let un-redesigned pages fall back to their embedded old content, replacing them one at a time.

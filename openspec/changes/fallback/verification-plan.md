@@ -117,6 +117,13 @@ Run in this order; re-run after the final code change and recorded verbatim in t
 | 7 | `pnpm test:e2e -- legacy-embed` | all pass (needs `pnpm dev` and `WP_LEGACY_BASE` set) — **required despite e2e not being in CI**, per the GATE 1 condition |
 | 8 | `pnpm url:check` | coverage **materially above** the 83.7 % baseline and no *shape* failure; the previously-404ing `/about/*`, `/materials/*`, `/profile/*` rows now 200 |
 | 9 | `curl -sI localhost:3000/legacy/team/ \| grep -i x-robots-tag` | `noindex` present |
+| 10 | `pnpm build && SITE_URL=http://localhost:3100 pnpm start -p 3100`, then curl `/team/`, `/faq/`, `/materials/plakati/` and an unknown path | 200, 200, 200, 404 — and **zero** `⨯` in the server log |
+
+**Gate 10 is not optional, and it is new.** It is the only gate in this list that can catch a
+`DYNAMIC_SERVER_USAGE` abort: `next dev` renders the legacy branch happily while a production build 500s on
+every legacy path, so lint, type-check, the unit suite and the browser suite all pass green against a broken
+build. It found exactly that during implementation. Run it against a **clean** `.next`, or clear `.next/cache`
+between runs — ISR keeps the previous answer, including a previous 404, for the revalidate window.
 
 ## Thresholds
 

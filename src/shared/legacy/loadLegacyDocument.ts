@@ -10,10 +10,14 @@ import type { LegacyLoad } from './types';
  * Fetching one legacy page and turning it into the document we serve
  * (LCP-002 … LCP-004, LCP-010).
  *
- * Shared by both surfaces on purpose: the proxy route serves the iframe's
- * document, and the catch-all's page + `generateMetadata` need the same page's
- * title. They are separate HTTP requests, so React's `cache()` cannot join
- * them — the store can, and does.
+ * Used by both surfaces: the proxy route serves the iframe's document, and the
+ * catch-all's page + `generateMetadata` need the same page's title. They are
+ * separate HTTP requests, so React's `cache()` cannot join them, and they are
+ * bundled separately, so they may not even share this module's instance — the
+ * boot warning is observably printed once per bundle. Each surface is therefore
+ * bounded by its own layer rather than by a shared one: the route by the store
+ * below, the page by Next's cache for the `'revalidate'` policy. That is what
+ * LPF-004 means by "one upstream render per path per window **per surface**".
  *
  * A bare `fetch`, never `wpFetch`: that one attaches the WordPress application
  * password to every request it makes, and the legacy origin is a different host
@@ -38,7 +42,31 @@ export interface LegacyLoaderDeps {
   gate: ConcurrencyGate;
   siteOrigin: string;
   timeoutMs: number;
+  /** How long Next may hold the upstream response for the `'revalidate'` policy. */
+  revalidateSeconds: number;
 }
+
+/**
+ * How the *caller's* surface needs the upstream fetch treated.
+ *
+ * - `'no-store'` — the proxy route. Nothing outside this module may retain the
+ *   response, so a failure can never be reused and a recovered origin serves the
+ *   real page on the next request (decision D13).
+ * - `'revalidate'` — the catch-all page. Its `revalidate = 3600` is module-level
+ *   and shared with the numeric branch that carries 46 % of site entries, so the
+ *   render **must** stay statically generatable; an uncached fetch discovered
+ *   during it aborts the render and answers 500 in production, where `next dev`
+ *   answers 200. A cacheable fetch is the only shape that route accepts.
+ *
+ * The asymmetry is safe, and narrower than it looks. The page's only definitive
+ * outcome is `missing` (upstream 404/410), which `notFound()` would have cached
+ * for the same window anyway; every other failure renders the embed regardless.
+ * So the worst a retained failure can cost on this surface is a generic
+ * `<title>` until the window rolls — which LPF-005 already accepts in writing.
+ * The **content** surface keeps `no-store`, so what the visitor actually reads
+ * heals the moment the origin does.
+ */
+export type LegacyFetchPolicy = 'no-store' | 'revalidate';
 
 const isHtml = (contentType: string | null): boolean => /^text\/html\b/i.test((contentType ?? '').trim());
 
@@ -50,6 +78,7 @@ export const createLegacyLoader = (overrides: Partial<LegacyLoaderDeps> = {}) =>
     gate: legacyGate,
     siteOrigin: siteUrl,
     timeoutMs: LEGACY_TIMEOUT_MS,
+    revalidateSeconds: 3600,
     ...overrides,
   };
 
@@ -61,13 +90,19 @@ export const createLegacyLoader = (overrides: Partial<LegacyLoaderDeps> = {}) =>
    */
   const inflight = new Map<string, Promise<LegacyLoad>>();
 
-  const fetchUpstream = async (url: string, signal: AbortSignal): Promise<Response | null> => {
+  const fetchUpstream = async (
+    url: string,
+    signal: AbortSignal,
+    policy: LegacyFetchPolicy
+  ): Promise<Response | null> => {
     let current = url;
     for (let hop = 0; hop <= MAX_REDIRECTS; hop += 1) {
       const response = await deps.fetch(current, {
         // Uncached at every layer we do not own, so no framework cache can
-        // retain a failure behind our back (decision D13).
-        cache: 'no-store',
+        // retain a failure behind our back (decision D13) — except on the
+        // page surface, which cannot legally make an uncached fetch. See
+        // `LegacyFetchPolicy`.
+        ...(policy === 'no-store' ? { cache: 'no-store' as const } : { next: { revalidate: deps.revalidateSeconds } }),
         // Manual, so a redirect off the origin is refused rather than followed.
         redirect: 'manual',
         signal,
@@ -98,7 +133,7 @@ export const createLegacyLoader = (overrides: Partial<LegacyLoaderDeps> = {}) =>
     return null;
   };
 
-  const attempt = async (path: string, url: string): Promise<LegacyLoad> => {
+  const attempt = async (path: string, url: string, policy: LegacyFetchPolicy): Promise<LegacyLoad> => {
     const release = await deps.gate.acquire();
     if (!release) {
       legacyWarn(`upstream busy for ${path}`);
@@ -109,7 +144,7 @@ export const createLegacyLoader = (overrides: Partial<LegacyLoaderDeps> = {}) =>
     const timer = setTimeout(() => controller.abort(), deps.timeoutMs);
 
     try {
-      const response = await fetchUpstream(url, controller.signal);
+      const response = await fetchUpstream(url, controller.signal, policy);
       if (!response) {
         legacyWarn(`upstream redirect refused for ${path}`);
         return { status: 'missing' };
@@ -156,7 +191,10 @@ export const createLegacyLoader = (overrides: Partial<LegacyLoaderDeps> = {}) =>
     }
   };
 
-  return async (segments: readonly string[] | undefined): Promise<LegacyLoad> => {
+  return async (
+    segments: readonly string[] | undefined,
+    policy: LegacyFetchPolicy = 'no-store'
+  ): Promise<LegacyLoad> => {
     if (!deps.origin) {
       return { status: 'disabled' };
     }
@@ -178,7 +216,7 @@ export const createLegacyLoader = (overrides: Partial<LegacyLoaderDeps> = {}) =>
       return existing;
     }
 
-    const pending = attempt(path, url);
+    const pending = attempt(path, url, policy);
     inflight.set(path, pending);
     pending.finally(() => inflight.delete(path)).catch(() => undefined);
     return pending;

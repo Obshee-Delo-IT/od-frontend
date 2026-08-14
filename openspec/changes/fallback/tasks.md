@@ -40,15 +40,15 @@
 
 ## 6. Observability, docs and rollback
 
-- [ ] 6.1 Add the four greppable log lines exactly as designed — `[legacy] WP_LEGACY_BASE missing — legacy fallback disabled` (once at boot), `[legacy] upstream <status> for <path>`, `[legacy] boundary miss for <path>`, `[legacy] rejected path <path>` — since they are this change's only production signal. [REQ: LCP-001, LCP-004, LCP-005, LCP-002]
-- [ ] 6.2 Verify the rollback path by hand: unset `WP_LEGACY_BASE`, restart, confirm the affected paths 404 exactly as today and that `/`, `/news/`, `/video/*` and `/<id>/` are untouched. [REQ: LPF-005] [VER: V16]
-- [ ] 6.3 Amend `docs/legacy-page-fallback.md`: its §3/§5 shell sketch predates the root layout (the page renders the embed only), and `?embed=1` is WordPress core's oEmbed-card parameter — record the measured evidence and the `od_embed=1` replacement. Mark A6 as implemented in `docs/implementation-plan.md` and note the remaining frozen-copy leg. [REQ: LCP-006]
-- [ ] 6.4 Add `WP_LEGACY_BASE` to the runtime-env table in `docs/prod-migration-runbook.md`, note that the container needs outbound HTTPS to that origin, and make `pnpm url:check` an explicit post-deploy step — it is the production signal this change depends on.
-- [ ] 6.5 Update `CLAUDE.md`'s routing section: the catch-all's non-numeric branch now embeds rather than 404s, `/legacy/*` is internal and `noindex`, and adding a native route retires a fallback with no other edit.
+- [x] 6.1 Add the four greppable log lines exactly as designed — `[legacy] WP_LEGACY_BASE missing — legacy fallback disabled` (once at boot), `[legacy] upstream <status> for <path>`, `[legacy] boundary miss for <path>`, `[legacy] rejected path <path>` — since they are this change's only production signal. [REQ: LCP-001, LCP-004, LCP-005, LCP-002]
+- [x] 6.2 Verify the rollback path by hand: unset `WP_LEGACY_BASE`, restart, confirm the affected paths 404 exactly as today and that `/`, `/news/`, `/video/*` and `/<id>/` are untouched. [REQ: LPF-005] [VER: V16]
+- [x] 6.3 Amend `docs/legacy-page-fallback.md`: its §3/§5 shell sketch predates the root layout (the page renders the embed only), and `?embed=1` is WordPress core's oEmbed-card parameter — record the measured evidence and the `od_embed=1` replacement. Mark A6 as implemented in `docs/implementation-plan.md` and note the remaining frozen-copy leg. [REQ: LCP-006]
+- [x] 6.4 Add `WP_LEGACY_BASE` to the runtime-env table in `docs/prod-migration-runbook.md`, note that the container needs outbound HTTPS to that origin, and make `pnpm url:check` an explicit post-deploy step — it is the production signal this change depends on.
+- [x] 6.5 Update `CLAUDE.md`'s routing section: the catch-all's non-numeric branch now embeds rather than 404s, `/legacy/*` is internal and `noindex`, and adding a native route retires a fallback with no other edit.
 
 ## 7. Verification and gate
 
-- [ ] 7.1 Run the ASM1/ASM8 sweep: the transform over all 174 legacy URLs, recording the boundary-miss count and asserting zero external script `src` lost on any page. [VER: V19]
+- [x] 7.1 Run the ASM1/ASM8 sweep: the transform over all 174 legacy URLs, recording the boundary-miss count and asserting zero external script `src` lost on any page. [VER: V19]
 - [ ] 7.2 Run every executable gate from verification-plan.md in order (format, lint, lint:styles, type-check, test, secrets-free build, `test:e2e -- legacy-embed`, `url:check`, the `X-Robots-Tag` curl) and record the real output verbatim.
 - [ ] 7.3 Confirm coverage of changed lines meets the 90 % threshold, and that the injected runtime's exemption is covered by the browser suite rather than skipped.
 - [ ] 7.4 Produce `reviews/impl-review.md` (GATE 2) and loop until it reads PASS, with the mutation table from verification-plan.md checked by the test-integrity lens.

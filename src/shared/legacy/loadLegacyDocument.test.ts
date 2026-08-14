@@ -72,7 +72,7 @@ describe('the upstream request (LCP-002, LCP-003)', () => {
     expect(JSON.stringify(headers)).not.toContain('Basic');
   });
 
-  it('makes the fetch uncached and manually redirected', async () => {
+  it('makes the fetch uncached and manually redirected by default', async () => {
     const { calls, impl } = recorder(() => htmlResponse());
 
     await loader(impl)(['team']);
@@ -80,6 +80,22 @@ describe('the upstream request (LCP-002, LCP-003)', () => {
     expect(calls[0].init?.cache).toBe('no-store');
     expect(calls[0].init?.redirect).toBe('manual');
     expect(calls[0].init?.signal).toBeDefined();
+  });
+
+  /**
+   * The page surface cannot make an uncached fetch: the catch-all's
+   * `revalidate` is module-level and shared with the numeric branch, so its
+   * render must stay statically generatable, and an uncached fetch inside it
+   * aborts the render with `DYNAMIC_SERVER_USAGE` — a **500** in production,
+   * where `next dev` answers 200 and every test passes.
+   */
+  it('makes the fetch cacheable when the caller asks for the revalidate policy', async () => {
+    const { calls, impl } = recorder(() => htmlResponse());
+
+    await loader(impl, { revalidateSeconds: 3600 })(['team'], 'revalidate');
+
+    expect(calls[0].init?.cache).toBeUndefined();
+    expect((calls[0].init as { next?: { revalidate?: number } }).next).toEqual({ revalidate: 3600 });
   });
 
   it('never fetches at all when the path is rejected', async () => {

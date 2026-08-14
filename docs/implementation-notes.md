@@ -96,6 +96,57 @@ The tail is tiny, but it is **~90 distinct slugs and open-ended** — any WP cat
 
 **Carry-over:** re-run gate 12 against a real deploy — od-dev is a stale copy, so those five `/<id>` rows can only settle on prod.
 
+### A6. Legacy-page fallback — DONE 2026-08-14
+
+The ~170 pages with no redesigned route are served at their live URLs: `app/[...slug]/page.tsx`'s non-numeric
+branch renders `LegacyEmbed`, whose iframe loads `app/legacy/[...slug]/route.ts`, which fetches the page from
+`WP_LEGACY_BASE`, strips the old chrome and returns it. Gate 12 went **83.7 % → 98.8 %** entry-traffic
+coverage; the residual 1.2 % is three posts missing from od-dev and six `/profile/…` URLs that 404 upstream
+too. Full specs and decision record in [`openspec/changes/fallback/`](../openspec/changes/fallback/).
+
+**It was never actually blocked on the frozen copy**, which is what the plan had said for two months.
+`WP_LEGACY_BASE` points at live production and the proxy removes the chrome itself, so no WordPress-side work
+was needed. Swapping to a frozen copy later is one environment variable.
+
+Six things measurement contradicted, all of which had been reasoned the other way first:
+
+- **Remove the chrome, don't extract the content.** Keeping only `section#middle` — the obvious reading —
+  discards 34 of `/team/`'s 46 script *elements*, because the `wp_footer` bootstraps sit after `</footer>`.
+  That is every cmsms widget, i.e. the only reason to iframe rather than inject. Also: `section#bottom` is
+  nested inside `section#page`, so a span finder that returns only outermost elements never finds it and every
+  assertion written against it passes vacuously.
+- **`?embed=1` is WordPress core's oEmbed card** (21 685 bytes of excerpt, not the page). The hint shipped as
+  `?od_embed=1` — which is *not* inert either: it bypasses WP Rocket's page cache, so the upstream serves an
+  unoptimised render. Any tooling that diffs upstream against proxied must send the same query or it reports
+  phantom losses on every page.
+- **`<base>` carries no `target`.** A base target is the default browsing context for every link *and form*, so
+  a fragment, a document-relative link or an actionless form would take the visitor's top-level window to the
+  legacy origin. Navigation is handled by a delegated click handler instead, and every page link is rewritten
+  at transform time so the no-JS floor holds too.
+- **The scrollbar suppression lives in the injected script, not in CSS.** As static CSS, a script that fails to
+  run leaves a frame stuck at its starting height around a document that cannot scroll — the content is simply
+  unreachable.
+- **The catch-all page cannot make an uncached fetch.** Its `revalidate` is module-level and shared with the
+  numeric branch, so the render must stay statically generatable; `cache: 'no-store'` there aborts with
+  `DYNAMIC_SERVER_USAGE` and production answers **500** while `next dev` answers 200. The page surface fetches
+  with `next: { revalidate }`; only the proxy route keeps `no-store`. `connection()` does not rescue it. Lint,
+  types, 500+ unit tests and 44 browser tests were all green against a build that 500'd on every legacy page —
+  a production build is the only gate that catches this.
+- **`WP_LEGACY_BASE` must not end up equal to `SITE_URL`.** After cutover this app *is* `obshee-delo.ru`, so a
+  legacy origin still pointing there makes every fallback page fetch itself and embed its own shell, one frame
+  deeper each time. The app warns at boot rather than refusing, because the two match harmlessly in local dev
+  (where `SITE_URL` is unset and defaults to prod).
+
+**Verification.** Three real captured pages under `src/shared/legacy/__fixtures__/` back the unit tests, with
+every measured number asserted so a re-capture cannot silently invalidate a decision; `e2e/legacy-embed.spec.ts`
+covers the injected runtime in a real browser (the link-classification matrix, form submission, the no-JS
+floor, and "the framed document requests nothing from our origin"); `pnpm legacy:sweep` runs the whole thing
+against all 172 pages in the legacy sitemap.
+
+**Carry-over:** point `WP_LEGACY_BASE` at the frozen copy when it exists; confirm the container's outbound
+HTTPS to that origin; and note that flipping the variable on a *running* container leaves already-rendered
+pages in the ISR cache until the window rolls — a real rollback is a redeploy, which starts with an empty one.
+
 ---
 
 ## 2. Shipped — design system (C)

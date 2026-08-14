@@ -23,7 +23,8 @@
     "film:covers": "node --env-file=.env scripts/upload-film-covers.mjs",
     "film:remap": "node scripts/remap-worksheet.mjs",
     "film:kinescope": "node --env-file=.env scripts/match-kinescope.mjs",
-    "url:check": "node scripts/check-legacy-urls.mjs"
+    "url:check": "node scripts/check-legacy-urls.mjs",
+    "legacy:sweep": "node scripts/legacy-sweep.mjs"
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx}": [

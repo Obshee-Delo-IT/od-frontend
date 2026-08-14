@@ -108,3 +108,19 @@ describe('other methods (LCP-009)', () => {
     expect(loadLegacyDocument).not.toHaveBeenCalled();
   });
 });
+
+/**
+ * The other half of the policy split. The proxy is the surface a visitor
+ * actually reads, so it must never reuse a failure — and it is dynamic, so it
+ * is free to say so.
+ */
+describe('the fetch policy the proxy requires (LCP-010)', () => {
+  it('asks for the uncached policy, by taking the default', async () => {
+    loadLegacyDocument.mockResolvedValue(ok('<p>x</p>'));
+
+    await call(GET, ['team']);
+
+    expect(loadLegacyDocument).toHaveBeenCalledWith(['team']);
+    expect(loadLegacyDocument.mock.calls[0]).toHaveLength(1);
+  });
+});

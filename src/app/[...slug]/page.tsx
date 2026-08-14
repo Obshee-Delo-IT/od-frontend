@@ -82,8 +82,19 @@ export async function generateStaticParams() {
  * Note what it does *not* buy: the iframe's `/legacy/*` request is a separate
  * HTTP request from the browser, so `cache()` cannot span the two. That one is
  * bounded by the proxy's own store instead, which both surfaces share.
+ *
+ * The `'revalidate'` policy is not optional and not a preference. `revalidate`
+ * above is module-level and shared with the numeric branch, so this render must
+ * stay statically generatable; an uncached fetch discovered during it aborts the
+ * render and production answers **500**, where `next dev` answers 200. That gap
+ * between the two modes is why this was found by a production build rather than
+ * by any test. `connection()` does not rescue it either — under a module-level
+ * `revalidate` it raises the same `DYNAMIC_SERVER_USAGE`.
+ *
+ * The proxy route keeps `'no-store'`, so the surface that serves the visitor
+ * the actual content still refuses to reuse a failure.
  */
-const loadLegacyPage = cache(async (slug: string[]) => loadLegacyDocument(slug));
+const loadLegacyPage = cache(async (slug: string[]) => loadLegacyDocument(slug, 'revalidate'));
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string[] }> }): Promise<Metadata> {
   const { slug } = await params;

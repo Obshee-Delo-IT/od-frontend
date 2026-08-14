@@ -10,11 +10,11 @@ import type { LegacyLoad } from '@/shared/legacy';
  * test the previous one's answer.
  */
 
-const loadLegacyDocument = vi.fn<(slug: readonly string[] | undefined) => Promise<LegacyLoad>>();
+const loadLegacyDocument = vi.fn<(slug: readonly string[] | undefined, policy?: string) => Promise<LegacyLoad>>();
 
 vi.mock('@/shared/legacy', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/shared/legacy')>()),
-  loadLegacyDocument: (slug: readonly string[] | undefined) => loadLegacyDocument(slug),
+  loadLegacyDocument: (slug: readonly string[] | undefined, policy?: string) => loadLegacyDocument(slug, policy),
 }));
 
 class NotFound extends Error {}
@@ -181,6 +181,31 @@ describe('metadata for an embedded page (LPF-004)', () => {
     await metadata(['meta-shared']);
     await render(['meta-shared']);
 
-    expect(loadLegacyDocument.mock.calls).toEqual([[['meta-shared']], [['meta-shared']]]);
+    expect(loadLegacyDocument.mock.calls).toEqual([
+      [['meta-shared'], 'revalidate'],
+      [['meta-shared'], 'revalidate'],
+    ]);
+  });
+});
+
+/**
+ * The guard on the bug a production build found and no test could: this route's
+ * `revalidate` is module-level, so an uncached fetch inside its render aborts
+ * with `DYNAMIC_SERVER_USAGE` and answers **500** — while `next dev` answers
+ * 200. Only the policy is assertable here; gate 10 in the verification plan is
+ * what actually exercises it.
+ */
+describe('the fetch policy this route requires', () => {
+  it('always asks for the cacheable policy, never the uncached one', async () => {
+    loadLegacyDocument.mockClear();
+    loadLegacyDocument.mockResolvedValue(ok('Политика'));
+
+    await render(['policy-page']);
+    await metadata(['policy-meta']);
+
+    expect(loadLegacyDocument.mock.calls.length).toBeGreaterThan(0);
+    for (const [, policy] of loadLegacyDocument.mock.calls) {
+      expect(policy).toBe('revalidate');
+    }
   });
 });
