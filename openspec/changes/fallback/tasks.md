@@ -25,10 +25,10 @@
 
 ## 4. The injected runtime, verified in a browser first
 
-- [ ] 4.1 Write the injected runtime as a standalone, lint-clean source file that the transform inlines — height reporter (`DOMContentLoaded`, `load`, `ResizeObserver`, bounded ~10 s settling poll), scroll suppression applied **by the script**, delegated `click` handler, and a `submit` handler that prevents every submission. [REQ: LCP-008, LCP-011] [VER: V8, V20–V27]
-- [ ] 4.2 Build a Playwright fixture page that frames a transformed fixture and exercises the pairwise link matrix — page link, document-relative, query-only, fragment, `href="#"`, download, `target="_self"` download, third-party, `javascript:`, modified click, explicit `target`, form submit by Enter and by button. [VER: V20–V26]
-- [ ] 4.3 Assert the two invariants that prose review kept missing: no click reaches the legacy origin in any browsing context, and the framed document issues **zero** requests to the site origin. [REQ: LCP-006, LCP-011] [VER: V27, V28]
-- [ ] 4.4 Assert the height contract and its failure mode: height applies and updates; with the script removed the document still scrolls internally. [REQ: LCP-008] [VER: V8]
+- [x] 4.1 Write the injected runtime as a standalone, lint-clean source file that the transform inlines — height reporter (`DOMContentLoaded`, `load`, `ResizeObserver`, bounded ~10 s settling poll), scroll suppression applied **by the script**, delegated `click` handler, and a `submit` handler that prevents every submission. [REQ: LCP-008, LCP-011] [VER: V8, V20–V27]
+- [x] 4.2 Build a Playwright fixture page that frames a transformed fixture and exercises the pairwise link matrix — page link, document-relative, query-only, fragment, `href="#"`, download, `target="_self"` download, third-party, `javascript:`, modified click, explicit `target`, form submit by Enter and by button. [VER: V20–V26]
+- [x] 4.3 Assert the two invariants that prose review kept missing: no click reaches the legacy origin in any browsing context, and the framed document issues **zero** requests to the site origin. [REQ: LCP-006, LCP-011] [VER: V27, V28]
+- [x] 4.4 Assert the height contract and its failure mode: height applies and updates; with the script removed the document still scrolls internally. [REQ: LCP-008] [VER: V8]
 
 ## 5. Route and page
 
