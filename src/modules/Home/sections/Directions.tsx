@@ -18,16 +18,18 @@ export interface DirectionCardData {
 
 export interface DirectionsProps {
   directions: DirectionCardData[];
+  /** Overridden when the programme cards are folded in — see `HOME_SECTIONS_TITLE`. */
+  title?: string;
 }
 
-export const Directions: React.FC<DirectionsProps> = ({ directions }) => (
+export const Directions: React.FC<DirectionsProps> = ({ directions, title = 'Направления деятельности' }) => (
   <section className={css.section} aria-labelledby="directions-heading">
     <Heading as="h2" id="directions-heading" size="9" className={css.heading}>
-      Направления деятельности
+      {title}
     </Heading>
 
     <Carousel
-      ariaLabel="Направления деятельности"
+      ariaLabel={title}
       slidesPerView={3}
       spaceBetween={40}
       breakpoints={{
