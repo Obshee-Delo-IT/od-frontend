@@ -722,7 +722,33 @@ what to know before adding any of it back:
 - **`SHOW_PRO_IN_NAV`** — a `const false` feeding a one-element `Set`.
 - **`legacyStore.clear()`** — on the interface, implemented, never called.
 
-What the audit flagged and measurement **refused**: `createLegacyLoader`'s eight
-injectable deps look like a DI container with one production caller, but
-`loadLegacyDocument.test.ts` overrides all eight — `maxBytes`, `timeoutMs` and
-`revalidateSeconds` included. They stay.
+### What the audit flagged and the code **refused**
+
+Each of these looked like an easy cut and isn't. Don't re-file them.
+
+- **`createLegacyLoader`'s eight injectable deps** look like a DI container with
+  one production caller, but `loadLegacyDocument.test.ts` overrides all eight —
+  `maxBytes`, `timeoutMs` and `revalidateSeconds` included.
+- **`cssnano` in `postcss.config.js`** looked redundant because `next build`
+  minifies CSS itself — and it does, thoroughly (`--gray-8:#bbb` in the output is
+  its work, not cssnano's). Measured anyway, over a full production build:
+  **895 923 bytes of emitted CSS with cssnano, 904 003 without.** It earns 8 080
+  bytes (0.9 %) on top of Next's own pass, mostly out of the 680 KB Radix bundle.
+  It stays.
+- **The six SVGs in `assets/icons/` with no wrapper** (`chevron-up`,
+  `cross-circle-filled`, `exclamation-outlined`, `info-outlined`, `vk-circle`,
+  `warning`) — the icon set is the *design* set and stays whole, as the
+  nineteen-wrappers bullet above already says.
+- **`POST /api/revalidate/`'s `postId` and `paths`.** `postId` duplicates
+  `postIds` and nothing sends it; `paths` has no caller at all. Both are
+  deliberate: `postId` is documented as the hand-written-curl form
+  ([wp-backend §6.5](./wp-backend.md)), and `paths` is what the mu-plugin will
+  need for legacy **pages** when A6 ships, which the runbook already names as a
+  known gap.
+- **`fetchSearch`** (117 lines + 134 of test, no caller) — B7's data layer, kept
+  by decision: its blocker is two design questions about the results page, not
+  the fetcher.
+- **`Link`'s `white`/`disabled`, `Tabs`'s `size`/`disabled`, `Checkbox`'s
+  no-label branch** — unused, and all four are cells in a Figma component set
+  this project tracks parity against. An unrealized spec cell is a gap; a
+  realized one that nothing happens to call yet is not waste.
