@@ -54,11 +54,21 @@ const legacyRuntime = (config: LegacyRuntimeConfig): void => {
     let last = 0;
     let scrollSuppressed = false;
 
-    const report = (): void => {
+    /**
+     * `force` re-sends a height the parent has already been told, which sounds
+     * pointless and is the whole repair. The parent listens from a `useEffect`,
+     * so on a back-navigation — frame served from cache, hydration still
+     * pending — the first report lands before anything is listening. Without a
+     * resend the `last` check then suppresses every later one and the frame is
+     * stuck at its 60vh starting height with its own scrollbar already
+     * suppressed, i.e. content that cannot be reached at all. Measured: 2149px
+     * of page in a 540px box, permanently.
+     */
+    const report = (force?: boolean): void => {
       try {
         const body = doc.body;
         const height = Math.max(doc.documentElement.scrollHeight, body ? body.scrollHeight : 0);
-        if (Math.abs(height - last) < 2) {
+        if (!force && Math.abs(height - last) < 2) {
           return;
         }
         last = height;
@@ -78,17 +88,24 @@ const legacyRuntime = (config: LegacyRuntimeConfig): void => {
       }
     };
 
-    doc.addEventListener('DOMContentLoaded', report);
-    window.addEventListener('load', report);
+    // Wrapped rather than passed by reference: a listener is called with an
+    // Event, an observer with an entry list, and either would arrive as a
+    // truthy `force` and turn every resize into a message.
+    doc.addEventListener('DOMContentLoaded', () => report());
+    window.addEventListener('load', () => report());
+    // Restored from the back/forward cache: this document's timers are long
+    // finished and `last` still holds the height nobody is listening for.
+    window.addEventListener('pageshow', () => report(true));
     if (typeof ResizeObserver !== 'undefined') {
-      new ResizeObserver(report).observe(doc.documentElement);
+      new ResizeObserver(() => report()).observe(doc.documentElement);
     }
     // A bounded settling window, not a permanent timer: lazy images and cmsms
     // sliders do not always trigger an observable resize, but nothing useful
-    // happens ten seconds after load.
+    // happens ten seconds after load. Forced, so it doubles as the retry for a
+    // parent that was not yet listening.
     let ticks = 0;
     const settling = setInterval(() => {
-      report();
+      report(true);
       ticks += 1;
       if (ticks > 10) {
         clearInterval(settling);

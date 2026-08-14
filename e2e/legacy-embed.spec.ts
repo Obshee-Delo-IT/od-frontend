@@ -75,7 +75,13 @@ const MATRIX_PAGE = `<!doctype html>
 <footer id="footer">chrome</footer>
 </body></html>`;
 
-const HOST_PAGE = `<!doctype html>
+/**
+ * `listenAfterMs` models the one thing the parent cannot control: `LegacyEmbed`
+ * attaches its listener from a `useEffect`, so on a cached frame with hydration
+ * still pending the frame's first report arrives before anything is listening.
+ * Zero is the ordinary case; a non-zero delay is the back-navigation case.
+ */
+const hostPage = (listenAfterMs: number): string => `<!doctype html>
 <html lang="ru"><head><title>Оболочка сайта</title></head>
 <body style="margin:0">
 <h1 id="site-shell">SITE SHELL</h1>
@@ -85,17 +91,20 @@ const HOST_PAGE = `<!doctype html>
   // Mirrors LegacyEmbed's listener. The component itself is unit-tested
   // (V14, V17); this harness exists to exercise the *frame* side.
   window.__heights = [];
-  window.addEventListener('message', function (event) {
-    if (event.origin !== window.location.origin) { return; }
-    var frame = document.getElementById('frame');
-    if (event.source !== frame.contentWindow) { return; }
-    var data = event.data;
-    if (!data || data.type !== 'od:legacy-height') { return; }
-    var height = Number(data.height);
-    if (!Number.isFinite(height) || height <= 0 || height > 50000) { return; }
-    window.__heights.push(height);
-    frame.style.height = height + 'px';
-  });
+  var listen = function () {
+    window.addEventListener('message', function (event) {
+      if (event.origin !== window.location.origin) { return; }
+      var frame = document.getElementById('frame');
+      if (event.source !== frame.contentWindow) { return; }
+      var data = event.data;
+      if (!data || data.type !== 'od:legacy-height') { return; }
+      var height = Number(data.height);
+      if (!Number.isFinite(height) || height <= 0 || height > 50000) { return; }
+      window.__heights.push(height);
+      frame.style.height = height + 'px';
+    });
+  };
+  ${listenAfterMs > 0 ? `setTimeout(listen, ${listenAfterMs});` : 'listen();'}
 </script>
 </body></html>`;
 
@@ -126,7 +135,7 @@ const install = async (page: Page, legacyDocument: string): Promise<Harness> => 
     const html = (body: string) => route.fulfill({ contentType: 'text/html; charset=utf-8', body });
 
     if (url.origin === SITE && url.pathname === '/host.html') {
-      return html(HOST_PAGE);
+      return html(hostPage(Number(url.searchParams.get('late') ?? 0)));
     }
     if (url.origin === SITE && url.pathname === '/legacy/team/') {
       return route.fulfill({
@@ -148,9 +157,9 @@ const install = async (page: Page, legacyDocument: string): Promise<Harness> => 
   return harness;
 };
 
-const openHost = async (page: Page, legacyDocument: string): Promise<Harness> => {
+const openHost = async (page: Page, legacyDocument: string, listenAfterMs = 0): Promise<Harness> => {
   const harness = await install(page, legacyDocument);
-  await page.goto(`${SITE}/host.html`);
+  await page.goto(`${SITE}/host.html?late=${listenAfterMs}`);
   await page.locator('#frame').waitFor();
   return harness;
 };
@@ -181,6 +190,19 @@ test.describe('injected runtime — height (LCP-008, V8)', () => {
       .locator('body')
       .evaluate(() => document.documentElement.style.overflowY);
     expect(overflow).toBe('hidden');
+  });
+
+  /**
+   * Reported after a back-navigation: the frame stayed at 540px around 2149px
+   * of page, permanently. The frame is served from cache and reports before
+   * React has hydrated the listener, and the reporter's own "same height as
+   * last time" check then suppressed every retry — while the inner scrollbar
+   * had already been suppressed on the strength of that first, unheard report.
+   */
+  test('recovers when the parent starts listening late', async ({ page }) => {
+    await openHost(page, transform(MATRIX_PAGE), 2500);
+
+    await expect.poll(async () => page.locator('#frame').evaluate((el) => el.clientHeight)).toBeGreaterThan(3000);
   });
 
   /**

@@ -37,7 +37,8 @@ import type { LegacyDocument } from './types';
  *    default browsing context for every link *and form* in the document, which
  *    would send an unrewritten link or an actionless form to the legacy origin
  *    in the visitor's top-level window;
- * 5. append the injected runtime (height reporter, click and submit handling).
+ * 5. append the injected stylesheet ({@link LEGACY_STYLE}) and runtime (height
+ *    reporter, click and submit handling).
  *
  * Idempotent by construction (invariant 14): the chrome is already gone, the
  * rewritten links no longer resolve to the legacy origin, the `<base>` is
@@ -90,6 +91,30 @@ const ASSET_PATH = /^\/(?:wp-content|wp-includes|wp-json)\//i;
 
 /** Marks our own injected script so a second pass does not add another. */
 const RUNTIME_MARKER = 'data-od-legacy-runtime';
+
+/** Same job for the stylesheet injected alongside it. */
+const STYLE_MARKER = 'data-od-legacy-style';
+
+/**
+ * Two corrections that only make sense once the chrome is gone.
+ *
+ * - `#middle` carries a `padding-top` that clears the legacy header, which is
+ *   `position: absolute` and exactly 130px tall. Measured on the live `/team/`:
+ *   header height 130, `#middle` padding-top 130. With the header removed that
+ *   padding is a strip of nothing at the top of every embedded page.
+ * - The newsletter row is a subscription that cannot subscribe anyone: LCP-007
+ *   strips the form's `action` and the runtime cancels `submit`, deliberately,
+ *   so a visitor who fills it in gets silence. Present on 43 of the 172 legacy
+ *   pages, always the same shape — a `div.cmsms_row` holding the heading in one
+ *   half and `.shortcode_wysija` in the other — so hiding the row takes the
+ *   heading («Хотите быть в курсе…») with it rather than leaving it stranded
+ *   above a gap.
+ *
+ * CSS rather than DOM surgery on purpose: `:has()` states the relationship in
+ * one line, and a browser without it drops this rule alone and shows the block,
+ * which is exactly today's behaviour.
+ */
+const LEGACY_STYLE = '#middle{padding-top:0!important}.cmsms_row:has(.shortcode_wysija){display:none!important}';
 
 interface ChromeResult {
   html: string;
@@ -285,7 +310,9 @@ const injectRuntime = (html: string, options: TransformOptions): string => {
     return html;
   }
   const source = legacyRuntimeSource({ legacyOrigin: options.origin, siteOrigin: options.siteOrigin });
-  const script = `<script ${RUNTIME_MARKER}>${source}</script>`;
+  // Last in document order, so it outranks the theme's own `<style>` blocks —
+  // twelve of which the fixtures measure, all of them inside the body.
+  const script = `<style ${STYLE_MARKER}>${LEGACY_STYLE}</style><script ${RUNTIME_MARKER}>${source}</script>`;
   const mask = maskInertRegions(html).toLowerCase();
   const close = mask.lastIndexOf('</body>');
   return close < 0 ? html + script : html.slice(0, close) + script + html.slice(close);

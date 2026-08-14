@@ -87,12 +87,12 @@ describe('transformLegacyHtml — chrome removal (LCP-005)', () => {
 
     // `<head>` keeps all seven of its inline styles. The body has five more, of
     // which two style the chrome and go with it — that is the removal working,
-    // not a loss.
+    // not a loss. The eleventh is ours, appended last.
     const headStyles = (doc: string) => countTags(doc.slice(0, doc.toLowerCase().indexOf('</head>')), 'style');
     expect(headStyles(source)).toBe(7);
     expect(headStyles(html)).toBe(7);
     expect(countTags(source, 'style')).toBe(12);
-    expect(countTags(html, 'style')).toBe(10);
+    expect(countTags(html, 'style')).toBe(11);
   });
 
   it.each(fixtureNames)('never returns an empty body for %s', (name) => {
@@ -464,6 +464,46 @@ describe('transformLegacyHtml — injected runtime (LCP-008)', () => {
   });
 });
 
+describe('transformLegacyHtml — injected stylesheet', () => {
+  const styleSource = (html: string): string => {
+    const span = findElementSpans(maskInertRegions(html), 'style')
+      .filter((candidate) => candidate.openTag.includes('data-od-legacy-style'))
+      .at(0);
+    expect(span).toBeDefined();
+    return html.slice(span!.openTagEnd, span!.closeTagStart);
+  };
+
+  it.each(fixtureNames)('appends exactly one stylesheet to %s, last in the document', (name) => {
+    const { html } = run(name);
+    expect(html.match(/data-od-legacy-style/g)).toHaveLength(1);
+    expect(html.lastIndexOf('data-od-legacy-style')).toBeLessThan(html.lastIndexOf('</body>'));
+    // Every one of the theme's own inline styles is upstream of it, which is
+    // what lets an unprefixed rule win without fighting specificity.
+    const ours = html.indexOf('data-od-legacy-style');
+    expect(findElementSpans(maskInertRegions(html), 'style').filter((span) => span.start > ours)).toHaveLength(0);
+  });
+
+  /** The header is gone, so its 130px of clearance is a strip of nothing. */
+  it('zeroes the padding that cleared the removed header', () => {
+    expect(styleSource(run('team').html)).toContain('#middle{padding-top:0!important}');
+  });
+
+  /**
+   * Only the row, and only when it holds the form: the heading sits in the
+   * row's other half, and hiding the form alone would strand «Хотите быть в
+   * курсе…» above an empty column.
+   */
+  it('hides the newsletter row, heading included', () => {
+    expect(styleSource(run('plakati').html)).toContain('.cmsms_row:has(.shortcode_wysija){display:none!important}');
+  });
+
+  it('is added once, not once per pass', () => {
+    const once = run('team').html;
+    const twice = transformLegacyHtml(once, { origin: LEGACY, path: '/team/', siteOrigin: SITE }).html;
+    expect(twice.match(/data-od-legacy-style/g)).toHaveLength(1);
+  });
+});
+
 describe('transformLegacyHtml — metadata (LPF-004)', () => {
   it('reads the title and decodes its entities', () => {
     expect(run('team').title).toBe('Команда организации — Общее дело');
@@ -528,12 +568,12 @@ describe('transformLegacyHtml — golden fingerprint (V18)', () => {
         "anchors": 17,
         "bases": 1,
         "boundaryMiss": false,
-        "bytes": 74312,
+        "bytes": 75552,
         "description": null,
-        "digest": "3bac8676e1c77df3",
+        "digest": "3ff615473b612b6a",
         "downloads": 0,
         "externalScripts": 28,
-        "inlineStyles": 10,
+        "inlineStyles": 11,
         "scripts": 46,
         "siteLinks": 3,
         "stylesheets": 26,
@@ -549,12 +589,12 @@ describe('transformLegacyHtml — golden fingerprint (V18)', () => {
         "anchors": 52,
         "bases": 1,
         "boundaryMiss": false,
-        "bytes": 116507,
+        "bytes": 117747,
         "description": null,
-        "digest": "b8d5765346217968",
+        "digest": "e690f26089c28971",
         "downloads": 32,
         "externalScripts": 38,
-        "inlineStyles": 10,
+        "inlineStyles": 11,
         "scripts": 58,
         "siteLinks": 4,
         "stylesheets": 26,
@@ -570,12 +610,12 @@ describe('transformLegacyHtml — golden fingerprint (V18)', () => {
         "anchors": 34,
         "bases": 1,
         "boundaryMiss": false,
-        "bytes": 87046,
+        "bytes": 88286,
         "description": null,
-        "digest": "2ae5cb61dd40be77",
+        "digest": "cbda9ec4ee67643c",
         "downloads": 3,
         "externalScripts": 35,
-        "inlineStyles": 10,
+        "inlineStyles": 11,
         "scripts": 54,
         "siteLinks": 1,
         "stylesheets": 26,
