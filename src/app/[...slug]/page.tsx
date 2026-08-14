@@ -79,6 +79,11 @@ export async function generateStaticParams() {
  * One legacy load per render pass, shared by `generateMetadata` and the page —
  * the same trick `resolvePostKind` uses above.
  *
+ * Keyed by the **path string**, not the slug array. `cache()` memoises on
+ * reference equality of its arguments, and `await params` hands each caller its
+ * own array instance, so keying on the array misses every time and the wrapper
+ * silently does nothing.
+ *
  * Note what it does *not* buy: the iframe's `/legacy/*` request is a separate
  * HTTP request from the browser, so `cache()` cannot span the two. That one is
  * bounded by the proxy's own store instead, which both surfaces share.
@@ -94,7 +99,7 @@ export async function generateStaticParams() {
  * The proxy route keeps `'no-store'`, so the surface that serves the visitor
  * the actual content still refuses to reuse a failure.
  */
-const loadLegacyPage = cache(async (slug: string[]) => loadLegacyDocument(slug, 'revalidate'));
+const loadLegacyPage = cache(async (path: string) => loadLegacyDocument(path.split('/').filter(Boolean), 'revalidate'));
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string[] }> }): Promise<Metadata> {
   const { slug } = await params;
@@ -106,8 +111,9 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     // Always **our** canonical, never the legacy origin's: after cutover that
     // origin is a private frozen copy, and pointing at it would canonicalise
     // the site onto a host nobody can reach.
-    const alternates = { canonical: canonicalUrl(legacyPathname(slug)) };
-    const legacy = await loadLegacyPage(slug);
+    const path = legacyPathname(slug);
+    const alternates = { canonical: canonicalUrl(path) };
+    const legacy = await loadLegacyPage(path);
     if (legacy.status !== 'ok') {
       // The upstream is unreachable or the page is gone; the layout's defaults
       // apply. `undefined` rather than an empty string, so Next falls back
@@ -140,7 +146,7 @@ const Page = async ({ params }: { params: Promise<{ slug: string[] }> }) => {
       notFound();
     }
 
-    const legacy = await loadLegacyPage(slug);
+    const legacy = await loadLegacyPage(legacyPathname(slug));
     // `notFound()` only for an answer the upstream gave definitively — a 404 or
     // a 410 — because this route's `revalidate = 3600` would cache it. A
     // transient 5xx or a timeout still renders the embed: the iframe fetches

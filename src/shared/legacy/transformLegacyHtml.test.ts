@@ -528,9 +528,9 @@ describe('transformLegacyHtml — golden fingerprint (V18)', () => {
         "anchors": 17,
         "bases": 1,
         "boundaryMiss": false,
-        "bytes": 73445,
+        "bytes": 74312,
         "description": null,
-        "digest": "1fec42afe7f8931f",
+        "digest": "3bac8676e1c77df3",
         "downloads": 0,
         "externalScripts": 28,
         "inlineStyles": 10,
@@ -549,9 +549,9 @@ describe('transformLegacyHtml — golden fingerprint (V18)', () => {
         "anchors": 52,
         "bases": 1,
         "boundaryMiss": false,
-        "bytes": 115640,
+        "bytes": 116507,
         "description": null,
-        "digest": "189409931afea93b",
+        "digest": "b8d5765346217968",
         "downloads": 32,
         "externalScripts": 38,
         "inlineStyles": 10,
@@ -570,9 +570,9 @@ describe('transformLegacyHtml — golden fingerprint (V18)', () => {
         "anchors": 34,
         "bases": 1,
         "boundaryMiss": false,
-        "bytes": 86179,
+        "bytes": 87046,
         "description": null,
-        "digest": "9f321ca40974737d",
+        "digest": "2ae5cb61dd40be77",
         "downloads": 3,
         "externalScripts": 35,
         "inlineStyles": 10,
@@ -583,5 +583,81 @@ describe('transformLegacyHtml — golden fingerprint (V18)', () => {
         "unbalanced": [],
       }
     `);
+  });
+});
+
+/**
+ * Findings from the GATE 2 refuter. Each of these was a real leak: a link the
+ * transform left addressing the legacy origin, or a form that could still reach
+ * it.
+ */
+describe('transformLegacyHtml — GATE 2 refuter findings', () => {
+  it('rewrites a hard-coded http:// link to its own site', () => {
+    const source = [
+      '<html><body>',
+      '<a id="a" href="http://obshee-delo.ru/about/">insecure absolute</a>',
+      '<a id="b" href="https://obshee-delo.ru/about/">secure absolute</a>',
+      '</body></html>',
+    ].join('');
+
+    const { html } = transformLegacyHtml(source, { origin: LEGACY, path: '/team/', siteOrigin: SITE });
+
+    // Both must land on the new site. Comparing origins rather than hosts left
+    // the first one alone, and the runtime then opened it in a new tab — on the
+    // legacy origin, which is precisely what LCP-011 forbids.
+    expect(anchorHrefs(html)).toEqual([`${SITE}/about/`, `${SITE}/about/`]);
+  });
+
+  /**
+   * The refuter argued for treating any dotted last segment as an asset. It
+   * measured false — across 40 legacy pages all 132 dotted links are already
+   * under `/wp-content/` — and the rule's real effect was on `wp-login.php`,
+   * which is an endpoint, not a file. A visitor sent to the old site's login
+   * form is worse off than one who gets our 404, so a dotted path outside the
+   * WordPress directories is treated as a page.
+   */
+  it('treats a dotted path outside the WordPress directories as a page', () => {
+    const source = [
+      '<html><body>',
+      '<a href="/wp-content/uploads/poster.jpg">a real download</a>',
+      '<a href="/wp-login.php">an endpoint</a>',
+      '</body></html>',
+    ].join('');
+
+    const { html } = transformLegacyHtml(source, { origin: LEGACY, path: '/team/', siteOrigin: SITE });
+
+    expect(anchorHrefs(html)).toEqual(['/wp-content/uploads/poster.jpg', `${SITE}/wp-login.php`]);
+  });
+
+  it('strips formaction from a submit control, not just action from the form', () => {
+    const source = [
+      '<html><body>',
+      `<form action="${LEGACY}/">`,
+      '<button type="submit" formaction="https://obshee-delo.ru/search/">go</button>',
+      '<input type="submit" formaction="/other/">',
+      '</form></body></html>',
+    ].join('');
+
+    const { html } = transformLegacyHtml(source, { origin: LEGACY, path: '/team/', siteOrigin: SITE });
+
+    expect(html).not.toMatch(/formaction/i);
+    expect(findTags(maskInertRegions(html), 'form').filter((f) => findAttribute(f.text, 'action'))).toEqual([]);
+  });
+
+  it('keeps a body-less fragment that is nothing but chrome', () => {
+    const source = '<header id="header">the only content there is</header>';
+
+    const { html } = transformLegacyHtml(source, { origin: LEGACY, path: '/x/', siteOrigin: SITE });
+
+    expect(html).toContain('the only content there is');
+  });
+
+  it('still empties nothing when a body-less fragment has real content', () => {
+    const source = '<header id="header">chrome</header><p>real</p>';
+
+    const { html } = transformLegacyHtml(source, { origin: LEGACY, path: '/x/', siteOrigin: SITE });
+
+    expect(html).toContain('real');
+    expect(html).not.toContain('chrome');
   });
 });

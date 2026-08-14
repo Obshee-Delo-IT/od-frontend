@@ -9,6 +9,7 @@ import {
   maskInertRegions,
   type Edit,
   type ElementSpan,
+  type TagSpan,
 } from './html';
 import { legacyRuntimeSource } from './legacyRuntime';
 import type { LegacyDocument } from './types';
@@ -73,7 +74,18 @@ const CHROME = [
   { tag: 'footer', id: 'footer' },
 ] as const;
 
-/** Paths that must keep resolving to the legacy origin: assets and downloads. */
+/**
+ * Paths that must keep resolving to the legacy origin: assets and downloads.
+ *
+ * Deliberately just the three WordPress directories. GATE 2's refuter argued
+ * for widening this to "any path whose last segment has a dot", so that a
+ * `/files/brochure.pdf` would keep working — a good argument, and measurement
+ * refused it: across 40 legacy pages there are **132** dotted links and every
+ * one is already under `/wp-content/`. What the wider rule did find was
+ * `wp-login.php`, which is an endpoint rather than a file, and sending a
+ * visitor to the old site's login form is worse than the 404 they get from
+ * ours.
+ */
 const ASSET_PATH = /^\/(?:wp-content|wp-includes|wp-json)\//i;
 
 /** Marks our own injected script so a second pass does not add another. */
@@ -153,15 +165,27 @@ const stripElements = (html: string): string => {
     remove(tag.start, tag.end);
   }
 
-  for (const tag of findTags(mask, 'form')) {
-    const action = findAttribute(tag.text, 'action');
-    if (!action) {
-      continue;
+  const removeAttribute = (tag: TagSpan, name: string): void => {
+    const attribute = findAttribute(tag.text, name);
+    if (!attribute) {
+      return;
     }
     // Take the separating space with it, so the tag does not end up with a
     // double space where the attribute was.
-    const leading = tag.text[action.start - 1] === ' ' ? 1 : 0;
-    remove(tag.start + action.start - leading, tag.start + action.end);
+    const leading = tag.text[attribute.start - 1] === ' ' ? 1 : 0;
+    remove(tag.start + attribute.start - leading, tag.start + attribute.end);
+  };
+
+  for (const tag of findTags(mask, 'form')) {
+    removeAttribute(tag, 'action');
+  }
+  // `formaction` on a submit control overrides the form's own action, so a form
+  // left actionless by the line above still has a destination if a button
+  // carries one.
+  for (const name of ['button', 'input']) {
+    for (const tag of findTags(mask, name)) {
+      removeAttribute(tag, 'formaction');
+    }
   }
 
   return applyEdits(html, edits);
@@ -192,7 +216,11 @@ const rewriteHref = (value: string, pageUrl: URL, siteOrigin: string): string | 
   if (url.protocol !== 'http:' && url.protocol !== 'https:') {
     return null; // mailto:, tel:, javascript: — not navigation we own
   }
-  if (url.origin !== pageUrl.origin) {
+  // Compared by **host**, not origin: legacy WordPress content is full of
+  // hard-coded `http://` links to its own site, and an origin comparison reads
+  // those as third-party — which would open the legacy origin in a new tab, the
+  // one thing LCP-011's invariant forbids.
+  if (url.host !== pageUrl.host) {
     return null; // third party, including protocol-relative `//host/…`
   }
   if (ASSET_PATH.test(url.pathname)) {
@@ -284,10 +312,17 @@ const parseDescription = (mask: string): string | null => {
   return null;
 };
 
-/** Everything between `<body …>` and `</body>`, for the "never empty" invariant. */
-const bodyContent = (html: string, mask: string): string | null => {
+/**
+ * Everything between `<body …>` and `</body>`, for the "never empty" invariant.
+ *
+ * A document with no `<body>` element at all — a fragment, not a page — is
+ * treated as being all body, so the emptiness guard still fires on it. Reading
+ * a missing body as "not empty" was how a fragment that was *entirely* chrome
+ * produced an output with nothing in it.
+ */
+const bodyContent = (html: string, mask: string): string => {
   const span = findElementSpans(mask, 'body')[0];
-  return span ? html.slice(span.openTagEnd, span.closeTagStart) : null;
+  return span ? html.slice(span.openTagEnd, span.closeTagStart) : html;
 };
 
 export const transformLegacyHtml = (html: string, options: TransformOptions): TransformResult => {
@@ -305,8 +340,7 @@ export const transformLegacyHtml = (html: string, options: TransformOptions): Tr
   // makes that all but impossible on a real page, but a document that is
   // *nothing but* chrome would do it, and an empty frame is worse than a
   // duplicated header.
-  const stripped = bodyContent(chrome.html, maskInertRegions(chrome.html));
-  const reduced = stripped !== null && stripped.trim() === '' ? html : chrome.html;
+  const reduced = bodyContent(chrome.html, maskInertRegions(chrome.html)).trim() === '' ? html : chrome.html;
 
   let out = stripElements(reduced);
   out = rewriteAnchors(out, pageUrl, options.siteOrigin);

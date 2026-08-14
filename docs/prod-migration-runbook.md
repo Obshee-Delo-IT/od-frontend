@@ -301,9 +301,20 @@ Post detail lives at the bare **`/<id>`** since A8 — that is the *only* addres
     signal: there is no alerting stack here, so a silent regression on ~170 pages would otherwise be noticed
     first by a visitor. The number to watch is **98.8 %** (measured 2026-08-14 with the fallback on); a drop
     back toward 83.7 % means the fallback is not serving. The container logs are the second signal, and are
-    greppable by design — `[legacy] WP_LEGACY_BASE missing` once at boot explains a fleet-wide 404, a rising
-    rate of `[legacy] upstream <status> for <path>` is the legacy origin failing, `[legacy] rejected path` is
-    someone probing, `[legacy] boundary miss` is a legacy page whose markup changed shape.
+    greppable by design — every line starts `[legacy] `:
+
+    | line | means |
+    |---|---|
+    | `WP_LEGACY_BASE missing — legacy fallback disabled` | once at boot; explains a fleet-wide 404 |
+    | `WP_LEGACY_BASE is the site's own origin (…)` | once at boot; after cutover the fallback would proxy itself |
+    | `upstream <status> for <path>` | the legacy origin answered 404/410/5xx |
+    | `upstream error for <path>: <message>` | network failure, DNS, or the 8 s timeout — check egress first |
+    | `upstream busy for <path>` | the concurrency cap's wait budget ran out; the origin is slow, not down |
+    | `upstream non-HTML for <path>` / `upstream oversized for <path>` | the origin served something that is not a page |
+    | `upstream redirect refused for <path>` | the origin redirected off its own origin |
+    | `boundary miss for <path>` | that legacy page has no `section#middle`; informational, it still renders |
+    | `unbalanced <element> for <path>` | markup the transform could not match; the old chrome is showing |
+    | `rejected path <path>` | a slug failed validation — usually someone probing for traversal |
 
     **Every redirected shape must be a single 301 hop, and every served shape zero.** The rules live in `src/proxy.ts` (Next 16's renamed middleware), *not* in `next.config.ts` `redirects()` — a config table can't emit a slash-terminated destination under `trailingSlash: true`, so each URL would take two hops. If you ever see a chain of two here, someone has moved a rule back into the config, where it also silently shadows the proxy. **A redirect answering 200 is not proof it worked:** twice during A8 a rule pointed at a filter value the destination didn't recognise, which renders an *unfiltered* list at status 200. Check the content, not the status.
 

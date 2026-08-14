@@ -35,6 +35,60 @@ const USER_AGENT = 'od-frontend/1.0 (legacy-page fallback)';
 
 const REDIRECT_STATUSES = new Set([301, 302, 303, 307, 308]);
 
+/**
+ * The largest legacy page measured is 128 KB, so 5 MB is forty times the real
+ * ceiling and still bounds the damage.
+ *
+ * Without it, `response.text()` buffers whatever the origin sends into the
+ * container's memory — the timeout and the concurrency cap bound *time* and
+ * *sockets*, but nothing bounded *bytes*. That matters more once the legacy
+ * origin is a frozen copy someone else stands up: "the origin is ours" is
+ * exactly the assumption this change is designed to stop relying on.
+ */
+export const LEGACY_MAX_BYTES = 5_000_000;
+
+/**
+ * Read a response body, giving up the moment it exceeds the cap.
+ *
+ * Streamed rather than `text()`-then-measure, so an oversized body is never
+ * fully in memory even once, and a `content-length` that lies cannot get past
+ * it.
+ */
+const readBounded = async (response: Response, limit: number): Promise<string | null> => {
+  const declared = Number(response.headers.get('content-length'));
+  if (Number.isFinite(declared) && declared > limit) {
+    return null;
+  }
+  if (!response.body) {
+    const text = await response.text();
+    return text.length > limit ? null : text;
+  }
+
+  const reader = response.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let total = 0;
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) {
+      break;
+    }
+    total += value.byteLength;
+    if (total > limit) {
+      await reader.cancel();
+      return null;
+    }
+    chunks.push(value);
+  }
+
+  const body = new Uint8Array(total);
+  let offset = 0;
+  for (const chunk of chunks) {
+    body.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  return new TextDecoder('utf-8').decode(body);
+};
+
 export interface LegacyLoaderDeps {
   origin: string | null;
   fetch: typeof fetch;
@@ -44,6 +98,8 @@ export interface LegacyLoaderDeps {
   timeoutMs: number;
   /** How long Next may hold the upstream response for the `'revalidate'` policy. */
   revalidateSeconds: number;
+  /** Largest upstream body we will read into memory. */
+  maxBytes: number;
 }
 
 /**
@@ -79,6 +135,7 @@ export const createLegacyLoader = (overrides: Partial<LegacyLoaderDeps> = {}) =>
     siteOrigin: siteUrl,
     timeoutMs: LEGACY_TIMEOUT_MS,
     revalidateSeconds: 3600,
+    maxBytes: LEGACY_MAX_BYTES,
     ...overrides,
   };
 
@@ -162,7 +219,12 @@ export const createLegacyLoader = (overrides: Partial<LegacyLoaderDeps> = {}) =>
         return { status: 'unavailable' };
       }
 
-      const html = await response.text();
+      const html = await readBounded(response, deps.maxBytes);
+      if (html === null) {
+        legacyWarn(`upstream oversized for ${path}`);
+        return { status: 'unavailable' };
+      }
+
       const result = transformLegacyHtml(html, {
         // `buildLegacyUrl` already asserted the origin, so this cannot be null
         // by the time we get here.

@@ -345,3 +345,49 @@ describe('the transformed result (LCP-005, LPF-004)', () => {
     expect(warn).toHaveBeenCalledWith('[legacy] rejected path /bad path/');
   });
 });
+
+describe('bounded reading (security review, GATE 2)', () => {
+  it('reads an ordinary page', async () => {
+    const { impl } = recorder(() => htmlResponse());
+
+    expect((await loader(impl)(['team'])).status).toBe('ok');
+  });
+
+  it('refuses a body larger than the cap rather than buffering it', async () => {
+    vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const { impl } = recorder(() => htmlResponse(`<html><body>${'x'.repeat(2000)}</body></html>`));
+
+    const result = await loader(impl, { maxBytes: 500 })(['huge']);
+
+    expect(result.status).toBe('unavailable');
+  });
+
+  /**
+   * The body here is 13 bytes, well under the cap, so a refusal can only have
+   * come from the *declared* length — which is the point: an origin claiming a
+   * huge body is turned away before a single chunk is pulled.
+   */
+  it('refuses on a declared content-length over the cap', async () => {
+    vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const { impl } = recorder(
+      () =>
+        new Response('<html></html>', {
+          status: 200,
+          headers: { 'content-type': 'text/html', 'content-length': '99999999' },
+        })
+    );
+
+    const result = await loader(impl, { maxBytes: 1000 })(['liar']);
+
+    expect(result.status).toBe('unavailable');
+  });
+
+  it('warns with the path when a body is refused', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const { impl } = recorder(() => htmlResponse(`<html><body>${'x'.repeat(2000)}</body></html>`));
+
+    await loader(impl, { maxBytes: 500 })(['huge']);
+
+    expect(warn).toHaveBeenCalledWith('[legacy] upstream oversized for /huge/');
+  });
+});

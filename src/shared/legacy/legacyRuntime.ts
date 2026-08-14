@@ -32,6 +32,22 @@ const legacyRuntime = (config: LegacyRuntimeConfig): void => {
   const ASSET = /^\/(?:wp-content|wp-includes|wp-json)\//i;
   const doc = document;
 
+  /**
+   * Compared by host rather than origin, in step with the transform: legacy
+   * WordPress content carries hard-coded `http://` links to its own site, and an
+   * origin comparison reads those as third-party — which would open the legacy
+   * origin in a new tab.
+   */
+  const hostOf = (value: string): string => {
+    try {
+      return new URL(value).host;
+    } catch (_error) {
+      return '';
+    }
+  };
+  const LEGACY_HOST = hostOf(LEGACY);
+  const SITE_HOST = hostOf(SITE);
+
   // --- Height reporting (LCP-008) -------------------------------------------
   // Only when framed: opened directly this must be an inert no-op.
   if (window.parent !== window) {
@@ -150,9 +166,9 @@ const legacyRuntime = (config: LegacyRuntimeConfig): void => {
       //    where the two origins are the same string still opens a download in
       //    its own context instead of replacing the page with a JPEG.
       const isAsset = ASSET.test(url.pathname);
-      if (url.origin === LEGACY && !isAsset) {
+      if (url.host === LEGACY_HOST && !isAsset) {
         anchor.href = SITE + url.pathname + url.search + url.hash;
-      } else if (url.origin !== SITE || isAsset) {
+      } else if (url.host !== SITE_HOST || isAsset) {
         // A download or a third-party link: genuinely off-site, so it opens in
         // its own context. An author's `target="_self"` is not consent to
         // replace the embedded page with a JPEG.
@@ -194,6 +210,18 @@ const legacyRuntime = (config: LegacyRuntimeConfig): void => {
     },
     true
   );
+
+  // …and a listener alone is not enough either: `form.submit()` called from
+  // script does **not** dispatch a submit event, by specification. The legacy
+  // theme's own widgets do call it. Neutralised at the prototype, inside this
+  // document only.
+  try {
+    HTMLFormElement.prototype.submit = function neutralised(): void {
+      /* the embedded document may not navigate itself off the page */
+    };
+  } catch (_error) {
+    // A frozen prototype; the listener above still covers user submissions.
+  }
 };
 
 /** The `<script>` body the transform inlines. */

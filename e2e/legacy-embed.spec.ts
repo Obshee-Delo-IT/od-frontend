@@ -64,6 +64,7 @@ const MATRIX_PAGE = `<!doctype html>
     document.getElementById('js-fragment').setAttribute('href', '${LEGACY}/team/#target');
   </script>
   <form id="search" action="${LEGACY}/"><input name="s" id="search-input"><button id="search-submit" type="submit">искать</button></form>
+  <button id="programmatic-submit" onclick="document.getElementById('search').submit()">submit by script</button>
   <div style="height:1200px">spacer</div>
   <a id="bare-hash" href="#">bare hash</a>
   <a id="missing-fragment" href="#nowhere">missing target</a>
@@ -413,6 +414,29 @@ test.describe('injected runtime — navigation (LCP-011, V20–V26)', () => {
 
     await frame(page).locator('#search-input').press('Enter');
     await page.waitForTimeout(500);
+    expect(page.url()).toBe(top);
+    expect(framed()).toBe(before);
+  });
+
+  /**
+   * `HTMLFormElement.submit()` does not dispatch a submit event, by
+   * specification — so the capture-phase listener never sees it and the form,
+   * left actionless by the transform, submits to the `<base href>`: the legacy
+   * origin. The legacy theme's own widgets call it. Found by the GATE 2
+   * refuter.
+   */
+  test('V26 a form submitted from script cannot leave either', async ({ page }) => {
+    const top = page.url();
+    const framed = () =>
+      page
+        .frames()
+        .find((candidate) => candidate !== page.mainFrame())
+        ?.url();
+    const before = framed();
+
+    await frame(page).locator('#programmatic-submit').click();
+    await page.waitForTimeout(500);
+
     expect(page.url()).toBe(top);
     expect(framed()).toBe(before);
   });
