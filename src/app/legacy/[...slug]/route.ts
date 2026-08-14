@@ -1,4 +1,4 @@
-import { loadLegacyDocument } from '@/shared/legacy';
+import { isEmbeddable, loadLegacyDocument } from '@/shared/legacy';
 
 /**
  * The same-origin proxy the legacy embed's iframe points at (A6).
@@ -47,6 +47,14 @@ export const GET = async (
   { params }: { params: Promise<{ slug: string[] }> }
 ): Promise<Response> => {
   const { slug } = await params;
+  // The same eligibility test the page applies, so the two surfaces cannot
+  // disagree about which paths exist: a slug retired via `LEGACY_DENYLIST`, or
+  // one the page would refuse for depth or a reserved first segment, must not
+  // still be fetchable here just because this route is the internal one.
+  if (!isEmbeddable(slug)) {
+    return new Response(null, { status: 404, headers: FAILURE_HEADERS });
+  }
+
   const result = await loadLegacyDocument(slug);
 
   if (result.status !== 'ok') {
@@ -54,20 +62,4 @@ export const GET = async (
   }
 
   return new Response(result.document.html, { status: 200, headers: SUCCESS_HEADERS });
-};
-
-/**
- * Written out rather than left to Next's default so the property is testable:
- * the route answers nothing outside {200, 404, 405}, and no method but GET
- * causes an upstream fetch.
- */
-const methodNotAllowed = async (): Promise<Response> =>
-  new Response(null, { status: 405, headers: { allow: 'GET', 'cache-control': 'no-store' } });
-
-export {
-  methodNotAllowed as POST,
-  methodNotAllowed as PUT,
-  methodNotAllowed as PATCH,
-  methodNotAllowed as DELETE,
-  methodNotAllowed as OPTIONS,
 };

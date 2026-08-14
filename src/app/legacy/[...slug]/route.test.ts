@@ -8,7 +8,7 @@ vi.mock('@/shared/legacy', async (importOriginal) => ({
   loadLegacyDocument: (slug: readonly string[] | undefined) => loadLegacyDocument(slug),
 }));
 
-const { DELETE, GET, POST, PUT } = await import('./route');
+const { GET } = await import('./route');
 
 const call = (handler: typeof GET, slug: string[]) =>
   handler(new Request('https://od.example/legacy/team/'), { params: Promise.resolve({ slug }) });
@@ -86,27 +86,29 @@ describe('GET /legacy/[...slug] (LCP-009)', () => {
     expect(response.headers.get('cache-control')).toBe('no-store');
   });
 
-  it('passes the slug through untouched, so validation happens in one place', async () => {
+  it('passes an eligible slug through untouched', async () => {
     loadLegacyDocument.mockResolvedValue(ok('<p>x</p>'));
 
     await call(GET, ['materials', 'plakati']);
 
     expect(loadLegacyDocument).toHaveBeenCalledWith(['materials', 'plakati']);
   });
-});
 
-describe('other methods (LCP-009)', () => {
-  it.each([
-    ['POST', POST],
-    ['PUT', PUT],
-    ['DELETE', DELETE],
-  ])('answers %s with 405 and fetches nothing', async (_name, handler) => {
-    const response = await call(handler as typeof GET, ['team']);
+  /**
+   * The two surfaces must agree on which paths exist. Without this the page
+   * could 404 a retired slug while the proxy — reached directly, not through
+   * the embed — still served it.
+   */
+  it.each([[['_next', 'static']], [['favicon.png']], [['a', 'b', 'c', 'd', 'e', 'f', 'g']]])(
+    'answers 404 for %j without fetching, exactly as the page would',
+    async (slug) => {
+      const response = await call(GET, slug);
 
-    expect(response.status).toBe(405);
-    expect(response.headers.get('allow')).toBe('GET');
-    expect(loadLegacyDocument).not.toHaveBeenCalled();
-  });
+      expect(response.status).toBe(404);
+      expect(response.headers.get('cache-control')).toBe('no-store');
+      expect(loadLegacyDocument).not.toHaveBeenCalled();
+    }
+  );
 });
 
 /**

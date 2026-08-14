@@ -100,9 +100,19 @@ The tail is tiny, but it is **~90 distinct slugs and open-ended** — any WP cat
 
 The ~170 pages with no redesigned route are served at their live URLs: `app/[...slug]/page.tsx`'s non-numeric
 branch renders `LegacyEmbed`, whose iframe loads `app/legacy/[...slug]/route.ts`, which fetches the page from
-`WP_LEGACY_BASE`, strips the old chrome and returns it. Gate 12 went **83.7 % → 98.8 %** entry-traffic
-coverage; the residual 1.2 % is three posts missing from od-dev and six `/profile/…` URLs that 404 upstream
+`WP_LEGACY_BASE`, strips the old chrome and returns it. Gate 12 went **83.7 % → 98.9 %** entry-traffic
+coverage; the residual 1.1 % is three posts missing from od-dev and two `/profile/…` URLs that 404 upstream
 too. Full specs and decision record in [`openspec/changes/fallback/`](../openspec/changes/fallback/).
+
+A post-merge review pass added the last 0.1 %: **route params arrive percent-encoded**, and `legacyPath.ts` had
+asserted the opposite in prose, so its allowlist rejected every Cyrillic slug — `/profile/дегтярёв-…/` 404'd on
+a page that exists. Segments are now decoded exactly once before the allowlist sees them (`decodeSegments`),
+which keeps the traversal guarantee intact because `%2e%2e` decodes to `..` and `%2f` to `/`, both of which the
+allowlist refuses. Two smaller things from the same pass: the store and the concurrency gate are `globalThis`
+singletons, because Next bundles the page and the route handler separately and a module-level instance is
+constructed **once per bundle** — measured, one build prints the boot warning three times — which had quietly
+doubled both the upstream concurrency bound and the number of upstream renders per page; and `/legacy/*` now
+applies the same `isEmbeddable` the page does, so the two surfaces cannot disagree about which paths exist.
 
 **It was never actually blocked on the frozen copy**, which is what the plan had said for two months.
 `WP_LEGACY_BASE` points at live production and the proxy removes the chrome itself, so no WordPress-side work

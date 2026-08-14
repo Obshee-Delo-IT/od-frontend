@@ -1,7 +1,7 @@
 import { siteUrl } from '@/shared/config/site';
 import { legacyWarn } from './legacyLog';
 import { legacyOrigin } from './legacyOrigin';
-import { buildLegacyUrl, legacyPathname } from './legacyPath';
+import { buildLegacyUrl, decodeSegments, legacyPathname } from './legacyPath';
 import { legacyGate, legacyStore, type ConcurrencyGate, type LegacyStore } from './legacyStore';
 import { transformLegacyHtml } from './transformLegacyHtml';
 import type { LegacyLoad } from './types';
@@ -12,12 +12,13 @@ import type { LegacyLoad } from './types';
  *
  * Used by both surfaces: the proxy route serves the iframe's document, and the
  * catch-all's page + `generateMetadata` need the same page's title. They are
- * separate HTTP requests, so React's `cache()` cannot join them, and they are
- * bundled separately, so they may not even share this module's instance — the
- * boot warning is observably printed once per bundle. Each surface is therefore
- * bounded by its own layer rather than by a shared one: the route by the store
- * below, the page by Next's cache for the `'revalidate'` policy. That is what
- * LPF-004 means by "one upstream render per path per window **per surface**".
+ * separate HTTP requests, so React's `cache()` cannot join them, and Next bundles
+ * them separately, so **this module is instantiated once per bundle** — one build
+ * prints the boot warning three times. The store and the concurrency gate are
+ * therefore process singletons on `globalThis` (see `legacyStore.ts`) rather than
+ * module-level values; without that the two surfaces would each keep their own
+ * reuse window and their own budget, and a page would cost two upstream renders
+ * where LPF-004 promises one.
  *
  * A bare `fetch`, never `wpFetch`: that one attaches the WordPress application
  * password to every request it makes, and the legacy origin is a different host
@@ -61,7 +62,10 @@ const readBounded = async (response: Response, limit: number): Promise<string | 
   }
   if (!response.body) {
     const text = await response.text();
-    return text.length > limit ? null : text;
+    // Encoded length, not `text.length`: the cap is in bytes and this content is
+    // largely Cyrillic, which is two bytes per character in UTF-8. Comparing
+    // UTF-16 code units would silently allow roughly twice the limit.
+    return new TextEncoder().encode(text).length > limit ? null : text;
   }
 
   const reader = response.body.getReader();
@@ -124,7 +128,9 @@ export interface LegacyLoaderDeps {
  */
 export type LegacyFetchPolicy = 'no-store' | 'revalidate';
 
-const isHtml = (contentType: string | null): boolean => /^text\/html\b/i.test((contentType ?? '').trim());
+/** Both of the types the request's own `accept` header asks for, and nothing else. */
+const isHtml = (contentType: string | null): boolean =>
+  /^(?:text\/html|application\/xhtml\+xml)\b/i.test((contentType ?? '').trim());
 
 export const createLegacyLoader = (overrides: Partial<LegacyLoaderDeps> = {}) => {
   const deps: LegacyLoaderDeps = {
@@ -144,6 +150,13 @@ export const createLegacyLoader = (overrides: Partial<LegacyLoaderDeps> = {}) =>
    * deduplication of a single in-flight fetch, not reuse of a result: nothing
    * is stored unless it succeeded, and the next request after this one settles
    * starts afresh.
+   *
+   * Keyed by **policy and path**, not path alone. The two policies make
+   * materially different fetches — one uncached, one cacheable — so joining them
+   * would hand the proxy route a response fetched under the page's cacheable
+   * policy. Self-healing rather than persistent (the next request re-enters with
+   * its own policy), but the whole point of the split is that the surface a
+   * visitor reads never depends on a cacheable fetch.
    */
   const inflight = new Map<string, Promise<LegacyLoad>>();
 
@@ -261,8 +274,17 @@ export const createLegacyLoader = (overrides: Partial<LegacyLoaderDeps> = {}) =>
       return { status: 'disabled' };
     }
 
-    const path = legacyPathname(segments ?? []);
-    const url = buildLegacyUrl(segments, deps.origin);
+    // Decoded first, so the store key, the log line and the upstream URL all
+    // describe the same path — and so a percent-encoded Cyrillic slug, which is
+    // how the router actually hands them over, is not mistaken for an attack.
+    const decoded = decodeSegments(segments);
+    if (!decoded) {
+      legacyWarn(`rejected path ${legacyPathname(segments ?? [])}`);
+      return { status: 'missing' };
+    }
+
+    const path = legacyPathname(decoded);
+    const url = buildLegacyUrl(decoded, deps.origin);
     if (!url) {
       legacyWarn(`rejected path ${path}`);
       return { status: 'missing' };
@@ -273,17 +295,21 @@ export const createLegacyLoader = (overrides: Partial<LegacyLoaderDeps> = {}) =>
       return { status: 'ok', document: cached };
     }
 
-    const existing = inflight.get(path);
+    const key = `${policy} ${path}`;
+    const existing = inflight.get(key);
     if (existing) {
       return existing;
     }
 
     const pending = attempt(path, url, policy);
-    inflight.set(path, pending);
-    pending.finally(() => inflight.delete(path)).catch(() => undefined);
+    inflight.set(key, pending);
+    pending.finally(() => inflight.delete(key)).catch(() => undefined);
     return pending;
   };
 };
 
-/** The instance both surfaces share, so they share one store and one concurrency budget. */
+/**
+ * One loader per bundle — but they share one store and one concurrency budget,
+ * because those two are `globalThis` singletons rather than module-level values.
+ */
 export const loadLegacyDocument = createLegacyLoader();

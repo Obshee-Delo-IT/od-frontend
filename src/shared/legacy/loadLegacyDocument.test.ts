@@ -294,6 +294,33 @@ describe('reuse and load control (LCP-010)', () => {
     expect(second.status).toBe('ok');
   });
 
+  /**
+   * …but only when they asked for the same thing. The two policies make
+   * materially different fetches, and joining them would serve the proxy — the
+   * surface a visitor actually reads — a response fetched under the page's
+   * cacheable policy, which is the one thing the split exists to prevent.
+   */
+  it('does not collapse two policies for the same path into one fetch', async () => {
+    let release: (() => void) | undefined;
+    const gate = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    const { calls, impl } = recorder(async () => {
+      await gate;
+      return htmlResponse();
+    });
+    const load = loader(impl);
+
+    const both = Promise.all([load(['team'], 'no-store'), load(['team'], 'revalidate')]);
+    release!();
+    await both;
+
+    expect(calls).toHaveLength(2);
+    // Sorted, so the assertion is about *which* two fetches happened rather
+    // than the order two microtasks happened to settle in.
+    expect(calls.map((entry) => entry.init?.cache).sort()).toEqual(['no-store', undefined]);
+  });
+
   it('answers a request that cannot get a slot without storing that answer', async () => {
     vi.useFakeTimers();
     vi.spyOn(console, 'warn').mockImplementation(() => {});

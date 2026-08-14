@@ -8,10 +8,17 @@
  * nobody thought to enumerate (a full-width `％`, a zero-width joiner) — is
  * rejected by not being on the list rather than by a rule naming it.
  *
- * Next hands route params **already decoded**, so a legitimate Cyrillic slug
- * arrives as literal Cyrillic and a surviving `%` can only be a re-encoding
- * attempt. That is why there is no decode-again loop: `%2e%2e` never gets the
- * chance to become `..`, because `%` is not an allowed character.
+ * Params arrive **percent-encoded**, so each segment is decoded exactly once
+ * before it meets the allowlist. This file originally asserted the opposite —
+ * that Next hands route params already decoded — and the assumption was simply
+ * wrong: measured, `/profile/дегтярёв-алексей-анатольевич/` reached the loader as
+ * `%D0%B4%D0%B5%D0%B3…` and was rejected, so every Cyrillic legacy URL 404'd.
+ *
+ * Exactly once, and the traversal guarantee survives it: `%2e%2e` decodes to
+ * `..` and `%2f` to `/`, both of which the allowlist refuses, and a
+ * double-encoded `%252e%252e` decodes to a literal `%` that is not on the list
+ * either. What is never done is decoding in a loop until it stops changing —
+ * that is the construction this guards against.
  */
 
 /** Unicode letters and digits plus the three unreserved URL punctuation marks. */
@@ -42,6 +49,34 @@ export const isAllowedSegment = (segment: string): boolean => {
 export const legacyPathname = (segments: readonly string[]): string => `/${segments.join('/')}/`;
 
 /**
+ * Decode one layer of percent-encoding off each segment and check the result
+ * against the allowlist, or `null` if any segment fails.
+ *
+ * The single place that turns what the router hands us into segments the rest of
+ * this module may use, so "decoded exactly once, then allowlisted" is a property
+ * of one function rather than a convention every caller has to remember.
+ */
+export const decodeSegments = (segments: readonly string[] | undefined): string[] | null => {
+  if (!segments || segments.length === 0) {
+    return null;
+  }
+  const decoded: string[] = [];
+  for (const segment of segments) {
+    let value: string;
+    try {
+      value = decodeURIComponent(segment);
+    } catch (_error) {
+      return null; // a malformed escape like `%zz`
+    }
+    if (!isAllowedSegment(value)) {
+      return null;
+    }
+    decoded.push(value);
+  }
+  return decoded;
+};
+
+/**
  * The upstream URL for a slug, or `null` if anything about it is off — an
  * unlisted character, a traversal attempt, an unconfigured origin, or a
  * composed URL that somehow does not land on the configured origin.
@@ -51,10 +86,14 @@ export const legacyPathname = (segments: readonly string[]): string => `/${segme
  * rather than by exhaustive reasoning about the character class.
  */
 export const buildLegacyUrl = (segments: readonly string[] | undefined, origin: string | null): string | null => {
-  if (!origin || !segments || segments.length === 0) {
+  if (!origin) {
     return null;
   }
-  if (!segments.every(isAllowedSegment)) {
+  // Idempotent when the caller has already decoded: a clean slug holds no `%`,
+  // so a second pass returns it unchanged, and one that does hold a `%` is
+  // rejected either way.
+  const decoded = decodeSegments(segments);
+  if (!decoded) {
     return null;
   }
 
@@ -63,7 +102,7 @@ export const buildLegacyUrl = (segments: readonly string[] | undefined, origin: 
     // `encodeURI` percent-encodes the non-ASCII slugs WordPress serves and
     // leaves the separators alone; the allowlist has already guaranteed there
     // is nothing else to encode.
-    url = new URL(encodeURI(legacyPathname(segments)), origin);
+    url = new URL(encodeURI(legacyPathname(decoded)), origin);
   } catch {
     return null;
   }

@@ -1,4 +1,4 @@
-import { legacyPathname } from './legacyPath';
+import { decodeSegments, legacyPathname } from './legacyPath';
 
 /**
  * Which paths the catch-all is willing to hand to the legacy embed (LPF-001).
@@ -36,17 +36,21 @@ export const isEmbeddable = (slug: readonly string[] | undefined): boolean => {
   if (!slug || slug.length === 0 || slug.length > MAX_DEPTH) {
     return false;
   }
-  if (slug.some((segment) => segment.length === 0)) {
+  // Decoded before anything is judged: the router hands segments percent-encoded,
+  // so `%2E` would slip past the dot test and a Cyrillic slug would never match a
+  // denylist entry written the way a human writes it.
+  const segments = decodeSegments(slug);
+  if (!segments) {
     return false;
   }
-  if (RESERVED_FIRST_SEGMENTS.has(slug[0].toLowerCase())) {
+  if (RESERVED_FIRST_SEGMENTS.has(segments[0].toLowerCase())) {
     return false;
   }
   // A dot in the last segment means a file, not a page — `/favicon.png/`,
   // `/apple-touch-icon.png/`. `trailingSlash: true` installs a redirect for the
   // dotted form, so what reaches here is the odd crawler or a broken link.
-  if (slug[slug.length - 1].includes('.')) {
+  if (segments[segments.length - 1].includes('.')) {
     return false;
   }
-  return !LEGACY_DENYLIST.includes(legacyPathname(slug));
+  return !LEGACY_DENYLIST.includes(legacyPathname(segments));
 };

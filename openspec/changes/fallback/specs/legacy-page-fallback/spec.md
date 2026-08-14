@@ -119,9 +119,11 @@ the site defaults when the upstream provides neither.
 
 **Invariants**: The canonical is always `canonicalUrl(path)` on `SITE_URL` — never the legacy origin
 (`src/shared/config/site.ts:29-41`). A page view costs at most **one** upstream render per path per
-revalidate window **per surface**: the parent page's metadata fetch and the iframe's `/legacy/*` request are
-two separate HTTP requests, so `cache()` cannot join them — each is bounded by its own cache
-(LCP-010 for the proxy, the catch-all's `revalidate = 3600` for the page).
+revalidate window, across both surfaces: the parent page's metadata fetch and the iframe's `/legacy/*` request
+are two separate HTTP requests, so React's `cache()` cannot join them, but the store they share can and does —
+the page render primes it and the iframe's request is served from it. That sharing is only true because the
+store is a `globalThis` singleton: Next bundles the page and the route handler separately, so a module-level
+instance is constructed once per bundle and each surface would keep its own window (`legacyStore.ts`).
 
 #### Scenario: Title taken from upstream
 - **WHEN** the upstream document's title is `Команда организации — Общее дело` (measured)

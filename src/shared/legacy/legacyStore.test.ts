@@ -152,3 +152,21 @@ describe('createConcurrencyGate (LCP-010, design D16)', () => {
     expect(gate.active()).toBe(0);
   });
 });
+
+/**
+ * Next bundles the catch-all page and the `/legacy/*` route handler separately,
+ * so this module is evaluated more than once in one process — a plain
+ * module-level instance would give each surface its own reuse window and its own
+ * concurrency budget, i.e. twice the upstream load LCP-010 bounds. Resetting the
+ * module registry is the closest a unit test gets to a second bundle.
+ */
+describe('the shared instances (LCP-010)', () => {
+  it('survives a second evaluation of this module, as a second bundle would cause', async () => {
+    const first = await import('./legacyStore');
+    vi.resetModules();
+    const second = await import('./legacyStore');
+
+    expect(second.legacyStore).toBe(first.legacyStore);
+    expect(second.legacyGate).toBe(first.legacyGate);
+  });
+});

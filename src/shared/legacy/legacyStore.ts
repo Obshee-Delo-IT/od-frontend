@@ -174,6 +174,31 @@ export const createConcurrencyGate = ({
   };
 };
 
-/** The process-wide instances the proxy route and the page loader share. */
-export const legacyStore = createLegacyStore();
-export const legacyGate = createConcurrencyGate();
+/**
+ * The instances the proxy route and the page loader share — hung off
+ * `globalThis`, deliberately.
+ *
+ * Module scope is **not** process scope here. Next bundles a page render and a
+ * route handler separately, so a plain module-level instance is constructed once
+ * per bundle: measured, three copies of this module land in `.next/server` and
+ * one build prints the boot warning three times. Two stores means two reuse
+ * windows and two concurrency budgets — that is, twice the upstream load
+ * LCP-010 bounds, and two upstream renders per page per window where the spec
+ * promises one.
+ *
+ * This is the same reason `globalThis` is the standard home for a database
+ * client in Next. It also survives dev-server HMR, which module scope does not.
+ */
+const LEGACY_SINGLETONS: unique symbol = Symbol.for('od.legacy.singletons');
+
+interface LegacySingletons {
+  store: LegacyStore;
+  gate: ConcurrencyGate;
+}
+
+const container = globalThis as typeof globalThis & { [LEGACY_SINGLETONS]?: LegacySingletons };
+
+container[LEGACY_SINGLETONS] ??= { store: createLegacyStore(), gate: createConcurrencyGate() };
+
+export const legacyStore = container[LEGACY_SINGLETONS].store;
+export const legacyGate = container[LEGACY_SINGLETONS].gate;

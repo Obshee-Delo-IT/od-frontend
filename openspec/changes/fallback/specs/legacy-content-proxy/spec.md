@@ -42,7 +42,10 @@ origin equals the configured origin — returning 404 when any check fails.
 **Invariants**: A request never causes an outbound fetch to any origin other than the configured one.
 Validation is an **allowlist, not a denylist**: a segment may contain only Unicode letters, Unicode digits,
 `-`, `_`, `.` and `~`, and may not be empty, `.` or `..`. Everything else — `/`, `\`, `:`, `@`, `?`, `#`, `%`,
-control characters, and any homoglyph nobody thought to enumerate — is rejected by not being on the list. The
+control characters, and any homoglyph nobody thought to enumerate — is rejected by not being on the list. Each
+segment is decoded **exactly once** before it meets that list, which is what keeps the guarantee: `%2e%2e`
+decodes to `..` and `%2f` to `/`, both refused, and a double-encoded `%252e` decodes to a literal `%`, also
+refused. What is never done is decoding in a loop until the value stops changing. The
 composed URL always ends in exactly one trailing slash (`trailingSlash: true`, `next.config.ts:18`). It carries
 **nothing from the request's query**; the only query it may carry is the fixed chromeless hint the origin is
 asked for (`od_embed=1`, decision D3), which is constant across every request and therefore cannot be
@@ -75,10 +78,15 @@ influenced by a visitor.
 - **AND** no outbound fetch is made
 
 #### Scenario: Cyrillic slugs survive
-- **WHEN** the path contains a non-ASCII slug (legacy WordPress serves Cyrillic slugs, see
-  `src/shared/config/legacyRedirects.ts:100-102`), which Next delivers already decoded
-- **THEN** the segment is accepted
+- **WHEN** the path contains a non-ASCII slug (legacy WordPress serves Cyrillic slugs — 67 of 139 `/profile/`
+  slugs are percent-encoded Cyrillic, `docs/wp-backend.md` §5), which the router delivers **percent-encoded**
+- **THEN** the segment is decoded exactly once, and accepted
 - **AND** the upstream URL carries it percent-encoded exactly once
+- **AND** the iframe `src` the page emits is encoded exactly once too — encoding an already-encoded segment
+  turns `%D0%B4` into `%25D0%25B4` and the proxy then refuses it
+- **NOTE** this scenario originally asserted the opposite ("Next delivers already decoded") and was written
+  with an ASCII fixture, so it passed while every Cyrillic URL 404'd in production. Found by `pnpm url:check`
+  replaying real entry URLs, not by any test in the suite
 
 #### Scenario: Request query string discarded
 - **WHEN** `/legacy/team/?utm_source=x&s=foo` is requested
@@ -137,7 +145,9 @@ timeout to a 404 with a server-side warning, never to a 5xx.
 **ID**: LCP-004
 
 **Invariants**: The route never returns a status outside {200, 404, 405} (405 only per LCP-009's
-method guard). A non-HTML upstream content type is treated as a failure, not proxied.
+method scenario, which the framework answers). A non-HTML upstream content type is treated as a failure, not
+proxied. Eligibility is decided by the same `isEmbeddable` the page uses, so the two surfaces cannot disagree
+about which paths exist.
 
 #### Scenario: Missing legacy page
 - **WHEN** the upstream answers 404 (measured: `/definitely-not-a-page-xyz/` → 404)
@@ -502,6 +512,9 @@ and can only be framed by our own origin.
 - **WHEN** the route is requested with POST, PUT or DELETE
 - **THEN** the response is 405
 - **AND** no upstream fetch is made
+- **NOTE** satisfied by exporting only `GET`: App Router answers 405 for every method a route does not export,
+  so hand-written handlers added nothing but a chance to get `OPTIONS` wrong (Next answers that itself, and
+  answering 405 to it is the wrong answer)
 
 ### Requirement: Caching and upstream load control
 

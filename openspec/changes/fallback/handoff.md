@@ -29,7 +29,7 @@ origin, D2 chrome strategy) were escalated and answered by you; these are the on
 | ASM8 | No `wp_footer` script sits inside a chrome element | `fixtures.test.ts` asserts 0 of 46/58/54; the sweep asserts no script lost on any of 172 pages | Interactive widgets die on that page — the exact capability the iframe exists to preserve. Caught by test, not in production |
 | ASM2 | Removing chrome markup does not break in-content theme JS | Open the sample pages with the console open | Sliders or toggles silently fail; fall back to hiding chrome with CSS instead of removing it |
 | ASM3 | The legacy origin is reachable server-side from the container | `curl` from inside the container after A2 | Every legacy page 404s in that environment — gracefully, never a 500 |
-| ASM4 | Iframe-weakened SEO is acceptable for the transition | Yandex Webmaster over the first weeks | Ranking loss on ~170 low-traffic pages; recoverable by prioritising native routes |
+| ASM4 | An embedded page having **no crawlable content of its own** is acceptable for the transition | Yandex Webmaster over the first weeks | Ranking loss across the ~15 % of entry traffic (≈3 000 of 20 907 entry visits / 91 days) these pages carry; recoverable by prioritising native routes |
 | ASM5 | Legacy JS executing same-origin is acceptable | **The first authenticated feature on this site** | Legacy scripts gain read access to a session. There is no auth, no cookie and no user data today; this is the named revisit trigger |
 | ASM6 | Stripping the legacy Metrica counter loses nothing depended on | Ask whoever reads the old dashboards | A gap in old-counter continuity for fallback pages. One line to revert |
 | ASM7 | Embedded pages stay out of `sitemap.xml` | An SEO review deciding otherwise | Slower discovery of ~170 URLs already linked from the header nav |
@@ -47,7 +47,8 @@ origin, D2 chrome strategy) were escalated and answered by you; these are the on
 ## Residual Risks
 
 - **The legacy origin becomes an availability dependency** for these paths. Bounded: an 8-second timeout, at
-  most 4 concurrent upstream requests, an hour-long reuse window, and failure closes to 404 rather than 500.
+  most 4 concurrent upstream requests process-wide, an hour-long reuse window, and failure closes to 404 rather
+  than 500.
   Detection: `[legacy] upstream …` lines in the container log, and `pnpm url:check` falling back toward 83.7 %.
 - **`?od_embed=1` bypasses WP Rocket's page cache on the current origin**, so every fallback fetch is a full
   uncached WordPress render (measured: +0.25 s, 70 KB instead of 88 KB). Acceptable — the uncached page is
@@ -57,6 +58,14 @@ origin, D2 chrome strategy) were escalated and answered by you; these are the on
   depth-counted element matching, per-element strips, an idempotence property and a golden fingerprint over
   three real pages — but a WordPress theme update could still move the boundary. Detection: `[legacy] boundary
   miss` / `[legacy] unbalanced` in the log, and the sweep.
+- **An embedded page is contentless to a crawler.** The indexable URL renders header, iframe and footer; the
+  frame's document is `x-robots-tag: noindex`, so what a crawler gets for `/team/` is a title, a description and
+  nothing else — where the live site today serves the full page. This is ASM4, restated bluntly after review
+  because "iframe-weakened SEO" undersold it, and because the ~170 affected pages carry ~15 % of entry traffic
+  rather than the "low-traffic" the row originally claimed. The cheap escape, if Webmaster shows drops: the page
+  already fetches and transforms the whole document server-side and discards the HTML to keep the title, so
+  rendering that body inline instead of framing it is a smaller step than it looks — what is untested there is
+  the CSS collision the iframe was chosen to avoid (D2, D4).
 - **Legacy scripts run same-origin** (ASM5). No auth, no cookies, no user data today. The revisit trigger is
   the first authenticated feature, and it is recorded in `LegacyEmbed.tsx` where someone will read it.
 - **ISR holds the previous answer.** Flipping `WP_LEGACY_BASE` on a *running* container leaves already-rendered
@@ -78,10 +87,10 @@ origin, D2 chrome strategy) were escalated and answered by you; these are the on
 | `pnpm lint` | pass, `--max-warnings 0` |
 | `pnpm lint:styles` | pass |
 | `pnpm type-check` | pass |
-| `pnpm test` | **515 passed**, 66 files, 0 skipped |
+| `pnpm test` | **526 passed**, 66 files, 0 skipped |
 | `WP_BASE= WP_USER= WP_PASSWORD= WP_LEGACY_BASE= pnpm build` | pass — the CI case |
 | `pnpm test:e2e -- legacy-embed` | **48 passed**, two viewports |
-| `pnpm url:check` | **98.8 %** entry-traffic coverage (from 83.7 %) |
+| `pnpm url:check` | **98.9 %** entry-traffic coverage (from 83.7 %) |
 | `curl -sI /legacy/team/` | `x-robots-tag: noindex`, `frame-ancestors 'self'` |
 | production build + smoke (gate 10) | 200 / 200 / 200 / 404, 0 server errors |
 | `pnpm legacy:sweep` | **172/172 clean**, 0 boundary misses |
@@ -148,6 +157,17 @@ real elements. Four of the 30 stylesheets sit in `<!--[if lte IE 9]>` comments. 
 inside `section#page`, not a sibling — a span finder that returned only outermost elements found neither it nor
 `#middle`, and every assertion written against that finder passed vacuously. All three are recorded in the
 fixtures README and asserted.
+
+**A review pass after GATE 2 found a fourth defect no gate had caught, and it was a prose assumption.**
+`legacyPath.ts` stated that Next hands route params already decoded, and built its security argument on it —
+"there is no decode-again loop, because `%` is not an allowed character". Params arrive **percent-encoded**, so
+the allowlist rejected every Cyrillic slug and `/profile/дегтярёв-алексей-анатольевич/` 404'd on a page that
+exists upstream. It survived GATE 1, GATE 2, 515 unit tests, 48 browser tests and a 172-page sweep, because
+every one of those used ASCII slugs; `pnpm url:check` is what found it, by replaying real URLs. Segments are now
+decoded exactly once before the allowlist sees them. The same pass made the store and the gate `globalThis`
+singletons — Next constructs a module-level instance once **per bundle**, so both were per-surface and the
+concurrency bound was double what LCP-010 promises — and put `isEmbeddable` on the proxy route so the two
+surfaces agree about which paths exist.
 
 **Two process notes.** `pnpm format` was not run repo-wide: 26 files carry pre-existing prettier drift, and
 reformatting them would bury this change's diff in unrelated churn. Every file this change touches is clean,

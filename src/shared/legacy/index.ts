@@ -11,7 +11,7 @@ export { isEmbeddable, LEGACY_DENYLIST } from './isEmbeddable';
 export { LEGACY_HEIGHT_MESSAGE, LEGACY_INITIAL_HEIGHT, LEGACY_MAX_HEIGHT } from './legacyMessage';
 export type { LegacyHeightMessage } from './legacyMessage';
 export { legacyOrigin, resolveLegacyOrigin } from './legacyOrigin';
-export { buildLegacyUrl, LEGACY_EMBED_QUERY, legacyPathname } from './legacyPath';
+export { buildLegacyUrl, decodeSegments, LEGACY_EMBED_QUERY, legacyPathname } from './legacyPath';
 export { createLegacyLoader, loadLegacyDocument, LEGACY_TIMEOUT_MS } from './loadLegacyDocument';
 export { createConcurrencyGate, createLegacyStore, legacyGate, legacyStore } from './legacyStore';
 export { transformLegacyHtml } from './transformLegacyHtml';

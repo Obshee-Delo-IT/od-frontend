@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { LEGACY_HEIGHT_MESSAGE, LEGACY_INITIAL_HEIGHT, LEGACY_MAX_HEIGHT } from '@/shared/legacy';
+import { decodeSegments, LEGACY_HEIGHT_MESSAGE, LEGACY_INITIAL_HEIGHT, LEGACY_MAX_HEIGHT } from '@/shared/legacy';
 import css from './LegacyEmbed.module.css';
 
 /**
@@ -13,9 +13,18 @@ import css from './LegacyEmbed.module.css';
  * CORS or `X-Frame-Options` handling is involved.
  */
 
-/** `/legacy/materials/plakati/`, with each segment encoded exactly once. */
-export const legacyEmbedSrc = (slug: readonly string[]): string =>
-  `/legacy/${slug.map((segment) => encodeURIComponent(segment)).join('/')}/`;
+/**
+ * `/legacy/materials/plakati/`, with each segment encoded exactly once.
+ *
+ * Decoded first because the router hands segments percent-encoded: encoding what
+ * is already encoded turns `%D0%B4` into `%25D0%25B4`, and the proxy then refuses
+ * the doubly-encoded slug. `decodeSegments` returns `null` only for a slug the
+ * page would never have rendered, so falling back to the raw value is safe.
+ */
+export const legacyEmbedSrc = (slug: readonly string[]): string => {
+  const segments = decodeSegments(slug) ?? slug;
+  return `/legacy/${segments.map((segment) => encodeURIComponent(segment)).join('/')}/`;
+};
 
 export interface LegacyEmbedProps {
   /** The catch-all's slug for the page being embedded. */

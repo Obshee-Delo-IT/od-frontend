@@ -158,7 +158,12 @@ const Page = async ({ params }: { params: Promise<{ slug: string[] }> }) => {
 
     // The embed and nothing else: the root layout already supplies the header,
     // `Container` and footer.
-    return <LegacyEmbed slug={slug} />;
+    //
+    // Keyed by path so a client-side navigation between two fallback pages
+    // remounts it. Without the key React reuses the instance, the frame reloads
+    // but the measured `height` state does not, and the new page renders at the
+    // old page's height until its first report arrives.
+    return <LegacyEmbed key={legacyPathname(slug)} slug={slug} />;
   }
 
   const kind = await resolvePostKind(id);
