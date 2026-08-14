@@ -1,7 +1,7 @@
 import { Link as RadixLink, LinkProps as RadixLinkProps } from '@radix-ui/themes';
 import clsx from 'clsx';
 import NextLink, { LinkProps as NextLinkProps } from 'next/link';
-import { PropsWithChildren, ReactNode } from 'react';
+import { PropsWithChildren } from 'react';
 import css from './Link.module.css';
 
 /**
@@ -24,8 +24,6 @@ type LinkColor = 'primary' | 'red' | 'white' | 'gray';
 
 interface LinkProps extends Omit<NextLinkProps, 'passHref'>, Omit<RadixLinkProps, 'href' | 'color' | 'asChild'> {
   color?: LinkColor;
-  leftIcon?: ReactNode;
-  rightIcon?: ReactNode;
   /** Figma's fourth state. Renders the disabled colour and takes the link out of the tab order. */
   disabled?: boolean;
 }
@@ -44,8 +42,6 @@ export const Link: React.FC<PropsWithChildren<LinkProps>> = ({
   highContrast,
   color = 'red',
   children,
-  leftIcon = null,
-  rightIcon = null,
   href,
   disabled = false,
   className,
@@ -59,21 +55,11 @@ export const Link: React.FC<PropsWithChildren<LinkProps>> = ({
     truncate={truncate}
     wrap={wrap}
     highContrast={highContrast}
-    className={clsx(
-      css.link,
-      css[color],
-      {
-        [css.disabled]: disabled,
-        [css.inlineFlex]: leftIcon || rightIcon,
-      },
-      className
-    )}
+    className={clsx(css.link, css[color], { [css.disabled]: disabled }, className)}
     asChild
   >
     <NextLink href={href} aria-disabled={disabled || undefined} tabIndex={disabled ? -1 : undefined} {...props}>
-      {leftIcon}
       <span>{children}</span>
-      {rightIcon}
     </NextLink>
   </RadixLink>
 );

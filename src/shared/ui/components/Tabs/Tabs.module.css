@@ -68,9 +68,3 @@
   background: var(--red-2);
   color: var(--white);
 }
-
-.tab svg {
-  width: 20px;
-  height: 20px;
-  flex-shrink: 0;
-}

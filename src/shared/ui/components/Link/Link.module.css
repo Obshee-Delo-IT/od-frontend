@@ -8,12 +8,6 @@
 
 .link {
   display: inline;
-  align-items: center;
-  gap: 10px;
-}
-
-.inlineFlex {
-  display: inline-flex;
 }
 
 /* Figma `Color=Primary` */

@@ -173,15 +173,4 @@ describe('<Carousel />', () => {
     sync({ isLocked: true });
     expect(controls()).toHaveAttribute('data-locked', 'true');
   });
-
-  it('omits the nav buttons when navigation is disabled', () => {
-    renderCarousel({ showNavigation: false });
-    expect(screen.queryByRole('button', { name: 'Предыдущий слайд' })).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Следующий слайд' })).not.toBeInTheDocument();
-  });
-
-  it('omits the pagination container when pagination is disabled', () => {
-    renderCarousel({ showPagination: false });
-    expect(controls().querySelector('[class*="pagination"]')).toBeNull();
-  });
 });

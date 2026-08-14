@@ -29,12 +29,9 @@ describe('<Breadcrumbs />', () => {
 
   it('renders one fewer separator than the number of items', () => {
     const { container } = renderWithinTheme(
-      <Breadcrumbs
-        Separator={<span data-testid="sep">/</span>}
-        items={[{ label: 'A', href: '/a' }, { label: 'B', href: '/b' }, { label: 'C' }]}
-      />
+      <Breadcrumbs items={[{ label: 'A', href: '/a' }, { label: 'B', href: '/b' }, { label: 'C' }]} />
     );
 
-    expect(container.querySelectorAll('[data-testid="sep"]')).toHaveLength(2);
+    expect(container.querySelectorAll('svg')).toHaveLength(2);
   });
 });

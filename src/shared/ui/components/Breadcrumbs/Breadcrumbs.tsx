@@ -11,13 +11,11 @@ export interface BreadcrumbItem {
 
 interface BreadcrumbsProps {
   items: BreadcrumbItem[];
-  Separator?: React.ReactNode;
 }
 
-export const Breadcrumbs: React.FC<BreadcrumbsProps> = ({
-  items,
-  Separator = <ChevronRight width={18} height={18} color="var(--gray-5)" aria-hidden="true" />,
-}) => (
+const separator = <ChevronRight width={18} height={18} color="var(--gray-5)" aria-hidden="true" />;
+
+export const Breadcrumbs: React.FC<BreadcrumbsProps> = ({ items }) => (
   <nav aria-label="Навигация" className={css.container}>
     {items.map((item, index) => {
       const isLast = index === items.length - 1;
@@ -34,7 +32,7 @@ export const Breadcrumbs: React.FC<BreadcrumbsProps> = ({
                 {item.label}
               </Text>
             )}
-            {!isLast && Separator}
+            {!isLast && separator}
           </>
         </Fragment>
       );

@@ -9,29 +9,23 @@ export interface PaginationProps {
   totalPages: number;
   /** Maps a page number to its href (query string is the caller's concern). */
   buildHref: (page: number) => string;
-  siblings?: number;
   className?: string;
-  'aria-label'?: string;
 }
 
-export const Pagination: React.FC<PaginationProps> = ({
-  currentPage,
-  totalPages,
-  buildHref,
-  siblings = 1,
-  className,
-  'aria-label': ariaLabel = 'Навигация по страницам',
-}) => {
+/** Pages either side of the current one, before the range collapses to «…». */
+const SIBLINGS = 1;
+
+export const Pagination: React.FC<PaginationProps> = ({ currentPage, totalPages, buildHref, className }) => {
   if (totalPages <= 1) {
     return null;
   }
 
-  const items = getPaginationRange(currentPage, totalPages, siblings);
+  const items = getPaginationRange(currentPage, totalPages, SIBLINGS);
   const prevDisabled = currentPage <= 1;
   const nextDisabled = currentPage >= totalPages;
 
   return (
-    <nav className={clsx(css.root, className)} aria-label={ariaLabel}>
+    <nav className={clsx(css.root, className)} aria-label="Навигация по страницам">
       {prevDisabled ? (
         <span className={clsx(css.arrow, css.disabled)} aria-hidden="true">
           <ChevronLeftIcon />

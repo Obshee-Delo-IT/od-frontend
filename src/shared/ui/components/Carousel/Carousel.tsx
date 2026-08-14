@@ -1,6 +1,5 @@
 'use client';
 
-import clsx from 'clsx';
 import { useId, useRef, useState } from 'react';
 import { A11y, Navigation, Pagination } from 'swiper/modules';
 import { Swiper, SwiperProps, SwiperSlide } from 'swiper/react';
@@ -15,9 +14,6 @@ export interface CarouselProps {
   slidesPerView?: SwiperProps['slidesPerView'];
   spaceBetween?: number;
   breakpoints?: SwiperProps['breakpoints'];
-  showNavigation?: boolean;
-  showPagination?: boolean;
-  className?: string;
 }
 
 export const Carousel: React.FC<CarouselProps> = ({
@@ -26,9 +22,6 @@ export const Carousel: React.FC<CarouselProps> = ({
   slidesPerView = 3,
   spaceBetween = 24,
   breakpoints,
-  showNavigation = true,
-  showPagination = true,
-  className,
 }) => {
   const swiperRef = useRef<SwiperType | null>(null);
   const paginationId = `carousel-pagination-${useId().replace(/:/g, '')}`;
@@ -39,22 +32,18 @@ export const Carousel: React.FC<CarouselProps> = ({
   };
 
   return (
-    <div aria-roledescription="carousel" aria-label={ariaLabel} className={clsx(css.root, className)}>
+    <div aria-roledescription="carousel" aria-label={ariaLabel} className={css.root}>
       <Swiper
         modules={[Navigation, Pagination, A11y]}
         slidesPerView={slidesPerView}
         spaceBetween={spaceBetween}
         breakpoints={breakpoints}
-        pagination={
-          showPagination
-            ? {
-                el: `#${paginationId}`,
-                clickable: true,
-                bulletClass: css.bullet,
-                bulletActiveClass: css.bulletActive,
-              }
-            : false
-        }
+        pagination={{
+          el: `#${paginationId}`,
+          clickable: true,
+          bulletClass: css.bullet,
+          bulletActiveClass: css.bulletActive,
+        }}
         onSwiper={(swiper) => {
           swiperRef.current = swiper;
           syncNav(swiper);
@@ -72,31 +61,27 @@ export const Carousel: React.FC<CarouselProps> = ({
       </Swiper>
 
       <div className={css.controls} data-locked={navState.isLocked || undefined}>
-        {showNavigation && (
-          <IconButton
-            aria-label="Предыдущий слайд"
-            radius="circle"
-            variant="outline"
-            disabled={navState.isBeginning}
-            onClick={() => swiperRef.current?.slidePrev()}
-            className={css.navButton}
-          >
-            <ChevronLeftIcon size={16} />
-          </IconButton>
-        )}
-        {showPagination && <div id={paginationId} className={css.pagination} />}
-        {showNavigation && (
-          <IconButton
-            aria-label="Следующий слайд"
-            radius="circle"
-            variant="outline"
-            disabled={navState.isEnd}
-            onClick={() => swiperRef.current?.slideNext()}
-            className={css.navButton}
-          >
-            <ChevronRightIcon size={16} />
-          </IconButton>
-        )}
+        <IconButton
+          aria-label="Предыдущий слайд"
+          radius="circle"
+          variant="outline"
+          disabled={navState.isBeginning}
+          onClick={() => swiperRef.current?.slidePrev()}
+          className={css.navButton}
+        >
+          <ChevronLeftIcon size={16} />
+        </IconButton>
+        <div id={paginationId} className={css.pagination} />
+        <IconButton
+          aria-label="Следующий слайд"
+          radius="circle"
+          variant="outline"
+          disabled={navState.isEnd}
+          onClick={() => swiperRef.current?.slideNext()}
+          className={css.navButton}
+        >
+          <ChevronRightIcon size={16} />
+        </IconButton>
       </div>
     </div>
   );

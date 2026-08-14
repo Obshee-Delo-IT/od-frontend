@@ -11,9 +11,7 @@ export interface TabItem {
   value: string;
   /** Destination — each tab is a link, so the strip works in RSC with no client JS. */
   href: string;
-  /** Optional leading icon (SVG component element). */
-  icon?: React.ReactNode;
-  /** Greys the tab out and drops the link (renders a non-interactive span). */
+  /** Figma «… / Disabled». Greys the tab out and drops the link (renders a non-interactive span). */
   disabled?: boolean;
 }
 
@@ -41,7 +39,6 @@ export const Tabs: React.FC<TabsProps> = ({
       if (item.disabled) {
         return (
           <span key={item.value} className={classes} aria-disabled="true">
-            {item.icon}
             {item.label}
           </span>
         );
@@ -49,7 +46,6 @@ export const Tabs: React.FC<TabsProps> = ({
 
       return (
         <NextLink key={item.value} href={item.href} className={classes} aria-current={isActive ? 'page' : undefined}>
-          {item.icon}
           {item.label}
         </NextLink>
       );

@@ -52,18 +52,6 @@ describe('<Link />', () => {
     expect(link).not.toHaveAttribute('tabindex');
   });
 
-  it('renders icon slots around the label and switches to inline-flex', () => {
-    renderInTheme(
-      <Link href="/" leftIcon={<span data-testid="left" />} rightIcon={<span data-testid="right" />}>
-        Ссылка
-      </Link>
-    );
-
-    expect(screen.getByTestId('left')).toBeInTheDocument();
-    expect(screen.getByTestId('right')).toBeInTheDocument();
-    expect(screen.getByRole('link')).toHaveClass('inlineFlex');
-  });
-
   it('keeps a caller-supplied className alongside the colour class', () => {
     renderInTheme(
       <Link href="/" color="white" className="custom">

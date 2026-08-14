@@ -648,6 +648,16 @@ what to know before adding any of it back:
   input and the wrapper `<div>` went with them (Radix's `TextFieldRoot` is
   `display: flex` and stretches the same either way). Figma still draws all four
   — see design-system §5's `Input Field` row before rebuilding one.
+- **Repo-invented props on five primitives**, each with zero call sites and no
+  cell in the Figma set behind it: `Link`'s `leftIcon`/`rightIcon` (every cell in
+  the `Links` matrix is text-only) and the `.inlineFlex` they switched on,
+  `Tabs`'s `icon` and the `.tab svg` rule sizing it, `Carousel`'s
+  `showNavigation`/`showPagination`/`className`, `Pagination`'s `siblings` and
+  `aria-label` overrides, `Breadcrumbs`'s `Separator`. **What stayed, and why:**
+  `Link`'s `white` colour and `disabled` state, and `Tabs`'s `size` and
+  `disabled` — those are Figma variants (see the `Links` matrix and the
+  `_Button Groups Base` (tabs) row in design-system §3.2), so an unused one is a
+  realized spec cell, not speculation.
 - **One entity decoder** (`src/shared/lib/decodeEntities.ts`) — there was a
   twenty-entry table in `shared/legacy/html.ts` and an eleven-entry one in
   `shared/api/newsPreview.ts`, the second of which silently dropped anything it
