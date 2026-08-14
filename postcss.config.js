@@ -6,9 +6,10 @@ module.exports = {
         files: ['./src/shared/ui/styles/media.css'],
       },
     ],
-    'postcss-flexbugs-fixes',
     'postcss-nested-import',
     'postcss-nested',
+    // Runs autoprefixer itself, off the same browserslist — there is no separate
+    // `autoprefixer` entry in this list for that reason.
     [
       'postcss-preset-env',
       {
@@ -24,6 +25,5 @@ module.exports = {
         discardUnused: false,
       },
     ],
-    'autoprefixer',
   ],
 };
