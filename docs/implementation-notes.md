@@ -114,6 +114,18 @@ constructed **once per bundle** — measured, one build prints the boot warning 
 doubled both the upstream concurrency bound and the number of upstream renders per page; and `/legacy/*` now
 applies the same `isEmbeddable` the page does, so the two surfaces cannot disagree about which paths exist.
 
+A second pass, this time from looking at the thing rather than at the code, fixed three more. Two are the same
+mistake — the chrome is gone but what was shaped around it is not: `section#middle` still carried the 130px
+`padding-top` that cleared the (`position: absolute`, 130px tall) header, showing as a strip of nothing at the
+top of every embedded page; and the newsletter row, on 43 of the 172 pages, still invited a subscription that
+LCP-007 and the runtime deliberately make impossible. Both are corrected by one injected `<style>`, last in
+the document so it outranks the theme's twelve inline blocks on order rather than specificity. The third:
+**a height the parent never heard was never re-sent.** The reporter deduplicated on "same height as last
+time", the parent attaches its listener from a `useEffect`, and a cached frame reports before hydration — so
+after a back-navigation the frame sat at 540px around 2149px of page, with its own scrollbar already
+suppressed on the strength of that unheard report. The settling ticks now force a re-send, and `pageshow`
+covers a bfcache restore.
+
 **It was never actually blocked on the frozen copy**, which is what the plan had said for two months.
 `WP_LEGACY_BASE` points at live production and the proxy removes the chrome itself, so no WordPress-side work
 was needed. Swapping to a frozen copy later is one environment variable.

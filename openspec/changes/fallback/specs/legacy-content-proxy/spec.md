@@ -481,6 +481,42 @@ so no combination of failures can leave content unreachable.
 - **THEN** a further height is reported within a bounded settling window after load
 - **AND** no unbounded polling continues for the lifetime of the page
 
+#### Scenario: Parent starts listening after the first report
+- **WHEN** the parent attaches its listener only after the frame has already reported — a cached frame with
+  hydration still pending, which is what a back-navigation produces
+- **THEN** the same height is re-sent during the settling window, unchanged though it is
+- **AND** the frame reaches its full height rather than staying at its starting height with its own scrollbar
+  already suppressed
+
+**NOTE**: this scenario was missing, and the gap was reported from use: after a back-navigation the frame sat
+at 540px around 2149px of page, permanently. The reporter deduplicated on "same height as last time", which is
+correct for resize spam and wrong for a listener that was not there yet.
+
+### Requirement: Injected stylesheet
+
+The system SHALL inject one stylesheet, last in the document, correcting what the removal of chrome leaves
+behind. It SHALL NOT carry any rule that suppresses the document's own scrollbar — that remains LCP-008's
+job, conditional on the reporter running.
+
+**ID**: LCP-012
+
+**Invariants**: Added exactly once per document however many times the transform runs, and positioned after
+every `<style>` the upstream page carries, so a rule wins on document order rather than on specificity.
+
+#### Scenario: Header clearance removed with the header
+- **WHEN** a page whose `section#middle` carries the `padding-top` that cleared the legacy header is proxied
+- **THEN** that padding is zeroed, so the content starts at the top of the frame
+
+#### Scenario: Newsletter block hidden
+- **WHEN** a proxied page carries the `.shortcode_wysija` newsletter form — 43 of the 172 legacy pages do
+- **THEN** the whole `.cmsms_row` holding it is hidden, heading included
+- **AND** nothing else on the page is hidden with it
+
+#### Scenario: Selector unsupported
+- **WHEN** the browser does not support `:has()`
+- **THEN** it drops that rule alone and shows the newsletter block, which is the behaviour before this
+  requirement existed
+
 ### Requirement: Proxy response construction
 
 The system SHALL build the response from scratch — never by forwarding upstream response headers — and SHALL
