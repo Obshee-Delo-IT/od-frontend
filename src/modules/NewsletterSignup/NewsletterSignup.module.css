@@ -20,9 +20,21 @@
   }
 }
 
+/* The article sidebar: same form, stacked into a ~378px column. */
+.narrow {
+  padding: 20px;
+  border-radius: var(--radius-4);
+  background: var(--white);
+  gap: 20px;
+}
+
 .title {
   margin: 0;
   color: var(--red-8);
+}
+
+.narrow .title {
+  color: inherit;
 }
 
 .form {
@@ -36,6 +48,12 @@
   }
 }
 
+/* Always stacked — the sidebar is too narrow for a row at any viewport. */
+.narrow .form {
+  flex-direction: column;
+  align-items: stretch;
+}
+
 .fields {
   display: flex;
   min-width: 320px;
@@ -46,6 +64,10 @@
   @media (--mobile) {
     min-width: 0;
   }
+}
+
+.narrow .fields {
+  min-width: 0;
 }
 
 .submit {

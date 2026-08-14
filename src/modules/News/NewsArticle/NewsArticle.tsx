@@ -1,4 +1,5 @@
 import { Text } from '@radix-ui/themes';
+import { NewsletterSignup } from '@/modules/NewsletterSignup';
 import { cachedFetchNews } from '@/shared/api/fetchNews';
 import { buildNewsPreview } from '@/shared/api/newsPreview';
 import { canonicalUrl } from '@/shared/config/site';
@@ -9,7 +10,6 @@ import { GutenbergProvider } from '@/shared/ui/theme';
 import { ImagePreviewClient } from '../ImagePreview';
 import { SimilarNews } from '../SimilarNews';
 import css from './NewsArticle.module.css';
-import { SubscribeToNews } from '../SubscribeToNews/SubscribeToNews';
 import { parsePost, resolveContentImages } from '../utils';
 import type { Metadata } from 'next';
 
@@ -130,7 +130,7 @@ export const NewsArticle = async ({ id }: NewsArticleProps) => {
         <Box as="aside" position="relative" className={css.aside}>
           <Box display="flex" flexDirection="column" position="sticky" top={32} gap={20}>
             <SimilarNews category={category} region={region} />
-            <SubscribeToNews variant="small" />
+            <NewsletterSignup variant="narrow" title="Подписаться" />
           </Box>
         </Box>
       </Box>

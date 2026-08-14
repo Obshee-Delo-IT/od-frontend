@@ -11,19 +11,22 @@ import css from './NewsletterSignup.module.css';
 
 const PERSONAL_DATA_LINK = '/personal-data';
 
+const PLACEHOLDER = 'Адрес электронной почты';
+
 export interface NewsletterSignupProps {
-  variant?: 'card' | 'bare';
+  /**
+   * `card` is the wide banner that closes the home page and every index;
+   * `narrow` is the same form stacked for the news article's sidebar, which
+   * used to be a second, non-functional copy of this component.
+   */
+  variant?: 'card' | 'narrow';
   title?: string;
-  submitLabel?: string;
-  placeholder?: string;
   className?: string;
 }
 
 export const NewsletterSignup: React.FC<NewsletterSignupProps> = ({
   variant = 'card',
   title = 'Подписаться на новости',
-  submitLabel = 'Подписаться',
-  placeholder = 'Адрес электронной почты',
   className,
 }) => {
   const [email, setEmail] = useState('');
@@ -34,9 +37,12 @@ export const NewsletterSignup: React.FC<NewsletterSignupProps> = ({
     // Submission wiring is tracked in #54 (B6 forms backend).
   };
 
+  const narrow = variant === 'narrow';
+
   return (
-    <form className={clsx(css.root, variant === 'card' && css.card, className)} onSubmit={handleSubmit}>
-      <Heading as="h2" size="7" weight="bold" className={css.title}>
+    <form className={clsx(css.root, css[variant], className)} onSubmit={handleSubmit}>
+      {/* h3 in the sidebar: it sits under «Похожие новости», which is one. */}
+      <Heading as={narrow ? 'h3' : 'h2'} size={narrow ? '5' : '7'} weight="bold" className={css.title}>
         {title}
       </Heading>
       <div className={css.form}>
@@ -44,8 +50,8 @@ export const NewsletterSignup: React.FC<NewsletterSignupProps> = ({
           <Input
             type="email"
             color="gray"
-            placeholder={placeholder}
-            aria-label={placeholder}
+            placeholder={PLACEHOLDER}
+            aria-label={PLACEHOLDER}
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
@@ -64,7 +70,7 @@ export const NewsletterSignup: React.FC<NewsletterSignupProps> = ({
           />
         </div>
         <Button type="submit" disabled={!consent || !email} className={css.submit}>
-          {submitLabel}
+          Подписаться
         </Button>
       </div>
     </form>

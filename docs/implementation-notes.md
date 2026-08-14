@@ -599,3 +599,31 @@ Kept so the same questions don't get re-opened.
 - **"`/materials/articles/` is not a build at all"** — it needed a thin alias route, now shipped. See §3.
 - **Route shapes `/news/<id>` and `/video/<id>`** — this project's own pre-launch invention. They 404 by design; don't "fix" them.
 - **`FILM_CATEGORY_IDS` as an array** — replaced by `FILM_CATEGORIES` keyed by URL segment (A8).
+
+---
+
+## 9. Simplification pass — 2026-08-14
+
+A repo-wide audit for over-engineering, applied in blocks. What it removed, and
+what to know before adding any of it back:
+
+- **`Programs`** — a byte-identical copy of `Directions` behind a switch that
+  static config pinned to `true`. See §3 D1.
+- **Five dependencies** — `autoprefixer` and `postcss-flexbugs-fixes` (the first
+  is inside `postcss-preset-env`, which runs it off the same browserslist; the
+  second patches an IE bug and this browserslist has no IE), plus `nanoid`,
+  `postcss-loader` and `postcss-discard-comments`, which nothing imported.
+- **`dayjs`** → `src/shared/lib/formatDate.ts`. Every call site was
+  `format('DD.MM.YYYY')`, which is `Intl.DateTimeFormat('ru-RU')` with 2-digit
+  day and month. The `dayjs.locale('ru')` calls did nothing — the format is
+  numeric.
+- **Nineteen icon wrapper files → one.** The SVG set in `assets/icons/` is the
+  design set and stays whole; the wrapper list is only what something renders.
+- **`SubscribeToNews`** — a second, non-functional subscribe form (no state, no
+  handler, a `variant="default"` branch rendering the literal string «Not
+  inplemented», and its own consent link pointing at `/`). The news article
+  sidebar now renders `NewsletterSignup variant="narrow"`, so there is one form,
+  one consent link and one place for #54 to wire submission.
+- **`LEGACY_DENYLIST`** — shipped empty by design (A6 decision D12). Retiring a
+  legacy page is a native route or a redirect; if a list is ever wanted back it
+  is three lines in `isEmbeddable.ts`.
