@@ -2,23 +2,26 @@ import clsx from 'clsx';
 import React from 'react';
 import css from './Box.module.css';
 
-type SpacingValue = 0 | 4 | 8 | 12 | 16 | 20 | 24 | 32 | 40 | 48 | 56 | 64;
+/**
+ * The layout shell: spacing, flex and position props with the project's three
+ * breakpoints, on any element.
+ *
+ * Each set prop contributes one class per breakpoint and one inline custom
+ * property carrying the value — see `Box.module.css`, which is 350 lines
+ * because of it rather than the 3 528 it took to enumerate every property
+ * against a fixed twelve-step scale. The scale is gone with it: `gap={18}` is
+ * as valid as `gap={16}`, and `p="1rem"` works too.
+ */
+
+type Spacing = number | string;
 
 type DisplayValue = 'block' | 'inline' | 'inline-block' | 'flex' | 'inline-flex' | 'grid' | 'inline-grid' | 'none';
-
 type FlexDirectionValue = 'row' | 'row-reverse' | 'column' | 'column-reverse';
-
 type FlexWrapValue = 'nowrap' | 'wrap' | 'wrap-reverse';
-
 type JustifyContentValue = 'flex-start' | 'flex-end' | 'center' | 'space-between' | 'space-around' | 'space-evenly';
-
 type AlignItemsValue = 'flex-start' | 'flex-end' | 'center' | 'baseline' | 'stretch';
-
 type AlignContentValue = 'flex-start' | 'flex-end' | 'center' | 'space-between' | 'space-around' | 'stretch';
-
 type PositionValue = 'static' | 'relative' | 'absolute' | 'fixed' | 'sticky';
-
-type CoordinateValue = 0 | 4 | 8 | 12 | 16 | 20 | 24 | 32 | 40 | 48 | 56 | 64;
 
 interface ResponsiveValue<T> {
   mobile?: T;
@@ -26,174 +29,130 @@ interface ResponsiveValue<T> {
   desktop?: T;
 }
 
-type Spacing = SpacingValue | ResponsiveValue<SpacingValue>;
-type Display = DisplayValue | ResponsiveValue<DisplayValue>;
-type FlexDirection = FlexDirectionValue | ResponsiveValue<FlexDirectionValue>;
-type FlexWrap = FlexWrapValue | ResponsiveValue<FlexWrapValue>;
-type JustifyContent = JustifyContentValue | ResponsiveValue<JustifyContentValue>;
-type AlignItems = AlignItemsValue | ResponsiveValue<AlignItemsValue>;
-type AlignContent = AlignContentValue | ResponsiveValue<AlignContentValue>;
-type Position = PositionValue | ResponsiveValue<PositionValue>;
-type Coordinate = CoordinateValue | ResponsiveValue<CoordinateValue>;
+type Responsive<T> = T | ResponsiveValue<T>;
 
 type BoxOwnProps<T extends keyof HTMLElementTagNameMap> = {
   children?: React.ReactNode;
   as?: T;
-  p?: Spacing;
-  pt?: Spacing;
-  pr?: Spacing;
-  pb?: Spacing;
-  pl?: Spacing;
-  px?: Spacing;
-  py?: Spacing;
-  m?: Spacing;
-  mt?: Spacing;
-  mr?: Spacing;
-  mb?: Spacing;
-  ml?: Spacing;
-  mx?: Spacing;
-  my?: Spacing;
-  display?: Display;
-  flexDirection?: FlexDirection;
-  flexWrap?: FlexWrap;
-  justifyContent?: JustifyContent;
-  alignItems?: AlignItems;
-  alignContent?: AlignContent;
-  gap?: Spacing;
-  position?: Position;
-  top?: Coordinate;
-  bottom?: Coordinate;
-  left?: Coordinate;
-  right?: Coordinate;
+  p?: Responsive<Spacing>;
+  pt?: Responsive<Spacing>;
+  pr?: Responsive<Spacing>;
+  pb?: Responsive<Spacing>;
+  pl?: Responsive<Spacing>;
+  px?: Responsive<Spacing>;
+  py?: Responsive<Spacing>;
+  m?: Responsive<Spacing>;
+  mt?: Responsive<Spacing>;
+  mr?: Responsive<Spacing>;
+  mb?: Responsive<Spacing>;
+  ml?: Responsive<Spacing>;
+  mx?: Responsive<Spacing>;
+  my?: Responsive<Spacing>;
+  gap?: Responsive<Spacing>;
+  top?: Responsive<Spacing>;
+  bottom?: Responsive<Spacing>;
+  left?: Responsive<Spacing>;
+  right?: Responsive<Spacing>;
+  display?: Responsive<DisplayValue>;
+  flexDirection?: Responsive<FlexDirectionValue>;
+  flexWrap?: Responsive<FlexWrapValue>;
+  justifyContent?: Responsive<JustifyContentValue>;
+  alignItems?: Responsive<AlignItemsValue>;
+  alignContent?: Responsive<AlignContentValue>;
+  position?: Responsive<PositionValue>;
 };
 
 export type BoxProps<T extends keyof HTMLElementTagNameMap = 'div'> = BoxOwnProps<T> &
   Omit<React.ComponentPropsWithoutRef<T>, keyof BoxOwnProps<T>>;
 
-const getSpacingClass = (
-  spacing: Spacing | undefined,
-  type: 'p' | 'm' | 'gap',
-  direction: 't' | 'r' | 'b' | 'l' | 'x' | 'y' | '' = ''
-) => {
-  if (spacing === undefined) {
-    return undefined;
-  }
+const BREAKPOINTS = ['mobile', 'smallDesktop', 'desktop'] as const;
 
-  const prefix = type === 'gap' ? 'gap' : `${type}${direction}`;
+/** Bare numbers are pixels, the unit every call site has ever meant. */
+const length = (value: Spacing): string => (typeof value === 'number' ? `${value}px` : value);
 
-  if (typeof spacing === 'number') {
-    return css[`${prefix}-${spacing}`];
-  }
+/** Props whose value is a length, keyed by the CSS class stem they use. */
+const LENGTH_PROPS = new Set([
+  'p',
+  'pt',
+  'pr',
+  'pb',
+  'pl',
+  'px',
+  'py',
+  'm',
+  'mt',
+  'mr',
+  'mb',
+  'ml',
+  'mx',
+  'my',
+  'gap',
+  'top',
+  'bottom',
+  'left',
+  'right',
+]);
 
-  return clsx(
-    spacing.mobile !== undefined && css[`${prefix}-mobile-${spacing.mobile}`],
-    spacing.smallDesktop !== undefined && css[`${prefix}-smallDesktop-${spacing.smallDesktop}`],
-    spacing.desktop !== undefined && css[`${prefix}-desktop-${spacing.desktop}`]
-  );
-};
-
-const getPropertyClass = <T extends string>(
-  value: T | { mobile?: T; smallDesktop?: T; desktop?: T } | undefined,
-  property: string
-) => {
-  if (value === undefined) {
-    return undefined;
-  }
-
-  if (typeof value === 'string') {
-    return css[`${property}-${value}`];
-  }
-
-  return clsx(
-    value.mobile !== undefined && css[`${property}-mobile-${value.mobile}`],
-    value.smallDesktop !== undefined && css[`${property}-smallDesktop-${value.smallDesktop}`],
-    value.desktop !== undefined && css[`${property}-desktop-${value.desktop}`]
-  );
-};
-
-const getCoordinateClass = (coordinate: Coordinate | undefined, property: 'top' | 'bottom' | 'left' | 'right') => {
-  if (coordinate === undefined) {
-    return undefined;
-  }
-
-  if (typeof coordinate === 'number') {
-    return css[`${property}-${coordinate}`];
-  }
-
-  return clsx(
-    coordinate.mobile !== undefined && css[`${property}-mobile-${coordinate.mobile}`],
-    coordinate.smallDesktop !== undefined && css[`${property}-smallDesktop-${coordinate.smallDesktop}`],
-    coordinate.desktop !== undefined && css[`${property}-desktop-${coordinate.desktop}`]
-  );
+/** Props whose value is a keyword, mapped from the React name to the CSS one. */
+const KEYWORD_PROPS: Record<string, string> = {
+  display: 'display',
+  flexDirection: 'flex-direction',
+  flexWrap: 'flex-wrap',
+  justifyContent: 'justify-content',
+  alignItems: 'align-items',
+  alignContent: 'align-content',
+  position: 'position',
 };
 
 export const Box = <T extends keyof HTMLElementTagNameMap = 'div'>({
   children,
   as,
   className,
-  p,
-  pt,
-  pr,
-  pb,
-  pl,
-  px,
-  py,
-  m,
-  mt,
-  mr,
-  mb,
-  ml,
-  mx,
-  my,
-  display,
-  flexDirection,
-  flexWrap,
-  justifyContent,
-  alignItems,
-  alignContent,
-  gap,
-  position,
-  top,
-  bottom,
-  left,
-  right,
+  style,
   ...props
 }: BoxProps<T>) => {
-  const Component = (as || 'div') as T;
+  const classes: Array<string | undefined> = [];
+  const variables: Record<string, string> = {};
+  const rest: Record<string, unknown> = {};
 
-  const combinedClassName = clsx(
-    getSpacingClass(p, 'p', ''),
-    getSpacingClass(pt, 'p', 't'),
-    getSpacingClass(pr, 'p', 'r'),
-    getSpacingClass(pb, 'p', 'b'),
-    getSpacingClass(pl, 'p', 'l'),
-    getSpacingClass(px, 'p', 'x'),
-    getSpacingClass(py, 'p', 'y'),
-    getSpacingClass(m, 'm', ''),
-    getSpacingClass(mt, 'm', 't'),
-    getSpacingClass(mr, 'm', 'r'),
-    getSpacingClass(mb, 'm', 'b'),
-    getSpacingClass(ml, 'm', 'l'),
-    getSpacingClass(mx, 'm', 'x'),
-    getSpacingClass(my, 'm', 'y'),
-    getSpacingClass(gap, 'gap'),
-    getPropertyClass(display, 'display'),
-    getPropertyClass(flexDirection, 'flex-direction'),
-    getPropertyClass(flexWrap, 'flex-wrap'),
-    getPropertyClass(justifyContent, 'justify-content'),
-    getPropertyClass(alignItems, 'align-items'),
-    getPropertyClass(alignContent, 'align-content'),
-    getPropertyClass(position, 'position'),
-    getCoordinateClass(top, 'top'),
-    getCoordinateClass(bottom, 'bottom'),
-    getCoordinateClass(left, 'left'),
-    getCoordinateClass(right, 'right'),
-    className
-  );
+  const set = (name: string, value: Responsive<Spacing>, toCss: (value: Spacing) => string): void => {
+    if (value !== null && typeof value === 'object') {
+      for (const breakpoint of BREAKPOINTS) {
+        const at = (value as ResponsiveValue<Spacing>)[breakpoint];
+        if (at !== undefined) {
+          classes.push(css[`${name}-${breakpoint}`]);
+          variables[`--box-${name}-${breakpoint}`] = toCss(at);
+        }
+      }
+      return;
+    }
+    classes.push(css[name]);
+    variables[`--box-${name}`] = toCss(value);
+  };
+
+  for (const [key, value] of Object.entries(props)) {
+    if (value === undefined) {
+      continue;
+    }
+    if (LENGTH_PROPS.has(key)) {
+      set(key, value as Responsive<Spacing>, length);
+    } else if (KEYWORD_PROPS[key]) {
+      set(KEYWORD_PROPS[key], value as Responsive<Spacing>, String);
+    } else {
+      rest[key] = value;
+    }
+  }
+
+  const Component = (as || 'div') as T;
 
   return React.createElement(
     Component,
-    { ...props, className: combinedClassName } as React.ComponentPropsWithoutRef<T>,
+    {
+      ...rest,
+      className: clsx(classes, className),
+      // The caller's own `style` wins: these are defaults it may want to override.
+      style: { ...variables, ...style },
+    } as React.ComponentPropsWithoutRef<T>,
     children
   );
 };

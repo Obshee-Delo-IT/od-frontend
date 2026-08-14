@@ -97,9 +97,9 @@ Figma variables `spacing/0..9`:
 
 A **multiples-of-5** scale that compresses at the small end and stretches at the large end (no even 30/40/50/60/70).
 
-**Repo `Box` spacing scale (`src/shared/ui/components/Box/`): `0, 4, 8, 12, 16, 20, 24, 32, 40, 48, 56, 64`** — a **multiples-of-4** scale.
+**Repo `Box` takes any length** (`src/shared/ui/components/Box/`): a number is pixels, a string is passed through, so `p={15}` and `gap="1rem"` are both fine.
 
-**These don't overlap cleanly.** Real drift. Designers' Figma spacing values won't map to `Box` props 1:1. When implementing, round to the nearest `Box` step (e.g. Figma `spacing/3` = 15 → `Box p="16"`; `spacing/6` = 35 → either 32 or 40). Note in the implementation plan for a future Design conversation: rebase `Box` on multiples-of-5 to match Figma, or accept the rounding cost.
+It used to be a fixed multiples-of-4 scale — `0, 4, 8, …, 64` — because every step of every property was a generated CSS class, and 3 528 lines of them. Values now ride in a custom property, so the scale is gone and with it the rounding rule this section used to carry: **write Figma's number**.
 
 ### 2.3 Radius
 
@@ -263,7 +263,7 @@ Two things this replaced: `lightgrey` (a duplicate of `gray`) and `darkgrey` (`p
 
 | Repo component | Location | What it does |
 | --- | --- | --- |
-| `Box` | `src/shared/ui/components/Box/` | Responsive layout primitive. **Spacing scale is multiples-of-4 (0/4/8/…/64) while Figma's `spacing/*` variables are multiples-of-5 (0/5/10/…/80) — round when implementing.** |
+| `Box` | `src/shared/ui/components/Box/` | Responsive layout primitive. Any length: a number is pixels, a string passes through. Each set prop adds one class and one inline custom property. |
 | `NewsCard` | `src/shared/ui/components/NewsCard/` | The card primitive that recurs in the home news section, the `/news` grid and the contacts socials grid (`Frame 33827/28/29`). Extracted during D1; lives on the `design` page rather than the `👉 UI` page, which is why it isn't in §3.2. |
 | `Container` | `src/shared/ui/components/Container/` | Plain `<main>`-or-similar wrapper. Distinct from Radix's `<Container>`. |
 | `Link` | `src/shared/ui/components/Link/` | Composes Next.js `<Link>` + Radix `<Link>` + the Figma `Links` colour enum (§3.2). |
@@ -289,7 +289,7 @@ The high-leverage edits are in `theme-override.css`. Every Radix component re-th
 - **Color change** → update the corresponding `--red-N` / `--gray-N` / `--white` value.
 - **New type size** → add `--font-size-N` (and matching `--line-height-N` / `--letter-spacing-N`).
 - **Shadow change** → update `--shadow-sm` / `--shadow-lg` directly.
-- **Spacing or radius scale change** → both currently live behind hard-coded numbers in components and the `Box` constraint set. There's no central spacing var to flip; updating means editing each call-site.
+- **Spacing or radius scale change** → both live behind hard-coded numbers in components. There's no central spacing var to flip; updating means editing each call-site. (`Box` no longer constrains the value — it takes whatever the call site writes.)
 
 ### 4.3 Open questions to raise with Design (none are blockers)
 
@@ -300,7 +300,7 @@ The high-leverage edits are in `theme-override.css`. Every Radix component re-th
 - **`1_main_black` for body.** Nothing wires up `#151313` as body text. Confirm Design intended this and add a rule, or drop the style.
 - **`4_line_gray` for borders.** Same — unused in the override.
 - **Inter typography styles.** Most are orphaned; one place still binds (breadcrumb separator label in `page header`). Confirm cleanup.
-- **Spacing scale mismatch.** Figma uses multiples of 5 (`5/10/15/20/25/35/45/65/80`); repo `Box` uses multiples of 4. Pick one — round in-implementation, or rebase `Box`.
+- ~~**Spacing scale mismatch.**~~ Resolved on the repo side 2026-08-14: `Box` no longer has a scale, so Figma's multiples of 5 go in as written. Whether Figma should *have* a tighter scale is Design's call, not a blocker here.
 - **Single tracking footer column heading style.** Footer uses Inter Regular 15 on one label and PT Sans elsewhere — confirm.
 - **The footer's three column headings aren't one colour.** Measured 2026-08-13: КОНТАКТЫ РЕДАКЦИИ and ОТЗЫВЫ are `gray-3` (`#E4E7EC`), ССЫЛКИ is `gray-4` (`#CED2DA`). Shipped as gray-3 for all three, on the assumption the odd one out is a slip.
 - **The nav row overflows its own column below 1440** — see [notes §2](./implementation-notes.md#c9-header--footer-promoted-to-the-live-components--2026-08-13). Shipped compressed, wrapping rather than clipping; Design should say what happens when the menu grows.

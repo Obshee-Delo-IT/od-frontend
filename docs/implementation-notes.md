@@ -627,3 +627,10 @@ what to know before adding any of it back:
 - **`LEGACY_DENYLIST`** — shipped empty by design (A6 decision D12). Retiring a
   legacy page is a native route or a redirect; if a list is ever wanted back it
   is three lines in `isEmbeddable.ts`.
+- **`Box`'s 3 528-line CSS module → 353 lines.** It generated a class per
+  property *per value* across four breakpoints; the app used about thirty of
+  them, and the twelve-step scale was the reason §2.2 of the design system told
+  you to round Figma's numbers. Values now ride in an inline custom property, so
+  the scale is gone and every prop survives. Verified by diffing the bounding
+  box of every element on five pages at 1440 and 390 before and after — the only
+  differences were the x-offsets of the two animated hero marquees.
