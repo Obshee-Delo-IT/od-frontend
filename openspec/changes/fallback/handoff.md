@@ -103,6 +103,14 @@ origin, D2 chrome strategy) were escalated and answered by you; these are the on
   `obshee-delo.ru` after cutover** — this app becomes that host, and the fallback would fetch itself and embed
   its own shell one frame deeper each time. The app warns at boot; it does not refuse, because the two match
   harmlessly on a developer's machine.
+  **One condition on how the copy is made: it has to carry the usual domain search-replace**, so its HTML
+  emits its own host. The transform rewrites a link by comparing it against the origin the page was fetched
+  from, so a clone still emitting `obshee-delo.ru` links leaves them alone — measured on `/team/`, 32 of 80
+  anchors are absolute to the current host (20 more are root-relative and ride the `<base>`, so they are safe
+  either way). On production that miss is invisible, since the old host *is* our host by then and the link
+  already points at us; on any tier whose `SITE_URL` differs it sends visitors to live production instead.
+  `pnpm legacy:sweep` against such a tier is the check, and its link test only compares against the legacy
+  origin — so verify by sampling an embedded page's anchors, not by trusting a clean sweep.
 - **`resolvePostKind` has no `try/catch`** (`src/app/[...slug]/page.tsx:45-55`). If WordPress is unreachable,
   `wpFetch` rejects and a numeric post URL answers **500** where it should 404. Found by this change's refuter;
   it is pre-existing A8 code that A6 does not touch, so it was left alone rather than widened into this diff.
