@@ -648,6 +648,21 @@ what to know before adding any of it back:
   input and the wrapper `<div>` went with them (Radix's `TextFieldRoot` is
   `display: flex` and stretches the same either way). Figma still draws all four
   — see design-system §5's `Input Field` row before rebuilding one.
+- **Branches nothing could reach.** `ButtonGroupItem`'s `contentProps`
+  passthrough (its one caller never set it) and the `.trigger` rule no element
+  carried; `ButtonGroupSubMenu`'s `links = []` default and `if (!links?.length)`
+  guard, when `ButtonGroup` only renders it for an item that has children;
+  `Accordion`'s `AccordionSingleProps | AccordionMultipleProps` union with one
+  caller passing `type="multiple"`; the Gutenberg carousel adapter parsing
+  `data-cb-space-between` and `JSON.parse`-ing `data-cb-breakpoints`, both of
+  which `createSwiperConfig` then overrode with its own values; `Directions`'s
+  `title` default, always overridden by `HOME_SECTIONS_TITLE`;
+  `HOME_DIRECTIONS`'s hidden-set filter, which was ten lines of machinery to
+  express a two-item list (the three absent titles are now a comment, which is
+  where the reason lived anyway); `variant="card"` spelled out at the four
+  `NewsletterSignup` call sites that were already getting the default; and the
+  hand-rolled `sleep` in `sitemap.ts`, which is `setTimeout` from
+  `node:timers/promises`.
 - **`modules/Header/utils/` — five modules and five test files → three.**
   `sortNavItems` (10 lines) and `mapWpMenuItemToNavItem` (12) had one caller
   each, `toNavItems`, and its own barrel exported them to nobody. They are local

@@ -18,11 +18,11 @@ export interface DirectionCardData {
 
 interface DirectionsProps {
   directions: DirectionCardData[];
-  /** Overridden when the programme cards are folded in — see `HOME_SECTIONS_TITLE`. */
-  title?: string;
+  /** Always `HOME_SECTIONS_TITLE` today — the section carries the folded-in programmes. */
+  title: string;
 }
 
-export const Directions: React.FC<DirectionsProps> = ({ directions, title = 'Направления деятельности' }) => (
+export const Directions: React.FC<DirectionsProps> = ({ directions, title }) => (
   <section className={css.section} aria-labelledby="directions-heading">
     <Heading as="h2" id="directions-heading" size="9" className={css.heading}>
       {title}

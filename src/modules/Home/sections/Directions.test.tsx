@@ -19,22 +19,24 @@ const DIRECTIONS = [
   { id: 2, title: 'Общее дело ПРО', href: 'https://od-pro.ru' },
 ];
 
+const TITLE = 'Направления деятельности';
+
 describe('<Directions />', () => {
   it('renders the section heading', () => {
-    renderInTheme(<Directions directions={DIRECTIONS} />);
+    renderInTheme(<Directions title={TITLE} directions={DIRECTIONS} />);
 
-    expect(screen.getByRole('heading', { level: 2, name: 'Направления деятельности' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 2, name: TITLE })).toBeInTheDocument();
   });
 
   it('renders a card per direction with its title as an h3', () => {
-    renderInTheme(<Directions directions={DIRECTIONS} />);
+    renderInTheme(<Directions title={TITLE} directions={DIRECTIONS} />);
 
     expect(screen.getByRole('heading', { level: 3, name: 'Бизнес-клуб' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { level: 3, name: 'Общее дело ПРО' })).toBeInTheDocument();
   });
 
   it('links each card to its href with a descriptive aria-label', () => {
-    renderInTheme(<Directions directions={DIRECTIONS} />);
+    renderInTheme(<Directions title={TITLE} directions={DIRECTIONS} />);
 
     expect(screen.getByRole('link', { name: 'Бизнес-клуб — подробнее' })).toHaveAttribute(
       'href',
@@ -47,9 +49,9 @@ describe('<Directions />', () => {
   });
 
   it('renders nothing card-like for an empty list but keeps the heading', () => {
-    renderInTheme(<Directions directions={[]} />);
+    renderInTheme(<Directions title={TITLE} directions={[]} />);
 
-    expect(screen.getByRole('heading', { level: 2, name: 'Направления деятельности' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 2, name: TITLE })).toBeInTheDocument();
     expect(screen.queryByRole('link')).not.toBeInTheDocument();
   });
 });

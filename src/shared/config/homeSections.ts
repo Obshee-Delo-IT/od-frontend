@@ -21,28 +21,23 @@ interface HomeCardData {
   href: string;
 }
 
-/**
- * Directions with nowhere to point: all three 404 on the legacy origin (measured
- * 2026-08-14), so the fallback has nothing to embed either. Drop a title from
- * this set once its page exists.
- */
-const HIDDEN_DIRECTIONS = new Set(['Бизнес-клуб', 'ОД ИТ', 'Наставничество']);
-
 export const HOME_PROGRAMS: HomeCardData[] = [
   { id: 'healthy-russia', title: 'Здоровая Россия', href: '/healthy-russia/' },
   { id: 'healthy-kids', title: 'Здоровые дети', href: '/healthy-kids/' },
   { id: 'healthy-youth', title: 'Здоровая молодёжь', href: '/healthy-youth/' },
 ];
 
-const ALL_DIRECTIONS: HomeCardData[] = [
-  { id: 'business-club', title: 'Бизнес-клуб', href: '/projects/business-club/' },
+/**
+ * Three more are drawn in Figma and absent here — «Бизнес-клуб»
+ * (`/projects/business-club/`), «ОД ИТ» (`/projects/od-it/`) and
+ * «Наставничество» (`/projects/mentorship/`). All three 404 on the legacy origin
+ * (measured 2026-08-14), so the A6 fallback has nothing to embed for them
+ * either. Add the card back when its page exists.
+ */
+export const HOME_DIRECTIONS: HomeCardData[] = [
   { id: 'od-pro', title: 'Общее дело ПРО', href: 'https://od-pro.ru' },
-  { id: 'od-it', title: 'ОД ИТ', href: '/projects/od-it/' },
-  { id: 'mentorship', title: 'Наставничество', href: '/projects/mentorship/' },
   { id: 'video', title: 'Видеоматериалы', href: '/video/' },
 ];
-
-export const HOME_DIRECTIONS: HomeCardData[] = ALL_DIRECTIONS.filter((card) => !HIDDEN_DIRECTIONS.has(card.title));
 
 /**
  * Heading for the one carousel the home page ships. Programmes come first, as

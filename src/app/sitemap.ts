@@ -1,3 +1,4 @@
+import { setTimeout as sleep } from 'node:timers/promises';
 import { WP_TAGS, wpCache } from '@/shared/api/cacheTags';
 import { wpFetch } from '@/shared/api/httpClient';
 import { catalogueHref, FILM_CATEGORIES, type FilmCategorySegment } from '@/shared/config/filmCategories';
@@ -69,8 +70,6 @@ interface PostIndex {
  */
 const postsPath = (page: number) =>
   `/wp/v2/posts?per_page=${PER_PAGE}&page=${page}&_fields=id,modified_gmt&orderby=id&order=asc`;
-
-const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 /** A page of post refs, or `null` once the retries are spent. */
 const fetchPostPage = async (page: number): Promise<Response | null> => {

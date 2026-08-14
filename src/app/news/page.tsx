@@ -116,7 +116,7 @@ const Page = async ({ searchParams }: NewsPageProps) => {
         buildHref={(page) => buildHref({ category: activeCategory, page })}
       />
 
-      <NewsletterSignup variant="card" />
+      <NewsletterSignup />
     </Box>
   );
 };

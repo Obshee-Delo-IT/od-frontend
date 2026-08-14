@@ -157,7 +157,7 @@ export const VideoCatalogue = async ({ segment, page }: VideoCatalogueProps) => 
         buildHref={(target) => catalogueHref({ segment, page: target })}
       />
 
-      <NewsletterSignup variant="card" />
+      <NewsletterSignup />
     </Box>
   );
 };

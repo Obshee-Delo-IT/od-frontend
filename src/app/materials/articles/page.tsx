@@ -67,7 +67,7 @@ const Page = async () => {
 
       <NewsGrid items={items} emptyMessage="Статей не найдено." />
 
-      <NewsletterSignup variant="card" />
+      <NewsletterSignup />
     </Box>
   );
 };

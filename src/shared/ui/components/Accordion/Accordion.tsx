@@ -2,7 +2,6 @@ import {
   AccordionContent,
   AccordionItem,
   AccordionMultipleProps,
-  AccordionSingleProps,
   AccordionTrigger,
   Root,
 } from '@radix-ui/react-accordion';
@@ -22,7 +21,11 @@ interface AccordionItemData {
   active?: boolean;
 }
 
-type AccordionProps = (AccordionSingleProps | AccordionMultipleProps) & {
+/**
+ * `type="multiple"` only — the one caller (the mobile menu) opens each section
+ * independently. Radix's single-open mode is one prop away if a FAQ ever wants it.
+ */
+type AccordionProps = AccordionMultipleProps & {
   items: AccordionItemData[];
 };
 

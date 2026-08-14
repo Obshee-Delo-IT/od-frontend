@@ -52,7 +52,7 @@ const HomePage = async () => {
           excerpt: post.excerpt ?? undefined,
         }))}
       />
-      <NewsletterSignup variant="card" />
+      <NewsletterSignup />
     </Box>
   );
 };

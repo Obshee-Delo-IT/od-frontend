@@ -1,9 +1,4 @@
-import {
-  NavigationMenuItem,
-  NavigationMenuTrigger,
-  NavigationMenuContent,
-  NavigationMenuContentProps,
-} from '@radix-ui/react-navigation-menu';
+import { NavigationMenuItem, NavigationMenuTrigger, NavigationMenuContent } from '@radix-ui/react-navigation-menu';
 import { Text } from '@radix-ui/themes';
 import clsx from 'clsx';
 import NextLink from 'next/link';
@@ -13,13 +8,11 @@ import css from './ButtonGroupItem.module.css';
 
 interface ButtonGroupItemProps {
   active?: boolean;
-  contentProps?: Omit<NavigationMenuContentProps, 'asChild' | 'children'>;
   href: string;
   content?: ReactNode;
 }
 
 export const ButtonGroupItem: React.FC<PropsWithChildren<ButtonGroupItemProps>> = ({
-  contentProps,
   content,
   href,
   children,
@@ -41,10 +34,6 @@ export const ButtonGroupItem: React.FC<PropsWithChildren<ButtonGroupItemProps>> 
       </Text>
     </NavigationMenuTrigger>
 
-    {!!content && (
-      <NavigationMenuContent {...contentProps} className={clsx(css.content, contentProps?.className)}>
-        {content}
-      </NavigationMenuContent>
-    )}
+    {!!content && <NavigationMenuContent className={css.content}>{content}</NavigationMenuContent>}
   </NavigationMenuItem>
 );

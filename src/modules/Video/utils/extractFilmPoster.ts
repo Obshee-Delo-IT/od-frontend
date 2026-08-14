@@ -142,8 +142,7 @@ export const extractFilmPoster = (html: string): ExtractFilmPosterResult => {
     const href = link ? attr(link, 'href') : null;
     // The figure link can itself point at a sized variant — always strip.
     posterImageUrl = (href && IMAGE_FILE.test(href) ? href : src).replace(SIZED_VARIANT, '');
-    const sized = src.match(SIZED_VARIANT);
-    posterAspectRatio = sized ? `${sized[1]} / ${sized[2]}` : null;
+    posterAspectRatio = aspectRatioFromUrl(src);
     removals.push(figure);
     break;
   }

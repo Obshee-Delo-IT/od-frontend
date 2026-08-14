@@ -47,11 +47,6 @@
   }
 }
 
-.trigger {
-  padding: 0;
-  border: none;
-}
-
 .icon {
   transition: transform 0.25s ease;
 

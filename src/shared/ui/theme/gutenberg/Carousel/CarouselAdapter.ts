@@ -5,16 +5,20 @@ import Swiper from 'swiper';
 import { Navigation, Pagination, Autoplay } from 'swiper/modules';
 import type { SwiperOptions } from 'swiper/types';
 
+/**
+ * Only the attributes {@link createSwiperConfig} reads. The block also carries
+ * `data-cb-space-between` and `data-cb-breakpoints`, both of which this adapter
+ * overrides with its own values — parsing them (the breakpoints through
+ * `JSON.parse`, on markup from WordPress) bought nothing.
+ */
 interface CarouselBlockAttributes {
   slidesPerView: number;
   slidesPerGroup: number;
-  spaceBetween: number;
   speed: number;
   hasNavigation: boolean;
   hasPagination: boolean;
   loop: boolean;
   autoplay: false | { delay: number; disableOnInteraction: boolean };
-  breakpoints: Record<string, unknown>;
 }
 
 const parseCarouselAttributes = (carouselBlock: Element): CarouselBlockAttributes => {
@@ -28,7 +32,6 @@ const parseCarouselAttributes = (carouselBlock: Element): CarouselBlockAttribute
   return {
     slidesPerView: getIntAttribute('data-cb-slides-per-view', '1'),
     slidesPerGroup: getIntAttribute('data-cb-slides-per-group', '1'),
-    spaceBetween: getIntAttribute('data-cb-space-between', '0'),
     speed: getIntAttribute('data-cb-speed', '300'),
     hasNavigation: getBooleanAttribute('data-cb-navigation'),
     hasPagination: getBooleanAttribute('data-cb-pagination'),
@@ -39,7 +42,6 @@ const parseCarouselAttributes = (carouselBlock: Element): CarouselBlockAttribute
           disableOnInteraction: false,
         }
       : false,
-    breakpoints: JSON.parse(carouselBlock.getAttribute('data-cb-breakpoints') || '{}'),
   };
 };
 
