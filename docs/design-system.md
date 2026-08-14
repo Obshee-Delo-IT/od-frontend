@@ -18,7 +18,7 @@ Repo-side status last verified against the code: **2026-08-13**. **Workstream C 
 | Breakpoint media | `src/shared/ui/styles/media.css` (`@custom-media` rules). Auto-injected globally by `@csstools/postcss-global-data`. |
 | Global resets | `src/shared/ui/styles/global.css` — pulls `normalize.css`, `swiper/swiper-bundle.css`, and a `box-sizing: border-box` reset. |
 | Component primitives | `src/shared/ui/components/<Name>/` — each component is a tiny wrapper over a Radix Themes / Radix Primitives component. |
-| Icons | `src/shared/ui/assets/icons/*.svg` imported as React components via `@svgr/webpack` (configured under `turbopack.rules` in `next.config.ts`) and re-exported with typed wrappers from `src/shared/ui/components/Icons/`. |
+| Icons | `src/shared/ui/assets/icons/*.svg` imported as React components via `@svgr/webpack` (configured under `turbopack.rules` in `next.config.ts`) and re-exported with typed wrappers from `src/shared/ui/components/Icons/index.tsx`. The SVG set is the design set; the wrapper list is only the icons something renders. |
 
 **Implementation pattern.** The project does **not** ship its own primitive library. Radix Themes is the primitive layer; the design system lives entirely in (a) the `theme-override.css` variable overrides and (b) thin `src/shared/ui/components/*` wrappers that compose Radix pieces with project conventions (icons, label/message slots, color enums, Next.js Link routing, etc.). When you change a token in `theme-override.css`, every Radix component picks it up automatically.
 
@@ -270,7 +270,7 @@ Two things this replaced: `lightgrey` (a duplicate of `gray`) and `darkgrey` (`p
 | `Logo` | `src/shared/ui/components/Logo/` | Brand logo rendered with `logo.webp`. |
 | `Modal` | `src/shared/ui/components/Modal/` | Radix `Dialog` under a small API (`isOpen` / `onClose` / `title`). Its content chrome is reset to nothing — the child owns its frame — and it requires a `title`, rendered visually hidden, because a dialog with no accessible name is the one thing Radix can't supply for you. |
 | `Accordion` | `src/shared/ui/components/Accordion/` | Wrapper over `@radix-ui/react-accordion` primitive. Used for FAQ. |
-| `Icons/*` | `src/shared/ui/components/Icons/` | Typed wrappers around each SVG. Adding an icon = drop SVG into `assets/icons/` + export wrapper here. |
+| `Icons` | `src/shared/ui/components/Icons/index.tsx` | One line per icon — all the wrapper adds to the svgr component is the square `size` prop. Adding an icon = drop the SVG into `assets/icons/` + one export here (or import the SVG directly, as `Accordion`, `ButtonGroup` and `Breadcrumbs` do, when CSS sizes it). |
 
 ---
 
