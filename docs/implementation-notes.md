@@ -627,13 +627,20 @@ what to know before adding any of it back:
 - **`LEGACY_DENYLIST`** — shipped empty by design (A6 decision D12). Retiring a
   legacy page is a native route or a redirect; if a list is ever wanted back it
   is three lines in `isEmbeddable.ts`.
-- **`Box`'s 3 528-line CSS module → 353 lines.** It generated a class per
+- **`Box`'s 3 528-line CSS module → 353 → 140 lines.** It generated a class per
   property *per value* across four breakpoints; the app used about thirty of
   them, and the twelve-step scale was the reason §2.2 of the design system told
   you to round Figma's numbers. Values now ride in an inline custom property, so
-  the scale is gone and every prop survives. Verified by diffing the bounding
-  box of every element on five pages at 1440 and 390 before and after — the only
-  differences were the x-offsets of the two animated hero marquees.
+  the scale is gone. Verified by diffing the bounding box of every element on
+  five pages at 1440 and 390 before and after — the only differences were the
+  x-offsets of the two animated hero marquees. The second pass cut the **prop
+  list** the same way: 15 of the 24 properties (`p`, `pr`, `pl`, `px`, `m`,
+  `mt`, `mr`, `ml`, `mx`, `my`, `bottom`, `left`, `right`, `flexWrap`,
+  `justifyContent`, `alignItems`, `alignContent`) had no call site anywhere.
+  Nine remain: `pt`, `pb`, `py`, `mb`, `gap`, `top`, `display`,
+  `flexDirection`, `position`. Adding one back is a line in the type, an entry
+  in `LENGTH_PROPS`/`KEYWORD_PROPS`, and three lines per breakpoint in the CSS —
+  use `Box`'s own `className` escape hatch if it's a one-off.
 - **One entity decoder** (`src/shared/lib/decodeEntities.ts`) — there was a
   twenty-entry table in `shared/legacy/html.ts` and an eleven-entry one in
   `shared/api/newsPreview.ts`, the second of which silently dropped anything it

@@ -7,20 +7,22 @@ import css from './Box.module.css';
  * breakpoints, on any element.
  *
  * Each set prop contributes one class per breakpoint and one inline custom
- * property carrying the value — see `Box.module.css`, which is 350 lines
+ * property carrying the value — see `Box.module.css`, which is 140 lines
  * because of it rather than the 3 528 it took to enumerate every property
  * against a fixed twelve-step scale. The scale is gone with it: `gap={18}` is
- * as valid as `gap={16}`, and `p="1rem"` works too.
+ * as valid as `gap={16}`, and `py="1rem"` works too.
+ *
+ * **The prop list is the list call sites use**, not every property a layout
+ * shell could want: the other fifteen (`p`, `mx`, `justifyContent`, …) shipped
+ * for a year with zero call sites. Adding one back is an entry in the type, an
+ * entry in {@link LENGTH_PROPS} or {@link KEYWORD_PROPS}, and three lines per
+ * breakpoint in the CSS.
  */
 
 type Spacing = number | string;
 
 type DisplayValue = 'block' | 'inline' | 'inline-block' | 'flex' | 'inline-flex' | 'grid' | 'inline-grid' | 'none';
 type FlexDirectionValue = 'row' | 'row-reverse' | 'column' | 'column-reverse';
-type FlexWrapValue = 'nowrap' | 'wrap' | 'wrap-reverse';
-type JustifyContentValue = 'flex-start' | 'flex-end' | 'center' | 'space-between' | 'space-around' | 'space-evenly';
-type AlignItemsValue = 'flex-start' | 'flex-end' | 'center' | 'baseline' | 'stretch';
-type AlignContentValue = 'flex-start' | 'flex-end' | 'center' | 'space-between' | 'space-around' | 'stretch';
 type PositionValue = 'static' | 'relative' | 'absolute' | 'fixed' | 'sticky';
 
 interface ResponsiveValue<T> {
@@ -34,31 +36,14 @@ type Responsive<T> = T | ResponsiveValue<T>;
 type BoxOwnProps<T extends keyof HTMLElementTagNameMap> = {
   children?: React.ReactNode;
   as?: T;
-  p?: Responsive<Spacing>;
   pt?: Responsive<Spacing>;
-  pr?: Responsive<Spacing>;
   pb?: Responsive<Spacing>;
-  pl?: Responsive<Spacing>;
-  px?: Responsive<Spacing>;
   py?: Responsive<Spacing>;
-  m?: Responsive<Spacing>;
-  mt?: Responsive<Spacing>;
-  mr?: Responsive<Spacing>;
   mb?: Responsive<Spacing>;
-  ml?: Responsive<Spacing>;
-  mx?: Responsive<Spacing>;
-  my?: Responsive<Spacing>;
   gap?: Responsive<Spacing>;
   top?: Responsive<Spacing>;
-  bottom?: Responsive<Spacing>;
-  left?: Responsive<Spacing>;
-  right?: Responsive<Spacing>;
   display?: Responsive<DisplayValue>;
   flexDirection?: Responsive<FlexDirectionValue>;
-  flexWrap?: Responsive<FlexWrapValue>;
-  justifyContent?: Responsive<JustifyContentValue>;
-  alignItems?: Responsive<AlignItemsValue>;
-  alignContent?: Responsive<AlignContentValue>;
   position?: Responsive<PositionValue>;
 };
 
@@ -71,36 +56,12 @@ const BREAKPOINTS = ['mobile', 'smallDesktop', 'desktop'] as const;
 const length = (value: Spacing): string => (typeof value === 'number' ? `${value}px` : value);
 
 /** Props whose value is a length, keyed by the CSS class stem they use. */
-const LENGTH_PROPS = new Set([
-  'p',
-  'pt',
-  'pr',
-  'pb',
-  'pl',
-  'px',
-  'py',
-  'm',
-  'mt',
-  'mr',
-  'mb',
-  'ml',
-  'mx',
-  'my',
-  'gap',
-  'top',
-  'bottom',
-  'left',
-  'right',
-]);
+const LENGTH_PROPS = new Set(['pt', 'pb', 'py', 'mb', 'gap', 'top']);
 
 /** Props whose value is a keyword, mapped from the React name to the CSS one. */
 const KEYWORD_PROPS: Record<string, string> = {
   display: 'display',
   flexDirection: 'flex-direction',
-  flexWrap: 'flex-wrap',
-  justifyContent: 'justify-content',
-  alignItems: 'align-items',
-  alignContent: 'align-content',
   position: 'position',
 };
 

@@ -4,7 +4,9 @@
  *
  * This used to be a class per property *per value* — 3 528 lines of generated
  * utilities capping spacing at twelve hard-coded steps, of which the whole app
- * used about thirty.
+ * used about thirty. Then it was every CSS property a layout shell could
+ * plausibly want, 24 of them; these nine are the ones call sites actually pass.
+ * Adding one back is three lines here and one entry in `Box.tsx`.
  *
  * **Block order is load-bearing.** The tiers are nested max-widths
  * (`--mobile` < 900, `--small-desktop` < 1440), so below 900 both match and
@@ -14,51 +16,18 @@
  * asked us to touch.
  */
 
-.p {
-  padding: var(--box-p);
-}
 .pt {
   padding-top: var(--box-pt);
 }
-.pr {
-  padding-right: var(--box-pr);
-}
 .pb {
   padding-bottom: var(--box-pb);
-}
-.pl {
-  padding-left: var(--box-pl);
-}
-.px {
-  padding-right: var(--box-px);
-  padding-left: var(--box-px);
 }
 .py {
   padding-top: var(--box-py);
   padding-bottom: var(--box-py);
 }
-.m {
-  margin: var(--box-m);
-}
-.mt {
-  margin-top: var(--box-mt);
-}
-.mr {
-  margin-right: var(--box-mr);
-}
 .mb {
   margin-bottom: var(--box-mb);
-}
-.ml {
-  margin-left: var(--box-ml);
-}
-.mx {
-  margin-right: var(--box-mx);
-  margin-left: var(--box-mx);
-}
-.my {
-  margin-top: var(--box-my);
-  margin-bottom: var(--box-my);
 }
 .gap {
   gap: var(--box-gap);
@@ -66,83 +35,29 @@
 .top {
   top: var(--box-top);
 }
-.bottom {
-  bottom: var(--box-bottom);
-}
-.left {
-  left: var(--box-left);
-}
-.right {
-  right: var(--box-right);
-}
 .display {
   display: var(--box-display);
 }
 .flex-direction {
   flex-direction: var(--box-flex-direction);
 }
-.flex-wrap {
-  flex-wrap: var(--box-flex-wrap);
-}
-.justify-content {
-  justify-content: var(--box-justify-content);
-}
-.align-items {
-  align-items: var(--box-align-items);
-}
-.align-content {
-  align-content: var(--box-align-content);
-}
 .position {
   position: var(--box-position);
 }
 
 @media (--mobile) {
-  .p-mobile {
-    padding: var(--box-p-mobile);
-  }
   .pt-mobile {
     padding-top: var(--box-pt-mobile);
   }
-  .pr-mobile {
-    padding-right: var(--box-pr-mobile);
-  }
   .pb-mobile {
     padding-bottom: var(--box-pb-mobile);
-  }
-  .pl-mobile {
-    padding-left: var(--box-pl-mobile);
-  }
-  .px-mobile {
-    padding-right: var(--box-px-mobile);
-    padding-left: var(--box-px-mobile);
   }
   .py-mobile {
     padding-top: var(--box-py-mobile);
     padding-bottom: var(--box-py-mobile);
   }
-  .m-mobile {
-    margin: var(--box-m-mobile);
-  }
-  .mt-mobile {
-    margin-top: var(--box-mt-mobile);
-  }
-  .mr-mobile {
-    margin-right: var(--box-mr-mobile);
-  }
   .mb-mobile {
     margin-bottom: var(--box-mb-mobile);
-  }
-  .ml-mobile {
-    margin-left: var(--box-ml-mobile);
-  }
-  .mx-mobile {
-    margin-right: var(--box-mx-mobile);
-    margin-left: var(--box-mx-mobile);
-  }
-  .my-mobile {
-    margin-top: var(--box-my-mobile);
-    margin-bottom: var(--box-my-mobile);
   }
   .gap-mobile {
     gap: var(--box-gap-mobile);
@@ -150,32 +65,11 @@
   .top-mobile {
     top: var(--box-top-mobile);
   }
-  .bottom-mobile {
-    bottom: var(--box-bottom-mobile);
-  }
-  .left-mobile {
-    left: var(--box-left-mobile);
-  }
-  .right-mobile {
-    right: var(--box-right-mobile);
-  }
   .display-mobile {
     display: var(--box-display-mobile);
   }
   .flex-direction-mobile {
     flex-direction: var(--box-flex-direction-mobile);
-  }
-  .flex-wrap-mobile {
-    flex-wrap: var(--box-flex-wrap-mobile);
-  }
-  .justify-content-mobile {
-    justify-content: var(--box-justify-content-mobile);
-  }
-  .align-items-mobile {
-    align-items: var(--box-align-items-mobile);
-  }
-  .align-content-mobile {
-    align-content: var(--box-align-content-mobile);
   }
   .position-mobile {
     position: var(--box-position-mobile);
@@ -183,51 +77,18 @@
 }
 
 @media (--small-desktop) {
-  .p-smallDesktop {
-    padding: var(--box-p-smallDesktop);
-  }
   .pt-smallDesktop {
     padding-top: var(--box-pt-smallDesktop);
   }
-  .pr-smallDesktop {
-    padding-right: var(--box-pr-smallDesktop);
-  }
   .pb-smallDesktop {
     padding-bottom: var(--box-pb-smallDesktop);
-  }
-  .pl-smallDesktop {
-    padding-left: var(--box-pl-smallDesktop);
-  }
-  .px-smallDesktop {
-    padding-right: var(--box-px-smallDesktop);
-    padding-left: var(--box-px-smallDesktop);
   }
   .py-smallDesktop {
     padding-top: var(--box-py-smallDesktop);
     padding-bottom: var(--box-py-smallDesktop);
   }
-  .m-smallDesktop {
-    margin: var(--box-m-smallDesktop);
-  }
-  .mt-smallDesktop {
-    margin-top: var(--box-mt-smallDesktop);
-  }
-  .mr-smallDesktop {
-    margin-right: var(--box-mr-smallDesktop);
-  }
   .mb-smallDesktop {
     margin-bottom: var(--box-mb-smallDesktop);
-  }
-  .ml-smallDesktop {
-    margin-left: var(--box-ml-smallDesktop);
-  }
-  .mx-smallDesktop {
-    margin-right: var(--box-mx-smallDesktop);
-    margin-left: var(--box-mx-smallDesktop);
-  }
-  .my-smallDesktop {
-    margin-top: var(--box-my-smallDesktop);
-    margin-bottom: var(--box-my-smallDesktop);
   }
   .gap-smallDesktop {
     gap: var(--box-gap-smallDesktop);
@@ -235,32 +96,11 @@
   .top-smallDesktop {
     top: var(--box-top-smallDesktop);
   }
-  .bottom-smallDesktop {
-    bottom: var(--box-bottom-smallDesktop);
-  }
-  .left-smallDesktop {
-    left: var(--box-left-smallDesktop);
-  }
-  .right-smallDesktop {
-    right: var(--box-right-smallDesktop);
-  }
   .display-smallDesktop {
     display: var(--box-display-smallDesktop);
   }
   .flex-direction-smallDesktop {
     flex-direction: var(--box-flex-direction-smallDesktop);
-  }
-  .flex-wrap-smallDesktop {
-    flex-wrap: var(--box-flex-wrap-smallDesktop);
-  }
-  .justify-content-smallDesktop {
-    justify-content: var(--box-justify-content-smallDesktop);
-  }
-  .align-items-smallDesktop {
-    align-items: var(--box-align-items-smallDesktop);
-  }
-  .align-content-smallDesktop {
-    align-content: var(--box-align-content-smallDesktop);
   }
   .position-smallDesktop {
     position: var(--box-position-smallDesktop);
@@ -268,51 +108,18 @@
 }
 
 @media (--desktop) {
-  .p-desktop {
-    padding: var(--box-p-desktop);
-  }
   .pt-desktop {
     padding-top: var(--box-pt-desktop);
   }
-  .pr-desktop {
-    padding-right: var(--box-pr-desktop);
-  }
   .pb-desktop {
     padding-bottom: var(--box-pb-desktop);
-  }
-  .pl-desktop {
-    padding-left: var(--box-pl-desktop);
-  }
-  .px-desktop {
-    padding-right: var(--box-px-desktop);
-    padding-left: var(--box-px-desktop);
   }
   .py-desktop {
     padding-top: var(--box-py-desktop);
     padding-bottom: var(--box-py-desktop);
   }
-  .m-desktop {
-    margin: var(--box-m-desktop);
-  }
-  .mt-desktop {
-    margin-top: var(--box-mt-desktop);
-  }
-  .mr-desktop {
-    margin-right: var(--box-mr-desktop);
-  }
   .mb-desktop {
     margin-bottom: var(--box-mb-desktop);
-  }
-  .ml-desktop {
-    margin-left: var(--box-ml-desktop);
-  }
-  .mx-desktop {
-    margin-right: var(--box-mx-desktop);
-    margin-left: var(--box-mx-desktop);
-  }
-  .my-desktop {
-    margin-top: var(--box-my-desktop);
-    margin-bottom: var(--box-my-desktop);
   }
   .gap-desktop {
     gap: var(--box-gap-desktop);
@@ -320,32 +127,11 @@
   .top-desktop {
     top: var(--box-top-desktop);
   }
-  .bottom-desktop {
-    bottom: var(--box-bottom-desktop);
-  }
-  .left-desktop {
-    left: var(--box-left-desktop);
-  }
-  .right-desktop {
-    right: var(--box-right-desktop);
-  }
   .display-desktop {
     display: var(--box-display-desktop);
   }
   .flex-direction-desktop {
     flex-direction: var(--box-flex-direction-desktop);
-  }
-  .flex-wrap-desktop {
-    flex-wrap: var(--box-flex-wrap-desktop);
-  }
-  .justify-content-desktop {
-    justify-content: var(--box-justify-content-desktop);
-  }
-  .align-items-desktop {
-    align-items: var(--box-align-items-desktop);
-  }
-  .align-content-desktop {
-    align-content: var(--box-align-content-desktop);
   }
   .position-desktop {
     position: var(--box-position-desktop);

@@ -97,7 +97,7 @@ Figma variables `spacing/0..9`:
 
 A **multiples-of-5** scale that compresses at the small end and stretches at the large end (no even 30/40/50/60/70).
 
-**Repo `Box` takes any length** (`src/shared/ui/components/Box/`): a number is pixels, a string is passed through, so `p={15}` and `gap="1rem"` are both fine.
+**Repo `Box` takes any length** (`src/shared/ui/components/Box/`): a number is pixels, a string is passed through, so `py={15}` and `gap="1rem"` are both fine. Nine props, and they are the nine the app uses — `pt pb py mb gap top display flexDirection position`. Anything else (`p`, `mx`, `justifyContent`, …) is a CSS module on the call site, or three lines added back to `Box.module.css`.
 
 It used to be a fixed multiples-of-4 scale — `0, 4, 8, …, 64` — because every step of every property was a generated CSS class, and 3 528 lines of them. Values now ride in a custom property, so the scale is gone and with it the rounding rule this section used to carry: **write Figma's number**.
 
@@ -261,7 +261,7 @@ Two things this replaced: `lightgrey` (a duplicate of `gray`) and `darkgrey` (`p
 
 | Repo component | Location | What it does |
 | --- | --- | --- |
-| `Box` | `src/shared/ui/components/Box/` | Responsive layout primitive. Any length: a number is pixels, a string passes through. Each set prop adds one class and one inline custom property. |
+| `Box` | `src/shared/ui/components/Box/` | Responsive layout primitive, nine props (`pt pb py mb gap top display flexDirection position`). Any length: a number is pixels, a string passes through. Each set prop adds one class and one inline custom property. |
 | `NewsCard` | `src/shared/ui/components/NewsCard/` | The card primitive that recurs in the home news section, the `/news` grid and the contacts socials grid (`Frame 33827/28/29`). Extracted during D1; lives on the `design` page rather than the `👉 UI` page, which is why it isn't in §3.2. |
 | `Link` | `src/shared/ui/components/Link/` | Composes Next.js `<Link>` + Radix `<Link>` + the Figma `Links` colour enum (§3.2). |
 | `Logo` | `src/shared/ui/components/Logo/` | Brand logo rendered with `logo.webp`. |
