@@ -2,11 +2,6 @@ import nextCoreWebVitals from "eslint-config-next/core-web-vitals";
 import nextTypescript from "eslint-config-next/typescript";
 import eslintConfigPrettier from 'eslint-config-prettier/flat';
 import reactHooksPlugin from 'eslint-plugin-react-hooks';
-import { dirname } from 'path';
-import { fileURLToPath } from 'url';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
 
 const eslintConfig = [{
   // Global ignores (an `ignores`-only entry). `/.scratch/` is the sanctioned
@@ -33,7 +28,6 @@ const eslintConfig = [{
         unnamedComponents: 'arrow-function',
       },
     ],
-    'react-hooks/rules-of-hooks': 'error',
     'react/hook-use-state': [
       'error',
       {

@@ -648,6 +648,19 @@ what to know before adding any of it back:
   input and the wrapper `<div>` went with them (Radix's `TextFieldRoot` is
   `display: flex` and stretches the same either way). Figma still draws all four
   — see design-system §5's `Input Field` row before rebuilding one.
+- **Barrel lines with no importer.** `shared/legacy/index.ts` re-exported the
+  transform, the store, the loader factory and `legacyOrigin`, none of which
+  anything imports through the barrel — they are reached by module path from
+  inside the folder or from `src/proxy.ts`. `shared/api/index.ts` re-exported
+  `fetchNews`/`cachedFetchNews`/`fetchVideo` alongside the module paths that are
+  actually used, plus eight unused type re-exports; `modules/Home/index.ts` three.
+  Two names for one function is how a test ends up mocking the wrong one.
+  `fetchSearch` deliberately stays in the api barrel: it has no consumer yet
+  (B7's UI), and this is the name that page will import.
+- **`react-hooks/rules-of-hooks: error`** — the line right above it spreads
+  `reactHooksPlugin.configs.recommended.rules`, which sets exactly that. Plus
+  `eslint.config.mjs`'s `__filename`/`__dirname` and the two Node imports behind
+  them, computed and never read.
 - **Four `forwardRef` wrappers and five `displayName` assignments** — `Button`,
   `IconButton`, `Checkbox`, `Input` (+ `HeaderClient`). No call site passes a
   `ref`, and Radix's own exported prop types are `ComponentPropsWithoutRef`, so
