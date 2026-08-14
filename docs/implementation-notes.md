@@ -648,6 +648,15 @@ what to know before adding any of it back:
   input and the wrapper `<div>` went with them (Radix's `TextFieldRoot` is
   `display: flex` and stretches the same either way). Figma still draws all four
   — see design-system §5's `Input Field` row before rebuilding one.
+- **Two stale assertions in `e2e/home.spec.ts`**, both wrong since the harness
+  landed (`764a6e2`) and invisible because e2e is not in CI: it asserted separate
+  «Программы» and «Направления деятельности» headings, which have been one
+  merged section since `HOME_SECTIONS_TITLE`, and it looked for the hero CTAs by
+  `role=button` when both are `<Button asChild>` around an anchor. Fixed rather
+  than deleted; all 60 tests now pass against a production build (`pnpm build &&
+  pnpm start`), which is also where the A8 gate was re-run: **98.9 % entry-traffic
+  coverage over the top 200 URLs**, the remainder being three `/<id>/` posts
+  absent from od-dev and two `/profile/` pages.
 - **Branches nothing could reach.** `ButtonGroupItem`'s `contentProps`
   passthrough (its one caller never set it) and the `.trigger` rule no element
   carried; `ButtonGroupSubMenu`'s `links = []` default and `if (!links?.length)`

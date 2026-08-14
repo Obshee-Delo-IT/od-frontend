@@ -5,22 +5,28 @@ test.describe('Home page (D1)', () => {
     await page.goto('/');
   });
 
-  test('renders all nine sections in order', async ({ page }) => {
+  test('renders all seven sections', async ({ page }) => {
     await expect(page).toHaveTitle(/ОБЩЕЕ ДЕЛО/);
 
     await expect(page.getByRole('heading', { level: 1, name: 'Здоровая Россия — общее дело' })).toBeVisible();
     await expect(page.getByRole('region', { name: 'Статистика организации' })).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Наши фильмы, мультфильмы и ролики' })).toBeVisible();
     await expect(page.getByRole('heading', { name: /Прими участие в международном/ })).toBeVisible();
-    await expect(page.getByRole('heading', { name: 'Направления деятельности' })).toBeVisible();
-    await expect(page.getByRole('heading', { name: 'Программы' })).toBeVisible();
+    // One section, not two: Figma's «Программы» and «Направления деятельности»
+    // carousels are merged, because three of the five directions have no page.
+    // See HOME_SECTIONS_TITLE in shared/config/homeSections.ts.
+    await expect(page.getByRole('heading', { name: 'Программы и направления деятельности' })).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Наши дела' })).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Подписаться на новости' })).toBeVisible();
   });
 
   test('hero CTAs are reachable', async ({ page }) => {
-    await expect(page.getByRole('button', { name: 'Оказать помощь' })).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Прими участие' })).toBeVisible();
+    // Links, not buttons: both CTAs are `<Button asChild>` around an anchor.
+    // Scoped to the hero — the header carries a second «Оказать помощь».
+    const hero = page.getByRole('region', { name: 'Здоровая Россия — общее дело' });
+
+    await expect(hero.getByRole('link', { name: 'Оказать помощь' })).toBeVisible();
+    await expect(hero.getByRole('link', { name: 'Прими участие' })).toBeVisible();
   });
 
   test('newsletter submit is disabled until email + consent are provided', async ({ page }) => {
