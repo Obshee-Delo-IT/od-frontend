@@ -1,5 +1,6 @@
 import { notFound } from 'next/navigation';
 import { cache } from 'react';
+import { LegacyEmbed } from '@/modules/Legacy';
 import { NewsArticle, newsMetadata } from '@/modules/News/NewsArticle';
 import { FilmPage, filmMetadata } from '@/modules/Video/FilmPage';
 import { cachedFetchVideo } from '@/shared/api';
@@ -7,6 +8,8 @@ import { postTag, WP_TAGS, wpCache } from '@/shared/api/cacheTags';
 import { cachedFetchNews } from '@/shared/api/fetchNews';
 import { client, wpFetch } from '@/shared/api/httpClient';
 import { ALL_FILM_CATEGORY_IDS } from '@/shared/config/filmCategories';
+import { canonicalUrl } from '@/shared/config/site';
+import { isEmbeddable, legacyPathname, loadLegacyDocument } from '@/shared/legacy';
 import type { Metadata } from 'next';
 
 /**
@@ -19,9 +22,11 @@ import type { Metadata } from 'next';
  * redesigned one. `/news/<id>` and `/video/<id>` redirect *into* this route
  * (see `next.config.ts`), not the other way round.
  *
- * Non-numeric paths `notFound()` for now. **This is the seam A6 fills**: the
- * legacy-page fallback replaces that branch with the chromeless iframe proxy,
- * at which point every not-yet-redesigned page keeps its live URL too.
+ * Non-numeric paths are the **A6 legacy fallback**: an eligible one renders
+ * `LegacyEmbed`, whose iframe pulls the old page through `/legacy/*` so that
+ * every not-yet-redesigned page keeps its live URL. Adding a native route for
+ * one of them retires its fallback automatically — App Router precedence gives
+ * a real route priority over this catch-all, and nothing here needs editing.
  */
 export const dynamicParams = true;
 export const revalidate = 3600;
@@ -70,11 +75,39 @@ export async function generateStaticParams() {
   return [...films, ...posts].filter((post) => post.id).map((post) => ({ slug: [String(post.id)] }));
 }
 
+/**
+ * One legacy load per render pass, shared by `generateMetadata` and the page —
+ * the same trick `resolvePostKind` uses above.
+ *
+ * Note what it does *not* buy: the iframe's `/legacy/*` request is a separate
+ * HTTP request from the browser, so `cache()` cannot span the two. That one is
+ * bounded by the proxy's own store instead, which both surfaces share.
+ */
+const loadLegacyPage = cache(async (slug: string[]) => loadLegacyDocument(slug));
+
 export async function generateMetadata({ params }: { params: Promise<{ slug: string[] }> }): Promise<Metadata> {
   const { slug } = await params;
   const id = legacyPostId(slug);
   if (!id) {
-    return {};
+    if (!isEmbeddable(slug)) {
+      return {};
+    }
+    // Always **our** canonical, never the legacy origin's: after cutover that
+    // origin is a private frozen copy, and pointing at it would canonicalise
+    // the site onto a host nobody can reach.
+    const alternates = { canonical: canonicalUrl(legacyPathname(slug)) };
+    const legacy = await loadLegacyPage(slug);
+    if (legacy.status !== 'ok') {
+      // The upstream is unreachable or the page is gone; the layout's defaults
+      // apply. `undefined` rather than an empty string, so Next falls back
+      // instead of emitting a blank title.
+      return { alternates };
+    }
+    return {
+      title: legacy.document.title ?? undefined,
+      description: legacy.document.description ?? undefined,
+      alternates,
+    };
   }
 
   const kind = await resolvePostKind(id);
@@ -92,8 +125,23 @@ const Page = async ({ params }: { params: Promise<{ slug: string[] }> }) => {
   const { slug } = await params;
   const id = legacyPostId(slug);
   if (!id) {
-    // A6 renders the legacy page here instead.
-    notFound();
+    if (!isEmbeddable(slug)) {
+      notFound();
+    }
+
+    const legacy = await loadLegacyPage(slug);
+    // `notFound()` only for an answer the upstream gave definitively — a 404 or
+    // a 410 — because this route's `revalidate = 3600` would cache it. A
+    // transient 5xx or a timeout still renders the embed: the iframe fetches
+    // independently, so the content appears the moment the origin recovers
+    // rather than an hour later (LPF-005).
+    if (legacy.status === 'disabled' || legacy.status === 'missing') {
+      notFound();
+    }
+
+    // The embed and nothing else: the root layout already supplies the header,
+    // `Container` and footer.
+    return <LegacyEmbed slug={slug} />;
   }
 
   const kind = await resolvePostKind(id);

@@ -32,11 +32,11 @@
 
 ## 5. Route and page
 
-- [ ] 5.1 `src/app/legacy/[...slug]/route.ts` — GET only (405 otherwise), dynamic (never route-cached), validate → store lookup → concurrency slot → bare `fetch` with `cache: 'no-store'`, `AbortSignal.timeout`, `redirect: 'manual'` and explicitly constructed headers → transform → store on success only. [REQ: LCP-002, LCP-003, LCP-004, LCP-010] [VER: V2, V3, V4, V10]
-- [ ] 5.2 Construct the response from scratch: `text/html; charset=utf-8`, `X-Robots-Tag: noindex`, `Content-Security-Policy: frame-ancestors 'self'`, `Cache-Control` per outcome, and no upstream header copied — in particular no `Set-Cookie`. [REQ: LCP-009] [VER: V9] 
-- [ ] 5.3 `src/modules/Legacy/LegacyEmbed/` — client component: an iframe with a Russian `title`, a `60vh` starting height, and a `message` listener gated on `event.origin`, `event.source === iframe.contentWindow`, the message type and a finite height in `(0, 50000]`, cleaned up on unmount. [REQ: LPF-003, LPF-006] [VER: V14, V17]
-- [ ] 5.4 Wire the catch-all's non-numeric branch: eligibility → render `<LegacyEmbed>` only (the layout owns header and footer) → `notFound()` when ineligible, when the origin is unconfigured, or on a **definitive** upstream 404/410; render the embed anyway on a transient 5xx or timeout. Leave the numeric branch untouched. [REQ: LPF-001, LPF-003, LPF-005] [VER: V12, V14, V16]
-- [ ] 5.5 Extend `generateMetadata`'s non-numeric branch through the same `cache()`d loader the page uses: upstream title and description, `canonicalUrl(path)` as the canonical, site defaults when the fetch fails, and never a canonical on the legacy origin. [REQ: LPF-004] [VER: V15]
+- [x] 5.1 `src/app/legacy/[...slug]/route.ts` — GET only (405 otherwise), dynamic (never route-cached), validate → store lookup → concurrency slot → bare `fetch` with `cache: 'no-store'`, `AbortSignal.timeout`, `redirect: 'manual'` and explicitly constructed headers → transform → store on success only. [REQ: LCP-002, LCP-003, LCP-004, LCP-010] [VER: V2, V3, V4, V10]
+- [x] 5.2 Construct the response from scratch: `text/html; charset=utf-8`, `X-Robots-Tag: noindex`, `Content-Security-Policy: frame-ancestors 'self'`, `Cache-Control` per outcome, and no upstream header copied — in particular no `Set-Cookie`. [REQ: LCP-009] [VER: V9] 
+- [x] 5.3 `src/modules/Legacy/LegacyEmbed/` — client component: an iframe with a Russian `title`, a `60vh` starting height, and a `message` listener gated on `event.origin`, `event.source === iframe.contentWindow`, the message type and a finite height in `(0, 50000]`, cleaned up on unmount. [REQ: LPF-003, LPF-006] [VER: V14, V17]
+- [x] 5.4 Wire the catch-all's non-numeric branch: eligibility → render `<LegacyEmbed>` only (the layout owns header and footer) → `notFound()` when ineligible, when the origin is unconfigured, or on a **definitive** upstream 404/410; render the embed anyway on a transient 5xx or timeout. Leave the numeric branch untouched. [REQ: LPF-001, LPF-003, LPF-005] [VER: V12, V14, V16]
+- [x] 5.5 Extend `generateMetadata`'s non-numeric branch through the same `cache()`d loader the page uses: upstream title and description, `canonicalUrl(path)` as the canonical, site defaults when the fetch fails, and never a canonical on the legacy origin. [REQ: LPF-004] [VER: V15]
 
 ## 6. Observability, docs and rollback
 

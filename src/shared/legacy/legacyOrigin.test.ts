@@ -45,13 +45,34 @@ describe('the module read of WP_LEGACY_BASE', () => {
 
   it('resolves the configured origin and stays quiet', async () => {
     vi.resetModules();
-    vi.stubEnv('WP_LEGACY_BASE', 'https://obshee-delo.ru/ignored/path/');
+    vi.stubEnv('WP_LEGACY_BASE', 'https://frozen.example/ignored/path/');
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
 
     const imported = await import('./legacyOrigin');
 
-    expect(imported.legacyOrigin).toBe('https://obshee-delo.ru');
+    expect(imported.legacyOrigin).toBe('https://frozen.example');
     expect(warn).not.toHaveBeenCalled();
+  });
+
+  /**
+   * The misconfiguration that only bites after cutover: once this app *is*
+   * `obshee-delo.ru`, a `WP_LEGACY_BASE` still pointing there makes every
+   * fallback page fetch itself and embed its own shell, one frame deeper each
+   * time. It warns rather than disabling, because locally `SITE_URL` is unset
+   * and defaults to production, so the two match on every developer's machine
+   * while the server is `localhost` and nothing recurses.
+   */
+  it('warns when the legacy origin is the site’s own origin', async () => {
+    vi.resetModules();
+    vi.stubEnv('SITE_URL', 'https://od.example');
+    vi.stubEnv('WP_LEGACY_BASE', 'https://od.example');
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+    const imported = await import('./legacyOrigin');
+
+    expect(imported.legacyOrigin).toBe('https://od.example');
+    expect(warn).toHaveBeenCalledTimes(1);
+    expect(String(warn.mock.calls[0][0])).toContain('proxy itself');
   });
 
   /**

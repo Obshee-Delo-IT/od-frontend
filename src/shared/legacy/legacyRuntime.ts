@@ -145,9 +145,14 @@ const legacyRuntime = (config: LegacyRuntimeConfig): void => {
       //    This has to happen even for clicks we then hand back to the browser
       //    — a modified click, or `target="_blank"` — or a document-relative
       //    link opens the legacy origin in a new tab.
-      if (url.origin === LEGACY && !ASSET.test(url.pathname)) {
+      //
+      //    `isAsset` is tested independently of origin so that a deployment
+      //    where the two origins are the same string still opens a download in
+      //    its own context instead of replacing the page with a JPEG.
+      const isAsset = ASSET.test(url.pathname);
+      if (url.origin === LEGACY && !isAsset) {
         anchor.href = SITE + url.pathname + url.search + url.hash;
-      } else if (url.origin !== SITE) {
+      } else if (url.origin !== SITE || isAsset) {
         // A download or a third-party link: genuinely off-site, so it opens in
         // its own context. An author's `target="_self"` is not consent to
         // replace the embedded page with a JPEG.
