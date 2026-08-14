@@ -641,6 +641,13 @@ what to know before adding any of it back:
   `flexDirection`, `position`. Adding one back is a line in the type, an entry
   in `LENGTH_PROPS`/`KEYWORD_PROPS`, and three lines per breakpoint in the CSS —
   use `Box`'s own `className` escape hatch if it's a one-off.
+- **`Input`'s label, hint message, error state and leading icon** — four of its
+  six own props, 90 of its 240 lines, and not one call site passed any of them:
+  the header search and the newsletter field both label with `aria-label` and
+  validate with native `required`. The always-rendered empty `<Text>` under every
+  input and the wrapper `<div>` went with them (Radix's `TextFieldRoot` is
+  `display: flex` and stretches the same either way). Figma still draws all four
+  — see design-system §5's `Input Field` row before rebuilding one.
 - **One entity decoder** (`src/shared/lib/decodeEntities.ts`) — there was a
   twenty-entry table in `shared/legacy/html.ts` and an eleven-entry one in
   `shared/api/newsPreview.ts`, the second of which silently dropped anything it
