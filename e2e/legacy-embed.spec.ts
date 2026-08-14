@@ -54,6 +54,15 @@ const MATRIX_PAGE = `<!doctype html>
   <a id="js-scheme" href="javascript:window.jsSchemeRan = true">javascript scheme</a>
   <a id="blank-relative" href="../about/" target="_blank">relative, _blank</a>
   <a id="mailto" href="mailto:info@example.org">mail</a>
+  <a id="js-fragment" href="/contacts/">repointed by page script</a>
+  <script>
+    // The legacy theme's own JS rewrites hrefs after load — cmsms sliders and
+    // accordions do exactly this. Such a link never passes through the
+    // transform, so the handler is the only thing standing between it and a
+    // navigation to the legacy origin, and it is the only case where comparing
+    // against document.baseURI rather than location.pathname is observable.
+    document.getElementById('js-fragment').setAttribute('href', '${LEGACY}/team/#target');
+  </script>
   <form id="search" action="${LEGACY}/"><input name="s" id="search-input"><button id="search-submit" type="submit">искать</button></form>
   <div style="height:1200px">spacer</div>
   <a id="bare-hash" href="#">bare hash</a>
@@ -253,6 +262,29 @@ test.describe('injected runtime — navigation (LCP-011, V20–V26)', () => {
    * *after* `scrollIntoViewIfNeeded`, because Playwright's own click scrolls
    * the element into view and would otherwise be measured as the movement.
    */
+  /**
+   * The `document.baseURI` comparison, made observable. Every *written* href
+   * that resolves to this page is normalised to `#fragment` by the transform,
+   * so the handler's first disjunct catches it and the comparison never runs —
+   * which is why deleting it survived a whole browser suite. A link the page's
+   * own JS repoints after load is the case that reaches it, and comparing
+   * against `location.pathname` there sends the visitor to the legacy origin,
+   * because inside the frame that pathname is `/legacy/team/` and matches
+   * nothing.
+   */
+  test('V21 a fragment a page script wrote still scrolls rather than navigating', async ({ page }) => {
+    const url = page.url();
+    await awaitHeightSync(page);
+    expect(await frame(page).locator('#js-fragment').getAttribute('href')).toContain(LEGACY);
+
+    await frame(page).locator('#js-fragment').click();
+
+    await expect.poll(async () => page.evaluate(() => window.scrollY)).toBeGreaterThan(500);
+    expect(page.url()).toBe(url);
+    await expect(page.locator('#frame')).toHaveCount(1);
+    await expect(frame(page).locator('#target')).toBeInViewport();
+  });
+
   test('V21 a fragment naming nothing moves nowhere', async ({ page }) => {
     const url = page.url();
     await awaitHeightSync(page);
@@ -356,17 +388,33 @@ test.describe('injected runtime — navigation (LCP-011, V20–V26)', () => {
     expect(ran).toBe(false);
   });
 
+  /**
+   * Asserted on the **frame's** URL, not just the top window's. Removing
+   * `action` does not neutralise a form once a `<base href>` exists — it
+   * retargets the submission at the base URL, which navigates the *frame* to
+   * the legacy origin and leaves `page.url()` untouched. An assertion that only
+   * watched the top window let the missing-listener mutation survive.
+   */
   test('V26 a form cannot submit, by button or by Enter', async ({ page }) => {
-    const before = page.url();
+    const top = page.url();
+    const framed = () =>
+      page
+        .frames()
+        .find((candidate) => candidate !== page.mainFrame())
+        ?.url();
+    const before = framed();
+    expect(before).toContain('/legacy/team/');
 
     await frame(page).locator('#search-input').fill('водка');
     await frame(page).locator('#search-submit').click();
-    expect(page.url()).toBe(before);
-    await expect(frame(page).locator('#search')).toBeAttached();
+    await page.waitForTimeout(500);
+    expect(page.url()).toBe(top);
+    expect(framed()).toBe(before);
 
     await frame(page).locator('#search-input').press('Enter');
-    expect(page.url()).toBe(before);
-    await expect(frame(page).locator('#search')).toBeAttached();
+    await page.waitForTimeout(500);
+    expect(page.url()).toBe(top);
+    expect(framed()).toBe(before);
   });
 
   test('a mailto link is left to the browser', async ({ page }) => {

@@ -1,5 +1,5 @@
 import { Theme } from '@radix-ui/themes';
-import { render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { LEGACY_HEIGHT_MESSAGE } from '@/shared/legacy';
 import { LegacyEmbed, legacyEmbedSrc } from './LegacyEmbed';
@@ -18,6 +18,35 @@ const postHeight = (source: Window | null, height: unknown, type: string = LEGAC
   const event = new MessageEvent('message', { data: { type, height }, origin: window.location.origin });
   Object.defineProperty(event, 'source', { value: source });
   window.dispatchEvent(event);
+};
+
+/** Let React flush any state update the message may have queued. */
+const settle = async () => {
+  await act(async () => {
+    await new Promise((resolve) => {
+      setTimeout(resolve, 0);
+    });
+  });
+};
+
+/**
+ * Assert that a message was ignored — **and prove the assertion could have
+ * failed**, by following it with a well-formed message and watching the height
+ * change.
+ *
+ * Without that second half these tests are vacuous: a single microtask is not
+ * enough for React to re-render, so "the height is still 60vh" holds whether the
+ * message was rejected or accepted. The mutation table caught exactly that —
+ * deleting the `event.source` check left the whole suite green.
+ */
+const expectIgnored = async (iframe: HTMLIFrameElement, post: () => void) => {
+  post();
+  await settle();
+  expect(iframe.style.height).toBe('60vh');
+
+  postHeight(iframe.contentWindow, 1234);
+  await settle();
+  expect(iframe.style.height).toBe('1234px');
 };
 
 describe('legacyEmbedSrc (LPF-003)', () => {
@@ -85,15 +114,14 @@ describe('LegacyEmbed height messages (LPF-006)', () => {
     renderEmbed(['team']);
     const iframe = frame();
 
-    const event = new MessageEvent('message', {
-      data: { type: LEGACY_HEIGHT_MESSAGE, height: 4200 },
-      origin: 'https://evil.example',
+    await expectIgnored(iframe, () => {
+      const event = new MessageEvent('message', {
+        data: { type: LEGACY_HEIGHT_MESSAGE, height: 4200 },
+        origin: 'https://evil.example',
+      });
+      Object.defineProperty(event, 'source', { value: iframe.contentWindow });
+      window.dispatchEvent(event);
     });
-    Object.defineProperty(event, 'source', { value: iframe.contentWindow });
-    window.dispatchEvent(event);
-
-    await Promise.resolve();
-    expect(iframe.style.height).toBe('60vh');
   });
 
   /**
@@ -104,10 +132,7 @@ describe('LegacyEmbed height messages (LPF-006)', () => {
     renderEmbed(['team']);
     const iframe = frame();
 
-    postHeight(window, 4200);
-
-    await Promise.resolve();
-    expect(iframe.style.height).toBe('60vh');
+    await expectIgnored(iframe, () => postHeight(window, 4200));
   });
 
   it.each([
@@ -122,10 +147,7 @@ describe('LegacyEmbed height messages (LPF-006)', () => {
     renderEmbed(['team']);
     const iframe = frame();
 
-    postHeight(iframe.contentWindow, height);
-
-    await Promise.resolve();
-    expect(iframe.style.height).toBe('60vh');
+    await expectIgnored(iframe, () => postHeight(iframe.contentWindow, height));
   });
 
   it('accepts the boundary height but not one past it', async () => {
@@ -136,7 +158,7 @@ describe('LegacyEmbed height messages (LPF-006)', () => {
     await waitFor(() => expect(iframe.style.height).toBe('50000px'));
 
     postHeight(iframe.contentWindow, 50_001);
-    await Promise.resolve();
+    await settle();
     expect(iframe.style.height).toBe('50000px');
   });
 
@@ -144,10 +166,7 @@ describe('LegacyEmbed height messages (LPF-006)', () => {
     renderEmbed(['team']);
     const iframe = frame();
 
-    postHeight(iframe.contentWindow, 4200, 'analytics:pageview');
-
-    await Promise.resolve();
-    expect(iframe.style.height).toBe('60vh');
+    await expectIgnored(iframe, () => postHeight(iframe.contentWindow, 4200, 'analytics:pageview'));
   });
 
   it('removes its listener on unmount', () => {
