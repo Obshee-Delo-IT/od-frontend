@@ -1,4 +1,3 @@
-import { isNavLabelHidden } from '@/shared/config/navOverrides';
 import { NavItem, SourceNavItem } from '../types';
 import { toInternalHref } from './toInternalHref';
 
@@ -21,18 +20,14 @@ const parentsFirst = (items: SourceNavItem[]): SourceNavItem[] =>
  * WordPress origin and our own — so their menu links come out site-relative
  * instead of sending visitors to the CMS. See {@link toInternalHref}.
  *
- * Entries WordPress carries but this site doesn't surface are dropped here per
- * {@link isNavLabelHidden}. A hidden top-level item takes its children with it:
- * they land in the same orphan branch as a child whose parent was never in the
- * input, so nothing leaks into the nav without its heading.
+ * The menu is taken as WordPress sends it. Entries this site shouldn't surface
+ * are deleted in WordPress instead of filtered here — «Заказать материалы» and
+ * «ОБЩЕЕДЕЛО-ПРО» were, on 2026-08-15, which retired the label filter that used
+ * to live in `shared/config/navOverrides.ts`. See `docs/next-steps.md`.
  */
 export const toNavItems = (wpItems: SourceNavItem[] = [], internalOrigins: string[] = []): NavItem[] => {
   const map = new Map<number, NavItem>();
   parentsFirst(wpItems).forEach((item) => {
-    if (isNavLabelHidden(item.title.rendered)) {
-      return;
-    }
-
     const mapped: NavItem = {
       id: item.id,
       parent: item.parent,

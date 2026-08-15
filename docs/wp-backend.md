@@ -1,15 +1,24 @@
 # WordPress backend — hosting, access, content model
 
-The Next.js app in this repo consumes a WordPress install hosted on **Timeweb shared hosting**. There are three OD-related WP instances on the same account (`cs16182@vh426.timeweb.ru`):
+The Next.js app in this repo consumes a WordPress install on **Timeweb shared hosting** (`cs16182@vh426.timeweb.ru`) — but **live production is not there**: it runs on **BeGet**, and the two hosts are the first thing to get straight.
+
+| | Host | Alias | Path |
+| --- | --- | --- | --- |
+| **Live prod** (`obshee-delo.ru`) | BeGet — `45.130.41.70`, reverse `ssl.dream.beget.com` | **`ssh od-root`** (`obsheedelo_odroot@obsheedelo.beget.tech`) | `~/public_html/` |
+| dev / stage / test, and a **stale copy of prod** | Timeweb — `vh426.timeweb.ru` | `ssh timeweb` | see the table below |
+
+**Check before you write.** `dig +short obshee-delo.ru` against the host's IPs settles it; so does making a request with a unique query string and grepping `~/access_log` — on the Timeweb copy it never appears. This cost a full round of edits landing on the copy on 2026-08-15 (found and recorded in [`next-steps.md`](./next-steps.md)). The BeGet install was set up around 2026-08-13 — `servers-agent/ssh/config` describes `od-root` as empty as of that date, and prod's privacy page carries the same `post_modified` on both installs, so the copy postdates the F6 writes.
+
+The Timeweb instances:
 
 | Instance | Path on server | URL | Status |
 | --- | --- | --- | --- |
 | **od-dev** | `~/od-dev/public_html/` | `https://od-dev.tmweb.ru` (matches `redocly.yml`) | The instance this repo points at via `WP_BASE`. **The only one we write to** — REST is on, content is migrated to Gutenberg, ACF is installed. |
 | **od-stage** | `~/od-stage/public_html/` | `https://stage.od.webtm.ru` (probed for the A6 research — confirm it's the same install as this directory) | Staging. **REST disabled** (clearfy-pro), content is cmsms shortcodes. Read-only so far; it is the rehearsal target for [`prod-migration-runbook.md`](./prod-migration-runbook.md). |
 | **od-test** | `~/od-test/public_html/` | unknown — confirm with the org | Test. Never probed; unclear how it differs from od-dev. |
-| ~~**prod**~~ **prod's stale twin** | `~/public_html/` — the account's default root | now only `общее-дело.рф`, as 301s | ⚠ **This is no longer the live site.** It is a full copy: same siteurl, same WP 5.5.5, DB `cs16182_delo`. Writes here are invisible. |
+| ~~**prod**~~ **prod's stale twin** | `~/public_html/` — the account's default root, *not* `~/obshee-delo.ru/`, which holds only verification files | serves `общее-дело.рф`, as 301s to the live host | ⚠ **Not the live site.** A full copy — same siteurl, same WP 5.5.5, DB `cs16182_delo` — so writes here are invisible. Useful as a read-only reference; never as the edit target. |
 
-⚠ **Live prod is on BeGet** (found 2026-08-15): `obshee-delo.ru` → `45.130.41.70` = `ssl.dream.beget.com`, install at **`ssh od-root`** (`obsheedelo_odroot@obsheedelo.beget.tech`), `~/public_html`, `wp` on `PATH`, same **WordPress 5.5.5** / REST disabled / cmsms / no ACF. The F6 writes of 2026-08-13 *are* there (privacy page `post_modified` matches on both installs, so the copy postdates them), but **every other prod fact in this file was measured on the Timeweb twin** and needs re-checking — see [`next-steps.md`](./next-steps.md). Written to on 2026-08-15: the footer `/sp/` link and nav item 27971, both deleted.
+**Prod, on BeGet** (`ssh od-root`, `~/public_html`): **WordPress 5.5.5** pinned by an active `wp-downgrade`, **REST disabled**, cmsms shortcodes, no ACF, `wp` at `/usr/local/bin/wp`. Writes so far: 2026-08-13 F6 (privacy page + clearfy's cookie notice, made on Timeweb before the copy, and present here), and 2026-08-15 the deletion of three dead nav/footer links (see [`next-steps.md`](./next-steps.md)). **The prod numbers elsewhere in this file — plugin inventory, cache behaviour, §2's CLI gotchas — were measured on the Timeweb twin**, and while the two matched everywhere they were compared, treat them as expected rather than verified until re-run against BeGet.
 
 **Read this alongside two things:** [`prod-migration-runbook.md`](./prod-migration-runbook.md) (what has to change on stage/prod, in order) and [`legacy-page-fallback.md` §2](./legacy-page-fallback.md) (the read-only probe that established the prod/stage facts above). The redesign started dev-first but is no longer dev-only.
 
@@ -22,11 +31,14 @@ Last verified: **2026-08-13** (core/plugin/CPT/taxonomy numbers below re-probed 
 SSH config is already wired via `~/Projects/servers-agent/ssh/config` (Included into `~/.ssh/config`). Always use the alias:
 
 ```bash
-ssh timeweb                    # opens (or reuses) a multiplexed session for 10 min
+ssh timeweb                    # dev/stage/test (and prod's stale copy)
 ssh timeweb '<command>'        # one-off remote command
+ssh od-root '<command>'        # LIVE PROD, on BeGet — ~/public_html
 ```
 
-**Restricted shell.** Shared hosting — **no root, no `sudo`, no `systemctl`, no `apt`**. Cron is managed through the Timeweb hosting panel, not `crontab -l` (the latter is blocked). Anything below has to be done with user-level tools.
+Both are shared hosting and multiplex a session for 10 min. `od-root` is a per-site BeGet subaccount: its home is the site directory, with no access to the other OD sites on that account or to their databases.
+
+**Restricted shell.** Shared hosting — **no root, no `sudo`, no `systemctl`, no `apt`**. Cron is managed through the hosting panel, not `crontab -l` (the latter is blocked). Anything below has to be done with user-level tools.
 
 **Secrets discipline.** Do **not** read `wp-config.php`, DB dumps (`~/*.sql`, `~/*.tar`, `~/*.tar.gz`), `.htaccess` secrets, or anything under `wp-content/uploads/private/`. If you need a specific non-secret value (DB name, table prefix), grep for it. See `servers-agent/CLAUDE.md` §"Safety rules" for the full list.
 
@@ -54,12 +66,20 @@ Without that flag the output is unusable. With it, all commands run cleanly.
 **On prod, `--skip-themes` is required as well** — the CLI's PHP is 8.2 while the site itself runs older, so the `welfare` theme fatals (`functions.php:754`, an optional-parameter-before-required signature) on every command and even `option get` fails:
 
 ```bash
-ssh timeweb 'cd ~/public_html && wp --skip-plugins --skip-themes <command>'
+ssh od-root 'cd ~/public_html && wp --skip-plugins --skip-themes <command>'   # live prod, BeGet
 ```
+
+(The same holds on the Timeweb copy at `ssh timeweb ~/public_html` — it's the same site, so the same theme fatals. Verified on BeGet 2026-08-15: with both flags, `option get`, `post list`, `menu item list/delete` and `eval-file` all run cleanly.)
 
 Skipping plugins wholesale is also the safer default there: prod carries 25 active plugins on WP 5.5.5, and a DB-only write (`post update`, `option get/update`) needs none of them. Content written that way still goes through core, so **revisions are created** — page 36316's F6 edit is revertible from `wp post list --post_type=revision --post_parent=36316`.
 
-⚠️ **Prod caches pages with WP Rocket** (10-hour lifespan, `wp rocket` CLI **not** registered). After editing a page, delete `wp-content/cache/wp-rocket/obshee-delo.ru/<slug>/index-https.html*` or the old HTML keeps serving. Its **"delay JavaScript execution"** also rewrites inline scripts to `type="rocketlazyloadscript"`, deferring them until the first user interaction — anything that must run on load needs a pattern in `wp_rocket_settings.delay_js_exclusions`.
+⚠️ **Prod caches pages with WP Rocket** (10-hour lifespan, `wp rocket` CLI **not** registered). The purge that works from the CLI, verified on BeGet 2026-08-15, is the plugin's own function with plugins loaded:
+
+```bash
+ssh od-root 'cd ~/public_html && wp --skip-plugins=clearfy-pro --skip-themes eval "rocket_clean_domain();"'
+```
+
+Skipping *all* plugins makes it unavailable; the fallback is deleting `wp-content/cache/wp-rocket/obshee-delo.ru/<slug>/index-https.html*` by hand. Without one or the other the old HTML keeps serving, and an edit looks like it did nothing. Its **"delay JavaScript execution"** also rewrites inline scripts to `type="rocketlazyloadscript"`, deferring them until the first user interaction — anything that must run on load needs a pattern in `wp_rocket_settings.delay_js_exclusions`.
 
 ---
 

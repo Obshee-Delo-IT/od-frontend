@@ -2,9 +2,9 @@
 
 Everything needed to move the Next.js redesign from **od-dev** to **od-stage** and then **production** (`obshee-delo.ru`), in execution order, with the verification gate for each step.
 
-> ⚠ **Prod is on BeGet, not Timeweb — every `ssh timeweb`-based prod fact below is suspect** (found 2026-08-15). `obshee-delo.ru` resolves to `45.130.41.70` (`ssl.dream.beget.com`); the live install is **`ssh od-root`, `~/public_html`**. `ssh timeweb ~/public_html` is a full *copy* of the same site, now serving only `общее-дело.рф` as 301s — editing it changes nothing anyone can see. The paths, WP-CLI invocations and measurements in §1–§2 were taken there and have to be re-verified against BeGet; [`next-steps.md`](./next-steps.md) carries that item and the two tells that identify which install you're on.
+> ⚠ **Prod lives on BeGet: `ssh od-root`, `~/public_html`.** Not Timeweb — `obshee-delo.ru` resolves to `45.130.41.70` (`ssl.dream.beget.com`), while `ssh timeweb ~/public_html` is a full *copy* of the same site that now serves only `общее-дело.рф` as 301s, so edits there are invisible. Established 2026-08-15, after a round of edits landed on the copy. The prod commands below have been repointed at `od-root`; the prod *measurements* (§2.5's PHP/mod_php notes, the plugin inventory, the WP Rocket behaviour) were taken on the twin and are marked where they matter. Two tells if you're unsure which install you're on: `dig +short obshee-delo.ru` against the host's IPs, and a request with a unique query string that never shows up in the copy's `~/access_log`.
 
-> **Read this first.** Every step below has been executed **only against od-dev**. od-stage and prod have never been written to (standing scope limit: od-dev only — see [`servers-agent/CLAUDE.md`](../../servers-agent/CLAUDE.md) safety rules). Prod facts in §0 come from a **read-only probe** recorded in [`legacy-page-fallback.md` §2](./legacy-page-fallback.md). Treat them as *expected*, and re-verify in §1 before acting. Run the whole runbook on **od-stage first** — it exists precisely so prod isn't the rehearsal.
+> **Read this first.** Every step below has been executed **only against od-dev**; od-stage has never been written to. Prod has, three times and narrowly: 2026-08-13's F6 privacy page + cookie notice (on Timeweb, before the copy diverged), and 2026-08-15's deletion of three dead nav/footer links (on BeGet — [`next-steps.md`](./next-steps.md)). Everything else in this runbook is unexecuted. Prod facts in §0 come from a **read-only probe** recorded in [`legacy-page-fallback.md` §2](./legacy-page-fallback.md). Treat them as *expected*, and re-verify in §1 before acting. Run the whole runbook on **od-stage first** — it exists precisely so prod isn't the rehearsal.
 
 Related: [`implementation-plan.md`](./implementation-plan.md) (task state) · [`wp-backend.md`](./wp-backend.md) (hosting, access, plugins) · [`legacy-page-fallback.md`](./legacy-page-fallback.md) (un-redesigned pages).
 
@@ -76,7 +76,7 @@ od-dev: 203 `format=video` posts, 99 in the four film sub-categories.
 
 ## 2. WordPress preparation
 
-**2.1 Enable REST (B1).** A `clearfy-pro` setting, not code — its "disable REST API" toggle in the WP admin (Clearfy → API). **It does not require the admin UI**, which matters because prod admin was the item this blocker was waiting on: the toggle is the single key `disable_json_rest_api` inside the `clearfy_option` array, and WP-CLI over `ssh timeweb` can flip it (`'on'` → unset/`''`). The F6 pass used exactly that mechanism to switch on a different clearfy option, so the path is proven. Re-run §1.1 to confirm.
+**2.1 Enable REST (B1).** A `clearfy-pro` setting, not code — its "disable REST API" toggle in the WP admin (Clearfy → API). **It does not require the admin UI**, which matters because prod admin was the item this blocker was waiting on: the toggle is the single key `disable_json_rest_api` inside the `clearfy_option` array, and WP-CLI over `ssh od-root` can flip it (`'on'` → unset/`''`; read on BeGet 2026-08-15, still `'on'`). The F6 pass used exactly that mechanism to switch on a different clearfy option, so the path is proven. Re-run §1.1 to confirm.
 
 ⚠️ **This one is a decision, not a chore** — it opens prod's REST surface to the public internet, so it wants a deliberate go-ahead rather than being flipped in passing. If REST must stay closed to the public, allowlist by path rather than disabling wholesale; the app needs `wp/v2/posts`, `wp/v2/media`, `wp/v2/menus`, `wp/v2/menu-items`.
 
@@ -113,20 +113,20 @@ Egress is fine: `wp_remote_get('https://example.com/')` from prod answered **200
 
 ```bash
 # 1. Upload, into a directory that does not exist yet
-ssh timeweb 'mkdir -p ~/public_html/wp-content/mu-plugins/od-revalidate'
-scp wp/mu-plugins/od-revalidate.php timeweb:public_html/wp-content/mu-plugins/od-revalidate.php
-ssh timeweb 'chmod 600 ~/public_html/wp-content/mu-plugins/od-revalidate.php && php -l ~/public_html/wp-content/mu-plugins/od-revalidate.php'
+ssh od-root 'mkdir -p ~/public_html/wp-content/mu-plugins/od-revalidate'
+scp wp/mu-plugins/od-revalidate.php od-root:public_html/wp-content/mu-plugins/od-revalidate.php
+ssh od-root 'chmod 600 ~/public_html/wp-content/mu-plugins/od-revalidate.php && php -l ~/public_html/wp-content/mu-plugins/od-revalidate.php'
 
 # 2. Config, secret over stdin so it never reaches a command line or a shell
 #    history. Install it INERT first — URL commented out, secret in place — so
 #    the file is in prod before cutover without doing anything.
 S=$(openssl rand -hex 32)   # prod's own secret; never stage's, never od-dev's
 printf '<?php\ndefined( '"'"'ABSPATH'"'"' ) || exit;\n// defined( '"'"'OD_REVALIDATE_URL'"'"' ) || define( '"'"'OD_REVALIDATE_URL'"'"', '"'"'https://obshee-delo.ru/api/revalidate/'"'"' );\ndefined( '"'"'OD_REVALIDATE_SECRET'"'"' ) || define( '"'"'OD_REVALIDATE_SECRET'"'"', '"'"'%s'"'"' );\n' "$S" \
-  | ssh timeweb 'T=~/public_html/wp-content/mu-plugins/od-revalidate/config.php; cat > $T && chmod 600 $T && php -l $T'
+  | ssh od-root 'T=~/public_html/wp-content/mu-plugins/od-revalidate/config.php; cat > $T && chmod 600 $T && php -l $T'
 # …and put the same $S into the deployment's REVALIDATE_SECRET (§4.1).
 
 # 3. Loaded, and inert as intended?
-ssh timeweb 'cd ~/public_html && wp --skip-plugins --skip-themes eval "
+ssh od-root 'cd ~/public_html && wp --skip-plugins --skip-themes eval "
   var_dump( class_exists( \"OD_Revalidate\" ), OD_Revalidate::configured() );"'   # true, false
 ```
 
@@ -134,11 +134,11 @@ ssh timeweb 'cd ~/public_html && wp --skip-plugins --skip-themes eval "
 
 ```bash
 # a. the two secrets are the same one — compare digests, never values
-ssh timeweb 'cd ~/public_html && wp --skip-plugins --skip-themes eval "echo hash( \"sha256\", OD_REVALIDATE_SECRET );"'
+ssh od-root 'cd ~/public_html && wp --skip-plugins --skip-themes eval "echo hash( \"sha256\", OD_REVALIDATE_SECRET );"'
 node --env-file=.env -e "console.log(require('node:crypto').createHash('sha256').update(process.env.REVALIDATE_SECRET).digest('hex'))"
 
 # b. a purge by hand: expects bool(true), and the frontend answers 200
-ssh timeweb 'cd ~/public_html && wp --skip-plugins --skip-themes eval "
+ssh od-root 'cd ~/public_html && wp --skip-plugins --skip-themes eval "
   var_dump( OD_Revalidate::send( array( \"tags\" => array( \"wp:menus\" ) ) ) );"'
 
 # c. only then, a real edit — retitle a post to the same title and watch
@@ -257,7 +257,7 @@ pnpm lint && pnpm type-check && pnpm test && pnpm build
 - **Persistent volume on `/app/.next/cache`** — without it every redeploy cold-starts into a request burst against the slow WP plus full image re-encoding.
 - **Health check → `/health/`** (added 2026-08-04). ⚠️ **With the trailing slash** — A8 turned on `trailingSlash: true`, so a probe of `/health` gets a 308 to `/health/`; whether that counts as healthy depends on the probe's redirect handling, so configure the slashed form and don't rely on it. It never touches WP on purpose: a WP hiccup must not make Coolify restart a healthy container. Do not point the probe at `/`.
 - **Pin the Next minor** — 16.1.0 has a known Docker memory-leak thread (vercel/next.js#88603).
-- **WordPress stays on timeweb.** The container reaches it over public HTTPS.
+- **WordPress stays where it is** — prod's WP on BeGet (`ssh od-root`), dev/stage on Timeweb. The container reaches whichever `WP_BASE` names over public HTTPS.
 
 **4.7 Remaining CI work.** `.github/workflows/ci.yml` runs `next typegen` → `lint` → `type-check` → `test` → `build` and **stops there** — the docker build + push-to-GHCR step is still to add, passing the two build-args above.
 
@@ -350,4 +350,4 @@ Nothing here is destructive, but in order of blast radius:
 - **ACF values** — the importer only ever *fills* empty fields, so a bad import adds rather than destroys. To revert a specific film, put `-` in the offending cells and re-import (that's the explicit clear token). Keep the pre-import `film:export` sheet — it **is** your backup of prior values.
 - **Cover uploads** — `film:covers` only touches posts with no featured image. To undo, unset `featured_media` and delete the `film-cover-<id>.jpg` attachments.
 - **ACF field group** — deactivating the ACF plugin hides the fields from REST but leaves postmeta intact; re-activating restores everything.
-- **Before starting on prod**, take a DB snapshot through the Timeweb panel — the migration writes postmeta across ~30 posts and uploads ~23 attachments.
+- **Before starting on prod**, take a DB snapshot through the **BeGet** panel (prod's host — not Timeweb's, which holds the stale copy) — the migration writes postmeta across ~30 posts and uploads ~23 attachments.
