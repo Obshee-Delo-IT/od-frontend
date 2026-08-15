@@ -14,7 +14,8 @@ test.describe('Home page (D1)', () => {
     await expect(page.getByRole('heading', { name: /Прими участие в международном/ })).toBeVisible();
     // One section, not two: Figma's «Программы» and «Направления деятельности»
     // carousels are merged, because three of the five directions have no page.
-    // See HOME_SECTIONS_TITLE in shared/config/homeSections.ts.
+    // See HOME_SECTIONS_TITLE in shared/config/programSections.ts. /projects/
+    // keeps the two sections apart, reading the same arrays.
     await expect(page.getByRole('heading', { name: 'Программы и направления деятельности' })).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Наши дела' })).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Подписаться на новости' })).toBeVisible();

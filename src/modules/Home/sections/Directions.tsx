@@ -18,13 +18,18 @@ export interface DirectionCardData {
 
 interface DirectionsProps {
   directions: DirectionCardData[];
-  /** Always `HOME_SECTIONS_TITLE` today — the section carries the folded-in programmes. */
+  /**
+   * `HOME_SECTIONS_TITLE` on the home page, where the two lists are folded into
+   * one carousel; `PROGRAMS_TITLE` / `DIRECTIONS_TITLE` on `/projects/`, which
+   * renders this twice. The section is named by `aria-label` rather than an
+   * `id` for exactly that reason — two copies would collide on one.
+   */
   title: string;
 }
 
 export const Directions: React.FC<DirectionsProps> = ({ directions, title }) => (
-  <section className={css.section} aria-labelledby="directions-heading">
-    <Heading as="h2" id="directions-heading" size="9" className={css.heading}>
+  <section className={css.section} aria-label={title}>
+    <Heading as="h2" size="9" className={css.heading}>
       {title}
     </Heading>
 

@@ -256,7 +256,7 @@ Figma reference frames on the `design` page: `home` 1440 (`3614:91040`, canonica
 
 *Resolved along the way:* the 5-vs-3 directions question — 5 is correct; the canonical frame just clips overflow cards.
 
-**Programmes and directions are one carousel (2026-08-14).** Three of the five directions point at pages that 404 on the legacy origin, so they are hidden and the two carousels were merged under «Программы и направления деятельности» — a two-card carousel reads as a stub. That started as a runtime switch (`MERGE_HOME_SECTIONS`) over two components, but `Programs` was a byte-identical copy of `Directions` bar its illustration list and heading, and the switch could only ever be `true` from static config. Both are gone: `app/page.tsx` renders one `Directions` over `[...HOME_PROGRAMS, ...HOME_DIRECTIONS]`. If the missing pages ship and the split comes back, it is the same component rendered twice with different props.
+**Programmes and directions are one carousel (2026-08-14).** Three of the five directions point at pages that 404 on the legacy origin, so they are hidden and the two carousels were merged under «Программы и направления деятельности» — a two-card carousel reads as a stub. That started as a runtime switch (`MERGE_HOME_SECTIONS`) over two components, but `Programs` was a byte-identical copy of `Directions` bar its illustration list and heading, and the switch could only ever be `true` from static config. Both are gone: `app/page.tsx` renders one `Directions` over `[...PROGRAMS, ...DIRECTIONS]`. If the missing pages ship and the split comes back, it is the same component rendered twice with different props — which is exactly what `/projects/` does (D6 below).
 
 **GitHub:** pre-decomposed into #33 Hero, #34 Statistics, #35 Films carousel, #36 Banner, #37 Programs carousel, #38 Articles, #39 Subscribe — all now have shipped markup. **#32 (open)** still tracks "how do we fetch sections" (working assumption: widgets).
 
@@ -269,6 +269,20 @@ Data via `fetchNewsList` (`src/shared/api/fetchNewsList.ts`) — paginated `/wp/
 **Filter chips** (`src/modules/News/NewsFilter/`): `Все` = unfiltered · `Наши дела` → category `Новости` (47) · `Статьи` → `articles` (578). There is no dedicated «Наши дела» WP category, so it maps to the main news category. Ids live in `src/shared/config/newsCategories.ts` since 2026-08-13.
 
 **GitHub:** newsletter *submission* wiring still open (#54); markup side is #66/#39.
+
+### D6. Projects index (`app/projects/page.tsx`) — 2026-08-15
+
+Figma: `projects` (`706:1775`). **Index only** — the three `project-1/2/3` detail mocks stay unbuilt, and the plan's reason holds: zero `/projects/<slug>/` URLs in 91 days, and the `project` CPT is 21 Lorem-ipsum drafts (B-CPT). The index itself is worth building — 794 views / 85 entries, **9.3×**, the section's whole traffic.
+
+**Nothing is fetched.** The cards are the same two arrays the home page reads, renamed `shared/config/homeSections.ts` → **`programSections.ts`** (`PROGRAMS`, `DIRECTIONS`, plus `PROGRAMS_TITLE`/`DIRECTIONS_TITLE`) now that two surfaces read them. So the hiding rule is one rule: a card absent from `DIRECTIONS` — «Бизнес-клуб», «ОД ИТ», «Наставничество», all three 404 upstream — is absent on the home page *and* here. Adding one back is one line and lights up both.
+
+**The two sections stay apart here, unlike the home page.** The merge into «Программы и направления деятельности» exists because a two-card carousel reads as a stub *above the fold on the landing page*; on the page whose subject is the list, a short section is a list. Same `Directions` component, rendered twice with different props — the shape D1's note predicted. Its `<section>` is now named by `aria-label` rather than a fixed `id="directions-heading"`, which two copies would collide on.
+
+`PageHeader` with no breadcrumbs row (the mock omits it here, unlike the per-project pages — the component's own doc already called this the example case), then the two sections, then `NewsletterSignup`. Fully static: no `revalidate`, no WP call. Seeded into `sitemap.ts` (`monthly`, 0.8).
+
+**Being a real route retires the A6 fallback for `/projects/`** with no other edit — App Router precedence over `[...slug]`.
+
+**Open: the H1 label.** Shipped as «ПРОЕКТЫ», matching the Figma frame and section name, because «ПРОГРАММЫ» (what the live site and the Figma nav call it) would repeat the first section's own heading one line below it. One-word change if Design says otherwise. Built without a Figma read — the worktree has no `.mcp.json`, so `figma-mcp-go` was unavailable — meaning the *composition* follows the mock's inventory as recorded in `docs/page-mocks.md`, not a fresh look at it; a fidelity pass against `706:1775` is still owed.
 
 ### D7. Video — index 2026-06-04, player 2026-07-02
 
@@ -666,7 +680,7 @@ what to know before adding any of it back:
   `data-cb-space-between` and `JSON.parse`-ing `data-cb-breakpoints`, both of
   which `createSwiperConfig` then overrode with its own values; `Directions`'s
   `title` default, always overridden by `HOME_SECTIONS_TITLE`;
-  `HOME_DIRECTIONS`'s hidden-set filter, which was ten lines of machinery to
+  `DIRECTIONS`'s hidden-set filter, which was ten lines of machinery to
   express a two-item list (the three absent titles are now a comment, which is
   where the reason lived anyway); `variant="card"` spelled out at the four
   `NewsletterSignup` call sites that were already getting the default; and the

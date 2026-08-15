@@ -95,7 +95,7 @@ Plus 5 `Status` badges.
 
 **Notes from the scout.** `projects` index does **not** include a breadcrumbs row in its header — distinct from per-project pages. All project detail pages share a common Frame 33938/33934/33787 pattern: a 3-card grid of "project items" (`Frame 251`/`33788`/`33789` with `Frame 151` content inside) followed by tabs (`Frame 33787`, ~572×198) and a text content block (`Frame 33937/33936/33935`).
 
-**Repo:** ❌ none. Likely `app/projects/page.tsx` + `app/projects/[slug]/page.tsx` (or per-project hard-coded routes — see plan §D6).
+**Repo:** ✅ index only — `app/projects/page.tsx` (2026-08-15), two `Directions` sections over `shared/config/programSections`, no breadcrumbs. The detail templates are unbuilt and may stay that way; see plan §D6.
 
 ### 2.4 видео — Video (SECTION `1227:4298`, 9 children, ~408 frames deep)
 

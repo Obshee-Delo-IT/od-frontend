@@ -176,6 +176,9 @@ const sitemap = async (): Promise<MetadataRoute.Sitemap> => {
     // The «Статьи» collection's own address — a live-site URL with real search
     // traffic, and the canonical target of the index's «Статьи» chip.
     { url: canonicalUrl(ARTICLES_HREF), changeFrequency: 'monthly', priority: 0.6 },
+    // Editorial and near-static (D6 reads a config array, not WordPress), but a
+    // nav destination all the same — 794 views / 91 days on the live site.
+    { url: canonicalUrl('/projects/'), changeFrequency: 'monthly', priority: 0.8 },
     { url: canonicalUrl(catalogueHref({ segment: null })), changeFrequency: 'weekly', priority: 0.8 },
     // Enumerated from the shared map, and addressed through the same helper the
     // catalogue links with, so a new segment can't be forgotten here or drift
