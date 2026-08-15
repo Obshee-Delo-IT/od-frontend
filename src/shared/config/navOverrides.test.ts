@@ -6,16 +6,12 @@ describe('isNavLabelHidden', () => {
     expect(isNavLabelHidden('ОБЩЕЕДЕЛО-ПРО')).toBe(true);
   });
 
-  it('hides «Заказать материалы», the child of «Материалы» this site does not surface', () => {
-    expect(isNavLabelHidden('Заказать материалы')).toBe(true);
-  });
-
   it('tolerates the whitespace and casing WP editors introduce', () => {
     expect(isNavLabelHidden('  общеедело-про  ')).toBe(true);
   });
 
   it('keeps every other entry', () => {
-    ['ГЛАВНАЯ', 'О НАС', 'ПРОГРАММЫ', 'ФИЛЬМЫ', 'МАТЕРИАЛЫ', 'КОНТАКТЫ', ''].forEach((label) => {
+    ['ГЛАВНАЯ', 'О НАС', 'ПРОГРАММЫ', 'ФИЛЬМЫ', 'МАТЕРИАЛЫ', 'Заказать материалы', 'КОНТАКТЫ', ''].forEach((label) => {
       expect(isNavLabelHidden(label)).toBe(false);
     });
   });

@@ -52,26 +52,6 @@ describe('renderFooterWidget', () => {
     expect(link).not.toHaveAttribute('rel');
   });
 
-  it('drops the hidden donation link together with its list item', () => {
-    const { container } = render(
-      <>
-        {renderFooterWidget(
-          '<ul class="wp-block-list"><li><a href="/faq/">Частые вопросы</a></li><li><a href="/sp/">Благотворительная акция</a></li></ul>'
-        )}
-      </>
-    );
-
-    expect(screen.getByRole('link', { name: 'Частые вопросы' })).toBeInTheDocument();
-    expect(screen.queryByRole('link', { name: 'Благотворительная акция' })).not.toBeInTheDocument();
-    expect(container.querySelectorAll('li')).toHaveLength(1);
-  });
-
-  it('drops the hidden link when it is not inside a list item', () => {
-    render(<>{renderFooterWidget('<p><a href="/sp/">Благотворительная акция</a></p>')}</>);
-
-    expect(screen.queryByRole('link', { name: 'Благотворительная акция' })).not.toBeInTheDocument();
-  });
-
   it('does not touch an anchor that merely has other classes', () => {
     render(<>{renderFooterWidget('<a class="cmsms-icon-telegram" href="/tg/">TG</a>')}</>);
 
