@@ -109,20 +109,44 @@ list costs more than it returns.
 subscribed under (2016–2020). Belongs in the legal map alongside the
 reg-site consent work, before any send.
 
-## Transactional mail is a separate problem
+## Contact forms — the same problem, and they're live right now
 
-Unisender covers campaigns, not notifications. On the legacy apex the
-transactional paths are effectively dormant — leyka takes no payments
-there (last funded donation 2022-01-05), login is admin-only — but three
-Contact Form 7 forms are live on three published pages, and their
-notifications go to real addresses (`web@obshee-delo.ru`,
-`dmd_kostroma@mail.ru`; the third, "Интернет волонтёр", still points at
-the stray `villain218@gmail.com`). With host mail landing in spam, those
-submissions are quietly lost rather than visibly broken.
+Unisender covers campaigns, not notifications. Most transactional paths
+on the legacy apex are dormant: leyka takes no payments there (last
+funded donation 2022-01-05, everything runs through
+`donation.obshee-delo.ru` and `поддержи.общее-дело.рф`), and login is
+admin-only. **Contact Form 7 is the exception** — verified on production
+2026-08-15:
 
-When the new frontend takes over contact forms, it must decide its own
-sending path — authenticated SMTP with DKIM, or a transactional API —
-and not inherit `mail()`.
+| Form | id | Recipients |
+| --- | --- | --- |
+| Написать письмо в общее дело | 6 | `web@obshee-delo.ru`, `dmd_kostroma@mail.ru` |
+| Твой отзыв об Общем деле | 20138 | `web@obshee-delo.ru`, `dmd_kostroma@mail.ru` |
+| Интернет волонтёр | 30103 | `villain218@gmail.com` ⚠ |
+
+All three are published, and three published pages embed the shortcode.
+So visitors can and do submit them — and since host mail lands in spam,
+those messages are **quietly lost, not visibly broken**. Nobody sees an
+error; the mail just never gets read.
+
+Two things follow for the redesign:
+
+1. **The recipient list needs an owner decision before the forms are
+   rebuilt.** `villain218@gmail.com` is a stray personal address — the
+   same one sitting in wysija's `smtp_login`, i.e. leftovers from a
+   previous developer, not something the organisation chose.
+   `dmd_kostroma@mail.ru` should be confirmed as still current too.
+2. **The new frontend must not inherit `mail()`.** Whatever sends the
+   form notification — authenticated SMTP with DKIM (the
+   `wp-mail-smtp` → `smtp.mail.ru` pattern the donation sites already
+   use) or a transactional API — has to be chosen deliberately, and the
+   submission should be persisted server-side as well, so a delivery
+   failure never means a lost message again.
+
+Owner's position, 2026-08-15: the legacy forms are left as they are for
+now — the site is admin-only in practice and admins can check spam. This
+is a conscious deferral, not an oversight, and it ends when the redesign
+takes the forms over.
 
 ## References
 
