@@ -8,6 +8,8 @@ Frontend for «Общее Дело» (a Russian non-profit). The app is a Next.j
 
 Node version is pinned in `.nvmrc` (22.16.0). Package manager is `pnpm@11.3.0` (enforced in the Dockerfile via corepack). pnpm config (build-script allowlist, `@types/react` overrides) lives in `pnpm-workspace.yaml` — pnpm 11 no longer reads the `pnpm.*` block from `package.json`.
 
+**Prod and od-dev store post content in different formats, and that difference is temporary.** Production still holds CMSMasters (`cmsms`) shortcodes; od-dev holds core Gutenberg blocks, which is what everything here assumes (`parsePost`, `GutenbergProvider`, the block-class selectors in the styles). Don't code around the fork: `cmsms-gutenberg-upgrade` is the migrator, it already converted od-dev's content, and **prod is migrated the same way as part of the cutover** — so write against Gutenberg. Shortcodes survive on purpose in exactly one place: **`frozen.obshee-delo.ru`**, the A6 frozen copy that `WP_LEGACY_BASE` points at after cutover. That copy stays un-migrated, and nothing parses it — it is served as rendered HTML through `app/legacy/[...slug]/route.ts`.
+
 **Project state lives in `docs/`, not here.** This file covers repo mechanics only. Before answering "is X built?", "why is it like this?", or "what's next?", read [`docs/README.md`](docs/README.md) — it maps the eight docs. Two of them are a pair: **`docs/implementation-plan.md` holds what is still open** ("what's next?"), **`docs/implementation-notes.md` holds everything that closed** ("is X built?", "why is it like this?"). When something ships, move it from the plan to the notes rather than growing the plan. `docs/wp-backend.md` is the reference for anything WordPress-shaped.
 
 ## Commands
