@@ -44,7 +44,7 @@ const ProjectsPage = () => (
     <PageHeader title="Проекты" />
 
     <Directions title={PROGRAMS_TITLE} directions={PROGRAMS} />
-    <Directions title={DIRECTIONS_TITLE} directions={DIRECTIONS} />
+    <Directions title={DIRECTIONS_TITLE} directions={DIRECTIONS} illustrationOffset={PROGRAMS.length} />
 
     <NewsletterSignup />
   </Box>

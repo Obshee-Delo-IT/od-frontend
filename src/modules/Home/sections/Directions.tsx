@@ -25,9 +25,17 @@ interface DirectionsProps {
    * `id` for exactly that reason — two copies would collide on one.
    */
   title: string;
+  /**
+   * Where in {@link ILLUSTRATIONS} this section's cards start. `/projects/`
+   * renders two sections that are one list in Figma, so the second passes the
+   * first's length and the five drawings stay distinct — without it both
+   * sections restart at Direction1, repeating two drawings *and* their internal
+   * SVG ids.
+   */
+  illustrationOffset?: number;
 }
 
-export const Directions: React.FC<DirectionsProps> = ({ directions, title }) => (
+export const Directions: React.FC<DirectionsProps> = ({ directions, title, illustrationOffset = 0 }) => (
   <section className={css.section} aria-label={title}>
     <Heading as="h2" size="9" className={css.heading}>
       {title}
@@ -43,7 +51,7 @@ export const Directions: React.FC<DirectionsProps> = ({ directions, title }) => 
         1280: { slidesPerView: 3, spaceBetween: 40 },
       }}
       items={directions.map((direction, idx) => {
-        const Illustration = ILLUSTRATIONS[idx % ILLUSTRATIONS.length];
+        const Illustration = ILLUSTRATIONS[(idx + illustrationOffset) % ILLUSTRATIONS.length];
         return (
           <article key={direction.id} className={css.card}>
             <div className={css.illustration}>
