@@ -6,6 +6,10 @@ export default defineConfig({
   plugins: [
     svgr({
       include: '**/*.svg',
+      // No svgoConfig here on purpose: @svgr/plugin-svgo isn't installed, so
+      // vite-plugin-svgr runs no svgo at all and a test sees the raw Figma
+      // markup (ids like `clip0_838_1531`). Passing the app's config would
+      // read as coverage it doesn't have — see svgo.config.ts.
       svgrOptions: { exportType: 'default' },
     }),
     react(),
