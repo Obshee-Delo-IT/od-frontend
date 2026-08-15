@@ -1,0 +1,18 @@
+/* The affordance follows the same rule the handler does: an image linked to its
+   own upload opens in the lightbox, an image linked to a page is a link. An
+   unlinked image opens too but gets no hover cue — styling it would need a
+   complex `:not()` for the sake of the rarer case. */
+.root a[href*='/wp-content/uploads/'] img {
+  cursor: zoom-in;
+  transition: opacity 200ms ease;
+}
+
+.root a[href*='/wp-content/uploads/'] img:hover {
+  opacity: 0.9;
+}
+
+.imageWrapper {
+  position: relative;
+  width: 90vw;
+  height: 90vh;
+}

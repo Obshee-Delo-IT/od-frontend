@@ -1,7 +1,7 @@
-import { ImagePreviewClient } from '@/modules/News/ImagePreview';
-import { parsePost, resolveContentImages } from '@/modules/News/utils';
 import { canonicalUrl } from '@/shared/config/site';
+import { parsePost, resolveContentImages } from '@/shared/lib/wpContent';
 import { Box } from '@/shared/ui/components/Box';
+import { ImagePreviewClient } from '@/shared/ui/components/ImagePreview';
 import { PageHeader } from '@/shared/ui/components/PageHeader';
 import { GutenbergProvider } from '@/shared/ui/theme';
 import type { WpPageContent } from '@/shared/api/fetchWpPage';

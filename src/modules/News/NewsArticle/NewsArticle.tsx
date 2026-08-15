@@ -4,13 +4,13 @@ import { cachedFetchNews } from '@/shared/api/fetchNews';
 import { buildNewsPreview } from '@/shared/api/newsPreview';
 import { canonicalUrl } from '@/shared/config/site';
 import { formatDate } from '@/shared/lib/formatDate';
+import { parsePost, resolveContentImages } from '@/shared/lib/wpContent';
 import { Box } from '@/shared/ui/components/Box';
 import { Breadcrumbs } from '@/shared/ui/components/Breadcrumbs';
+import { ImagePreviewClient } from '@/shared/ui/components/ImagePreview';
 import { GutenbergProvider } from '@/shared/ui/theme';
-import { ImagePreviewClient } from '../ImagePreview';
 import { SimilarNews } from '../SimilarNews';
 import css from './NewsArticle.module.css';
-import { parsePost, resolveContentImages } from '../utils';
 import type { Metadata } from 'next';
 
 export interface NewsArticleProps {

@@ -1,12 +1,12 @@
 import { notFound } from 'next/navigation';
-import { ImagePreviewClient } from '@/modules/News/ImagePreview';
-import { parsePost, resolveContentImages } from '@/modules/News/utils';
 import { cachedFetchVideo, fetchVideoList, resolveMediaUrl } from '@/shared/api';
 import { wpBaseUrl } from '@/shared/api/httpClient';
 import { ALL_FILM_CATEGORY_IDS, catalogueHref } from '@/shared/config/filmCategories';
 import { canonicalUrl } from '@/shared/config/site';
+import { parsePost, resolveContentImages } from '@/shared/lib/wpContent';
 import { Box } from '@/shared/ui/components/Box';
 import { Breadcrumbs } from '@/shared/ui/components/Breadcrumbs';
+import { ImagePreviewClient } from '@/shared/ui/components/ImagePreview';
 import { GutenbergProvider } from '@/shared/ui/theme';
 import { CollapsibleBody } from '../CollapsibleBody';
 import { FilmActions } from '../FilmActions';
