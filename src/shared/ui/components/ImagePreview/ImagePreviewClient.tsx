@@ -51,8 +51,24 @@ const previewSource = (target: EventTarget | null): HTMLImageElement | null => {
   return href === undefined || href === null || href.includes(MEDIA_PATH) ? img : null;
 };
 
+/**
+ * What the lightbox shows. The size travels with the source because the dialog
+ * has to be **exactly as big as the picture**: a `fill` image inside a fixed
+ * 90vw × 90vh box letterboxes the picture but leaves the whole box part of the
+ * dialog, so a click in the grey beside a portrait image landed on the dialog
+ * and did not dismiss it — only clicks out at the viewport edge did.
+ *
+ * Taken off the clicked thumbnail, which is on screen and therefore measurable:
+ * `naturalWidth` when the file has loaded, the laid-out size otherwise.
+ */
+interface Preview {
+  src: string;
+  width: number;
+  height: number;
+}
+
 export const ImagePreviewClient = ({ children }: ImagePreviewClientProps) => {
-  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [preview, setPreview] = useState<Preview | null>(null);
   /**
    * The thumbnail that opened the lightbox, so closing puts focus back on it
    * instead of dropping the reader at the top of the document. State, not a ref:
@@ -66,13 +82,20 @@ export const ImagePreviewClient = ({ children }: ImagePreviewClientProps) => {
     if (!img) {
       return;
     }
+    const width = img.naturalWidth || img.width;
+    const height = img.naturalHeight || img.height;
+    if (!width || !height) {
+      // Nothing measurable yet — leave the anchor to do whatever it does rather
+      // than open a dialog around an image `next/image` would reject.
+      return;
+    }
     event.preventDefault();
     setOpenedFrom(img.closest('a') ?? img);
-    setSelectedImage(img.currentSrc);
+    setPreview({ src: img.currentSrc, width, height });
   };
 
   const handleClose = () => {
-    setSelectedImage(null);
+    setPreview(null);
   };
 
   return (
@@ -84,11 +107,21 @@ export const ImagePreviewClient = ({ children }: ImagePreviewClientProps) => {
       <div className={css.root} onClick={open}>
         {children}
       </div>
-      <Modal isOpen={!!selectedImage} onClose={handleClose} title="Просмотр изображения" restoreFocusTo={openedFrom}>
-        {selectedImage && (
-          <div className={css.imageWrapper}>
-            <Image src={selectedImage} alt="" fill style={{ objectFit: 'contain' }} quality={80} />
-          </div>
+      <Modal isOpen={!!preview} onClose={handleClose} title="Просмотр изображения" restoreFocusTo={openedFrom}>
+        {preview && (
+          <Image
+            src={preview.src}
+            alt=""
+            width={preview.width}
+            height={preview.height}
+            className={css.image}
+            quality={80}
+            // Eager: the default `loading="lazy"` leaves the dialog collapsed to
+            // nothing until the file arrives, so it pops open a beat late and at
+            // the wrong size. It is the only thing on screen — there is nothing
+            // to defer it behind.
+            priority
+          />
         )}
       </Modal>
     </>

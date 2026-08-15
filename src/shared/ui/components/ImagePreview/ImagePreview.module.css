@@ -11,8 +11,14 @@
   opacity: 0.9;
 }
 
-.imageWrapper {
-  position: relative;
-  width: 90vw;
-  height: 90vh;
+/* Scaled by the viewport, never stretched past its own pixels: `auto` on both
+   axes keeps the intrinsic size the source of truth, and the caps let the
+   dialog shrink to whatever is left. The dialog is then exactly the picture, so
+   every pixel around it is overlay and dismisses. */
+.image {
+  display: block;
+  width: auto;
+  max-width: 90vw;
+  height: auto;
+  max-height: 90vh;
 }

@@ -12,8 +12,10 @@ import { ImagePreviewClient } from './ImagePreviewClient';
  */
 
 vi.mock('next/image', () => ({
-  // eslint-disable-next-line @next/next/no-img-element
-  default: ({ src, alt }: { src: string; alt: string }) => <img src={src} alt={alt} />,
+  default: ({ src, alt, width, height }: { src: string; alt: string; width: number; height: number }) => (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img src={src} alt={alt} width={width} height={height} />
+  ),
 }));
 
 const linked = (href: string, src = 'https://cdn.test/poster.jpg') => (
@@ -29,10 +31,16 @@ const linked = (href: string, src = 'https://cdn.test/poster.jpg') => (
   </ImagePreviewClient>
 );
 
-// jsdom does not load images, so `currentSrc` stays empty unless it is set.
-const withCurrentSrc = (src = 'https://cdn.test/poster.jpg') => {
+/**
+ * jsdom loads nothing and lays nothing out, so an `<img>` there has neither a
+ * `currentSrc` nor a size — both of which the component reads off the thumbnail
+ * it was clicked on. Stubbed here to what a loaded image would report.
+ */
+const asLoaded = (src = 'https://cdn.test/poster.jpg', natural: [number, number] = [1200, 800]) => {
   const img = document.querySelector('img') as HTMLImageElement;
   Object.defineProperty(img, 'currentSrc', { value: src, configurable: true });
+  Object.defineProperty(img, 'naturalWidth', { value: natural[0], configurable: true });
+  Object.defineProperty(img, 'naturalHeight', { value: natural[1], configurable: true });
   return img;
 };
 
@@ -41,7 +49,7 @@ const dialog = () => screen.queryByRole('dialog');
 describe('ImagePreviewClient', () => {
   it('opens the lightbox on an image linked to its own upload', async () => {
     render(linked('/wp-content/uploads/2021/02/poster.jpg'));
-    const img = withCurrentSrc();
+    const img = asLoaded();
 
     await userEvent.click(img);
 
@@ -56,7 +64,7 @@ describe('ImagePreviewClient', () => {
    */
   it('prevents the anchor from navigating', async () => {
     render(linked('/wp-content/uploads/2021/02/poster.jpg'));
-    withCurrentSrc();
+    asLoaded();
 
     const anchor = document.querySelector('a') as HTMLAnchorElement;
     const event = new MouseEvent('click', { bubbles: true, cancelable: true });
@@ -68,7 +76,7 @@ describe('ImagePreviewClient', () => {
 
   it('leaves an image that links to a page as a link', async () => {
     render(linked('/healthy-russia/'));
-    const img = withCurrentSrc();
+    const img = asLoaded();
 
     const event = new MouseEvent('click', { bubbles: true, cancelable: true });
     img.dispatchEvent(event);
@@ -84,11 +92,37 @@ describe('ImagePreviewClient', () => {
         <img src="https://cdn.test/plain.jpg" alt="" />
       </ImagePreviewClient>
     );
-    const img = withCurrentSrc('https://cdn.test/plain.jpg');
+    const img = asLoaded('https://cdn.test/plain.jpg');
 
     await userEvent.click(img);
 
     expect(dialog()).not.toBeNull();
+  });
+
+  /**
+   * The dialog is sized from the thumbnail, so an image with no measurable size
+   * has nothing to open around — and `next/image` rejects a zero width outright.
+   */
+  it('does nothing for an image that has not loaded', async () => {
+    render(linked('/wp-content/uploads/2021/02/poster.jpg'));
+    const img = asLoaded('https://cdn.test/poster.jpg', [0, 0]);
+
+    const event = new MouseEvent('click', { bubbles: true, cancelable: true });
+    img.dispatchEvent(event);
+
+    expect(dialog()).toBeNull();
+    expect(event.defaultPrevented).toBe(false);
+  });
+
+  it('sizes the dialog from the thumbnail, so the overlay reaches the edge of the picture', async () => {
+    render(linked('/wp-content/uploads/2021/02/poster.jpg'));
+    const img = asLoaded('https://cdn.test/poster.jpg', [1200, 800]);
+
+    await userEvent.click(img);
+
+    const preview = screen.getByAltText('');
+    expect(preview).toHaveAttribute('width', '1200');
+    expect(preview).toHaveAttribute('height', '800');
   });
 
   it('ignores a click that is not on an image', async () => {
