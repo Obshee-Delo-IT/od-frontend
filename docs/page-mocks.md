@@ -166,7 +166,7 @@ A media-asset catalog. Many sub-frames have dozens of children each — these ar
 | --- | --- | --- |
 | Article (materials landing) | `article` (`1012:10934`) | 16 children |
 | Article content (reader view) | `article-content` (`966:8461`) | 9 children |
-| Ads | `ads` (`778:2206`) | 2 children |
+| Materials index | `ads` (`778:2206`) | 2 children — ✅ shipped as `app/materials/page.tsx` |
 | Handbooks | `handbooks` (`779:4133`) | 1749 × 1440 |
 | Books | `books` (`966:6650`) | 3108 × 1440 |
 | Disks (DVDs/CDs) | `disks` (`966:8062`) | small |
@@ -182,7 +182,7 @@ A media-asset catalog. Many sub-frames have dozens of children each — these ar
 
 Plus 7 `Status` badges.
 
-**Repo:** ❌ none. This section has the largest design surface and likely the heaviest CMS / media integration. Component prerequisites are now all built (`Pagination` ✅ C4, `Carousel` ✅ C8, `Tabs` ✅ C5 — for switching between material types); what remains blocking is the CMS taxonomy (no `material` CPT exists) and the asset-hosting capacity plan (Workstream E1).
+**Repo:** ✅ the index (`app/materials/page.tsx`, 2026-08-15 — the `ads` frame, four static group cards) and `app/materials/articles/`; ❌ the rest. This section has the largest design surface and likely the heaviest CMS / media integration. Component prerequisites are now all built (`Pagination` ✅ C4, `Carousel` ✅ C8, `Tabs` ✅ C5 — for switching between material types); what remains blocking is the CMS taxonomy (no `material` CPT exists) and the asset-hosting capacity plan (Workstream E1).
 
 > **Don't read the size of this section as permission to defer it.** Real traffic puts Materials **#3 by search entries**, and `/materials/plakati/` is the #6 entry page on the whole site. **4 of the 14 sub-pages carry 62 % of the section's entries** (plakati · zakladki · articles · metodichki), so the index plus those four are **Tier 2 — before prod**; the other ten ride the A6 fallback. The index itself is worth building for a second reason the entry ranking hides: **939 views against 107 entries (8.8×)** — almost nobody arrives there from search, but it is how the section gets browsed. And `/materials/articles/` needed no build at all — **✅ shipped 2026-08-13 as a thin alias route** (`app/materials/articles/page.tsx`) listing category 578, a superset of the legacy page's 14 curated links; its five child pages stay on the fallback. See [`implementation-plan.md` §D8](./implementation-plan.md) and the launch tiering.
 
@@ -257,7 +257,7 @@ Repo side verified 2026-08-13.
 
 | Designed | Built |
 | --- | --- |
-| ~30+ distinct page mocks across 7 sections + home, most with mobile variants | **6 content routes + 3 ops routes**: `app/page.tsx` (home, D1) · `app/news/page.tsx` (news index, D2) · `app/materials/articles/page.tsx` (a thin category alias, not a D8 build) · `app/video/page.tsx` + `app/video/[segment]/page.tsx` (film catalogue and its four categories, D7) · `app/[...slug]/page.tsx` (post detail — dispatches to the news article or the film page) · `app/sitemap.ts` · `app/robots.ts` · `app/health/route.ts` (container probe) |
+| ~30+ distinct page mocks across 7 sections + home, most with mobile variants | **7 content routes + 3 ops routes**: `app/page.tsx` (home, D1) · `app/news/page.tsx` (news index, D2) · `app/materials/page.tsx` (the section index, D8) · `app/materials/articles/page.tsx` (a thin category alias, not a D8 build) · `app/video/page.tsx` + `app/video/[segment]/page.tsx` (film catalogue and its four categories, D7) · `app/[...slug]/page.tsx` (post detail — dispatches to the news article or the film page) · `app/sitemap.ts` · `app/robots.ts` · `app/health/route.ts` (container probe) |
 
 **Note the detail-route shape (A8).** There is no `app/news/[id]/` or `app/video/[id]/` any more: post detail is served at the **bare `/<id>`** — the URL the live site uses and 46 % of entries land on — by the catch-all, which picks the news or film body by `post_format`. The two bodies live in `src/modules/News/NewsArticle/` and `src/modules/Video/FilmPage/`. `/news/<id>` and `/video/<id>` **404** — they were this project's own first cut, never public, so they carry no redirect. That same catch-all is where the A6 legacy fallback will render un-redesigned pages, so the route count above will stop tracking "how much of the design is built".
 

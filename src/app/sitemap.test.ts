@@ -11,8 +11,8 @@ import { FILM_CATEGORIES } from '@/shared/config/filmCategories';
 import { canonicalUrl, siteUrl } from '@/shared/config/site';
 import sitemap from './sitemap';
 
-/** `/`, `/news/`, `/materials/articles/`, `/projects/`, `/video/`, then one per segment. */
-const STATIC_COUNT = 5 + Object.keys(FILM_CATEGORIES).length;
+/** `/`, `/news/`, `/materials/`, `/materials/articles/`, `/projects/`, `/video/`, then one per segment. */
+const STATIC_COUNT = 6 + Object.keys(FILM_CATEGORIES).length;
 
 const postsPage = (ids: number[], headers: Record<string, string> = {}) =>
   new Response(JSON.stringify(ids.map((id) => ({ id, modified_gmt: '2016-05-19T08:57:08' }))), {
@@ -42,6 +42,7 @@ describe('sitemap', () => {
 
     expect(urls).toContain(`${siteUrl}/`);
     expect(urls).toContain(`${siteUrl}/news/`);
+    expect(urls).toContain(`${siteUrl}/materials/`);
     expect(urls).toContain(`${siteUrl}/materials/articles/`);
     expect(urls).toContain(`${siteUrl}/projects/`);
     expect(urls).toContain(`${siteUrl}/video/`);

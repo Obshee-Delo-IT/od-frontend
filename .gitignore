@@ -44,9 +44,10 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-#ai slop
-.claude
-CLAUDE.md
+# agent config — CLAUDE.md, .claude/ and .mcp.json are shared tooling and are
+# tracked. Only the per-machine bits stay out: settings.local.json (which MCP
+# servers this checkout has enabled) and the Playwright MCP scratch dir.
+.claude/settings.local.json
 .playwright-mcp
 
 #ide
@@ -55,7 +56,6 @@ CLAUDE.md
 
 # local scout / scratch artefacts — screenshots, Figma exports, visual smoke
 # runs. Everything transient goes in /.scratch/; nothing at the repo root.
-.mcp.json
 /.scratch/
 
 # stray screenshots dropped at the root — belong in /.scratch/screenshots/

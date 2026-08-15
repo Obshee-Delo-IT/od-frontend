@@ -55,9 +55,7 @@ const Page = async () => {
 
   const breadcrumbItems = [
     { label: 'Главная', href: '/' },
-    // Unlinked on purpose: `/materials/` has no route yet (Tier 2, D8) and
-    // 404s until either that or the A6 fallback lands. Give it an `href` then.
-    { label: 'Материалы' },
+    { label: 'Материалы', href: '/materials/' },
     { label: 'Статьи' },
   ];
 

@@ -24,9 +24,12 @@ const nextConfig: NextConfig = {
           {
             loader: '@svgr/webpack',
             // svgo's preset-default drops `viewBox` when the SVG also carries
-            // width/height. Without it the drawing can't scale: the element
-            // resizes but the artwork stays at 1:1 and is simply cropped, which
-            // is what the card illustrations did below ~1170px.
+            // width/height — exactly a Figma export at its natural size. Without
+            // it the drawing can't scale: the element resizes but the artwork
+            // stays at 1:1 and is simply cropped, which is what the card
+            // illustrations did below ~1170px. The icons never showed it because
+            // their width/height are set smaller than the viewBox, so it was
+            // never removed from those.
             options: {
               svgoConfig: {
                 plugins: [{ name: 'preset-default', params: { overrides: { removeViewBox: false } } }],
