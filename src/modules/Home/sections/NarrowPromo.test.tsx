@@ -1,7 +1,7 @@
 import { Theme } from '@radix-ui/themes';
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
-import { NarrowPromo } from './NarrowPromo';
+import { NarrowPromo, promoDate } from './NarrowPromo';
 
 const renderInTheme = (ui: React.ReactElement) => render(<Theme accentColor="red">{ui}</Theme>);
 
@@ -21,9 +21,16 @@ describe('<NarrowPromo />', () => {
     expect(link).toHaveAttribute('rel', 'noopener noreferrer');
   });
 
-  it('shows the promo date', () => {
+  it('shows the current season, which rolls over on 1 August', () => {
+    expect(promoDate(new Date('2026-07-31T12:00:00Z'))).toBe('1 октября 2025 – 28 апреля 2026');
+    expect(promoDate(new Date('2026-08-01T12:00:00Z'))).toBe('1 октября 2026 – 28 апреля 2027');
+    expect(promoDate(new Date('2026-12-31T12:00:00Z'))).toBe('1 октября 2026 – 28 апреля 2027');
+    expect(promoDate(new Date('2027-01-01T12:00:00Z'))).toBe('1 октября 2026 – 28 апреля 2027');
+  });
+
+  it('renders that date in the banner', () => {
     renderInTheme(<NarrowPromo />);
 
-    expect(screen.getAllByText(/1 октября 2022/).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(promoDate(new Date())).length).toBeGreaterThan(0);
   });
 });
