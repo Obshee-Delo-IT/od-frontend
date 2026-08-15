@@ -1,0 +1,39 @@
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 45px;
+
+  @media (--mobile) {
+    gap: 25px;
+  }
+}
+
+/* Figma text/8/bold — PT Sans Bold 32, not the 48 PT Sans Narrow the home
+   sections use. */
+.heading {
+  margin: 0;
+  color: var(--gray-9);
+  font-size: 32px;
+  font-weight: 700;
+  line-height: 130%;
+
+  @media (--mobile) {
+    font-size: 24px;
+  }
+}
+
+.grid {
+  display: grid;
+  gap: 40px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+
+  @media (--small-desktop) {
+    gap: 24px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  @media (--mobile) {
+    gap: 16px;
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

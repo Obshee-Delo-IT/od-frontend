@@ -14,9 +14,11 @@ import { Directions } from './Directions';
 
 const renderInTheme = (ui: React.ReactElement) => render(<Theme accentColor="red">{ui}</Theme>);
 
+const Illustration = () => createElement('svg');
+
 const DIRECTIONS = [
-  { id: 1, title: 'Бизнес-клуб', href: '/projects/business-club' },
-  { id: 2, title: 'Общее дело ПРО', href: 'https://od-pro.ru' },
+  { id: 1, title: 'Бизнес-клуб', href: '/projects/business-club', Illustration },
+  { id: 2, title: 'Общее дело ПРО', href: 'https://od-pro.ru', Illustration },
 ];
 
 const TITLE = 'Направления деятельности';

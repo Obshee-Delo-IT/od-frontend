@@ -1,3 +1,10 @@
+import OdPro from '@/shared/ui/assets/illustrations/direction-2.svg';
+import Video from '@/shared/ui/assets/illustrations/direction-5.svg';
+import HealthyKids from '@/shared/ui/assets/illustrations/healthy-kids.svg';
+import HealthyRussia from '@/shared/ui/assets/illustrations/healthy-russia.svg';
+import HealthyYouth from '@/shared/ui/assets/illustrations/healthy-youth.svg';
+import type { FC, SVGProps } from 'react';
+
 /**
  * The «Программы» and «Направления деятельности» cards, shared by the home page
  * and `/projects/` (D6).
@@ -6,9 +13,14 @@
  * Lorem-ipsum drafts (see `docs/implementation-notes.md` D6) — so the list lives
  * here, where hiding a card or repointing one is a config edit rather than a
  * route edit. **Both surfaces read the same two arrays**, so a card hidden here
- * is hidden on both; the home page differs only in folding them into one
- * carousel, which `/projects/` does not (Figma `projects`, `706:1775`, draws the
- * two sections separately).
+ * is hidden on both; they differ only in shape — the home page folds them into
+ * one carousel, `/projects/` keeps the two sections its mock draws.
+ *
+ * **Each card carries its own drawing**, because Figma pairs them by name and
+ * not by position: «Общее дело ПРО» is the charts illustration on both pages,
+ * even though it is the 4th card on one and the 1st of its section on the other.
+ * The five `direction-*.svg` names are positional leftovers; the file each
+ * constant below points at is what matters.
  *
  * **Programme hrefs address the legacy pages the A6 fallback embeds.** The real
  * programmes are three top-level pages on the old site (`/healthy-kids/`, not
@@ -18,17 +30,18 @@
  * edit here — App Router precedence handles it.
  */
 
-/** Shape the `Directions` cards accept. */
+/** Shape the card components accept. */
 interface SectionCardData {
   id: string;
   title: string;
   href: string;
+  Illustration: FC<SVGProps<SVGElement>>;
 }
 
 export const PROGRAMS: SectionCardData[] = [
-  { id: 'healthy-russia', title: 'Здоровая Россия', href: '/healthy-russia/' },
-  { id: 'healthy-kids', title: 'Здоровые дети', href: '/healthy-kids/' },
-  { id: 'healthy-youth', title: 'Здоровая молодёжь', href: '/healthy-youth/' },
+  { id: 'healthy-russia', title: 'Здоровая Россия', href: '/healthy-russia/', Illustration: HealthyRussia },
+  { id: 'healthy-kids', title: 'Здоровые дети', href: '/healthy-kids/', Illustration: HealthyKids },
+  { id: 'healthy-youth', title: 'Здоровая молодёжь', href: '/healthy-youth/', Illustration: HealthyYouth },
 ];
 
 /**
@@ -37,15 +50,27 @@ export const PROGRAMS: SectionCardData[] = [
  * «Наставничество» (`/projects/mentorship/`). All three 404 on the legacy origin
  * (measured 2026-08-14), so the A6 fallback has nothing to embed for them
  * either. Add the card back when its page exists — one line, and it appears on
- * the home page and `/projects/` together.
+ * the home page and `/projects/` together — their drawings are already in the
+ * repo as `direction-1.svg` (Бизнес-клуб), `direction-3.svg` (ОД ИТ) and
+ * `direction-4.svg` (Наставничество).
  */
 export const DIRECTIONS: SectionCardData[] = [
-  { id: 'od-pro', title: 'Общее дело ПРО', href: 'https://od-pro.ru' },
-  { id: 'video', title: 'Видеоматериалы', href: '/video/' },
+  { id: 'od-pro', title: 'Общее дело ПРО', href: 'https://od-pro.ru', Illustration: OdPro },
+  { id: 'video', title: 'Видеоматериалы', href: '/video/', Illustration: Video },
 ];
 
-/** Section headings on `/projects/`, where the two lists stay separate. */
+/**
+ * `/projects/`'s H1, and the accessible name of the programme grid under it —
+ * that grid draws no heading of its own, because the mock puts one only above
+ * «Проекты». The live site and Figma's own nav agree on this label; the Figma
+ * *frame* is named `projects`, which is where «Проекты» below comes from.
+ */
 export const PROGRAMS_TITLE = 'Программы';
+
+/** Heading above the second `/projects/` section. */
+export const PROJECTS_TITLE = 'Проекты';
+
+/** The same second section is «Направления деятельности» on the home page. */
 export const DIRECTIONS_TITLE = 'Направления деятельности';
 
 /**

@@ -1,6 +1,6 @@
-import { Directions } from '@/modules/Home';
 import { NewsletterSignup } from '@/modules/NewsletterSignup';
-import { DIRECTIONS, DIRECTIONS_TITLE, PROGRAMS, PROGRAMS_TITLE } from '@/shared/config/programSections';
+import { ProjectsSection } from '@/modules/Projects';
+import { DIRECTIONS, PROGRAMS, PROGRAMS_TITLE, PROJECTS_TITLE } from '@/shared/config/programSections';
 import { canonicalUrl } from '@/shared/config/site';
 import { Box } from '@/shared/ui/components/Box';
 import { PageHeader } from '@/shared/ui/components/PageHeader';
@@ -12,9 +12,14 @@ import type { Metadata } from 'next';
  * Editorial, not CMS-driven: the cards come from `shared/config/programSections`,
  * the same two arrays the home page reads, so a card hidden there (today
  * «Бизнес-клуб», «ОД ИТ» and «Наставничество», none of which has a page) is
- * hidden on both surfaces. The difference is only the shape — the home page
- * folds the lists into one carousel, this page keeps the two sections the mock
- * draws.
+ * hidden here too. The difference is only the shape — the home page folds the
+ * lists into one carousel, this page keeps the two sections the mock draws, as
+ * static grids.
+ *
+ * The mock's own two shapes are **not** both built. Its middle row is a pair of
+ * 598×280 wide cards holding «Бизнес-клуб» and «ОД ИТ» — a five-card row split
+ * 2 + 3 — and both of those cards are hidden, so the variant would render for
+ * nobody. Restore it with them.
  *
  * No breadcrumbs row: the mock's header omits it here, unlike the per-project
  * pages. Nothing is fetched, so there is no `revalidate` — the route is fully
@@ -25,8 +30,8 @@ import type { Metadata } from 'next';
  * `/projects/<slug>/` detail mocks stay unbuilt — zero traffic in 91 days.
  */
 
-const TITLE = 'Проекты — ОБЩЕЕ ДЕЛО';
-const DESCRIPTION = 'Программы и направления деятельности общероссийской общественной организации «Общее дело»';
+const TITLE = 'Программы — ОБЩЕЕ ДЕЛО';
+const DESCRIPTION = 'Программы и проекты общероссийской общественной организации «Общее дело»';
 
 export const metadata: Metadata = {
   title: TITLE,
@@ -41,10 +46,11 @@ export const metadata: Metadata = {
 
 const ProjectsPage = () => (
   <Box display="flex" flexDirection="column" gap={40} py={48}>
-    <PageHeader title="Проекты" />
+    <PageHeader title={PROGRAMS_TITLE} />
 
-    <Directions title={PROGRAMS_TITLE} directions={PROGRAMS} />
-    <Directions title={DIRECTIONS_TITLE} directions={DIRECTIONS} illustrationOffset={PROGRAMS.length} />
+    {/* No visible heading — the H1 above already says «Программы». */}
+    <ProjectsSection title={PROGRAMS_TITLE} cards={PROGRAMS} showHeading={false} />
+    <ProjectsSection title={PROJECTS_TITLE} cards={DIRECTIONS} />
 
     <NewsletterSignup />
   </Box>

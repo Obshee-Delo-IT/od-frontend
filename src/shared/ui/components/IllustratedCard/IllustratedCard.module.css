@@ -1,0 +1,56 @@
+.card {
+  position: relative;
+  display: flex;
+  height: 100%;
+  flex-direction: column;
+  padding: 25px;
+  border-radius: 12px;
+  background: var(--white);
+  cursor: pointer;
+  /* Figma `Frame 33824`: 385×358 = 25 + 200 illustration + 45 + 63 body + 25. */
+  gap: 45px;
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.card:hover {
+  box-shadow: var(--shadow-sm);
+  transform: translateY(-2px);
+}
+
+/* stretch the "Подробнее" link over the whole card so it's all clickable */
+.card a::after {
+  position: absolute;
+  content: '';
+  inset: 0;
+}
+
+.illustration {
+  display: flex;
+  overflow: hidden;
+  height: 200px;
+  align-items: center;
+  justify-content: center;
+}
+
+.illustration svg {
+  width: auto;
+  max-width: 100%;
+  height: auto;
+  max-height: 100%;
+}
+
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.title {
+  margin: 0;
+  color: var(--gray-9);
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 130%;
+}

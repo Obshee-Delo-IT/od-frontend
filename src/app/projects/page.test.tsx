@@ -1,15 +1,6 @@
 import { Theme } from '@radix-ui/themes';
 import { render, screen } from '@testing-library/react';
-import { createElement, type ReactNode } from 'react';
-import { describe, expect, it, vi } from 'vitest';
-
-// jsdom has no layout, so stub Swiper to render every slide as a plain child.
-vi.mock('swiper/modules', () => ({ Navigation: {}, Pagination: {}, A11y: {} }));
-vi.mock('swiper/react', () => ({
-  Swiper: ({ children }: { children?: ReactNode }) => createElement('div', null, children),
-  SwiperSlide: ({ children }: { children?: ReactNode }) => createElement('div', null, children),
-}));
-
+import { describe, expect, it } from 'vitest';
 import ProjectsPage from './page';
 
 const renderPage = () =>
@@ -20,26 +11,30 @@ const renderPage = () =>
   );
 
 describe('/projects/', () => {
-  it('keeps «Программы» and «Направления деятельности» as two sections', () => {
+  it('leads with the «Программы» H1 and keeps «Проекты» a second section', () => {
     renderPage();
 
-    expect(screen.getByRole('heading', { level: 2, name: 'Программы' })).toBeInTheDocument();
-    expect(screen.getByRole('heading', { level: 2, name: 'Направления деятельности' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 1, name: 'Программы' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 2, name: 'Проекты' })).toBeInTheDocument();
+    // The programme grid draws no heading — the H1 names it. It is still a
+    // labelled region, which is the whole point of passing the title anyway.
+    expect(screen.getByRole('region', { name: 'Программы' })).toBeInTheDocument();
   });
 
   it('hides the same cards the home page hides', () => {
     renderPage();
 
     expect(screen.getByRole('heading', { level: 3, name: 'Здоровая Россия' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 3, name: 'Общее дело ПРО' })).toBeInTheDocument();
     // Hidden by omission from `programSections` — the config both surfaces read.
     expect(screen.queryByRole('heading', { level: 3, name: 'ОД ИТ' })).not.toBeInTheDocument();
     expect(screen.queryByRole('heading', { level: 3, name: 'Бизнес-клуб' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('heading', { level: 3, name: 'Наставничество' })).not.toBeInTheDocument();
   });
 
   it('has no breadcrumbs, unlike the per-project pages', () => {
     renderPage();
 
-    expect(screen.getByRole('heading', { level: 1, name: 'Проекты' })).toBeInTheDocument();
     expect(screen.queryByRole('navigation')).not.toBeInTheDocument();
   });
 });

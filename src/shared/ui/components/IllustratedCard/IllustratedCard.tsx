@@ -1,0 +1,31 @@
+import { Link } from '@/shared/ui/components/Link';
+import css from './IllustratedCard.module.css';
+
+export interface IllustratedCardProps {
+  title: string;
+  href: string;
+  /** The card's drawing, imported as a component by `@svgr/webpack`. */
+  Illustration: React.FC<React.SVGProps<SVGElement>>;
+}
+
+/**
+ * Figma `Frame 33823/24/25` — white 12px-radius card, 25px padding, a 200-tall
+ * illustration box, then the title and a «Подробнее» link. The whole card is
+ * clickable: the link's `::after` is stretched over it.
+ *
+ * Shared because the same card appears in two shapes — the home page's
+ * `Directions` carousel and `/projects/`'s static grid.
+ */
+export const IllustratedCard: React.FC<IllustratedCardProps> = ({ title, href, Illustration }) => (
+  <article className={css.card}>
+    <div className={css.illustration}>
+      <Illustration aria-hidden="true" />
+    </div>
+    <div className={css.body}>
+      <h3 className={css.title}>{title}</h3>
+      <Link href={href} color="red" underline="always" size="3" aria-label={`${title} — подробнее`}>
+        Подробнее
+      </Link>
+    </div>
+  </article>
+);
