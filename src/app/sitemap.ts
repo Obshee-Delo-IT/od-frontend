@@ -2,6 +2,7 @@ import { setTimeout as sleep } from 'node:timers/promises';
 import { WP_TAGS, wpCache } from '@/shared/api/cacheTags';
 import { wpFetch } from '@/shared/api/httpClient';
 import { catalogueHref, FILM_CATEGORIES, type FilmCategorySegment } from '@/shared/config/filmCategories';
+import { isLegacyEmbedPage } from '@/shared/config/legacyEmbedPages';
 import { ARTICLES_HREF } from '@/shared/config/newsCategories';
 import { canonicalUrl } from '@/shared/config/site';
 import type { MetadataRoute } from 'next';
@@ -71,11 +72,11 @@ interface PostIndex {
 const postsPath = (page: number) =>
   `/wp/v2/posts?per_page=${PER_PAGE}&page=${page}&_fields=id,modified_gmt&orderby=id&order=asc`;
 
-/** A page of post refs, or `null` once the retries are spent. */
-const fetchPostPage = async (page: number): Promise<Response | null> => {
+/** A WP response, or `null` once the retries are spent. */
+const fetchWithRetries = async (path: string, tag: string): Promise<Response | null> => {
   for (let attempt = 1; attempt <= ATTEMPTS; attempt += 1) {
     try {
-      const res = await wpFetch(postsPath(page), wpCache([WP_TAGS.posts], revalidate));
+      const res = await wpFetch(path, wpCache([tag], revalidate));
       if (res.ok) {
         return res;
       }
@@ -88,6 +89,9 @@ const fetchPostPage = async (page: number): Promise<Response | null> => {
   }
   return null;
 };
+
+/** A page of post refs, or `null` once the retries are spent. */
+const fetchPostPage = (page: number): Promise<Response | null> => fetchWithRetries(postsPath(page), WP_TAGS.posts);
 
 /**
  * WP returns GMT timestamps without the `Z`; `new Date` would read them as
@@ -169,6 +173,59 @@ const collectPosts = async (): Promise<PostIndex> => {
   return { posts: posts.sort((a, b) => a.id - b.id), stubbed: false };
 };
 
+interface RawPageRef {
+  link?: string;
+  modified_gmt?: string;
+}
+
+/**
+ * Every WordPress page we render ourselves, as `{ path, lastModified }`.
+ *
+ * These have no other discovery path once the domain moves: the live site's
+ * sitemap comes from a WP plugin and 404s the moment the frontend takes over,
+ * and a page nobody links to would simply drop out of the index. Small enough
+ * to crawl inline — 174 pages, two requests — and failure is **not** fatal here
+ * the way it is for posts: the sitemap is still worth publishing without them.
+ *
+ * Paths keep the percent-encoding WordPress produced, because `<loc>` must be
+ * URL-escaped; the exception list is matched against the decoded form, which is
+ * what the route compares too.
+ */
+const collectPagePaths = async (): Promise<Array<{ path: string; lastModified?: Date }>> => {
+  const collected: Array<{ path: string; lastModified?: Date }> = [];
+
+  for (let page = 1; ; page += 1) {
+    const res = await fetchWithRetries(
+      `/wp/v2/pages?per_page=${PER_PAGE}&page=${page}&_fields=link,modified_gmt&orderby=id&order=asc`,
+      WP_TAGS.pages
+    );
+    if (!res) {
+      // eslint-disable-next-line no-console
+      console.warn(`[sitemap] page ${page} of the WP page index failed; publishing without the rest.`);
+      break;
+    }
+
+    const payload = (await res.json()) as unknown;
+    for (const raw of Array.isArray(payload) ? (payload as RawPageRef[]) : []) {
+      let pathname: string;
+      try {
+        pathname = new URL(raw.link ?? '').pathname;
+      } catch {
+        continue;
+      }
+      if (!isLegacyEmbedPage(decodeURIComponent(pathname))) {
+        collected.push({ path: pathname, lastModified: toLastModified(raw.modified_gmt) });
+      }
+    }
+
+    if (page >= Number(res.headers.get('x-wp-totalpages') ?? 0)) {
+      break;
+    }
+  }
+
+  return collected;
+};
+
 const sitemap = async (): Promise<MetadataRoute.Sitemap> => {
   const staticEntries: MetadataRoute.Sitemap = [
     { url: canonicalUrl('/'), changeFrequency: 'daily', priority: 1 },
@@ -199,8 +256,20 @@ const sitemap = async (): Promise<MetadataRoute.Sitemap> => {
     return staticEntries;
   }
 
+  // Skipping anything a static entry above already publishes: `/`, `/news/` and
+  // the rest are WP pages too, and a duplicate `<loc>` is a defect.
+  const staticUrls = new Set(staticEntries.map((entry) => entry.url));
+
   return [
     ...staticEntries,
+    ...(await collectPagePaths())
+      .map((page) => ({
+        url: canonicalUrl(page.path),
+        lastModified: page.lastModified,
+        changeFrequency: 'monthly' as const,
+        priority: 0.7,
+      }))
+      .filter((entry) => !staticUrls.has(entry.url)),
     // `/<id>/` is the only address a post has — the one the live site uses and
     // search engines already hold.
     ...posts.map((post) => ({

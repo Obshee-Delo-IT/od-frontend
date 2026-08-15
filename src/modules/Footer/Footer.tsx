@@ -1,6 +1,6 @@
 import { Fragment } from 'react';
-import { resolveContentImages } from '@/modules/News/utils/resolveContentImages';
 import { fetchFooter } from '@/shared/api';
+import { resolveContentImages } from '@/shared/lib/wpContent';
 import css from './Footer.module.css';
 import { renderFooterWidget } from './utils/renderFooterWidget';
 

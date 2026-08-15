@@ -95,7 +95,7 @@ Plus 5 `Status` badges.
 
 **Notes from the scout.** `projects` index does **not** include a breadcrumbs row in its header — distinct from per-project pages. All project detail pages share a common Frame 33938/33934/33787 pattern: a 3-card grid of "project items" (`Frame 251`/`33788`/`33789` with `Frame 151` content inside) followed by tabs (`Frame 33787`, ~572×198) and a text content block (`Frame 33937/33936/33935`).
 
-**Repo:** ✅ index only — `app/projects/page.tsx` (2026-08-15): H1 «ПРОГРАММЫ» + a programme grid with no heading of its own + a «Проекты» grid, over `shared/config/programSections`, no breadcrumbs. The detail templates are unbuilt and may stay that way; see plan §D6.
+**Repo:** ✅ index only — `app/projects/page.tsx` (2026-08-15): H1 «ПРОГРАММЫ» + a programme grid with no heading of its own + a «Проекты» grid, over `shared/config/programSections`, no breadcrumbs. **The pages the cards point at are built, but not from these mocks** — `/healthy-russia|kids|youth/` render their existing WordPress content natively at their existing URLs (D6b in the notes), which is what the section's "detail pages" actually are. The Figma `project-1/2/3` templates remain unbuilt and may stay that way; see plan §D6.
 
 ### 2.4 видео — Video (SECTION `1227:4298`, 9 children, ~408 frames deep)
 

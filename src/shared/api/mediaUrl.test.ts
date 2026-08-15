@@ -63,6 +63,26 @@ describe('resolveMediaUrl', () => {
     );
   });
 
+  /**
+   * The form the block editor writes into page content. Left relative it
+   * resolves against *our* origin and 404s — how every image on the first
+   * natively-rendered WP page came out blank.
+   */
+  it('gives a root-relative src the WP origin', async () => {
+    vi.stubEnv('WP_BASE', 'https://wp.test/');
+    vi.stubEnv('WP_MEDIA_CDN', '');
+    expect(await resolveMediaUrl('/wp-content/uploads/2021/02/healthy_russia.png')).toBe(
+      'https://wp.test/wp-content/uploads/2021/02/healthy_russia.png'
+    );
+  });
+
+  it('gives a protocol-relative src a scheme', async () => {
+    vi.stubEnv('WP_MEDIA_CDN', '');
+    expect(await resolveMediaUrl('//wp.test/wp-content/uploads/a.jpg')).toBe(
+      'https://wp.test/wp-content/uploads/a.jpg'
+    );
+  });
+
   it('returns null for nullish input', async () => {
     expect(await resolveMediaUrl(null)).toBeNull();
     expect(await resolveMediaUrl(undefined)).toBeNull();

@@ -2,7 +2,12 @@
    none of those: the child supplies its own frame, so everything here is a
    reset of that chrome, keeping only the size cap the old portal had. */
 .content {
+  /* `fit-content`, because Radix's panel is a full-width card and a lightbox
+     that stays 90vw wide around a portrait photo puts dialog — not overlay —
+     in the grey beside the picture, where a click to dismiss naturally lands. */
+  width: fit-content;
   max-width: 90vw;
+  height: fit-content;
   max-height: 90vh;
   padding: 0;
   border-radius: 0;

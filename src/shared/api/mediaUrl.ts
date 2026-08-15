@@ -47,13 +47,30 @@ const existsOnCdn = async (url: string): Promise<boolean> => {
 };
 
 /**
+ * Give a root-relative or protocol-relative src an origin. WordPress stores
+ * editor-inserted images as `/wp-content/uploads/…` — fine inside WP, where the
+ * page is served from that host, and a 404 here, where it resolves against
+ * *our* origin. Every WP page written in the block editor is full of them.
+ */
+const absoluteWpUrl = (url: string): string => {
+  if (url.startsWith('//')) {
+    return `https:${url}`;
+  }
+  if (!url.startsWith('/')) {
+    return url;
+  }
+  const wpOrigin = stripTrailingSlash(process.env.WP_BASE);
+  return wpOrigin ? `${wpOrigin}${url}` : url;
+};
+
+/**
  * Resolve a raw WordPress image URL to the best full-size source for
  * `next/image`: the CDN copy when it's there (fast, reliable object storage),
  * otherwise the WP origin (e.g. freshly published media not yet offloaded).
  * With no `WP_MEDIA_CDN` set this is just the full-size WP URL.
  */
 export const resolveMediaUrl = async (rawUrl: string | null | undefined): Promise<string | null> => {
-  const wpUrl = toFullSizeImageUrl(rawUrl);
+  const wpUrl = toFullSizeImageUrl(rawUrl && absoluteWpUrl(rawUrl));
   if (!wpUrl) {
     return null;
   }

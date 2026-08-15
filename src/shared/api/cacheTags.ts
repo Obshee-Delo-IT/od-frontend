@@ -35,6 +35,12 @@ export const WP_TAGS = {
   all: WP_TAG_PREFIX,
   /** Any post list or post detail — WP keeps news, articles and films in one type. */
   posts: 'wp:posts',
+  /**
+   * WP `page` content served natively (D6). Coarse on purpose: the pages are a
+   * handful and nothing lists them, so there is no per-page tag to be worth the
+   * vocabulary — a single page can still be purged by `paths` on the webhook.
+   */
+  pages: 'wp:pages',
   /** The `format=video` slice: the catalogue, its categories, the film pages. */
   films: 'wp:films',
   /** Nav menus (`/wp/v2/menus` + `/wp/v2/menu-items`) — the header. */

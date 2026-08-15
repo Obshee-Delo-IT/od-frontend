@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { LegacyEmbed } from '@/modules/Legacy';
+import { WpPage } from '@/modules/WpPage';
 import type { LegacyLoad } from '@/shared/legacy';
 
 /**
@@ -15,6 +16,13 @@ const loadLegacyDocument = vi.fn<(slug: readonly string[] | undefined, policy?: 
 vi.mock('@/shared/legacy', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/shared/legacy')>()),
   loadLegacyDocument: (slug: readonly string[] | undefined, policy?: string) => loadLegacyDocument(slug, policy),
+}));
+
+const fetchWpPage = vi.fn<(path: string) => Promise<unknown>>().mockResolvedValue(null);
+
+vi.mock('@/shared/api/fetchWpPage', () => ({
+  cachedFetchWpPage: (path: string) => fetchWpPage(path),
+  fetchWpPage: (path: string) => fetchWpPage(path),
 }));
 
 class NotFound extends Error {}
@@ -96,6 +104,71 @@ describe('the legacy branch declines (LPF-001, LPF-005)', () => {
     const element = await render(['branch-transient']);
 
     expect(element.type).toBe(LegacyEmbed);
+  });
+});
+
+describe('the native WP page branch (D6)', () => {
+  const wpPage = { id: 60050, title: 'Здоровая Россия', contentHtml: '<p>тело</p>', description: 'Программа' };
+
+  it('renders the WP page instead of the embed, and never loads the legacy one', async () => {
+    loadLegacyDocument.mockClear();
+    fetchWpPage.mockResolvedValueOnce(wpPage);
+
+    const element = await render(['healthy-russia']);
+
+    expect(element.type).toBe(WpPage);
+    expect(element.props).toEqual({ page: wpPage, path: '/healthy-russia/' });
+    expect(loadLegacyDocument).not.toHaveBeenCalled();
+  });
+
+  it('takes its metadata from the page, canonical unchanged', async () => {
+    fetchWpPage.mockResolvedValueOnce(wpPage);
+
+    const meta = await metadata(['healthy-russia']);
+
+    expect(meta.title).toBe('Здоровая Россия');
+    expect(meta.alternates?.canonical).toContain('/healthy-russia/');
+  });
+
+  /** WordPress is asked about every path, so "no page here" is the ordinary
+   *  answer, not an error — the embed still gets its turn. */
+  it('falls through to the embed when WP has no page there', async () => {
+    fetchWpPage.mockResolvedValueOnce(null);
+    loadLegacyDocument.mockResolvedValue(ok('Ничего'));
+
+    const element = await render(['branch-no-wp-page']);
+
+    expect(element.type).toBe(LegacyEmbed);
+  });
+
+  it('asks WordPress about a path nobody configured — that is the default', async () => {
+    fetchWpPage.mockClear();
+    fetchWpPage.mockResolvedValueOnce(null);
+    loadLegacyDocument.mockResolvedValue(ok('Команда'));
+
+    await render(['branch-unconfigured']);
+
+    expect(fetchWpPage).toHaveBeenCalledWith('/branch-unconfigured/');
+  });
+
+  it('never asks about an exception path, WP page or not', async () => {
+    fetchWpPage.mockClear();
+    loadLegacyDocument.mockResolvedValue(ok('Контакты'));
+
+    const element = await render(['contacts']);
+
+    expect(fetchWpPage).not.toHaveBeenCalled();
+    expect(element.type).toBe(LegacyEmbed);
+  });
+
+  it('asks nothing at all for a path that is not a page in either sense', async () => {
+    fetchWpPage.mockClear();
+    loadLegacyDocument.mockClear();
+
+    await expect(render(['favicon.ico'])).rejects.toBeInstanceOf(NotFound);
+
+    expect(fetchWpPage).not.toHaveBeenCalled();
+    expect(loadLegacyDocument).not.toHaveBeenCalled();
   });
 });
 

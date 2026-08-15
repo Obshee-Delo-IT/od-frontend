@@ -1,0 +1,24 @@
+/* The affordance follows the same rule the handler does: an image linked to its
+   own upload opens in the lightbox, an image linked to a page is a link. An
+   unlinked image opens too but gets no hover cue — styling it would need a
+   complex `:not()` for the sake of the rarer case. */
+.root a[href*='/wp-content/uploads/'] img {
+  cursor: zoom-in;
+  transition: opacity 200ms ease;
+}
+
+.root a[href*='/wp-content/uploads/'] img:hover {
+  opacity: 0.9;
+}
+
+/* Scaled by the viewport, never stretched past its own pixels: `auto` on both
+   axes keeps the intrinsic size the source of truth, and the caps let the
+   dialog shrink to whatever is left. The dialog is then exactly the picture, so
+   every pixel around it is overlay and dismisses. */
+.image {
+  display: block;
+  width: auto;
+  max-width: 90vw;
+  height: auto;
+  max-height: 90vh;
+}

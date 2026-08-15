@@ -20,8 +20,26 @@ const postsPage = (ids: number[], headers: Record<string, string> = {}) =>
     headers,
   });
 
+/**
+ * The sitemap crawls the WP **page** index as well as posts. Everything below
+ * is about posts, so each mock answers that crawl with one empty page — a test
+ * that let it fall through to the post fixture would be counting the wrong
+ * requests.
+ */
+const isPagesRequest = (path: string) => path.startsWith('/wp/v2/pages');
+const noPages = () => new Response('[]', { status: 200, headers: { 'x-wp-totalpages': '1' } });
+
+const pagesIndex = (links: string[]) =>
+  new Response(JSON.stringify(links.map((link) => ({ link, modified_gmt: '2016-05-19T08:57:08' }))), {
+    status: 200,
+    headers: { 'x-wp-totalpages': '1' },
+  });
+
 const paginated = (totalPages: number, total: number, ids: (page: number) => number[]) => {
   wpFetch.mockImplementation(async (path: string) => {
+    if (isPagesRequest(path)) {
+      return noPages();
+    }
     const page = Number(new URL(path, 'https://wp.test').searchParams.get('page') ?? 1);
     return postsPage(ids(page), { 'x-wp-totalpages': String(totalPages), 'x-wp-total': String(total) });
   });
@@ -97,8 +115,11 @@ describe('sitemap', () => {
 
     const urls = (await sitemap()).map((entry) => entry.url);
 
-    expect(wpFetch).toHaveBeenCalledTimes(3);
-    const requested = wpFetch.mock.calls.map((call) => new URL(call[0] as string, 'https://wp.test').searchParams);
+    const requested = wpFetch.mock.calls
+      .map((call) => call[0] as string)
+      .filter((path) => !isPagesRequest(path))
+      .map((path) => new URL(path, 'https://wp.test').searchParams);
+    expect(requested).toHaveLength(3);
     expect(requested.map((params) => params.get('page'))).toEqual(['1', '2', '3']);
     requested.forEach((params) => {
       expect(params.get('per_page')).toBe('100');
@@ -106,6 +127,36 @@ describe('sitemap', () => {
       expect(params.get('orderby')).toBe('id');
     });
     expect(urls.slice(STATIC_COUNT)).toEqual([1, 2, 3, 10, 20, 30].map((id) => `${siteUrl}/${id}/`));
+  });
+
+  /**
+   * The WP pages are the sitemap's only discovery path once the plugin sitemap
+   * goes with the domain, so they are listed — except the two kinds that would
+   * be wrong: a path pinned to the legacy iframe, and one a static entry above
+   * already publishes.
+   */
+  it('lists the WP pages, minus the legacy-embed exceptions and the static duplicates', async () => {
+    wpFetch.mockImplementation(async (path: string) => {
+      if (isPagesRequest(path)) {
+        return pagesIndex([
+          'https://wp.test/healthy-russia/',
+          'https://wp.test/about/reviews/',
+          'https://wp.test/news/',
+          'https://wp.test/%D0%B4%D0%BE%D0%B1%D1%80%D0%BE%D0%B2%D0%BE%D0%BB%D1%8C%D1%87%D0%B5%D1%81%D1%82%D0%B2%D0%BE/',
+        ]);
+      }
+      return postsPage([], { 'x-wp-totalpages': '1', 'x-wp-total': '0' });
+    });
+
+    const urls = (await sitemap()).map((entry) => entry.url);
+
+    expect(urls).toContain(`${siteUrl}/healthy-russia/`);
+    // `/about/reviews/` is on the exception list, `/news/` is a static entry —
+    // the latter exactly once, not twice.
+    expect(urls).not.toContain(`${siteUrl}/about/reviews/`);
+    expect(urls.filter((url) => url === `${siteUrl}/news/`)).toHaveLength(1);
+    // Matched decoded, published encoded: `<loc>` has to be URL-escaped.
+    expect(urls.some((url) => url.includes('%D0%B4%D0%BE'))).toBe(false);
   });
 
   it('publishes only the static URLs when WordPress is unconfigured', async () => {
@@ -145,6 +196,9 @@ describe('sitemap', () => {
     it('retries a 503 and keeps the page', async () => {
       const attempts = new Map<string, number>();
       wpFetch.mockImplementation(async (path: string) => {
+        if (isPagesRequest(path)) {
+          return noPages();
+        }
         const page = new URL(path, 'https://wp.test').searchParams.get('page') ?? '1';
         const seen = (attempts.get(page) ?? 0) + 1;
         attempts.set(page, seen);
@@ -163,6 +217,9 @@ describe('sitemap', () => {
     it('drops a page that never answers, but says so', async () => {
       const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
       wpFetch.mockImplementation(async (path: string) => {
+        if (isPagesRequest(path)) {
+          return noPages();
+        }
         const page = new URL(path, 'https://wp.test').searchParams.get('page') ?? '1';
         if (page === '5') {
           return new Response('busy', { status: 503 });
@@ -179,6 +236,9 @@ describe('sitemap', () => {
 
     it('refuses to publish when most of the archive is missing', async () => {
       wpFetch.mockImplementation(async (path: string) => {
+        if (isPagesRequest(path)) {
+          return noPages();
+        }
         const page = new URL(path, 'https://wp.test').searchParams.get('page') ?? '1';
         if (page !== '1') {
           return new Response('busy', { status: 503 });

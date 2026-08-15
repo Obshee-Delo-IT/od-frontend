@@ -3,13 +3,16 @@ import { cache } from 'react';
 import { LegacyEmbed } from '@/modules/Legacy';
 import { NewsArticle, newsMetadata } from '@/modules/News/NewsArticle';
 import { FilmPage, filmMetadata } from '@/modules/Video/FilmPage';
+import { WpPage, wpPageMetadata } from '@/modules/WpPage';
 import { cachedFetchVideo } from '@/shared/api';
 import { postTag, WP_TAGS, wpCache } from '@/shared/api/cacheTags';
 import { cachedFetchNews } from '@/shared/api/fetchNews';
+import { cachedFetchWpPage } from '@/shared/api/fetchWpPage';
 import { client, wpFetch } from '@/shared/api/httpClient';
 import { ALL_FILM_CATEGORY_IDS } from '@/shared/config/filmCategories';
+import { isLegacyEmbedPage } from '@/shared/config/legacyEmbedPages';
 import { canonicalUrl } from '@/shared/config/site';
-import { isEmbeddable, legacyPathname, loadLegacyDocument } from '@/shared/legacy';
+import { decodeSegments, isEmbeddable, legacyPathname, loadLegacyDocument } from '@/shared/legacy';
 import type { Metadata } from 'next';
 
 /**
@@ -22,16 +25,38 @@ import type { Metadata } from 'next';
  * redesigned one. `/news/<id>` and `/video/<id>` redirect *into* this route
  * (see `next.config.ts`), not the other way round.
  *
- * Non-numeric paths are the **A6 legacy fallback**: an eligible one renders
- * `LegacyEmbed`, whose iframe pulls the old page through `/legacy/*` so that
- * every not-yet-redesigned page keeps its live URL. Adding a native route for
- * one of them retires its fallback automatically — App Router precedence gives
- * a real route priority over this catch-all, and nothing here needs editing.
+ * A non-numeric path is a **WordPress page rendered natively** (D6) whenever WP
+ * has one published at it: the same URL, the same content, rendered by us. That
+ * is the default and needs no configuration — `shared/config/legacyEmbedPages.ts`
+ * lists only the exceptions, pages whose markup still wants the old theme.
+ *
+ * Everything else is the **A6 legacy fallback**: `LegacyEmbed`, whose iframe
+ * pulls the old page through `/legacy/*` so that every not-yet-redesigned page
+ * keeps its live URL. Adding a native route for one of them retires both
+ * branches automatically — App Router precedence gives a real route priority
+ * over this catch-all, and nothing here needs editing.
  */
 export const dynamicParams = true;
 export const revalidate = 3600;
 
 const legacyPostId = (slug: string[] | undefined) => (slug?.length === 1 && /^\d+$/.test(slug[0]) ? slug[0] : null);
+
+/**
+ * The path to ask WordPress for, or `null` when this slug is not to be answered
+ * from WP at all — an exception in `shared/config/legacyEmbedPages.ts`, or a
+ * slug the path allowlist rejects.
+ *
+ * Decoded before it is matched, for the same reason the legacy loader decodes:
+ * the router hands segments percent-encoded.
+ */
+const nativeWpPath = (slug: string[] | undefined): string | null => {
+  const segments = decodeSegments(slug);
+  if (!segments) {
+    return null;
+  }
+  const path = legacyPathname(segments);
+  return isLegacyEmbedPage(path) ? null : path;
+};
 
 /**
  * Which detail page a legacy `/<id>` resolves to, or `null` when no such post
@@ -105,8 +130,19 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const { slug } = await params;
   const id = legacyPostId(slug);
   if (!id) {
+    // The shape guard runs first, before anything is fetched: `/favicon.png/`
+    // and `/legacy/…` are not pages in either sense, and now that WordPress is
+    // asked about every other path, "not a page at all" has to be settled
+    // without a round trip.
     if (!isEmbeddable(slug)) {
       return {};
+    }
+    const nativePath = nativeWpPath(slug);
+    if (nativePath) {
+      const page = await cachedFetchWpPage(nativePath);
+      if (page) {
+        return wpPageMetadata({ page, path: nativePath });
+      }
     }
     // Always **our** canonical, never the legacy origin's: after cutover that
     // origin is a private frozen copy, and pointing at it would canonicalise
@@ -144,6 +180,18 @@ const Page = async ({ params }: { params: Promise<{ slug: string[] }> }) => {
   if (!id) {
     if (!isEmbeddable(slug)) {
       notFound();
+    }
+
+    // WordPress first, the embed when it has nothing published here. Which way
+    // round matters: this is the branch that decides whether a page the editors
+    // maintain is served as ours or as a frame of the old site, and the answer
+    // is "ours unless listed otherwise".
+    const nativePath = nativeWpPath(slug);
+    if (nativePath) {
+      const page = await cachedFetchWpPage(nativePath);
+      if (page) {
+        return <WpPage page={page} path={nativePath} />;
+      }
     }
 
     const legacy = await loadLegacyPage(legacyPathname(slug));
