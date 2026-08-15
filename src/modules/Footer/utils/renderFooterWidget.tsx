@@ -42,9 +42,14 @@ const socialFor = (className = '') =>
  * frozen copy inside an iframe, where that form is doubly dead. A visible
  * «дать денег» link that silently takes no money is worse than no link.
  *
- * Hiding it here removes the only link to it: the page itself stays reachable
- * by its URL through the legacy fallback. Next steps in `docs/next-steps.md`;
- * remove the entry once that decision lands.
+ * **The link is already deleted at the source on od-dev** (widget `block-32`,
+ * `sidebar_bottom`, 2026-08-15), so this set does nothing there. It stays as
+ * the guard for the tier whose WordPress still lists it — **prod**, which
+ * can't be edited yet (its REST is off, runbook blocker B1). Delete `/sp/`
+ * from here once runbook §2.6 has removed it on prod too.
+ *
+ * Either way the page stays reachable by its URL through the legacy fallback;
+ * only the link goes. Next steps in `docs/next-steps.md`.
  */
 const HIDDEN_HREFS = new Set(['/sp/']);
 
