@@ -20,7 +20,22 @@ const nextConfig: NextConfig = {
   turbopack: {
     rules: {
       '*.svg': {
-        loaders: ['@svgr/webpack'],
+        loaders: [
+          {
+            loader: '@svgr/webpack',
+            options: {
+              // SVGO's `removeViewBox` drops the attribute whenever it matches
+              // `width`/`height` — which is exactly the case for a Figma export
+              // at its natural size. The file then cannot be scaled at all: CSS
+              // resizes the viewport and the drawing stays 1:1 and gets clipped.
+              // The icons never showed it because their width/height are set
+              // smaller than the viewBox, so it was never removed from those.
+              svgoConfig: {
+                plugins: [{ name: 'preset-default', params: { overrides: { removeViewBox: false } } }],
+              },
+            },
+          },
+        ],
         as: '*.js',
       },
     },

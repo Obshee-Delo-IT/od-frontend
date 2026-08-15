@@ -294,6 +294,18 @@ Verified against WP before building: the live page is a hand-curated list of **1
 
 Gate 12 moved 83.7 % → 84.2 %, exactly the 114 visits.
 
+### `/materials/` — section index (D8), 2026-08-15
+
+`app/materials/page.tsx` + `materials.module.css`, from Figma `ads` (`778:2206`). Four white cards in a 2×2 grid (598×280, radius 12, padding 25, 44px between columns and 40px between rows): a 24/700 title top-left, a red «Подробнее» stretched over the whole card, and a ~200px illustration on the right. Static — no `revalidate`, no fetch, no props.
+
+**It is four hard-coded links, and that is the whole page.** The live index has carried the same four groups for years, and the CPT question ([`wp-backend.md` §8](./wp-backend.md#8-outstanding-questions-the-wp-state-doesnt-answer)) belongs to the sub-pages behind them, not here — inventing a taxonomy to render a fixed quartet would have put that decision on the critical path of the one D8 page that doesn't ask it. The hrefs are the live page's own: `/materials/metodichki/`, `/materials/printed-products/`, `/materials/articles/` (the shipped alias), `/materials/social-reklama/`. Three of the four still answer through the A6 fallback; `page.test.tsx` pins them, because this hub is the section's only navigation and a typo would be a dead end no other route catches.
+
+Built ahead of its entry traffic on purpose: **107 entries against 939 views (8.8×)** in 91 days — nearly nobody lands here from search, but it is how the section gets browsed, so it is what an iframe would have been seen through. Seeded into `sitemap.ts`, and `/materials/articles/`'s «Материалы» breadcrumb is now a link.
+
+**Repo-wide fix that came out of it: SVGO was stripping `viewBox` from every illustration.** `removeViewBox` (on in svgr's default preset) drops the attribute whenever it equals `width`/`height` — exactly a Figma export at natural size. Such a file cannot be scaled at all: CSS resizes the SVG viewport and the drawing stays 1:1 and is clipped. Invisible on the icons (their `width`/`height` are set smaller than the viewBox, so it was never removed) and invisible on home's `direction-*.svg` only because `Directions.module.css` sets `overflow: hidden`. `next.config.ts` now passes `svgoConfig` with `removeViewBox: false`; the home cards visibly gained the bottom of their illustrations.
+
+Deferred: the newsletter block is *not* in the Figma frame — kept anyway, since the live page has one and every other index route ends with it. No mobile frame exists either; the cards stay a row down to 390 with the illustration on a `min(200px, 42%)` basis, which is what keeps the titles off mid-word breaks at the 900 tier.
+
 ---
 
 ## 4. Shipped — data & media (B, E)
