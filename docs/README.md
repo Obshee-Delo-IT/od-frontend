@@ -1,6 +1,6 @@
 # Documentation map
 
-Nine documents, each with one job. Start here to find the right one.
+Ten documents, each with one job. Start here to find the right one.
 
 **The first two are a pair.** The plan holds what is still open; the notes hold everything that closed. If an item ships, it moves from one to the other — so the plan stays short enough to read in one sitting.
 
@@ -14,6 +14,7 @@ Nine documents, each with one job. Start here to find the right one.
 | [`prod-migration-runbook.md`](./prod-migration-runbook.md) | **od-dev → od-stage → prod**, in execution order: blockers, recon commands, WP prep, applying the film worksheet, env + config, verification gates, rollback. | You're promoting anything to another environment. |
 | [`legacy-page-fallback.md`](./legacy-page-fallback.md) | **A6**: how ~170 not-yet-redesigned pages get served inside the new shell (iframe via a same-origin proxy), why not SSR injection, and what's left to build. | You're working on the catch-all route or the launch gate. |
 | [`newsletter-unisender.md`](./newsletter-unisender.md) | **Newsletter subscribe via the Unisender API** — the decision (own form, their double opt-in), why host mail can't be used, what the legacy 10 922-address list is worth, and why it must not be bulk-imported. | You're building the subscribe form, or someone proposes mailing the old list. |
+| [`next-steps.md`](./next-steps.md) | **Loose ends**: things shipped work hid, stubbed or postponed — what was done, why, and what has to happen next. Currently the hidden `/sp/` donation link. | You touched something that looks deliberately disabled, or you're picking up a small follow-up. |
 | [`questions-for-designer.md`](./questions-for-designer.md) | **The open design questions**, in Russian, ready to send. Canonical list — the other docs point here. | You're talking to Design, or you hit an ambiguity in a mock. |
 
 ## Conventions across these docs
