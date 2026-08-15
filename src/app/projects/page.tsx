@@ -16,10 +16,11 @@ import type { Metadata } from 'next';
  * lists into one carousel, this page keeps the two sections the mock draws, as
  * static grids.
  *
- * The mock's own two shapes are **not** both built. Its middle row is a pair of
- * 598×280 wide cards holding «Бизнес-клуб» and «ОД ИТ» — a five-card row split
- * 2 + 3 — and both of those cards are hidden, so the variant would render for
- * nobody. Restore it with them.
+ * Both card shapes the mock draws are built, and which one a row gets is derived
+ * rather than authored: `toCardRows` fills rows of three and spends the
+ * remainder on the wide 598×280 pair the mock leads «Проекты» with. So the
+ * five cards of the mock still read 2 + 3, and hiding or restoring one card
+ * re-flows the page instead of stranding a row of one.
  *
  * No breadcrumbs row: the mock's header omits it here, unlike the per-project
  * pages. Nothing is fetched, so there is no `revalidate` — the route is fully

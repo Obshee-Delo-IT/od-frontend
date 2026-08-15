@@ -54,3 +54,43 @@
   font-weight: 700;
   line-height: 130%;
 }
+
+/* Figma `Frame 33845`: 598×280 = 25 + 230 + 25, drawing to the right of a body
+   that spans the full height — title at the top, link at the bottom. Below
+   `--mobile` the row is one column wide, where the portrait card reads better.
+   Kept last: these override the base rules above by specificity anyway, and
+   stylelint wants the looser selector declared first. */
+.wide {
+  min-height: 280px;
+  /* `row-reverse`, not `row`: the drawing sits to the *right* of the text here,
+     the other way round from the portrait card's markup order. */
+  flex-direction: row-reverse;
+  align-items: center;
+
+  @media (--mobile) {
+    min-height: 0;
+    flex-direction: column;
+  }
+}
+
+.wide .body {
+  min-width: 0;
+  flex: 1;
+  align-self: stretch;
+  justify-content: space-between;
+
+  @media (--mobile) {
+    align-self: auto;
+    justify-content: flex-start;
+  }
+}
+
+/* The drawings are 335×200 landscape, not the mock's 200×200 square, so cap the
+   share of the card they take rather than fixing a width. */
+.wide .illustration {
+  max-width: 55%;
+
+  @media (--mobile) {
+    max-width: 100%;
+  }
+}

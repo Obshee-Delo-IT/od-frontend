@@ -6,6 +6,12 @@ export interface IllustratedCardProps {
   href: string;
   /** The card's drawing, imported as a component by `@svgr/webpack`. */
   Illustration: React.FC<React.SVGProps<SVGElement>>;
+  /**
+   * Figma `Frame 33845` — the 598×280 landscape card that fills a row of two,
+   * drawing beside the text instead of above it. `/projects/` picks it per row;
+   * see `toCardRows`.
+   */
+  wide?: boolean;
 }
 
 /**
@@ -13,11 +19,12 @@ export interface IllustratedCardProps {
  * illustration box, then the title and a «Подробнее» link. The whole card is
  * clickable: the link's `::after` is stretched over it.
  *
- * Shared because the same card appears in two shapes — the home page's
- * `Directions` carousel and `/projects/`'s static grid.
+ * Shared because the same card appears in three shapes — the home page's
+ * `Directions` carousel, `/projects/`'s three-up rows, and the `wide` variant
+ * its two-up rows use.
  */
-export const IllustratedCard: React.FC<IllustratedCardProps> = ({ title, href, Illustration }) => (
-  <article className={css.card}>
+export const IllustratedCard: React.FC<IllustratedCardProps> = ({ title, href, Illustration, wide = false }) => (
+  <article className={wide ? `${css.card} ${css.wide}` : css.card}>
     <div className={css.illustration}>
       <Illustration aria-hidden="true" />
     </div>

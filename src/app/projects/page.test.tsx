@@ -26,6 +26,7 @@ describe('/projects/', () => {
 
     expect(screen.getByRole('heading', { level: 3, name: 'Здоровая Россия' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { level: 3, name: 'Общее дело ПРО' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 3, name: 'Онлайн курсы' })).toBeInTheDocument();
     // Hidden by omission from `programSections` — the config both surfaces read.
     expect(screen.queryByRole('heading', { level: 3, name: 'ОД ИТ' })).not.toBeInTheDocument();
     expect(screen.queryByRole('heading', { level: 3, name: 'Бизнес-клуб' })).not.toBeInTheDocument();

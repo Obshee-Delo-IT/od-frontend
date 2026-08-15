@@ -22,6 +22,21 @@
   }
 }
 
+/* Rows are separated by the same gap as the cards within one. */
+.rows {
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+
+  @media (--small-desktop) {
+    gap: 24px;
+  }
+
+  @media (--mobile) {
+    gap: 16px;
+  }
+}
+
 .grid {
   display: grid;
   gap: 40px;
@@ -30,6 +45,23 @@
   @media (--small-desktop) {
     gap: 24px;
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  @media (--mobile) {
+    gap: 16px;
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* A row of two wide cards (`Frame 33846`). Two columns already, so only the gap
+   steps down until the row collapses on mobile. */
+.wideGrid {
+  display: grid;
+  gap: 40px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+
+  @media (--small-desktop) {
+    gap: 24px;
   }
 
   @media (--mobile) {

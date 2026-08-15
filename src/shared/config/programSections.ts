@@ -1,4 +1,5 @@
 import OdPro from '@/shared/ui/assets/illustrations/direction-2.svg';
+import OnlineCourses from '@/shared/ui/assets/illustrations/direction-3.svg';
 import Video from '@/shared/ui/assets/illustrations/direction-5.svg';
 import HealthyKids from '@/shared/ui/assets/illustrations/healthy-kids.svg';
 import HealthyRussia from '@/shared/ui/assets/illustrations/healthy-russia.svg';
@@ -53,10 +54,15 @@ export const PROGRAMS: SectionCardData[] = [
  * the home page and `/projects/` together — their drawings are already in the
  * repo as `direction-1.svg` (Бизнес-клуб), `direction-3.svg` (ОД ИТ) and
  * `direction-4.svg` (Наставничество).
+ *
+ * «Онлайн курсы» is not in the mock at all and borrows «ОД ИТ»'s drawing, which
+ * Figma names «Digital learning». Restoring «ОД ИТ» therefore needs a drawing of
+ * its own, or the two cards share one component and duplicate the SVG's ids.
  */
 export const DIRECTIONS: SectionCardData[] = [
   { id: 'od-pro', title: 'Общее дело ПРО', href: 'https://od-pro.ru', Illustration: OdPro },
   { id: 'video', title: 'Видеоматериалы', href: '/video/', Illustration: Video },
+  { id: 'online-courses', title: 'Онлайн курсы', href: 'https://edu.obshee-delo.ru/', Illustration: OnlineCourses },
 ];
 
 /**

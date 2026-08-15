@@ -8,7 +8,7 @@ describe('programme sections config', () => {
     // Adding one back needs its page to exist first — all three 404 upstream, so
     // the A6 fallback has nothing to embed either. The omission is what hides
     // «ОД ИТ» on the home page *and* on /projects/: both read this array.
-    expect(DIRECTIONS.map((card) => card.title)).toEqual(['Общее дело ПРО', 'Видеоматериалы']);
+    expect(DIRECTIONS.map((card) => card.title)).toEqual(['Общее дело ПРО', 'Видеоматериалы', 'Онлайн курсы']);
   });
 
   it('points every programme at the legacy page the fallback can embed', () => {
