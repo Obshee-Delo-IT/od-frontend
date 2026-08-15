@@ -6,6 +6,10 @@ describe('isNavLabelHidden', () => {
     expect(isNavLabelHidden('ОБЩЕЕДЕЛО-ПРО')).toBe(true);
   });
 
+  it('hides «Заказать материалы», the child of «Материалы» this site does not surface', () => {
+    expect(isNavLabelHidden('Заказать материалы')).toBe(true);
+  });
+
   it('tolerates the whitespace and casing WP editors introduce', () => {
     expect(isNavLabelHidden('  общеедело-про  ')).toBe(true);
   });
