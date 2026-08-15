@@ -327,6 +327,13 @@ The scan that produced the list is worth repeating rather than trusting: its fir
 
 `stripHtml` gained a related fix: a tag now becomes a space rather than nothing, because `<p>a</p><p>b</p>` and a `<br>`-broken title are two words and it was gluing them into one — visible in page titles first, but meta descriptions had it all along.
 
+**A third bug, from the tile pages: a WP body brings its own `<style>`, and ours was fighting it.** `/materials/printed-products/` and `/materials/social-reklama/` lay a caption over each picture with `.textcapt { position: absolute; top: 15px; left: 17px }`. Two things went wrong at once, both in `gutenberg.css`:
+
+- **The captions left the page.** An absolutely positioned element needs a positioned ancestor; on the old site that was the theme's `.cmsms_column`, and Gutenberg's `.wp-block-column` is static, so every caption resolved against the document and stacked in the top-left corner **over the header**, leaving the images captionless. `.wp-block-column` is now `position: relative` — the old anchor, restored without the frontend knowing anything about the page's CSS.
+- **Then they came back grey.** The page colours the *column* (`.redcapt`), and our `.wp-block-columns p { color: var(--gray-7) }` (from #62) matched the paragraph itself — an inherited colour always loses to a direct rule. That rule is deleted: its `font-size` duplicated the base `p` rule, so the colour was all it did, and a WP page's own styling should win inside its own body.
+
+**Still broken on those two pages, and not fixable here:** the migration repointed every tile's link at the image file (`/wp-content/uploads/…jpg`) where the live site links to the child page (`/materials/books/`, `/zakladki/`, `/booklet/`, `/disk/`, `/autosticker/`, …). So the tiles open a lightbox instead of navigating, and the grandchild pages lose their only inbound link. It is content, not code — the fix is in WP (or in `cmsms-gutenberg-upgrade`, since prod will migrate the same way). The `.image` wrapper class went the same way, which is why the tiles are white with full-brightness pictures rather than the grey dimmed panels the live site draws.
+
 ### D7. Video — index 2026-06-04, player 2026-07-02
 
 Figma: index `video` (`706:3315`) + `video-filter` (`1554:17574`) + player `video-page` (`1566:10433`) + mobile `video-page-mob` (`1567:10735`, `1567:11844`) + download (`1581:10334`).

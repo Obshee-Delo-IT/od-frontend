@@ -263,7 +263,19 @@ th {
   }
 }
 
-.wp-block-columns p {
-  color: var(--gray-7);
-  font-size: var(--font-size-3);
+/* Paragraphs in columns are paragraphs: the base `p` rule above already gives
+   them this size, and the muted colour this rule used to add (from #62) was
+   also beating a page's own CSS — a WP body that colours a column, as the
+   `/materials/` tiles do with `.redcapt`, sets the colour on the *column*, and
+   an inherited value always loses to a rule matching the `p` itself. */
+
+/* A WP body can carry its own `<style>`, and the tile pages under `/materials/`
+   use it to lay a caption over the picture (`.textcapt { position: absolute }`).
+   On the old site the containing block was the theme's `.cmsms_column`, which is
+   positioned; Gutenberg's column is not, so every such caption escaped to the
+   top-left corner of the document — over the header, with the images left
+   captionless. Positioning the column restores the old anchor without the
+   frontend knowing anything about the page's own CSS. */
+.wp-block-column {
+  position: relative;
 }
