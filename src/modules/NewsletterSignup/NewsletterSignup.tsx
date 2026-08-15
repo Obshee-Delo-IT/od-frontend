@@ -3,6 +3,7 @@
 import { Heading } from '@radix-ui/themes';
 import clsx from 'clsx';
 import { useState } from 'react';
+import { NEWSLETTER_SIGNUP_ENABLED } from '@/shared/config/features';
 import { Button } from '@/shared/ui/components/Button';
 import { Checkbox } from '@/shared/ui/components/Checkbox';
 import { Input } from '@/shared/ui/components/input';
@@ -24,7 +25,11 @@ export interface NewsletterSignupProps {
   className?: string;
 }
 
-export const NewsletterSignup: React.FC<NewsletterSignupProps> = ({
+/**
+ * The form itself. Rendered only through {@link NewsletterSignup}, which is
+ * what every call site uses — keep the switch there, not here.
+ */
+export const NewsletterSignupForm: React.FC<NewsletterSignupProps> = ({
   variant = 'card',
   title = 'Подписаться на новости',
   className,
@@ -76,3 +81,10 @@ export const NewsletterSignup: React.FC<NewsletterSignupProps> = ({
     </form>
   );
 };
+
+/**
+ * One gate for all seven call sites, so hiding the form is one edit and
+ * unhiding it is the same edit — see {@link NEWSLETTER_SIGNUP_ENABLED}.
+ */
+export const NewsletterSignup: React.FC<NewsletterSignupProps> = (props) =>
+  NEWSLETTER_SIGNUP_ENABLED ? <NewsletterSignupForm {...props} /> : null;

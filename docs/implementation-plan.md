@@ -234,7 +234,7 @@ Real, but they live in the issue tracker. Pulled 2026-05-30.
 
 **Tech debt:** **#26** Pino + next-logger · **#27** `next/font/google` → `next/font/local` · **#28** Storybook · **#68** GitHub integration polish.
 
-**Open feature issues:** **#32** how to fetch home sections (working assumption: widgets) · **#54** newsletter submission wiring.
+**Open feature issues:** **#32** how to fetch home sections (working assumption: widgets) · **#54** newsletter submission wiring — the form is built but **hidden**, behind `NEWSLETTER_SIGNUP_ENABLED` in `src/shared/config/features.ts`; flip it on only once [`newsletter-unisender.md`](./newsletter-unisender.md) is implemented.
 
 ---
 
