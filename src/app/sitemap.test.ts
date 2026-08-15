@@ -9,10 +9,14 @@ vi.mock('@/shared/api/httpClient', () => ({
 
 import { FILM_CATEGORIES } from '@/shared/config/filmCategories';
 import { canonicalUrl, siteUrl } from '@/shared/config/site';
+import { NATIVE_WP_PAGES } from '@/shared/config/wpPages';
 import sitemap from './sitemap';
 
-/** `/`, `/news/`, `/materials/`, `/materials/articles/`, `/projects/`, `/video/`, then one per segment. */
-const STATIC_COUNT = 6 + Object.keys(FILM_CATEGORIES).length;
+/**
+ * `/`, `/news/`, `/materials/`, `/materials/articles/`, `/projects/`, the
+ * natively-rendered WP pages, `/video/`, then one per segment.
+ */
+const STATIC_COUNT = 6 + NATIVE_WP_PAGES.length + Object.keys(FILM_CATEGORIES).length;
 
 const postsPage = (ids: number[], headers: Record<string, string> = {}) =>
   new Response(JSON.stringify(ids.map((id) => ({ id, modified_gmt: '2016-05-19T08:57:08' }))), {

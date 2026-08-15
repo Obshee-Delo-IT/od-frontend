@@ -38,7 +38,13 @@ export const ImagePreviewClient = ({ children }: ImagePreviewClientProps) => {
 
     if (element.type === 'img' && props.src) {
       return cloneElement(element, {
-        onClick: (e: React.MouseEvent<HTMLElement>) => handleImageClick(props.src as string, e.currentTarget),
+        onClick: (e: React.MouseEvent<HTMLElement>) => {
+          // WP wraps "link to media file" images in an `<a>` to the raw upload;
+          // without this the lightbox opens and the browser navigates away from
+          // under it.
+          e.preventDefault();
+          handleImageClick(props.src as string, e.currentTarget);
+        },
         className: `${props.className || ''} ${css.clickableImage}`,
         role: 'button',
         tabIndex: 0,

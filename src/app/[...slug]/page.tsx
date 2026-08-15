@@ -3,13 +3,16 @@ import { cache } from 'react';
 import { LegacyEmbed } from '@/modules/Legacy';
 import { NewsArticle, newsMetadata } from '@/modules/News/NewsArticle';
 import { FilmPage, filmMetadata } from '@/modules/Video/FilmPage';
+import { WpPage, wpPageMetadata } from '@/modules/WpPage';
 import { cachedFetchVideo } from '@/shared/api';
 import { postTag, WP_TAGS, wpCache } from '@/shared/api/cacheTags';
 import { cachedFetchNews } from '@/shared/api/fetchNews';
+import { cachedFetchWpPage } from '@/shared/api/fetchWpPage';
 import { client, wpFetch } from '@/shared/api/httpClient';
 import { ALL_FILM_CATEGORY_IDS } from '@/shared/config/filmCategories';
 import { canonicalUrl } from '@/shared/config/site';
-import { isEmbeddable, legacyPathname, loadLegacyDocument } from '@/shared/legacy';
+import { isNativeWpPage, NATIVE_WP_PAGES } from '@/shared/config/wpPages';
+import { decodeSegments, isEmbeddable, legacyPathname, loadLegacyDocument } from '@/shared/legacy';
 import type { Metadata } from 'next';
 
 /**
@@ -22,7 +25,10 @@ import type { Metadata } from 'next';
  * redesigned one. `/news/<id>` and `/video/<id>` redirect *into* this route
  * (see `next.config.ts`), not the other way round.
  *
- * Non-numeric paths are the **A6 legacy fallback**: an eligible one renders
+ * Non-numeric paths have two answers. A path listed in
+ * `shared/config/wpPages.ts` is a **native WP page** (D6): the same URL, the
+ * same WordPress content, rendered by us instead of iframed. Everything else is
+ * the **A6 legacy fallback**: an eligible one renders
  * `LegacyEmbed`, whose iframe pulls the old page through `/legacy/*` so that
  * every not-yet-redesigned page keeps its live URL. Adding a native route for
  * one of them retires its fallback automatically — App Router precedence gives
@@ -32,6 +38,23 @@ export const dynamicParams = true;
 export const revalidate = 3600;
 
 const legacyPostId = (slug: string[] | undefined) => (slug?.length === 1 && /^\d+$/.test(slug[0]) ? slug[0] : null);
+
+/**
+ * The path this slug is served natively from WordPress at, or `null` when it
+ * isn't one — see `shared/config/wpPages.ts` for what "natively" buys and why
+ * it is a list rather than every page.
+ *
+ * Decoded before it is matched, for the same reason the legacy loader decodes:
+ * the router hands segments percent-encoded.
+ */
+const nativeWpPath = (slug: string[] | undefined): string | null => {
+  const segments = decodeSegments(slug);
+  if (!segments) {
+    return null;
+  }
+  const path = legacyPathname(segments);
+  return isNativeWpPage(path) ? path : null;
+};
 
 /**
  * Which detail page a legacy `/<id>` resolves to, or `null` when no such post
@@ -72,7 +95,12 @@ export async function generateStaticParams() {
       .catch(() => []),
   ]);
 
-  return [...films, ...posts].filter((post) => post.id).map((post) => ({ slug: [String(post.id)] }));
+  return [
+    ...[...films, ...posts].filter((post) => post.id).map((post) => ({ slug: [String(post.id)] })),
+    // The natively-rendered WP pages: a fixed, short list, so they may as well
+    // be prerendered rather than built on the first visitor's request.
+    ...NATIVE_WP_PAGES.map((path) => ({ slug: path.split('/').filter(Boolean) })),
+  ];
 }
 
 /**
@@ -105,6 +133,13 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const { slug } = await params;
   const id = legacyPostId(slug);
   if (!id) {
+    const nativePath = nativeWpPath(slug);
+    if (nativePath) {
+      const page = await cachedFetchWpPage(nativePath);
+      if (page) {
+        return wpPageMetadata({ page, path: nativePath });
+      }
+    }
     if (!isEmbeddable(slug)) {
       return {};
     }
@@ -142,6 +177,17 @@ const Page = async ({ params }: { params: Promise<{ slug: string[] }> }) => {
   const { slug } = await params;
   const id = legacyPostId(slug);
   if (!id) {
+    // Native WP page before the legacy embed, and falling *through* to it when
+    // WordPress has nothing published at the path — a mistyped entry in the
+    // config then costs the old rendering, not a 404.
+    const nativePath = nativeWpPath(slug);
+    if (nativePath) {
+      const page = await cachedFetchWpPage(nativePath);
+      if (page) {
+        return <WpPage page={page} path={nativePath} />;
+      }
+    }
+
     if (!isEmbeddable(slug)) {
       notFound();
     }

@@ -4,6 +4,7 @@ import { wpFetch } from '@/shared/api/httpClient';
 import { catalogueHref, FILM_CATEGORIES, type FilmCategorySegment } from '@/shared/config/filmCategories';
 import { ARTICLES_HREF } from '@/shared/config/newsCategories';
 import { canonicalUrl } from '@/shared/config/site';
+import { NATIVE_WP_PAGES } from '@/shared/config/wpPages';
 import type { MetadataRoute } from 'next';
 
 /**
@@ -180,6 +181,15 @@ const sitemap = async (): Promise<MetadataRoute.Sitemap> => {
     // Editorial and near-static (D6 reads a config array, not WordPress), but a
     // nav destination all the same — 794 views / 91 days on the live site.
     { url: canonicalUrl('/projects/'), changeFrequency: 'monthly', priority: 0.8 },
+    // The pages those cards point at. Listed from the same config the route
+    // reads, so a page moved off the native branch leaves the sitemap with it —
+    // it would still resolve, but through the legacy embed, which publishes
+    // nothing here to keep in sync.
+    ...NATIVE_WP_PAGES.map((path) => ({
+      url: canonicalUrl(path),
+      changeFrequency: 'monthly' as const,
+      priority: 0.7,
+    })),
     { url: canonicalUrl(catalogueHref({ segment: null })), changeFrequency: 'weekly', priority: 0.8 },
     // Enumerated from the shared map, and addressed through the same helper the
     // catalogue links with, so a new segment can't be forgotten here or drift

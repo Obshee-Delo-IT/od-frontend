@@ -23,12 +23,12 @@ import type { FC, SVGProps } from 'react';
  * The five `direction-*.svg` names are positional leftovers; the file each
  * constant below points at is what matters.
  *
- * **Programme hrefs address the legacy pages the A6 fallback embeds.** The real
- * programmes are three top-level pages on the old site (`/healthy-kids/`, not
+ * **Programme hrefs address the pages WordPress already serves.** The real
+ * programmes are three top-level pages (`/healthy-kids/`, not
  * `/programs/healthy-children/`, which 404s upstream; the `/programs/*` forms
- * that resolve at all only 301 onto these, and the fallback route doesn't follow
- * redirects). Adding a native route for one of them retires its fallback with no
- * edit here — App Router precedence handles it.
+ * that resolve at all only 301 onto these). All three are on
+ * `shared/config/wpPages.ts`, so they render natively from WP at those same
+ * URLs rather than through the A6 iframe — nothing here changes either way.
  */
 
 /** Shape the card components accept. */

@@ -6,12 +6,17 @@ const MAX_PREVIEW = 300;
  * Reduce a fragment of WordPress-rendered HTML to plain text: drop
  * `<style>`/`<script>` blocks (WP post content often opens with an inline
  * style block), strip remaining tags, decode entities, collapse whitespace.
+ *
+ * A tag becomes a **space**, not nothing: `<p>a</p><p>b</p>` and a title broken
+ * with `<br>` are two words, and deleting the tag outright glues them into one.
+ * The cost is a stray space where a tag sits mid-word (`<b>но</b>вости`), which
+ * is both rarer and less damaging in a meta description than a run-on.
  */
 export const stripHtml = (html?: string | null): string => {
   if (!html) {
     return '';
   }
-  return decodeEntities(html.replace(/<(style|script)\b[^>]*>[\s\S]*?<\/\1>/gi, '').replace(/<[^>]*>/g, ''))
+  return decodeEntities(html.replace(/<(style|script)\b[^>]*>[\s\S]*?<\/\1>/gi, '').replace(/<[^>]*>/g, ' '))
     .replace(/\s+/g, ' ')
     .trim();
 };

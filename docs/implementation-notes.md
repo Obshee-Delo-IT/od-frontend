@@ -300,6 +300,25 @@ The card itself moved to `shared/ui/components/IllustratedCard` (both shapes ren
 
 **«Онлайн курсы» (2026-08-15)** is a sixth card, added to `DIRECTIONS` at the client's request and absent from the mock. It points at `edu.obshee-delo.ru` — no page for it exists on the legacy origin or in WP — and borrows «ОД ИТ»'s drawing (Figma's «Digital learning», `direction-3.svg`), which is why restoring «ОД ИТ» now needs a drawing of its own rather than just a line of config.
 
+### D6b. Native WP pages — the programme detail pages, 2026-08-15
+
+The `/projects/` cards point at three programme pages, and those pages are not a template to design: they are **WordPress pages that already exist at the URLs the live site serves them from**. So they are rendered as such, and the mechanism is deliberately general — `shared/config/wpPages.ts` lists paths, and any path on the list is fetched from WP and rendered by us instead of iframed. Nothing else is per-page: no route, no component, no content migration, and **no URL change**, so entries and rankings are untouched and editors keep working in WP. Adding the next page is one line.
+
+The three parts:
+
+- **`shared/api/fetchWpPage.ts`** — resolve a page by the path it is served at. WP's REST API has no path lookup, so this queries `?slug=<last segment>` and then **verifies `link` against the requested path**: `?slug=` matches the last segment anywhere in the tree, so `/materials/plakati/` and a hypothetical top-level `/plakati/` would otherwise answer for each other. Raw `wpFetch`, not the typed client, because "no page here" is an expected answer and the client's middleware throws on non-2xx. Tagged `wp:pages`.
+- **`modules/WpPage`** — a news article without the news furniture: `resolveContentImages` → `parsePost` → `GutenbergProvider`, a `PageHeader` on top (a WP page carries its title outside the body), no date and no similar-posts rail.
+- **The catch-all** tries the native branch before the legacy one, and **falls through to the embed** when WP has no published page at the path — a typo in the config then costs the native rendering, not the page. The listed paths are also seeded into `generateStaticParams`, being a short fixed list.
+
+**Opt-in rather than "every WP page", and the reason is narrower than it was.** Measured 2026-08-15: 165 of 174 od-dev pages are Gutenberg blocks and **not one holds a shortcode** — `cmsms-gutenberg-upgrade` has already run there (see `CLAUDE.md`). What 23 of them still carry is bare `cmsms_*` class names, which only mean something under the old theme's CSS — which is exactly what the iframe still supplies. So the list is a "someone has looked at this page" marker, not a technical barrier, and dropping it is one `if` away when that stops being worth the check.
+
+**Two bugs the first page found, both fixed in shared code rather than here:**
+
+- **Every image was broken.** The block editor writes `src="/wp-content/uploads/…"`, root-relative — which resolves against *our* origin and 404s. `resolveMediaUrl` assumed an absolute URL; it now gives a root-relative (or protocol-relative) src the WP origin before anything else, so every caller benefits, not just page content.
+- **Clicking an image opened the lightbox and then navigated away from it.** WP wraps "link to media file" images in an `<a>` to the raw upload; `ImagePreviewClient` never called `preventDefault`. It does now — the same bug was live on any news post with linked images.
+
+`stripHtml` gained a related fix: a tag now becomes a space rather than nothing, because `<p>a</p><p>b</p>` and a `<br>`-broken title are two words and it was gluing them into one — visible in page titles first, but meta descriptions had it all along.
+
 ### D7. Video — index 2026-06-04, player 2026-07-02
 
 Figma: index `video` (`706:3315`) + `video-filter` (`1554:17574`) + player `video-page` (`1566:10433`) + mobile `video-page-mob` (`1567:10735`, `1567:11844`) + download (`1581:10334`).
