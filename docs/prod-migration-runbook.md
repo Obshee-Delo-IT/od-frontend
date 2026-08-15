@@ -2,6 +2,8 @@
 
 Everything needed to move the Next.js redesign from **od-dev** to **od-stage** and then **production** (`obshee-delo.ru`), in execution order, with the verification gate for each step.
 
+> ⚠ **Prod is on BeGet, not Timeweb — every `ssh timeweb`-based prod fact below is suspect** (found 2026-08-15). `obshee-delo.ru` resolves to `45.130.41.70` (`ssl.dream.beget.com`); the live install is **`ssh od-root`, `~/public_html`**. `ssh timeweb ~/public_html` is a full *copy* of the same site, now serving only `общее-дело.рф` as 301s — editing it changes nothing anyone can see. The paths, WP-CLI invocations and measurements in §1–§2 were taken there and have to be re-verified against BeGet; [`next-steps.md`](./next-steps.md) carries that item and the two tells that identify which install you're on.
+
 > **Read this first.** Every step below has been executed **only against od-dev**. od-stage and prod have never been written to (standing scope limit: od-dev only — see [`servers-agent/CLAUDE.md`](../../servers-agent/CLAUDE.md) safety rules). Prod facts in §0 come from a **read-only probe** recorded in [`legacy-page-fallback.md` §2](./legacy-page-fallback.md). Treat them as *expected*, and re-verify in §1 before acting. Run the whole runbook on **od-stage first** — it exists precisely so prod isn't the rehearsal.
 
 Related: [`implementation-plan.md`](./implementation-plan.md) (task state) · [`wp-backend.md`](./wp-backend.md) (hosting, access, plugins) · [`legacy-page-fallback.md`](./legacy-page-fallback.md) (un-redesigned pages).
@@ -147,16 +149,7 @@ ssh timeweb 'cd ~/public_html && wp --skip-plugins --skip-themes eval "
 
 ⚠️ **Two known gaps, both about legacy pages, both live only once A6 ships.** The plugin reports post type `post` only, so **editing a legacy page purges nothing** — the fallback route would serve its cached render for up to an hour. And prod caches its own HTML with **WP Rocket** (§2 of `wp-backend.md`), which the fallback fetches: purging Next before WP Rocket just re-caches the stale copy. When A6 lands, the order is WP Rocket first, then the frontend, and the plugin needs to start sending `paths` for pages — the endpoint already accepts them.
 
-**2.6 Delete the footer's «Благотворительная акция» link.** The `sidebar_bottom` links widget lists `/sp/`, whose leyka form has taken no money since 2022-01-05 — measurements in [`next-steps.md`](./next-steps.md). It is already gone on od-dev; do the same here, then **delete `/sp/` from `HIDDEN_HREFS` in `src/modules/Footer/utils/renderFooterWidget.tsx`**, which exists only to cover this tier until then. Needs §2.1 (REST) first, or edit the widget in wp-admin.
-
-```bash
-# read it first — prod's widget is CMSMasters-era, so the markup may differ
-node --env-file=.env -e 'const a=Buffer.from(`${process.env.WP_USER}:${process.env.WP_PASSWORD}`).toString("base64");
-fetch(`${process.env.WP_BASE}/wp-json/wp/v2/widgets?sidebar=sidebar_bottom&context=edit`,{headers:{Authorization:`Basic ${a}`}})
- .then(r=>r.json()).then(d=>d.filter(w=>JSON.stringify(w).includes("/sp/")).forEach(w=>console.log(w.id,"\n",w.instance?.raw?.content)))'
-```
-
-Remove only the one `wp:list-item` (or `<li>`) carrying `/sp/`, keep the other seven, then re-read the widget to confirm the count. `/sp/` itself stays served by the A6 fallback — this removes the link, not the page.
+**2.6 Two dead links — ~~to remove~~ done 2026-08-15, on prod and od-dev both.** The `sidebar_bottom` links widget's `/sp/` (leyka form, no money taken since 2022-01-05) and menu item 27971 «Заказать материалы» (CF7 order form, mail lands in spam). Deleted at the source, so the frontend filters neither any more. What was removed, how to restore it, and what has to be decided before either comes back: [`next-steps.md`](./next-steps.md). Both pages still answer 200 on the A6 fallback — the links went, not the pages.
 
 ---
 
