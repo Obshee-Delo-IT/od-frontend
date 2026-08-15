@@ -1,0 +1,121 @@
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+## Project context
+
+Frontend for «Общее Дело» (a Russian non-profit). The app is a Next.js 16 App Router site that consumes a WordPress instance over the WP REST API (`wp-json`). The user-facing UI is in Russian.
+
+Node version is pinned in `.nvmrc` (22.16.0). Package manager is `pnpm@11.3.0` (enforced in the Dockerfile via corepack). pnpm config (build-script allowlist, `@types/react` overrides) lives in `pnpm-workspace.yaml` — pnpm 11 no longer reads the `pnpm.*` block from `package.json`.
+
+**Project state lives in `docs/`, not here.** This file covers repo mechanics only. Before answering "is X built?", "why is it like this?", or "what's next?", read [`docs/README.md`](docs/README.md) — it maps the eight docs. Two of them are a pair: **`docs/implementation-plan.md` holds what is still open** ("what's next?"), **`docs/implementation-notes.md` holds everything that closed** ("is X built?", "why is it like this?"). When something ships, move it from the plan to the notes rather than growing the plan. `docs/wp-backend.md` is the reference for anything WordPress-shaped.
+
+## Commands
+
+- `pnpm dev` — Next.js dev server (Turbopack). `pnpm dev:debug` enables `--inspect`.
+- `pnpm build` / `pnpm start` — production build/serve. `output: 'standalone'` is configured for Docker.
+- `pnpm lint` — ESLint, `--max-warnings 0`. Runs over the whole tree.
+- `pnpm lint:styles` — Stylelint over `**/*.css` with auto-fix.
+- `pnpm type-check` — `tsc --noEmit` (TS isn't run by ESLint).
+- `pnpm format` — Prettier write.
+- `pnpm generate:types` — regenerate `src/types/generated/wp-json-openapi.ts` from the WordPress OpenAPI schema configured in `redocly.yml` (currently points at `https://od-dev.tmweb.ru/wp-json-openapi`).
+- `pnpm test` — Vitest run (jsdom + React Testing Library). `pnpm test:watch` for the watcher, `pnpm test:coverage` for v8 coverage.
+- `pnpm test:e2e` — Playwright (`e2e/`, `playwright.config.ts`); needs a running dev server and is **not** in CI.
+- `pnpm film:export` / `film:import` / `film:kinescope` / `film:covers` / `film:remap` — the film-metadata CSV tooling in `scripts/` (zero-dep Node, `node --env-file=.env`). Writes go through `--apply`; everything is dry-run by default. See the README.
+- `pnpm url:check` — replays the live site's real entry URLs (Yandex Metrica export) against a base URL and reports entry-traffic coverage. The A8 regression gate; run it after touching routing or `src/proxy.ts`.
+- Docker dev: `docker-compose up --build frontend-local` (uses the `dev` target, mounts the repo).
+
+CI (`.github/workflows/ci.yml`) runs `next typegen` → `lint` → `type-check` → `test` → `build` on every PR and on `main`, deliberately **without** WP secrets — `httpClient` and `next.config.ts` substitute a stub when env is missing. Husky + lint-staged run `eslint --fix` and `prettier` on staged JS/TS, and `stylelint --fix` on staged CSS.
+
+Caveat on `generate:types`: **follow it with Prettier** — `npx prettier --write src/types/generated/wp-json-openapi.ts`. openapi-typescript emits double quotes and 4-space indent, so skipping that step buries the real change in ~35 000 lines of formatting diff. (The output path itself was broken until 2026-08-13 — a stray space made it write to a directory called `generated `; fixed.)
+
+## Committing
+
+**Commit every block of work, as it lands.** A block is one self-contained change — a fetcher, a route, a config fix, a doc sweep. Get it green (`pnpm lint` · `pnpm type-check` · `pnpm test`), commit it, then start the next one; don't let two blocks pile up in the working tree, because a review of the second can no longer see the first. **Committing is part of finishing a block, not a separate request** — don't leave the change in the working tree waiting to be told; a block that isn't committed isn't done. Code and the docs describing that same change belong in **one** commit — unrelated blocks never do.
+
+Messages follow the log: `type(SCOPE): lowercase summary`, where `SCOPE` is the workstream item from `docs/implementation-plan.md` (`A8`, `B3`, `D7`, …) or the area (`scripts`, `repo`, `runbook`) — e.g. `feat(B4): secret-gated /api/revalidate/`. Branch first if you're on `main`, and only push when asked.
+
+## Env vars
+
+Required: `WP_USER`, `WP_PASSWORD`, `WP_BASE` (a WordPress application password — see README). Optional: `WP_MEDIA_CDN` (media bucket origin; defaulted in `src/shared/api/mediaCdn.ts`, `""` disables the rewrite), `SITE_URL` (this deployment's public origin — feeds `metadataBase`, every canonical, `sitemap.xml` and `robots.txt`; defaults to `https://obshee-delo.ru` in `src/shared/config/site.ts`, so **any non-prod tier must set it explicitly** or it advertises prod's URLs), `REVALIDATE_SECRET` (shared secret for `POST /api/revalidate/`, B4 — unset means the endpoint 503s and purges nothing; **one secret per tier**), `KINESCOPE_TOKEN` (`film:kinescope` only, never at runtime), and later `WP_LEGACY_BASE` (the A6 frozen-copy origin).
+
+All are read **at module load** — `httpClient.ts` builds the `Authorization: Basic …` header and base URL from them — so restart the dev server after changing `.env`. The one exception is `REVALIDATE_SECRET`, read per request so a tier can be handed the secret without a rebuild. `WP_BASE` and `WP_MEDIA_CDN` additionally feed `images.remotePatterns`, which is evaluated at **build** time; in Docker they must be passed as build-args or `next/image` 400s on every remote image.
+
+## Architecture
+
+### Layering
+
+`src/` is split into three layers, with `@/*` aliased to `./src/*`:
+
+- `src/app/` — Next.js App Router routes. Server Components by default. Currently: `page.tsx` (home), `news/page.tsx`, `materials/page.tsx` (the D8 section index — four static cards) + `materials/articles/page.tsx` (a thin alias, see below), `video/page.tsx` + `video/[segment]/page.tsx` (the film catalogue), `[...slug]/page.tsx` (post detail — see the routing note below), `sitemap.ts`, `robots.ts`, `health/route.ts`, `api/revalidate/route.ts` (B4's cache purge), plus `layout.tsx`.
+- `src/modules/<Feature>/` — feature modules (`Header`, `Footer`, `Home`, `News`, `Video`, `NewsletterSignup`). Each module typically exposes server + client components (e.g. `HeaderServer.tsx` fetches data and renders `HeaderClient.tsx`). Co-located `*.module.css`, `utils/`, `types.ts`, and an `index.ts` barrel. Note that **whole page bodies live here too** when a route can't own them — `News/NewsArticle` and `Video/FilmPage` are rendered by the catch-all.
+- `src/shared/` — cross-cutting code: `api/` (typed WP fetchers), `ui/components/` (Box, Breadcrumbs, Modal, Link, Icons, …), `ui/theme/` (Radix + Gutenberg providers), `ui/styles/` (global CSS, `@custom-media` breakpoints), `ui/assets/icons/` (SVGs imported as React components).
+- `src/types/generated/wp-json-openapi.ts` is generated — don't hand-edit it; run `pnpm generate:types`.
+
+Outside `src/`, **`wp/mu-plugins/` holds PHP that runs on the WordPress side** — currently `od-revalidate.php`, the `save_post`-side half of B4, installed on od-dev at `wp-content/mu-plugins/`. It is the canonical copy: edit here, re-upload with `scp`, and keep `docs/wp-backend.md` §6.5 (which documents the install and what was measured) pointing at it rather than embedding a second copy.
+
+### Data layer
+
+All WordPress calls go through a single `openapi-fetch` client in `src/shared/api/httpClient.ts`. Two middlewares: one injects Basic auth, the other throws on non-2xx responses (so callers can rely on `data` being present on success). New fetchers live in `src/shared/api/` and are re-exported from `src/shared/api/index.ts`. For per-request dedup within a render pass, wrap fetchers with React's `cache()` (see `cachedFetchNews`).
+
+The same module exports a raw `wpFetch` for the cases where the throwing middleware is wrong — notably the catch-all's post-kind probe and the paginated listings, where a 404/400 is an expected answer, not an error. Prefer the typed client; reach for `wpFetch` only with that justification.
+
+**Every WP request carries cache tags.** `wpCache([WP_TAGS.posts, postTag(id)])` in `src/shared/api/cacheTags.ts` returns the `next: { revalidate, tags }` fragment both `wpFetch` and the typed client take — pass it as the init, or spread it alongside `params`. Tagging isn't optional bookkeeping: Next stamps a render's fetch tags onto the route's ISR entry, so it's what lets `POST /api/revalidate/` (B4) purge the *page*, not just the JSON. A new fetcher without a tag is invisible to that. The typed client only keeps `next` because openapi-fetch copies leftover init keys onto its `Request` — `httpClient.test.ts` guards it, since the failure mode is silent.
+
+**Images must go through the resolution pipeline**, never straight from the API. WP media is offloaded to a Yandex bucket: the origin is slow and 301s, and WordPress's sized variants (`-300x169`, …) often 500 — yet the REST payloads and post bodies reference exactly those. So `imageUrl.ts` strips the `-WxH` suffix to full-size, and `mediaUrl.ts` → `resolveMediaUrl` picks the CDN copy when a cached HEAD probe returns a direct 200, else falls back to the origin. News/film bodies additionally run through `resolveContentImages` (rewrites every `<img>`, strips `srcset`/`sizes`) before `parsePost`. Details in `docs/wp-backend.md` §6.4.
+
+### Rendering model
+
+Pages are async Server Components. The post-detail route (`app/[...slug]/page.tsx`) demonstrates the intended pattern: `generateStaticParams` for ISR seed, `revalidate = 3600`, `dynamicParams = true`, `generateMetadata` for SEO. **On-demand revalidation is wired end to end and gated on one line of deploy config**: every WP fetch carries cache tags (`src/shared/api/cacheTags.ts` → `wpCache()`), `POST /api/revalidate/` purges them, and the WP mu-plugin that calls it is installed on od-dev — with `OD_REVALIDATE_URL` commented out, since no frontend is deployed for that tier to purge. Until a tier sets both that and `REVALIDATE_SECRET`, edits propagate on the hour. `docs/wp-backend.md` §6.5 has the procedure and the measurements behind it. The ISR cache lives on the container filesystem (`output: 'standalone'`), so it's per-replica — a custom `cacheHandler` would be needed before scaling past one instance. WordPress post HTML is rendered through `parsePost` (`src/modules/News/utils/parsePost.tsx`), which uses `html-react-parser` to lift the first `wp-block-cb-carousel-v2` or `wp-block-gallery` block out of the body and return it as a separate `header` slot. WordPress block styles are scoped by wrapping rendered HTML in `<GutenbergProvider>` (imports `@wordpress/block-library` CSS).
+
+### Routing and URL compatibility
+
+This site replaces a live WordPress site, and **matching its URLs is a hard requirement** — 59 % of search entries land on legacy shapes. Two consequences that will surprise you otherwise:
+
+- **Post detail is served at the bare `/<id>`**, by `app/[...slug]/page.tsx`. It probes `/wp/v2/posts/<id>?_fields=id,format` and renders `modules/Video/FilmPage` for `format=video`, else `modules/News/NewsArticle`. There is deliberately no `app/news/[id]/` or `app/video/[id]/` — those paths **404**. Don't "fix" this by adding them back, or by adding a redirect: they were this project's own pre-launch shape, nothing public ever linked to them, and a second address for one piece of content is the thing this prevents.
+- **The same catch-all's non-numeric branch embeds the old site (A6)** rather than 404ing. An eligible path renders `modules/Legacy/LegacyEmbed` — an iframe pointing at `app/legacy/[...slug]/route.ts`, which fetches the page from `WP_LEGACY_BASE`, removes the old header/footer, rewrites its links onto this site and injects a height reporter. `/legacy/*` is **internal**: `noindex`, `frame-ancestors 'self'`, and never the indexable address for a page. Three things to know before touching it:
+  - **Adding a native route retires that page's fallback with no other edit** — App Router precedence gives a real route priority over `[...slug]`. There is no list to update.
+  - **The page surface must not fetch uncached.** The catch-all's `revalidate` is module-level and shared with the numeric branch, so its render has to stay statically generatable; `cache: 'no-store'` there aborts with `DYNAMIC_SERVER_USAGE` and production 500s while `next dev` answers 200. That is why `loadLegacyDocument` takes a policy and the page passes `'revalidate'` while the route takes the `'no-store'` default. **Run a production build before believing this route works** — `pnpm build && pnpm start` is the only gate that catches it.
+  - **Unsetting `WP_LEGACY_BASE` is the rollback**, and the whole feature goes back to today's 404s. It must never point at this deployment's own origin (see `src/shared/legacy/legacyOrigin.ts` — it warns).
+  - The transform is a pure function over the HTML string in `src/shared/legacy/`, tested against three real captured pages in `__fixtures__/` and swept over all 172 legacy pages with `pnpm legacy:sweep`. Every measured number in the fixtures' README is asserted; don't reformat or re-capture them casually.
+- **The film categories are real routes**, `app/video/[segment]/page.tsx` — `/video/filmy|multy|roliki|famous-people/`, sharing a body with `/video/` via `modules/Video/VideoCatalogue`. They are the #2 and #3 entry pages on the site, so they are served, never redirected, and an unknown segment `notFound()`s rather than quietly serving «Все».
+- **`trailingSlash: true`**, and the legacy redirects live in **`src/proxy.ts`** (Next 16's rename of `middleware.ts`), driven by the pure `resolveLegacyUrl(pathname)` in `src/shared/config/legacyRedirects.ts` — see its `.test.ts`. Covered: `/video/short/`, `/video/<segment>/page/N/`, the **whole** `/category/*` family (video aliases → the catalogue, news aliases → `/news/?category=<key>`, everything else → `/news/`), and `/news/page/N` + `/page/N`. The proxy runs before the catch-all, so check `resolveLegacyUrl` first when a URL doesn't reach the page you expect. It also holds the A6 **font relay** — `/legacy-font/*` is rewritten (not redirected) to the legacy origin's theme fonts, because a browser fetches fonts under CORS and that origin sends no `Access-Control-Allow-Origin`; see `src/shared/legacy/legacyFonts.ts`.
+- **Redirects belong in the proxy, not `next.config.ts` `redirects()`.** A config table can't emit a slash-terminated destination under `trailingSlash: true` — Next strips the slash and its own normalisation adds it back, making every legacy URL a two-hop chain. Config redirects also run *before* the proxy, so a rule left there silently shadows it. Everything is **301** (not 308): Yandex, where most of this traffic comes from, documents 301/302 only. Also note `/health` answers at `/health/`.
+
+**Two config facts worth knowing before you touch any of it:**
+
+- **Film category ids live in exactly one file** — `src/shared/config/filmCategories.ts` (`FILM_CATEGORIES`, keyed by **URL segment** → WP id, plus `resolveFilmCategory` and `catalogueHref`). Both video routes, the related-films scope, the SSG seed, `sitemap.ts` and the redirect table all read it. The ids are environment-specific, so it's also the single edit point when repointing `WP_BASE` (blocker B5 in the runbook). The keys are live URLs — renaming one 404s real traffic. `src/shared/config/newsCategories.ts` is the same idea for news (`NEWS_CATEGORIES` = `nashi-dela` 47 / `articles` 578, `resolveNewsCategory`, `ARTICLES_HREF`), read by the `/news/` chips, `/materials/articles/`, the sitemap and the redirect table. Note `scripts/lib/wp.mjs` keeps its *own* copy of the film ids — zero-dep Node can't import TS — so it needs the same edit.
+- **`/materials/articles/` is a thin alias route**, not part of D8. It lists WP category 578 (19 posts — a superset of the legacy page's 14 curated links, each of which is a `/<id>` post the catch-all already renders). It's a route rather than a 301 because 114 entry visits/91 days land there from search, and it is the **canonical** of the pair: `/news/?category=articles` canonicalises onto it, while `?page=2` self-canonicalises. Its five child pages (`about-beer`, …) are ordinary WP pages and stay on the A6 fallback.
+- **A redirect pointing at a filter value the destination doesn't recognise answers 200, with unfiltered content.** This bit twice during A8 (`/video/…?category=581` and `/news/?category=47`, where both indexes resolve by *key*). Status checks can't catch it — check the result count. `legacyRedirects.test.ts` now asserts no destination carries a numeric id.
+
+After changing routing or redirects, run `pnpm url:check` — it replays the live site's real entry URLs and reports traffic-weighted coverage.
+
+### Styling
+
+CSS Modules + PostCSS (`postcss-preset-env`, `postcss-nested`, `postcss-nested-import`, `@csstools/postcss-global-data` pulling in `src/shared/ui/styles/media.css`). Breakpoints are `@custom-media`: `--mobile (<900px)`, `--small-desktop (<1440px)`, `--desktop (>=1440px)`. The `Box` component in `src/shared/ui/components/Box/` accepts the same breakpoints as responsive object props (`{ mobile, smallDesktop, desktop }`) for spacing/layout — prefer it over ad-hoc CSS for layout shells. Its values are unconstrained (a number is pixels, a string passes through): each set prop adds one class and one inline custom property, rather than selecting from a generated per-value class. **It has nine props — `pt pb py mb gap top display flexDirection position` — and they are the nine with call sites**; the other fifteen were deleted unused. Reach for a CSS module before adding a tenth. **The breakpoints are nested max-widths, so below 900 both `--mobile` and `--small-desktop` match and the later block wins** — a Box that sets `mobile` *and* `smallDesktop` renders the `smallDesktop` value on a phone. Long-standing; `Box.module.css` preserves the block order deliberately. Radix Themes is the component primitive library (`@radix-ui/themes`), wrapped by `RadixProvider` in the root layout.
+
+### SVG and images
+
+SVGs are loaded as React components via `@svgr/webpack` configured under `turbopack.rules` in `next.config.ts`; add one by dropping the file in `src/shared/ui/assets/icons/` and exporting a typed wrapper from `src/shared/ui/components/Icons/`. That loader is configured with `removeViewBox: false` on purpose: SVGO drops `viewBox` whenever it matches `width`/`height` — i.e. on any Figma export at natural size — and a file without it **cannot be scaled**, it just gets clipped inside the resized viewport. Remote image hosts are allowlisted in the same config via `images.remotePatterns`: the `WP_BASE` origin, a Punycode-encoded legacy domain (still in use by at least one film poster), and the media CDN. One deliberate exception to the SVG rule — the three video-platform brand marks are raster in Figma, so they live as PNGs in `assets/images/` and are wired through `modules/Video/sharePlatforms.ts`.
+
+### React 19 / compiler
+
+`reactCompiler: true` is on in `next.config.ts` and `babel-plugin-react-compiler` is installed — don't add manual `useMemo`/`useCallback` for things the compiler will handle.
+
+### Testing
+
+Vitest + React Testing Library + jsdom. Config in `vitest.config.ts`, setup in `vitest.setup.ts` (loads `@testing-library/jest-dom/vitest` matchers and runs `cleanup()` after each test). SVGs and `@/*` paths resolve the same way as in the Next.js app (vite-plugin-svgr with `exportType: 'default'`, native Vite tsconfig paths). CSS Modules use the `non-scoped` class strategy so imported class names stay readable in tests; the project PostCSS pipeline is bypassed (Vitest has its own empty `css.postcss`). Tests co-locate next to source as `*.test.ts(x)` and use explicit `import { describe, it, expect } from 'vitest'` (no globals). Component tests that lean on Radix styling should wrap the tree in `<Theme>` from `@radix-ui/themes`.
+
+## Lint rules worth knowing
+
+ESLint (`eslint.config.mjs`) enforces a few non-default choices that will trip up new code:
+
+- `react/function-component-definition` → arrow functions only (no `function Foo()` components).
+- `import/order` is enforced with `alphabetize` (case-insensitive). Groups: external/builtin → internal → parent/sibling → index → object → type.
+- `import/extensions` forbids `.ts/.tsx/.js/.jsx` extensions in import paths.
+- `import/no-cycle` is an error.
+- `arrow-body-style: as-needed`, `curly: all`, `no-plusplus`, `no-console: warn`.
+- `react/hook-use-state` requires destructured `[x, setX]` (no aliasing).
+- Prefix unused identifiers with `_` (applies to args, caught errors, destructured, vars).
+
+Prettier: 120 cols, single quotes, semis, ES5 trailing commas.
