@@ -13,9 +13,10 @@ export interface DirectionCardData {
 interface DirectionsProps {
   directions: DirectionCardData[];
   /**
-   * Always `HOME_SECTIONS_TITLE` today — the section carries the folded-in
-   * programmes. The section is named by `aria-label` rather than an `id`
-   * because `/projects/` renders this shape twice.
+   * `PROGRAMS_TITLE`/`DIRECTIONS_TITLE` when the home page draws the two
+   * carousels Figma does, `HOME_SECTIONS_TITLE` when it folds them into one —
+   * see `SPLIT_HOME_SECTIONS`. Named by `aria-label` rather than an `id`,
+   * because the shape renders more than once per page either way.
    */
   title: string;
 }

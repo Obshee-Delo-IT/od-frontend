@@ -34,9 +34,12 @@
   justify-content: center;
 }
 
+/* `width: 100%`, not `auto`: as a flex item the drawing's `min-width: auto`
+   resolves to its intrinsic 335px, so `max-width` alone never shrank it — it
+   just overflowed and got clipped once the card was narrower than that. */
 .illustration svg {
-  width: auto;
-  max-width: 100%;
+  width: 100%;
+  max-width: 335px;
   height: auto;
   max-height: 100%;
 }

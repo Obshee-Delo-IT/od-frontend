@@ -1,7 +1,14 @@
 import { Directions, FilmsCarousel, Hero, NarrowPromo, NewsGrid, StatsRow } from '@/modules/Home';
 import { NewsletterSignup } from '@/modules/NewsletterSignup';
 import { fetchFilms, fetchLatestNews } from '@/shared/api';
-import { DIRECTIONS, HOME_SECTIONS_TITLE, PROGRAMS } from '@/shared/config/programSections';
+import {
+  DIRECTIONS,
+  DIRECTIONS_TITLE,
+  HOME_SECTIONS_TITLE,
+  PROGRAMS,
+  PROGRAMS_TITLE,
+  SPLIT_HOME_SECTIONS,
+} from '@/shared/config/programSections';
 import { canonicalUrl } from '@/shared/config/site';
 import { formatDate } from '@/shared/lib/formatDate';
 import { Box } from '@/shared/ui/components/Box';
@@ -40,7 +47,14 @@ const HomePage = async () => {
         }))}
       />
       <NarrowPromo />
-      <Directions title={HOME_SECTIONS_TITLE} directions={[...PROGRAMS, ...DIRECTIONS]} />
+      {SPLIT_HOME_SECTIONS ? (
+        <>
+          <Directions title={PROGRAMS_TITLE} directions={PROGRAMS} />
+          <Directions title={DIRECTIONS_TITLE} directions={DIRECTIONS} />
+        </>
+      ) : (
+        <Directions title={HOME_SECTIONS_TITLE} directions={[...PROGRAMS, ...DIRECTIONS]} />
+      )}
       <NewsGrid
         items={news.map((post) => ({
           id: post.id,

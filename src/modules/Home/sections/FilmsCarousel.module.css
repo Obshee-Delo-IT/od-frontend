@@ -8,16 +8,17 @@
   }
 }
 
+/* Figma text/8/bold (`3614:91093`) — PT Sans Bold 32, like every other section
+   heading on the site. */
 .heading {
   margin: 0;
   color: var(--gray-9);
-  font-family: var(--font-pt-sans-narrow), 'PT Sans Narrow', sans-serif;
-  font-size: 48px;
+  font-size: 32px;
   font-weight: 700;
-  line-height: 120%;
+  line-height: 130%;
 
   @media (--mobile) {
-    font-size: 32px;
+    font-size: 24px;
   }
 }
 

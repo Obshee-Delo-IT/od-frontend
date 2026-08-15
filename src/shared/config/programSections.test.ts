@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { DIRECTIONS, PROGRAMS } from './programSections';
+import { DIRECTIONS, PROGRAMS, SPLIT_HOME_SECTIONS } from './programSections';
 
 const ALL = [...PROGRAMS, ...DIRECTIONS];
 
@@ -13,6 +13,13 @@ describe('programme sections config', () => {
 
   it('points every programme at the legacy page the fallback can embed', () => {
     expect(PROGRAMS.map((card) => card.href)).toEqual(['/healthy-russia/', '/healthy-kids/', '/healthy-youth/']);
+  });
+
+  it('splits the home carousels once the directions fill a row', () => {
+    // The merge only exists to stop a one- or two-card carousel reading as a
+    // stub above the fold; three is a full row at desktop.
+    expect(SPLIT_HOME_SECTIONS).toBe(DIRECTIONS.length >= 3);
+    expect(SPLIT_HOME_SECTIONS).toBe(true);
   });
 
   it('gives every card its own drawing', () => {

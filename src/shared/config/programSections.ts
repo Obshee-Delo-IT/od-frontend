@@ -80,12 +80,21 @@ export const PROJECTS_TITLE = 'Проекты';
 export const DIRECTIONS_TITLE = 'Направления деятельности';
 
 /**
- * Heading for the one carousel the **home page** ships. Programmes come first,
- * as the wording says.
- *
- * Figma draws two carousels there too, and this merges them, because three of
- * the five directions have no page to point at and a two-card carousel reads as
- * a stub above the fold. `/projects/` keeps the split — it is the page whose
- * subject is the list, so a short section there is a list, not a gap.
+ * Heading for the **merged** home carousel, used only while the directions are
+ * too few to stand alone. Programmes come first, as the wording says.
  */
 export const HOME_SECTIONS_TITLE = 'Программы и направления деятельности';
+
+/**
+ * Whether the home page draws Figma's two carousels — «Программы» and
+ * «Направления деятельности» — instead of folding them into one.
+ *
+ * They were merged because three of the five directions have no page to point
+ * at, and a two-card carousel reads as a stub above the fold. Three is where it
+ * stops being a stub: a full row, the same count the carousel shows at desktop.
+ * So the split comes back on its own as directions are added, and would fold
+ * again if they were removed — no second switch to remember. `/projects/` is
+ * always split: it is the page whose subject is the list, so a short section
+ * there is a list, not a gap.
+ */
+export const SPLIT_HOME_SECTIONS = DIRECTIONS.length >= 3;

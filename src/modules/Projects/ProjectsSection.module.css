@@ -37,6 +37,9 @@
   }
 }
 
+/* Three across all the way down to `--mobile`: the row count is decided by
+   `toCardRows`, so dropping to two columns here would strand the third card in
+   a row of its own rather than reflowing anything. */
 .grid {
   display: grid;
   gap: 40px;
@@ -44,7 +47,6 @@
 
   @media (--small-desktop) {
     gap: 24px;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   @media (--mobile) {

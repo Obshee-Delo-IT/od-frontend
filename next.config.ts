@@ -20,7 +20,20 @@ const nextConfig: NextConfig = {
   turbopack: {
     rules: {
       '*.svg': {
-        loaders: ['@svgr/webpack'],
+        loaders: [
+          {
+            loader: '@svgr/webpack',
+            // svgo's preset-default drops `viewBox` when the SVG also carries
+            // width/height. Without it the drawing can't scale: the element
+            // resizes but the artwork stays at 1:1 and is simply cropped, which
+            // is what the card illustrations did below ~1170px.
+            options: {
+              svgoConfig: {
+                plugins: [{ name: 'preset-default', params: { overrides: { removeViewBox: false } } }],
+              },
+            },
+          },
+        ],
         as: '*.js',
       },
     },
