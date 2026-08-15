@@ -24,13 +24,15 @@ describe('/projects/', () => {
   it('hides the same cards the home page hides', () => {
     renderPage();
 
-    expect(screen.getByRole('heading', { level: 3, name: 'Здоровая Россия' })).toBeInTheDocument();
+    // H2 in the heading-less programmes section, H3 under the «Проекты» H2 —
+    // the card follows its section so the outline never skips a level.
+    expect(screen.getByRole('heading', { level: 2, name: 'Здоровая Россия' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { level: 3, name: 'Общее дело ПРО' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { level: 3, name: 'Онлайн курсы' })).toBeInTheDocument();
     // Hidden by omission from `programSections` — the config both surfaces read.
-    expect(screen.queryByRole('heading', { level: 3, name: 'ОД ИТ' })).not.toBeInTheDocument();
-    expect(screen.queryByRole('heading', { level: 3, name: 'Бизнес-клуб' })).not.toBeInTheDocument();
-    expect(screen.queryByRole('heading', { level: 3, name: 'Наставничество' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'ОД ИТ' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Бизнес-клуб' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Наставничество' })).not.toBeInTheDocument();
   });
 
   it('has no breadcrumbs, unlike the per-project pages', () => {

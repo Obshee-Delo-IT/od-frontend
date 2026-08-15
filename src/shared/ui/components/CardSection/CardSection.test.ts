@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { toCardRows } from './ProjectsSection';
-import type { ProjectCardData } from './ProjectsSection';
+import { toCardRows } from './CardSection';
+import type { CardData } from './CardSection';
 
-const cards = (count: number): ProjectCardData[] =>
+const cards = (count: number): CardData[] =>
   Array.from({ length: count }, (_, i) => ({ id: i, title: `${i}`, href: '/', Illustration: () => null }));
 
 const shape = (count: number) => toCardRows(cards(count)).map((row) => row.length);

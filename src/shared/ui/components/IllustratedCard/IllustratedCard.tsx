@@ -12,6 +12,11 @@ export interface IllustratedCardProps {
    * see `toCardRows`.
    */
   wide?: boolean;
+  /**
+   * `h3` under a section heading, `h2` where the section draws none — see
+   * `CardSection`. Only the level differs; the styling is the card's own.
+   */
+  headingAs?: 'h2' | 'h3';
 }
 
 /**
@@ -23,13 +28,19 @@ export interface IllustratedCardProps {
  * `Directions` carousel, `/projects/`'s three-up rows, and the `wide` variant
  * its two-up rows use.
  */
-export const IllustratedCard: React.FC<IllustratedCardProps> = ({ title, href, Illustration, wide = false }) => (
+export const IllustratedCard: React.FC<IllustratedCardProps> = ({
+  title,
+  href,
+  Illustration,
+  wide = false,
+  headingAs: Title = 'h3',
+}) => (
   <article className={wide ? `${css.card} ${css.wide}` : css.card}>
     <div className={css.illustration}>
       <Illustration aria-hidden="true" />
     </div>
     <div className={css.body}>
-      <h3 className={css.title}>{title}</h3>
+      <Title className={css.title}>{title}</Title>
       <Link href={href} color="red" underline="always" size="3" aria-label={`${title} — подробнее`}>
         Подробнее
       </Link>

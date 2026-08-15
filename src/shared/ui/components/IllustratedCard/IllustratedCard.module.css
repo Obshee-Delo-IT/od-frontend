@@ -76,8 +76,12 @@
   }
 }
 
+/* `min-content` — the longest word — rather than 0: the drawing yields before a
+   title breaks mid-word. With 0 the illustration keeps its 55% share all the way
+   down and a 24px title wraps inside a word once the card is ~420px wide, which
+   is what two columns come to around a 1000px viewport. */
 .wide .body {
-  min-width: 0;
+  min-width: min-content;
   flex: 1;
   align-self: stretch;
   justify-content: space-between;
@@ -91,6 +95,9 @@
 /* The drawings are 335×200 landscape, not the mock's 200×200 square, so cap the
    share of the card they take rather than fixing a width. */
 .wide .illustration {
+  /* Overrides the flex default of `auto`, which is the drawing's intrinsic
+     width — it has to be shrinkable for the rule above to have anything to take. */
+  min-width: 0;
   max-width: 55%;
 
   @media (--mobile) {

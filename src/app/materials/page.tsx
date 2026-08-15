@@ -5,9 +5,8 @@ import MetodichkiIllustration from '@/shared/ui/assets/illustrations/materials-m
 import PrintedIllustration from '@/shared/ui/assets/illustrations/materials-printed.svg';
 import SocialIllustration from '@/shared/ui/assets/illustrations/materials-social.svg';
 import { Box } from '@/shared/ui/components/Box';
-import { Link } from '@/shared/ui/components/Link';
+import { CardSection, type CardData } from '@/shared/ui/components/CardSection';
 import { PageHeader } from '@/shared/ui/components/PageHeader';
-import css from './materials.module.css';
 import type { Metadata } from 'next';
 
 const TITLE = 'Материалы';
@@ -21,12 +20,32 @@ const DESCRIPTION =
  * four are still WP pages and answer through the A6 fallback until their own
  * routes land (D8 Tier 2: `plakati`, `zakladki`, `metodichki`).
  */
-const GROUPS = [
-  { title: 'Методические пособия', href: '/materials/metodichki/', Illustration: MetodichkiIllustration },
-  { title: 'Печатная продукция', href: '/materials/printed-products/', Illustration: PrintedIllustration },
-  { title: 'Статьи для газет и журналов', href: '/materials/articles/', Illustration: ArticlesIllustration },
-  { title: 'Социальная реклама', href: '/materials/social-reklama/', Illustration: SocialIllustration },
-] as const;
+const GROUPS: CardData[] = [
+  {
+    id: 'metodichki',
+    title: 'Методические пособия',
+    href: '/materials/metodichki/',
+    Illustration: MetodichkiIllustration,
+  },
+  {
+    id: 'printed-products',
+    title: 'Печатная продукция',
+    href: '/materials/printed-products/',
+    Illustration: PrintedIllustration,
+  },
+  {
+    id: 'articles',
+    title: 'Статьи для газет и журналов',
+    href: '/materials/articles/',
+    Illustration: ArticlesIllustration,
+  },
+  {
+    id: 'social-reklama',
+    title: 'Социальная реклама',
+    href: '/materials/social-reklama/',
+    Illustration: SocialIllustration,
+  },
+];
 
 export const generateMetadata = (): Metadata => {
   const url = canonicalUrl('/materials/');
@@ -48,6 +67,10 @@ export const generateMetadata = (): Metadata => {
  * page that doesn't ask it. The sub-pages behind these links are where the CMS
  * shape actually matters.
  *
+ * The cards are `CardSection`'s, not this route's: four cards fall out as the
+ * 2 + 2 wide rows the `ads` mock draws, which is the same card `/projects/`
+ * leads «Проекты» with.
+ *
  * Worth building ahead of its entry traffic: 107 entries in 91 days against
  * 939 views (8.8×) — almost nobody lands here from search, but it is how the
  * section gets browsed, so it is what an iframe would be seen through.
@@ -59,21 +82,8 @@ const Page = () => {
     <Box display="flex" flexDirection="column" gap={40} py={48}>
       <PageHeader title={TITLE} breadcrumbs={breadcrumbItems} />
 
-      <div className={css.grid}>
-        {GROUPS.map(({ title, href, Illustration }) => (
-          <article key={href} className={css.card}>
-            <div className={css.body}>
-              <h2 className={css.title}>{title}</h2>
-              <Link href={href} color="red" underline="always" size="3" aria-label={`${title} — подробнее`}>
-                Подробнее
-              </Link>
-            </div>
-            <div className={css.illustration}>
-              <Illustration aria-hidden="true" />
-            </div>
-          </article>
-        ))}
-      </div>
+      {/* No visible heading — the H1 above already says «Материалы». */}
+      <CardSection title={TITLE} cards={GROUPS} showHeading={false} />
 
       <NewsletterSignup />
     </Box>

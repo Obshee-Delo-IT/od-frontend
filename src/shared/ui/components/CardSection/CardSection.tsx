@@ -1,22 +1,23 @@
 import { Heading } from '@radix-ui/themes';
 import { IllustratedCard } from '@/shared/ui/components/IllustratedCard';
-import css from './ProjectsSection.module.css';
+import css from './CardSection.module.css';
 
-export interface ProjectCardData {
+export interface CardData {
   id: string | number;
   title: string;
   href: string;
   Illustration: React.FC<React.SVGProps<SVGElement>>;
 }
 
-interface ProjectsSectionProps {
-  cards: ProjectCardData[];
+interface CardSectionProps {
+  cards: CardData[];
   /** Names the section for assistive tech, and is the visible heading unless suppressed. */
   title: string;
   /**
    * Figma `projects` (`706:1775`) shows a heading only above «Проекты» — the
    * programmes above it are named by the page's own H1, so their section
-   * carries the title as a label and draws nothing.
+   * carries the title as a label and draws nothing. `/materials/` is the same
+   * case: one section, named by the H1.
    */
   showHeading?: boolean;
 }
@@ -30,10 +31,10 @@ interface ProjectsSectionProps {
  * Exported for its own test: the arithmetic is the whole feature, and the config
  * it runs on changes whenever a card is hidden or restored.
  */
-export const toCardRows = (cards: ProjectCardData[]): ProjectCardData[][] => {
+export const toCardRows = (cards: CardData[]): CardData[][] => {
   // A remainder of 1 needs two wide rows (4 = 2 + 2), a remainder of 2 needs one.
   const wideRows = (3 - (cards.length % 3)) % 3;
-  const rows: ProjectCardData[][] = [];
+  const rows: CardData[][] = [];
   let taken = 0;
 
   while (taken < cards.length) {
@@ -46,11 +47,14 @@ export const toCardRows = (cards: ProjectCardData[]): ProjectCardData[][] => {
 };
 
 /**
- * The static card rows of `/projects/`. The home page uses the same cards in a
- * carousel instead, because there they sit below the fold among six other
- * sections.
+ * A section of {@link IllustratedCard}s in the rows Figma draws — used by
+ * `/projects/` for its two card sections and by `/materials/` for its four
+ * groups (which land on 2 + 2 wide rows, the shape that mock draws).
+ *
+ * The home page uses the same cards in a carousel instead, because there they
+ * sit below the fold among six other sections.
  */
-export const ProjectsSection: React.FC<ProjectsSectionProps> = ({ cards, title, showHeading = true }) => (
+export const CardSection: React.FC<CardSectionProps> = ({ cards, title, showHeading = true }) => (
   <section className={css.section} aria-label={title}>
     {showHeading && (
       <Heading as="h2" className={css.heading}>
@@ -68,6 +72,10 @@ export const ProjectsSection: React.FC<ProjectsSectionProps> = ({ cards, title, 
               href={card.href}
               Illustration={card.Illustration}
               wide={row.length <= 2}
+              // Without a section heading the cards are the page's top-level
+              // sections, so they take H2 — an H1 → H3 jump is a heading-order
+              // failure, and the level is derivable rather than worth a prop.
+              headingAs={showHeading ? 'h3' : 'h2'}
             />
           ))}
         </div>

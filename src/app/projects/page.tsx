@@ -1,8 +1,8 @@
 import { NewsletterSignup } from '@/modules/NewsletterSignup';
-import { ProjectsSection } from '@/modules/Projects';
 import { DIRECTIONS, PROGRAMS, PROGRAMS_TITLE, PROJECTS_TITLE } from '@/shared/config/programSections';
 import { canonicalUrl } from '@/shared/config/site';
 import { Box } from '@/shared/ui/components/Box';
+import { CardSection } from '@/shared/ui/components/CardSection';
 import { PageHeader } from '@/shared/ui/components/PageHeader';
 import type { Metadata } from 'next';
 
@@ -50,8 +50,8 @@ const ProjectsPage = () => (
     <PageHeader title={PROGRAMS_TITLE} />
 
     {/* No visible heading — the H1 above already says «Программы». */}
-    <ProjectsSection title={PROGRAMS_TITLE} cards={PROGRAMS} showHeading={false} />
-    <ProjectsSection title={PROJECTS_TITLE} cards={DIRECTIONS} />
+    <CardSection title={PROGRAMS_TITLE} cards={PROGRAMS} showHeading={false} />
+    <CardSection title={PROJECTS_TITLE} cards={DIRECTIONS} />
 
     <NewsletterSignup />
   </Box>
