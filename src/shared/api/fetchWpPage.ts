@@ -5,8 +5,9 @@ import { buildNewsPreview, stripHtml } from './newsPreview';
 
 /**
  * One WordPress **page** (`post_type=page`), addressed by the path it is served
- * at — the mechanism behind every "manage it in WP, render it natively" page
- * (see `shared/config/wpPages.ts` for which paths take that route).
+ * at — the mechanism behind every "manage it in WP, render it natively" page,
+ * which is now every path the catch-all reaches bar the exceptions in
+ * `shared/config/legacyEmbedPages.ts`.
  *
  * Pages are looked up by **slug, then verified by path**, because WP's REST API
  * has no path lookup: `?slug=` matches the last segment across the whole tree,
@@ -52,9 +53,10 @@ const pathnameOf = (link: string): string | null => {
  * no published page there.
  *
  * `path` is expected decoded, which is what `decodeSegments` hands the route.
- * A page whose slug WP stores percent-encoded — the Cyrillic ones — therefore
- * never matches; none is served natively today, and one that needs to be can
- * carry its stored slug form in the config.
+ * A page whose slug WP stores percent-encoded — the handful of Cyrillic ones —
+ * therefore never matches and falls back to the embed. Fixing that means
+ * querying both forms, which is two round trips on every miss to serve pages
+ * that between them see no measurable traffic.
  */
 export const fetchWpPage = async (path: string): Promise<WpPageContent | null> => {
   const slug = path.split('/').filter(Boolean).pop();

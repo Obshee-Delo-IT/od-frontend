@@ -8,9 +8,9 @@ import type { WpPageContent } from '@/shared/api/fetchWpPage';
 import type { Metadata } from 'next';
 
 /**
- * A WordPress `page` rendered natively at its own URL (D6) — the body of the
- * three programme pages today, and of anything else added to
- * `shared/config/wpPages.ts` later.
+ * A WordPress `page` rendered natively at its own URL (D6) — the body of every
+ * WP page the catch-all reaches, bar the exceptions pinned to the legacy iframe
+ * in `shared/config/legacyEmbedPages.ts`.
  *
  * Structurally a news article without the news furniture: same Gutenberg
  * pipeline (`resolveContentImages` → `parsePost` → `GutenbergProvider`), no

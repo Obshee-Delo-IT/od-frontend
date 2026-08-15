@@ -26,9 +26,9 @@ import type { FC, SVGProps } from 'react';
  * **Programme hrefs address the pages WordPress already serves.** The real
  * programmes are three top-level pages (`/healthy-kids/`, not
  * `/programs/healthy-children/`, which 404s upstream; the `/programs/*` forms
- * that resolve at all only 301 onto these). All three are on
- * `shared/config/wpPages.ts`, so they render natively from WP at those same
- * URLs rather than through the A6 iframe — nothing here changes either way.
+ * that resolve at all only 301 onto these). All three render natively from WP at
+ * those same URLs rather than through the A6 iframe, which is the default for
+ * any WP page — nothing here changes either way.
  */
 
 /** Shape the card components accept. */

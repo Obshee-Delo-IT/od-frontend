@@ -130,24 +130,45 @@ describe('the native WP page branch (D6)', () => {
     expect(meta.alternates?.canonical).toContain('/healthy-russia/');
   });
 
-  /** A path in the config that WordPress can't answer for is a config mistake,
-   *  and it costs the native rendering — not the page. */
+  /** WordPress is asked about every path, so "no page here" is the ordinary
+   *  answer, not an error — the embed still gets its turn. */
   it('falls through to the embed when WP has no page there', async () => {
     fetchWpPage.mockResolvedValueOnce(null);
-    loadLegacyDocument.mockResolvedValue(ok('Здоровые дети'));
+    loadLegacyDocument.mockResolvedValue(ok('Ничего'));
 
-    const element = await render(['healthy-kids']);
+    const element = await render(['branch-no-wp-page']);
 
     expect(element.type).toBe(LegacyEmbed);
   });
 
-  it('leaves a path outside the config alone', async () => {
+  it('asks WordPress about a path nobody configured — that is the default', async () => {
     fetchWpPage.mockClear();
+    fetchWpPage.mockResolvedValueOnce(null);
     loadLegacyDocument.mockResolvedValue(ok('Команда'));
 
-    await render(['branch-not-configured']);
+    await render(['branch-unconfigured']);
+
+    expect(fetchWpPage).toHaveBeenCalledWith('/branch-unconfigured/');
+  });
+
+  it('never asks about an exception path, WP page or not', async () => {
+    fetchWpPage.mockClear();
+    loadLegacyDocument.mockResolvedValue(ok('Контакты'));
+
+    const element = await render(['contacts']);
 
     expect(fetchWpPage).not.toHaveBeenCalled();
+    expect(element.type).toBe(LegacyEmbed);
+  });
+
+  it('asks nothing at all for a path that is not a page in either sense', async () => {
+    fetchWpPage.mockClear();
+    loadLegacyDocument.mockClear();
+
+    await expect(render(['favicon.ico'])).rejects.toBeInstanceOf(NotFound);
+
+    expect(fetchWpPage).not.toHaveBeenCalled();
+    expect(loadLegacyDocument).not.toHaveBeenCalled();
   });
 });
 
