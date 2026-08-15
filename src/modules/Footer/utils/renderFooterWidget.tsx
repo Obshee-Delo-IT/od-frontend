@@ -32,6 +32,25 @@ const socialFor = (className = '') =>
   Object.entries(SOCIAL_ICONS).find(([cmsmsClass]) => className.split(/\s+/).includes(cmsmsClass))?.[1];
 
 /**
+ * Footer links WordPress still lists but this site must not offer.
+ *
+ * `/sp/` is the «Благотворительная акция» campaign page, and it carries a
+ * **leyka donation form** posting to `/leyka-process-donation`. Donations
+ * haven't run through this WordPress since 2022-01-05 — they live on
+ * `donation.obshee-delo.ru` / `поддержи.общее-дело.рф` (see
+ * `docs/newsletter-unisender.md`) — and under A6 the page is served from the
+ * frozen copy inside an iframe, where that form is doubly dead. A visible
+ * «дать денег» link that silently takes no money is worse than no link.
+ *
+ * Hiding it here removes the only link to it: the page itself stays reachable
+ * by its URL through the legacy fallback. Next steps in `docs/next-steps.md`;
+ * remove the entry once that decision lands.
+ */
+const HIDDEN_HREFS = new Set(['/sp/']);
+
+const isHiddenLink = (node: Element) => node.name === 'a' && HIDDEN_HREFS.has(node.attribs.href ?? '');
+
+/**
  * Render one footer widget's `rendered` HTML, with the social anchors replaced
  * by real icons. Everything else — headings, link lists, the legal copy — is
  * WordPress's markup, unchanged, and styled by `Footer.module.css`.
@@ -39,7 +58,17 @@ const socialFor = (className = '') =>
 export const renderFooterWidget = (html: string, linkClassName?: string): ReactNode =>
   parse(html, {
     replace: (domNode) => {
-      if (!isElement(domNode) || domNode.name !== 'a') {
+      if (!isElement(domNode)) {
+        return domNode;
+      }
+
+      // Drop the whole list item, or the bare anchor if it isn't in a list —
+      // an emptied `<li>` would still take a row.
+      if (isHiddenLink(domNode) || domNode.children.some((child) => isElement(child) && isHiddenLink(child))) {
+        return <></>;
+      }
+
+      if (domNode.name !== 'a') {
         return domNode;
       }
 
