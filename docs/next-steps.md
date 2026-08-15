@@ -11,11 +11,27 @@ this file is for the loose ends that don't deserve a workstream item.
 
 ## Footer link «Благотворительная акция» (`/sp/`) — hidden 2026-08-15
 
-**Done.** The link is dropped at render time via `HIDDEN_HREFS` in
-[`src/modules/Footer/utils/renderFooterWidget.tsx`](../src/modules/Footer/utils/renderFooterWidget.tsx)
-(the anchor and the `<li>` around it). The WordPress widget is untouched —
-rollback is deleting one string. `/sp/` itself stays reachable by URL through
-the A6 legacy fallback.
+**Done, in two places.**
+
+1. **At the source on od-dev** — the `wp:list-item` block was deleted from
+   widget `block-32` (`sidebar_bottom`) over the REST API. Seven links left.
+   To restore it, paste this back into the list, at the end:
+
+   ```html
+   <!-- wp:list-item -->
+   <li><a href="/sp/">Благотворительная акция</a></li>
+   <!-- /wp:list-item -->
+   ```
+
+2. **In the frontend**, as the guard for the tier whose WordPress still lists
+   it: `HIDDEN_HREFS` in
+   [`src/modules/Footer/utils/renderFooterWidget.tsx`](../src/modules/Footer/utils/renderFooterWidget.tsx)
+   drops the anchor and the `<li>` around it. **Prod can't be edited yet** —
+   its REST is off (runbook blocker B1) — so runbook §2.6 carries the same
+   deletion, and this entry goes away once that has run.
+
+`/sp/` itself stays reachable by URL through the A6 legacy fallback; only the
+link goes.
 
 **Why.** `/sp/` carries a leyka donation form posting to this WordPress's
 `/leyka-process-donation`, and that path has taken no money since 2022-01-05;

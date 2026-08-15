@@ -146,6 +146,18 @@ ssh timeweb 'cd ~/public_html && wp --skip-plugins --skip-themes eval "
 **Rollback is deletion.** `rm ~/public_html/wp-content/mu-plugins/od-revalidate.php` and the `od-revalidate/` directory beside it; nothing else in WordPress references either, and the only DB row it can leave is one transient (`wp --skip-plugins --skip-themes transient delete od_revalidate_unreachable`). Deleting the config alone is enough to make it inert.
 
 ⚠️ **Two known gaps, both about legacy pages, both live only once A6 ships.** The plugin reports post type `post` only, so **editing a legacy page purges nothing** — the fallback route would serve its cached render for up to an hour. And prod caches its own HTML with **WP Rocket** (§2 of `wp-backend.md`), which the fallback fetches: purging Next before WP Rocket just re-caches the stale copy. When A6 lands, the order is WP Rocket first, then the frontend, and the plugin needs to start sending `paths` for pages — the endpoint already accepts them.
+
+**2.6 Delete the footer's «Благотворительная акция» link.** The `sidebar_bottom` links widget lists `/sp/`, whose leyka form has taken no money since 2022-01-05 — measurements in [`next-steps.md`](./next-steps.md). It is already gone on od-dev; do the same here, then **delete `/sp/` from `HIDDEN_HREFS` in `src/modules/Footer/utils/renderFooterWidget.tsx`**, which exists only to cover this tier until then. Needs §2.1 (REST) first, or edit the widget in wp-admin.
+
+```bash
+# read it first — prod's widget is CMSMasters-era, so the markup may differ
+node --env-file=.env -e 'const a=Buffer.from(`${process.env.WP_USER}:${process.env.WP_PASSWORD}`).toString("base64");
+fetch(`${process.env.WP_BASE}/wp-json/wp/v2/widgets?sidebar=sidebar_bottom&context=edit`,{headers:{Authorization:`Basic ${a}`}})
+ .then(r=>r.json()).then(d=>d.filter(w=>JSON.stringify(w).includes("/sp/")).forEach(w=>console.log(w.id,"\n",w.instance?.raw?.content)))'
+```
+
+Remove only the one `wp:list-item` (or `<li>`) carrying `/sp/`, keep the other seven, then re-read the widget to confirm the count. `/sp/` itself stays served by the A6 fallback — this removes the link, not the page.
+
 ---
 
 ## 3. Film data — applying the filled worksheet
