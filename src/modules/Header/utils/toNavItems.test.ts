@@ -71,21 +71,16 @@ describe('toNavItems', () => {
     expect(result[1].href).toBe('https://external.example/');
   });
 
-  it('drops the hidden entries, children with them', () => {
+  it('keeps every entry WordPress sends, external ones included', () => {
+    // Nothing is filtered by label any more: entries this site shouldn't show
+    // are deleted in WordPress. See `docs/next-steps.md`.
     const result = toNavItems([
       wpItem(1, 0, 'ГЛАВНАЯ', '/'),
-      wpItem(56658, 0, 'ОБЩЕЕДЕЛО-ПРО', 'https://pro.obshee-delo.ru/'),
-      wpItem(2, 56658, 'Конкурс', 'https://pro.obshee-delo.ru/contest/'),
+      wpItem(56658, 0, 'ОБЩЕЕДЕЛО-ПРО', 'https://od-pro.ru/'),
+      wpItem(2, 56658, 'Конкурс', 'https://od-pro.ru/contest/'),
     ]);
 
-    expect(result.map((item) => item.text)).toEqual(['ГЛАВНАЯ']);
-  });
-
-  it('drops it whatever URL the install happens to store', () => {
-    // od-dev and prod disagree about this entry's URL — matching the label is
-    // what keeps it hidden on both.
-    const result = toNavItems([wpItem(1, 0, 'ГЛАВНАЯ', '/'), wpItem(56658, 0, 'ОБЩЕЕДЕЛО-ПРО', 'https://od-pro.ru/')]);
-
-    expect(result.map((item) => item.text)).toEqual(['ГЛАВНАЯ']);
+    expect(result.map((item) => item.text)).toEqual(['ГЛАВНАЯ', 'ОБЩЕЕДЕЛО-ПРО']);
+    expect(result[1].content.map((item) => item.text)).toEqual(['Конкурс']);
   });
 });

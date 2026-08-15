@@ -9,29 +9,38 @@ this file is for the loose ends that don't deserve a workstream item.
 
 ---
 
-## ⚠ Prod moved to BeGet — the runbook's `ssh timeweb` path is a stale copy
+## Prod is on BeGet, not Timeweb — re-verify what was measured on the twin
 
-**Found 2026-08-15, the hard way.** `obshee-delo.ru` resolves to
-**45.130.41.70**, whose reverse is `ssl.dream.beget.com` — BeGet, not Timeweb.
-The live install is `ssh od-root` (`obsheedelo_odroot@obsheedelo.beget.tech`),
-`~/public_html`, WP 5.5.5, `wp` on `PATH`.
+**Established 2026-08-15, the hard way.** `obshee-delo.ru` resolves to
+**45.130.41.70**, reverse `ssl.dream.beget.com` — BeGet. The live install is
+**`ssh od-root`** (`obsheedelo_odroot@obsheedelo.beget.tech`), `~/public_html`,
+WP 5.5.5, `wp` at `/usr/local/bin/wp`.
 
-`ssh timeweb ~/public_html` — which [`prod-migration-runbook.md`](./prod-migration-runbook.md)
-§2.5 and [`wp-backend.md`](./wp-backend.md) still call prod — is a **full copy
-of the same site** (same siteurl, same WP version, DB `cs16182_delo`) that now
-serves only `общее-дело.рф`, and only as 301s to the live host. Editing it
-changes nothing anyone can see. Two cheap tells, if you're ever unsure which
-install you're on:
+`ssh timeweb ~/public_html` is a **full copy of the same site** (same siteurl,
+same WP version, DB `cs16182_delo`) now serving only `общее-дело.рф`, as 301s
+to the live host. Editing it changes nothing anyone can see — which is how this
+was found: a first pass of the link deletions below landed there. Two cheap
+tells when unsure which install you're on:
 
 - `dig +short obshee-delo.ru` against the host's own IPs;
 - make a request with a unique query string and grep `~/access_log` for it —
   on the Timeweb copy it never appears.
 
-**Next:** re-verify and correct every prod claim in the runbook and
-`wp-backend.md` (paths, WP-CLI invocations, the mu-plugin install in §2.5,
-plugin inventory, the `wp-rocket.off-2026-08-14` observation) against the BeGet
-install, and note which of them were measured on the copy. Until that's done,
-treat "prod" in those docs as "a copy of prod".
+**Already corrected** (2026-08-15): the host tables and access section of
+[`wp-backend.md`](./wp-backend.md), the prod commands and preamble of
+[`prod-migration-runbook.md`](./prod-migration-runbook.md) (§2.1, §2.5's install
+block, §4.6, §7), the B1 line in [`implementation-plan.md`](./implementation-plan.md),
+and the outbound-HTTP note in [`implementation-notes.md`](./implementation-notes.md).
+
+**Still open — measurements, not paths.** These were taken on the twin and
+carry over only by assumption: prod's plugin inventory and versions, §2.5's
+PHP/mod_php and no-`fastcgi_finish_request` notes with the save-time budget,
+the WP Rocket cache-directory observation (`wp-rocket.off-2026-08-14` exists on
+Timeweb; BeGet was not inspected), and the `upload_url_path` / media-offload
+answer. Re-run each on `od-root` before the migration depends on it. The two
+places already re-verified on BeGet: `clearfy_option.disable_json_rest_api` is
+still `'on'`, and `wp --skip-plugins --skip-themes` is still the invocation that
+works.
 
 The A6 frozen copy is unaffected — it's `WP_LEGACY_BASE`, not a WP-CLI target.
 
@@ -115,3 +124,26 @@ answers 200 and stays on the A6 fallback.
 **Next:** it comes back only with a delivery path that works — the form wired
 to something other than host mail, or the page replaced by an address people
 can write to. Same decision as the contact forms in that doc; do them together.
+
+---
+
+## Nav item «ОБЩЕЕДЕЛО-ПРО» — deleted 2026-08-15
+
+Deleted on both tiers, which retired the last entry in `HIDDEN_LABELS` and with
+it the whole `shared/config/navOverrides.ts` module and its test —
+`toNavItems` now takes the menu exactly as WordPress sends it.
+
+Menu item **56658**, top-level in menu **39**, `menu_order` 39, a `custom` link
+whose URL differed per install — `https://od-pro.ru/` on prod,
+`https://общеедело-про.рф` on od-dev (the label was what matched both). Menu 39
+went 39 items → 38 on each. To restore: re-add a custom link with that label
+and the install's own URL, at the end of the menu.
+
+**Why:** a sibling property this site doesn't advertise. It had been filtered
+in the app since the header was built; deleting it at the source is the same
+decision, made once, where editors can see it.
+
+⚠ **The banner slider on prod's home page still links `od-pro.ru`** — an
+`allinone_bannerWithPlaylist` slide («Проекты. Развитие. Общество.»), untouched
+because it wasn't in scope. If ОБЩЕЕДЕЛО-ПРО is meant to disappear from the
+site rather than just from the nav, that slide is the other half.
