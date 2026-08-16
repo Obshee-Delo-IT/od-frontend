@@ -54,7 +54,7 @@ All are read **at module load** — `httpClient.ts` builds the `Authorization: B
 - `src/shared/` — cross-cutting code: `api/` (typed WP fetchers), `ui/components/` (Box, Breadcrumbs, Modal, Link, Icons, …), `ui/theme/` (Radix + Gutenberg providers), `ui/styles/` (global CSS, `@custom-media` breakpoints), `ui/assets/icons/` (SVGs imported as React components).
 - `src/types/generated/wp-json-openapi.ts` is generated — don't hand-edit it; run `pnpm generate:types`.
 
-Outside `src/`, **`wp/mu-plugins/` holds PHP that runs on the WordPress side** — currently `od-revalidate.php`, the `save_post`-side half of B4, installed on od-dev at `wp-content/mu-plugins/`. It is the canonical copy: edit here, re-upload with `scp`, and keep `docs/wp-backend.md` §6.5 (which documents the install and what was measured) pointing at it rather than embedding a second copy.
+Outside `src/`, **`wp/` holds PHP that runs on the WordPress side**, and both directories under it are the canonical copy — edit here, re-upload with `scp`, and keep the doc that describes each pointing at the file rather than embedding a second copy. `wp/mu-plugins/od-revalidate.php` is the `save_post`-side half of B4, installed on od-dev at `wp-content/mu-plugins/` (`docs/wp-backend.md` §6.5). `wp/plugins/cmsms-gutenberg-upgrade/` is the shortcode→Gutenberg migrator, ours to maintain until cmsms is removed after cutover; it carries a `wp cmsms` WP-CLI command so a migration can be run and diffed from a script ([`docs/wp-page-passthrough.md`](docs/wp-page-passthrough.md) §6).
 
 ### Data layer
 
