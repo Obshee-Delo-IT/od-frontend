@@ -37,6 +37,8 @@ Caveat on `generate:types`: **follow it with Prettier** — `npx prettier --writ
 
 Messages follow the log: `type(SCOPE): lowercase summary`, where `SCOPE` is the workstream item from `docs/implementation-plan.md` (`A8`, `B3`, `D7`, …) or the area (`scripts`, `repo`, `runbook`) — e.g. `feat(B4): secret-gated /api/revalidate/`. Branch first if you're on `main`, and only push when asked.
 
+**Merge with `--no-ff`, always.** `git merge --no-ff <branch>` even when a fast-forward is possible, so every branch leaves a merge commit and the log keeps showing what shipped together as one unit. Never `--ff-only`, never a bare `git merge` that silently fast-forwards.
+
 ## Env vars
 
 Required: `WP_USER`, `WP_PASSWORD`, `WP_BASE` (a WordPress application password — see README). Optional: `WP_MEDIA_CDN` (media bucket origin; defaulted in `src/shared/api/mediaCdn.ts`, `""` disables the rewrite), `SITE_URL` (this deployment's public origin — feeds `metadataBase`, every canonical, `sitemap.xml` and `robots.txt`; defaults to `https://obshee-delo.ru` in `src/shared/config/site.ts`, so **any non-prod tier must set it explicitly** or it advertises prod's URLs), `REVALIDATE_SECRET` (shared secret for `POST /api/revalidate/`, B4 — unset means the endpoint 503s and purges nothing; **one secret per tier**), `KINESCOPE_TOKEN` (`film:kinescope` only, never at runtime), and later `WP_LEGACY_BASE` (the A6 frozen-copy origin).
@@ -54,7 +56,7 @@ All are read **at module load** — `httpClient.ts` builds the `Authorization: B
 - `src/shared/` — cross-cutting code: `api/` (typed WP fetchers), `ui/components/` (Box, Breadcrumbs, Modal, Link, Icons, …), `ui/theme/` (Radix + Gutenberg providers), `ui/styles/` (global CSS, `@custom-media` breakpoints), `ui/assets/icons/` (SVGs imported as React components).
 - `src/types/generated/wp-json-openapi.ts` is generated — don't hand-edit it; run `pnpm generate:types`.
 
-Outside `src/`, **`wp/mu-plugins/` holds PHP that runs on the WordPress side** — currently `od-revalidate.php`, the `save_post`-side half of B4, installed on od-dev at `wp-content/mu-plugins/`. It is the canonical copy: edit here, re-upload with `scp`, and keep `docs/wp-backend.md` §6.5 (which documents the install and what was measured) pointing at it rather than embedding a second copy.
+Outside `src/`, **`wp/` holds PHP that runs on the WordPress side**, and both directories under it are the canonical copy — edit here, re-upload with `scp`, and keep the doc that describes each pointing at the file rather than embedding a second copy. `wp/mu-plugins/od-revalidate.php` is the `save_post`-side half of B4, installed on od-dev at `wp-content/mu-plugins/` (`docs/wp-backend.md` §6.5). `wp/plugins/cmsms-gutenberg-upgrade/` is the shortcode→Gutenberg migrator, ours to maintain until cmsms is removed after cutover; it carries a `wp cmsms` WP-CLI command so a migration can be run and diffed from a script ([`docs/wp-page-passthrough.md`](docs/wp-page-passthrough.md) §6).
 
 ### Data layer
 

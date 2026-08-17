@@ -111,17 +111,59 @@ Checked before shipping it:
 
 **It is a rule and not a hand-rebuild of the two pages** because the same content migrates to prod the same way — `cmsms-gutenberg-upgrade` will bring the same `<style>` blocks with it — and because the failure mode is disproportionate: a caption that escapes its column lands on top of the site header, on a page nobody edited. One three-line parity rule restores the contract the markup was written against; rebuilding one page leaves the next one to break the same way. The two pages still want content work (§5), just not for this reason.
 
-## 5. Known broken, content-side
+## 5. The migrator dropped every image link — fixed at the source
 
-**Every tile links to the image file.** The migration repointed each tile's `<a>` at `/wp-content/uploads/….jpg` where the live site links to the child page — `/materials/books/`, `/zakladki/`, `/booklet/`, `/disk/`, `/autosticker/` and so on. Two consequences: the tile opens the lightbox instead of navigating, and the grandchild pages lose their only inbound links. 11 links across the two pages. The fix belongs in WordPress, or better in `cmsms-gutenberg-upgrade` before prod migrates the same way.
+**Symptom, on the two tile pages:** each tile's `<a>` pointed at `/wp-content/uploads/….jpg` where the live site links to the child page (`/materials/books/`, `/zakladki/`, `/booklet/`, `/disk/`, `/autosticker/`). So a tile opened the lightbox instead of navigating, and the grandchild pages lost their only inbound links. The tiles had also gone white and full-brightness instead of the live site's grey dimmed panels.
 
-**The `.image` wrapper class went the same way**, which is why the tiles are white with full-brightness pictures rather than the grey dimmed panels with a border, radius and hover zoom the live site draws.
+**Cause, in `cmsms-gutenberg-upgrade`:** its `cmsms_image` branch matched `\[cmsms_image[^\]]*\]` and threw the attributes away, hard-coding `linkDestination:"media"` with the image's own URL as the href. The original shortcode carries both facts:
 
-**WooCommerce shortcodes are handed over unexpanded.** REST returns `[woocommerce_cart]` verbatim — only the theme expands it. That is why the four shop pages are on the opt-out list and out of the sitemap. See §6; they are being deleted.
+```
+[cmsms_image align="center" link="/materials/books/" classes="image colorize"]38201|/wp-content/uploads/…jpg|full[/cmsms_image]
+```
+
+`link` is the destination; `classes` is what the page's own `[cmsms_css]` styles (`.image { background: #cdcdcd; border-radius: 10px }`, `.image img { opacity: .4 }`, `.image:hover img { transform: scale(1.15) }`). Both were dropped, which is why one bug produced two symptoms.
+
+**Scale, measured 2026-08-16 across od-dev:** **5 825 links** on **2 824 published records** — 24 pages, 2 758 posts, 42 profiles. Not two pages. Breakdown of the destinations: 5 467 point at *another* image file (a thumbnail linking to its full-size original — the lightbox pattern, which our `ImagePreviewClient` handles by `img.currentSrc` either way, so those were harmless in practice), 296 at the same file, and **~60 are real navigation** — internal paths such as `/get-involved/give-a-lesson/` and a page of ~30 partner sites on post 20118.
+
+**Fix:** the converter now parses the attributes, keeps `link` as the href (`linkDestination:"custom"` when it differs from the image, `media` otherwise) and carries `classes` onto both the block attributes and the `<figure>`. Source and CLI in §6.
+
+Applied to the two tile pages on od-dev (`wp cmsms migrate --post=57271,57269`) and verified in a browser at 1440: grey panels, red captions over the pictures, tiles navigating to their child pages. Two cosmetic differences from the live site remain, both ours rather than the content's: the picture sits left instead of right (the page says `text-align: right`, our `gutenberg.css` says `img { display: block }`), and panels in a row are equal-height (Gutenberg columns are flex; the old theme floated them). Not worth emulating a dead theme for.
+
+**Not yet applied to the other 2 822 records** — that is a bulk content operation on od-dev and wants its own decision, not a side effect of a bug fix.
+
+**WooCommerce shortcodes are handed over unexpanded.** REST returns `[woocommerce_cart]` verbatim — only the theme expands it. That is why the four shop pages are on the opt-out list and out of the sitemap. See §7.
 
 **Cyrillic slugs never match.** WordPress stores them percent-encoded and we compare paths decoded, so those pages fall through to the iframe. Deliberate: matching both forms costs two round trips on every miss, to serve pages with no measurable traffic.
 
-## 6. The WooCommerce pages (deletion pending)
+## 6. Running the migrator
+
+`cmsms-gutenberg-upgrade` converts CMSMasters shortcodes to core Gutenberg blocks. It ran once on od-dev; **prod runs it as part of the cutover**, so a bug in it is a bug in prod's future content, which is why the fix above went here rather than into the two pages.
+
+**Its source now lives in this repo** — [`wp/plugins/cmsms-gutenberg-upgrade/`](../wp/plugins/cmsms-gutenberg-upgrade/) — on the same terms as `wp/mu-plugins/od-revalidate.php`: edit here, upload with `scp`, one copy to review. The original author (Николай Воронков) is not shipping updates; we own it until it is deleted with cmsms after cutover.
+
+```bash
+scp wp/plugins/cmsms-gutenberg-upgrade/cmsms-gutenberg-upgrade.php \
+    timeweb:od-dev/public_html/wp-content/plugins/cmsms-gutenberg-upgrade/
+```
+
+**WP-CLI, so a migration can be run and reviewed from a script instead of clicked through the admin page.** Every subcommand needs `--url=` on this install: clearfy-pro redirects to HTTPS on `init`, and without a host WP-CLI dies before WordPress finishes loading.
+
+```bash
+cd ~/od-dev/public_html
+wp cmsms backup  --url=https://od-dev.tmweb.ru        # originals → nvp_content_copy meta (idempotent)
+wp cmsms migrate --url=… --post=57271 --dry-run       # what would change, nothing written
+wp cmsms migrate --url=…                              # every record that has a copy
+wp cmsms restore --url=… --post=57271                 # roll back from the copy
+wp cmsms dump 57271 --url=… [--original|--converted]  # for diffing before/after
+```
+
+`backup` is what makes the rest reversible: the pre-migration `post_content` is kept in the `nvp_content_copy` meta, `migrate` always converts *from that copy* (so it is re-runnable after a converter fix), and `restore` puts it back. The CLI writes through `$wpdb->update` rather than `wp_update_post` on purpose — the plugin's own `save_post` hook deletes `nvp_content_copy` on update, which would destroy the copy both re-running and rollback depend on. A revision is saved before each write.
+
+The four admin-page buttons still work and do the same four things.
+
+## 7. The WooCommerce pages
+
+**Deleted on prod 2026-08-16** (all four now 404 there). **Still published on od-dev**, ids below — so `LEGACY_EMBED_PAGES` keeps its four entries for now: drop them from the config only once od-dev is cleaned too, or `/cart/` starts rendering the literal `[woocommerce_cart]` on the tier we test against.
 
 Measured 2026-08-16 on od-dev; traffic from the Metrica export, 2026-05-14 → 2026-08-13 (91 days).
 
@@ -137,9 +179,9 @@ What still points at them, and needs the same pass:
 - **`/materials/order-materials/`** (id 22125, 19 views) — carries a «Корзина заказов» button to `/cart/` and a `[recent_products]` shortcode, plus its own text «В данное время заказ материалов не осуществляется». The shop is already switched off in copy; the page is what is left of it.
 - **`/sitemap/`** — the hand-written HTML sitemap page links to all four.
 
-On this side, after deletion: drop the four entries from `LEGACY_EMBED_PAGES` in `src/shared/config/legacyEmbedPages.ts`. They then 404 (no WP page, no legacy page), which is the right answer for 4 views a quarter. Nothing else in the repo references them.
+On this side, once od-dev is cleaned too: drop the four entries from `LEGACY_EMBED_PAGES` in `src/shared/config/legacyEmbedPages.ts`. They then 404 (no WP page, no legacy page), which is the right answer for 4 views a quarter. Nothing else in the repo references them.
 
-## 7. When a page renders wrong
+## 8. When a page renders wrong
 
 In order, cheapest first:
 
