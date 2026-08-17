@@ -118,8 +118,16 @@ position 26.
 
 **Why.** The page is a Contact Form 7 order form, and CF7 mail from this host
 lands in spam — the same "quietly lost, not visibly broken" path documented in
-[`newsletter-unisender.md`](./newsletter-unisender.md). The page itself still
-answers 200 and stays on the A6 fallback.
+[`newsletter-unisender.md`](./newsletter-unisender.md).
+
+**The page went too.** It is **deleted on prod** as of 2026-08-17 (`/materials/order-materials/`
+404s), so the restore note above no longer applies there — bringing the entry
+back means recreating the page first. It is **still published on od-dev**; delete
+it there with `wp --url=https://od-dev.tmweb.ru post delete 22125` and then drop
+its entry from [`legacyEmbedPages.ts`](../src/shared/config/legacyEmbedPages.ts),
+in that order — see [`wp-page-passthrough.md`](./wp-page-passthrough.md) §7 for
+why the order matters. The one page that linked to it, `/materials/disk/`, is
+already cleaned on both tiers.
 
 **Next:** it comes back only with a delivery path that works — the form wired
 to something other than host mail, or the page replaced by an address people

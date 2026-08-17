@@ -49,6 +49,9 @@ export const LEGACY_EMBED_PAGES = [
   '/get-involved/join/',
   '/materials/audio-roliki-social-reklama/',
   '/materials/disk/',
+  // Deleted on prod 2026-08-17, still published on od-dev. This line goes when
+  // the od-dev copy does — while it exists, dropping it would render that page
+  // natively, dead «Корзина заказов» button and all. See `docs/next-steps.md`.
   '/materials/order-materials/',
   '/materials/pppuiv-constructor/',
   '/добровольчество/',
