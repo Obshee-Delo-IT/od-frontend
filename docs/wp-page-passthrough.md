@@ -131,7 +131,7 @@ Applied to the two tile pages on od-dev (`wp cmsms migrate --post=57271,57269`) 
 
 **Not yet applied to the other 2 822 records** — that is a bulk content operation on od-dev and wants its own decision, not a side effect of a bug fix.
 
-**WooCommerce shortcodes are handed over unexpanded.** REST returns `[woocommerce_cart]` verbatim — only the theme expands it. That is why the four shop pages are on the opt-out list and out of the sitemap. See §7.
+**WooCommerce shortcodes are handed over unexpanded.** REST returns `[woocommerce_cart]` verbatim — only the theme expands it, so the four shop pages had to stay on the opt-out list. They were deleted instead; see §7.
 
 **Cyrillic slugs never match.** WordPress stores them percent-encoded and we compare paths decoded, so those pages fall through to the iframe. Deliberate: matching both forms costs two round trips on every miss, to serve pages with no measurable traffic.
 
@@ -163,9 +163,9 @@ The four admin-page buttons still work and do the same four things.
 
 ## 7. The WooCommerce pages
 
-**Deleted on prod 2026-08-16** (all four now 404 there). **Still published on od-dev**, ids below — so `LEGACY_EMBED_PAGES` keeps its four entries for now: drop them from the config only once od-dev is cleaned too, or `/cart/` starts rendering the literal `[woocommerce_cart]` on the tier we test against.
+**Deleted 2026-08-17, on prod and od-dev both** — all four 404 on each. The shop had been switched off in copy for years and drew 16 views in 91 days between them. Their four entries are gone from `LEGACY_EMBED_PAGES`: with no WP page and no legacy page, the catch-all 404s them without help, and the sitemap never sees them because they are no longer in `/wp/v2/pages`.
 
-Measured 2026-08-16 on od-dev; traffic from the Metrica export, 2026-05-14 → 2026-08-13 (91 days).
+What they were, measured on od-dev before deletion; traffic from the Metrica export, 2026-05-14 → 2026-08-13 (91 days).
 
 | id | path | title | body | views / entries |
 | --- | --- | --- | --- | --- |
@@ -174,12 +174,12 @@ Measured 2026-08-16 on od-dev; traffic from the Metrica export, 2026-05-14 → 2
 | 9 | `/checkout/` | Оформление заказа | `[woocommerce_checkout]` | 0 / 0 |
 | 10 | `/my-account/` | Мой аккаунт | `[woocommerce_my_account]` | 12 / 6 |
 
-What still points at them, and needs the same pass:
+What still points at them, and needs the same pass — both now carry dead links:
 
 - **`/materials/order-materials/`** (id 22125, 19 views) — carries a «Корзина заказов» button to `/cart/` and a `[recent_products]` shortcode, plus its own text «В данное время заказ материалов не осуществляется». The shop is already switched off in copy; the page is what is left of it.
 - **`/sitemap/`** — the hand-written HTML sitemap page links to all four.
 
-On this side, once od-dev is cleaned too: drop the four entries from `LEGACY_EMBED_PAGES` in `src/shared/config/legacyEmbedPages.ts`. They then 404 (no WP page, no legacy page), which is the right answer for 4 views a quarter. Nothing else in the repo references them.
+**WooCommerce itself is still installed** — nothing renders it now, and it goes with the §4.3 plugin sweep in [`wp-backend.md`](./wp-backend.md).
 
 ## 8. When a page renders wrong
 

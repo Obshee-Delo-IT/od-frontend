@@ -12,8 +12,14 @@
  * **What lands here.** Content that only means something under the old theme —
  * which is exactly what the iframe supplies. Measured 2026-08-15 over all 174
  * published pages: `cmsms-gutenberg-upgrade` has run on od-dev (see
- * `CLAUDE.md`), so the only surviving shortcodes are WooCommerce's four, and 23
- * pages still carry bare `cmsms_*` class names. Those two groups are this list.
+ * `CLAUDE.md`), so the only surviving shortcodes were WooCommerce's four, and 23
+ * pages still carry bare `cmsms_*` class names.
+ *
+ * The WooCommerce group is gone: `/shop/`, `/cart/`, `/checkout/` and
+ * `/my-account/` were **deleted in WordPress on 2026-08-17**, on prod and
+ * od-dev both — the shop had been switched off in copy for years and drew 16
+ * views in 91 days. They now 404, which is the right answer, and needed no
+ * entry here to do it.
  *
  * Three of the 23 are deliberately **not** here — `/healthy-russia/`,
  * `/healthy-kids/` and `/healthy-youth/`, the programme pages. Their `cmsms_*`
@@ -29,15 +35,6 @@
  * percent-encoded slug WordPress stores.
  */
 export const LEGACY_EMBED_PAGES = [
-  // WooCommerce. Their bodies are a bare `[woocommerce_cart]` and friends —
-  // shortcodes the REST API hands over unexpanded, because only the theme
-  // renders them. Natively they would print the literal bracket text; `/shop/`
-  // has no body at all. These are also why they stay out of the sitemap.
-  '/shop/',
-  '/cart/',
-  '/checkout/',
-  '/my-account/',
-
   '/about/',
   '/about/ostavit-otziv/',
   '/about/reviews/',
