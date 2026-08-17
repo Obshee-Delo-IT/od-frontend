@@ -490,16 +490,29 @@ function welfare_to_gutenberg($content) {
         if (!$url) return '';
 
         $link = isset($atts['link']) ? trim($atts['link']) : '';
-        //-- Часть ссылок на файлы записана без ведущего слеша ("wp-content/…").
-        //-- Относительный href разрешался бы от адреса записи, то есть в никуда,
-        //-- поэтому приводим к корневому пути.
-        if (preg_match('#^wp-content/#', $link)) {
-            $link = '/' . $link;
+        //-- Часть ссылок на файлы записана с мусором перед путём: без ведущего
+        //-- слеша ("wp-content/…") или с опечаткой ("i/wp-content/…"). Такой href
+        //-- разрешался бы от адреса записи, то есть в никуда, и вдобавок не
+        //-- опознавался бы фронтендом как ссылка на медиа. Приводим к корневому
+        //-- пути — но только когда схемы нет и путь не абсолютный, чтобы не
+        //-- переписать ссылку на чужой домен.
+        if ($link !== '' && $link[0] !== '/' && strpos($link, '://') === false
+            && preg_match('#(wp-content/.*)$#', $link, $wp_path)) {
+            $link = '/' . $wp_path[1];
         }
         $href = $link !== '' ? $link : $url;
         //-- Без link="" поведение прежнее: ссылка на сам файл, лайтбокс.
         //-- Ссылка на этот же файл — тоже media, а не custom: так её видит редактор.
         $destination = ($link !== '' && $link !== $url) ? 'custom' : 'media';
+
+        //-- esc_url() дописывает http:// к значению без схемы и без ведущего
+        //-- слеша, превращая относительный путь ("printed-products" на
+        //-- /materials/) в ссылку на несуществующий хост. Такие значения
+        //-- оставляем как есть: старая тема отдавала их относительными, и
+        //-- браузер разрешает их от адреса страницы. Двоеточия здесь по условию
+        //-- нет, поэтому javascript:/data: этой веткой не проходят.
+        $relative = strpos($href, ':') === false && !in_array(substr($href, 0, 1), ['/', '#', '?'], true);
+        $safe_href = $relative ? esc_attr($href) : esc_url($href);
 
         $classes = isset($atts['classes']) ? trim(preg_replace('/\s+/', ' ', $atts['classes'])) : '';
 
@@ -509,7 +522,7 @@ function welfare_to_gutenberg($content) {
         }
 
         return '<!-- wp:image ' . wp_json_encode($block_atts, JSON_UNESCAPED_UNICODE) . ' -->
-<figure class="wp-block-image size-' . esc_attr($size) . ($classes ? ' ' . esc_attr($classes) : '') . '"><a href="' . esc_url($href) . '"><img src="' . esc_url($url) . '" alt=""/></a></figure>
+<figure class="wp-block-image size-' . esc_attr($size) . ($classes ? ' ' . esc_attr($classes) : '') . '"><a href="' . $safe_href . '"><img src="' . esc_url($url) . '" alt=""/></a></figure>
 <!-- /wp:image -->';
     }, $content);
     
