@@ -290,28 +290,33 @@ th {
  * from the same script when their turn comes.
  * ------------------------------------------------------------------------- */
 
+/* Every measurement below is read off the mock, not guessed: the content column
+   is 1240px wide, the blocks sit 120px apart, and a section heading sits 45px
+   above the row it introduces. */
+
 /* The programme's own logo, in a card of its own at the top right — the mock
    uses it in place of a second title, so it is deliberately not full width. */
 /* Two classes, not one: `.wp-block-image` sets a margin of its own, and core's
    stylesheet is imported after this file — a single class ties and loses. */
 .wp-block-image.od-programme-logo {
   max-width: 470px;
-  padding: 18px 12px;
+  padding: 18px 11px;
   border-radius: 12px;
-  margin: 0 0 40px auto;
+  margin: 0 0 36px auto;
   background-color: var(--white);
 }
 
 .od-card {
   padding: 24px 20px;
   border-radius: 12px;
-  margin-bottom: 64px;
+  margin-bottom: 120px;
   background-color: var(--white);
 }
 
-/* Beats the lowercasing rule above: «Здоровая Россия — ОБЩЕЕ ДЕЛО!» is a name,
-   and the mock sets it as written. */
+/* `text-transform` beats the lowercasing rule above: «Здоровая Россия — ОБЩЕЕ
+   ДЕЛО!» is a name, and the mock sets it as written. */
 .od-card h2 {
+  margin-bottom: 20px;
   text-transform: none;
 }
 
@@ -319,31 +324,44 @@ th {
   margin-bottom: 0;
 }
 
+/* A heading that introduces a row of cards, rather than sitting inside one.
+   `:has` because the two are siblings: an ordinary `margin-top` on the row
+   would collapse into the heading's own bottom margin and lose. */
+h2:has(+ .od-cards, + .od-poster-cards) {
+  margin-bottom: 45px;
+}
+
 /* The goal card. Its drawing is decoration rather than content, so it is a
-   background here and not an image block — nothing for an editor to lose. */
+   background here and not an image block — nothing for an editor to lose.
+   The mock centres a 314×340 drawing in the card's left half and gives the text
+   the rest, which is what the 640px basis buys: 640 + 572 + 28 = 1240. */
 .od-card--goal {
   display: flex;
   align-items: center;
-  padding: 48px 40px;
-  gap: 64px;
+  padding: 32px 28px 32px 0;
+  gap: 0;
 }
 
 .od-card--goal::before {
-  flex: 0 0 314px;
-  aspect-ratio: 314 / 340;
+  height: 340px;
+  flex: 0 1 640px;
   background: url('/figma/programme-goal.svg') center / contain no-repeat;
   content: '';
 }
 
 .od-card--goal > .wp-block-group__inner-container {
-  max-width: 640px;
   flex: 1;
+}
+
+.od-card--goal p {
+  font-size: var(--font-size-6);
+  line-height: 140%;
 }
 
 /* The task cards: one white card per column, equal height because core pins
    `align-items: initial !important` on every columns block. */
 .od-cards {
-  margin-bottom: 64px;
+  margin-bottom: 120px;
   gap: 40px;
 }
 
@@ -360,20 +378,19 @@ th {
   line-height: 130%;
 }
 
-.od-cards p:last-child {
+.od-cards p {
+  font-size: var(--font-size-4);
+  line-height: 140%;
+}
+
+.od-cards p:where(:last-child) {
   margin-bottom: 0;
 }
 
-/* The film posters. `margin-top: auto` on the button keeps the row of buttons
-   on one line when the posters differ in height. */
+/* The film posters. Each card *is* its poster, with the link floated over the
+   bottom of the artwork — the column is already positioned by the rule above. */
 .od-poster-cards {
   gap: 40px;
-}
-
-.od-poster-cards > .wp-block-column {
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
 }
 
 .od-poster-cards .wp-block-image {
@@ -386,27 +403,57 @@ th {
    because cropping a poster to fit cuts the film's title off it. */
 .od-poster-cards img {
   width: 100%;
-  padding: 8px;
   border-radius: 12px;
-  aspect-ratio: 3 / 4;
+  aspect-ratio: 387 / 546;
   background-color: var(--white);
   object-fit: contain;
 }
 
 .od-poster-cards .wp-block-buttons {
-  margin-top: auto;
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+  left: 12px;
+}
+
+.od-poster-cards .wp-block-button {
+  width: 100%;
+}
+
+.od-poster-cards .wp-block-buttons .wp-block-button .wp-block-button__link {
+  width: 100%;
+  background-color: var(--white);
+  color: var(--red-8);
+}
+
+.od-poster-cards .wp-block-buttons .wp-block-button .wp-block-button__link:hover {
+  background-color: var(--gray-2);
+  color: var(--red-10);
 }
 
 /* The methodology card — a columns block that *is* the card, with the cover
    flush against its left edge and the text centred beside it. */
 .od-card--flush {
-  padding: 0 20px 0 0;
+  padding: 0 40px 0 0;
   gap: 40px;
 }
 
-.od-card--flush > .wp-block-column:last-child {
+/* `.wp-block-columns` as well as the modifier, because core sizes every column
+   with `.wp-block-columns:not(.is-not-stacked-on-mobile) > .wp-block-column` —
+   four classes, same as this rule without it, and core is imported last. */
+.wp-block-columns.od-card--flush > .wp-block-column:first-child {
+  flex: 0 1 386px;
+}
+
+.wp-block-columns.od-card--flush > .wp-block-column:last-child {
   align-self: center;
   padding: 24px 0;
+}
+
+.od-card--flush p {
+  margin-bottom: 45px;
+  font-size: var(--font-size-5);
+  line-height: 130%;
 }
 
 .od-card--flush .wp-block-image {
@@ -421,7 +468,17 @@ th {
 @media (--mobile) {
   .od-programme-logo {
     max-width: none;
+    margin-bottom: 24px;
     margin-left: 0;
+  }
+
+  .od-card,
+  .od-cards {
+    margin-bottom: 40px;
+  }
+
+  h2:has(+ .od-cards, + .od-poster-cards) {
+    margin-bottom: 24px;
   }
 
   .od-card--goal {
@@ -434,15 +491,29 @@ th {
   .od-card--goal::before {
     width: 100%;
     max-width: 240px;
+    height: 260px;
     flex: 0 0 auto;
+  }
+
+  .od-card--goal p {
+    font-size: var(--font-size-4);
   }
 
   .od-card--flush {
     padding: 0 0 24px;
   }
 
-  .od-card--flush > .wp-block-column:last-child {
+  .wp-block-columns.od-card--flush > .wp-block-column:first-child {
+    flex: 0 1 auto;
+  }
+
+  .wp-block-columns.od-card--flush > .wp-block-column:last-child {
     padding: 0 20px;
+  }
+
+  .od-card--flush p {
+    margin-bottom: 24px;
+    font-size: var(--font-size-4);
   }
 
   .od-card--flush .wp-block-image img {
