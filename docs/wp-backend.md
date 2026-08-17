@@ -92,13 +92,34 @@ Beyond core (`post`, `page`, `attachment`, …), od-dev registers:
 | CPT | Source plugin | Public | Records | Verdict |
 | --- | --- | --- | --- | --- |
 | `project` | **cmsms-content-composer** | ✅ | **21** — all `draft`, all from April–May 2015 (`/wp/v2/project` returns **0**, since REST only serves `publish`) | **Demo content from the welfare theme installation.** Titles in English ("Special Needs Assistance", "Disabled People Assistance"), bodies are literal Lorem ipsum. Never published, never used in production. **Delete entirely with cmsms.** Live site's «Программы / Проекты» section is served by plain WP pages, not this CPT. |
-| `profile` | **cmsms-content-composer** | ✅ | **205 total, 139 `publish`** — ongoing through 2024 (`/wp/v2/profile` returns the 139) | Real OD regional coordinators / team members. **`post_content` is already clean Gutenberg-block markup** (image + columns + paragraph), thanks to `cmsms-gutenberg-upgrade` having already run a migration. The original cmsms shortcodes survive only as a backup in the `nvp_content_copy` meta field. **Keep — renders like any other Gutenberg post.** Mind the two counts: WP-CLI's `post list --format=count` reports all statuses, REST reports only published, and D3 will surface 139. |
+| `profile` | **cmsms-content-composer** | ✅ | **205 total, 139 `publish`** — ongoing through 2024 (`/wp/v2/profile` returns the 139) | Real OD regional coordinators / team members. **`post_content` is already clean Gutenberg-block markup** (image + columns + paragraph), thanks to `cmsms-gutenberg-upgrade` having already run a migration. The original cmsms shortcodes survive only as a backup in the `nvp_content_copy` meta field. **Keep — renders like any other Gutenberg post.** Mind the two counts: WP-CLI's `post list --format=count` reports all statuses, REST reports only published, and D3 will surface 139. **Exact registration, located 2026-08-17** — see the note under this table. |
 | `cmsms_like`, `cmsms_view`, `content_template` | cmsms-content-composer | ❌ | (engagement / template plumbing) | Disappear with cmsms. Not used. |
 | `leyka_donation` | **leyka** | ✅ | | Donation records — likely surfaces on the donation subdomain, not in this redesign. Keep only if donations stay on this WP. |
 | `leyka_campaign` | leyka | ✅ | | Same. |
 | `wpcf7_contact_form` | **contact-form-7** | ❌ | | Form definitions (admin-only) — usable for B6 forms. |
 | `owl-carousel` | **owl-carousel** | ✅ | | Plugin-driven carousel sliders. Goes with the plugin. |
 | `wysijap` | **wysija-newsletters** (MailPoet legacy) | ✅ | | Newsletter pages — only relevant if "subscribe to news" lands here. |
+
+#### Where `profile` is actually registered (located 2026-08-17)
+
+Worth pinning down exactly, because B8's ordering depends on it and "it's the cmsms theme" is the natural guess and the wrong one.
+
+**A plugin owns the data model, the theme owns only the presentation:**
+
+| what | where |
+| --- | --- |
+| `register_post_type('profile', …)` | `plugins/cmsms-content-composer/inc/profile/profiles-posttype.php:69` |
+| `register_taxonomy('pl-categs', ['profile'], …)` | same file, `:92` |
+| both fire on | `add_action('init', 'cmsms_profiles_init')`, `:188` |
+| `[cmsms_profiles]` shortcode | `plugins/cmsms-content-composer/inc/shortcodes.php:5717` (function), `:5822` (`add_shortcode`) |
+| the single-profile page template | `themes/welfare/single-profile.php` — **theme**, and irrelevant to us: D3 renders `/profile/[slug]` itself |
+
+The plugin is **CMSMasters Content Composer 1.6.2**, active, and its header says it is "distributed exclusively as appendant to WordPress themes created by CMSMasters" — the theme **bundles and installs it** through TGMPA (`themes/welfare/framework/admin/inc/plugin-activator.php:31-32`, from `framework/admin/inc/plugins/cmsms-content-composer.zip`). So it is theme-coupled by licence and by installer, but it is a separate plugin and the CPT dies with the *plugin*, not with the theme. Deactivating one does not imply the other.
+
+Two consequences already in §4.4's ordering, restated here because this is where they're checkable:
+
+- **`pl-categs` is registered with no `show_in_rest`** (`:92`, `$pl_categs_args`), which is why `/wp/v2/pl-categs` 404s. Re-registration is the one chance to add it.
+- The registration is **~15 lines of `register_post_type` + `register_taxonomy`**, so owning it is cheap; the content needs nothing, being clean Gutenberg already.
 
 **Key takeaways:**
 - **`project` is dead** — drop along with cmsms. No migration, no replacement needed.
