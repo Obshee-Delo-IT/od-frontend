@@ -1,3 +1,4 @@
+import { stripHtml } from '@/shared/api/newsPreview';
 import { NavItem, SourceNavItem } from '../types';
 import { toInternalHref } from './toInternalHref';
 
@@ -32,7 +33,7 @@ export const toNavItems = (wpItems: SourceNavItem[] = [], internalOrigins: strin
       id: item.id,
       parent: item.parent,
       href: toInternalHref(item.url, internalOrigins),
-      text: item.title.rendered,
+      text: stripHtml(item.title.rendered),
       content: [],
     };
     if (mapped.parent === 0) {

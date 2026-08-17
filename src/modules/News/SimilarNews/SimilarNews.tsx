@@ -1,5 +1,5 @@
-import parse from 'html-react-parser';
 import { fetchSimilarNews } from '@/shared/api/fetchSimilarNews';
+import { stripHtml } from '@/shared/api/newsPreview';
 import { formatDate } from '@/shared/lib/formatDate';
 import { Link } from '@/shared/ui/components/Link';
 import css from './SimilarNews.module.css';
@@ -27,7 +27,7 @@ export const SimilarNews = async ({ category, region }: SimilarNewsProps) => {
               <div className={css.newsItem}>
                 <p className={css.date}>{date}</p>
                 <Link href={el.link} size="4" color="primary" weight="bold">
-                  {parse(el.title?.rendered)}
+                  {stripHtml(el.title.rendered)}
                 </Link>
               </div>
             </div>

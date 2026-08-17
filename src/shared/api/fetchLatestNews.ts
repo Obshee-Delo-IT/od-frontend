@@ -2,7 +2,7 @@ import { WP_TAGS, wpCache } from './cacheTags';
 import { extractFirstImage } from './extractFirstImage';
 import { wpBaseUrl, wpFetch } from './httpClient';
 import { resolveMediaUrl } from './mediaUrl';
-import { buildNewsPreview } from './newsPreview';
+import { buildNewsPreview, stripHtml } from './newsPreview';
 
 export interface NewsSummary {
   id: number;
@@ -33,7 +33,7 @@ export const fetchLatestNews = async (limit = 4): Promise<NewsSummary[]> => {
   return Promise.all(
     data.map(async (post, index) => ({
       id: post.id ?? 0,
-      title: post.title?.rendered ?? '',
+      title: stripHtml(post.title?.rendered),
       link: post.link ?? '#',
       date: post.date ?? null,
       thumbnailUrl: await resolveMediaUrl(

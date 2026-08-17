@@ -1,7 +1,7 @@
 import { Text } from '@radix-ui/themes';
 import { NewsletterSignup } from '@/modules/NewsletterSignup';
 import { cachedFetchNews } from '@/shared/api/fetchNews';
-import { buildNewsPreview } from '@/shared/api/newsPreview';
+import { buildNewsPreview, stripHtml } from '@/shared/api/newsPreview';
 import { canonicalUrl } from '@/shared/config/site';
 import { formatDate } from '@/shared/lib/formatDate';
 import { parsePost, resolveContentImages } from '@/shared/lib/wpContent';
@@ -24,7 +24,7 @@ export interface NewsArticleProps {
  * publishes and `/news/<id>` redirects to.
  */
 export const newsMetadata = (post: Awaited<ReturnType<typeof cachedFetchNews>>, id: string): Metadata => {
-  const title = post?.title?.rendered;
+  const title = stripHtml(post?.title?.rendered) || undefined;
   // Same source as the film page: WP's excerpt, stripped of markup, falling
   // back to the body for the many posts that have no manual excerpt.
   const description = buildNewsPreview(post?.excerpt?.rendered, post?.content?.rendered) ?? undefined;
@@ -62,7 +62,7 @@ export const NewsArticle = async ({ id }: NewsArticleProps) => {
   const breadcrumbItems = [
     { label: 'Главная', href: '/' },
     { label: 'Новости', href: '/news' },
-    { label: data?.title?.rendered ?? '' },
+    { label: stripHtml(data?.title?.rendered) },
   ];
 
   const parsed = parsePost(await resolveContentImages(data?.content?.rendered));

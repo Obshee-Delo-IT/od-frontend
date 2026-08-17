@@ -2,6 +2,7 @@ import { WP_TAGS, wpCache } from './cacheTags';
 import { extractFirstImage } from './extractFirstImage';
 import { wpBaseUrl, wpFetch } from './httpClient';
 import { resolveMediaUrl } from './mediaUrl';
+import { stripHtml } from './newsPreview';
 
 export interface FilmSummary {
   id: number;
@@ -31,7 +32,7 @@ export const fetchFilms = async (limit = 6): Promise<FilmSummary[]> => {
   return Promise.all(
     data.map(async (post) => ({
       id: post.id ?? 0,
-      title: post.title?.rendered ?? '',
+      title: stripHtml(post.title?.rendered),
       link: post.link ?? '#',
       thumbnailUrl: await resolveMediaUrl(
         post._embedded?.['wp:featuredmedia']?.[0]?.source_url ?? extractFirstImage(post.content?.rendered, wpBaseUrl)

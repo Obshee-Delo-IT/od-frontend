@@ -29,6 +29,12 @@ describe('toNavItems', () => {
     ]);
   });
 
+  it('decodes the entities WordPress renders menu labels with', () => {
+    const result = toNavItems([wpItem(1, 0, '&#171;Общее&nbsp;Дело&#187;', '/')]);
+
+    expect(result[0].text).toBe('«Общее Дело»');
+  });
+
   it('nests children under their parents', () => {
     const result = toNavItems([
       wpItem(1, 0, 'О нас', '/about'),

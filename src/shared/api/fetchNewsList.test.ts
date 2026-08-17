@@ -58,6 +58,16 @@ describe('fetchNewsList', () => {
     expect(requestedPath).not.toContain('categories=');
   });
 
+  it('decodes the entities WordPress renders titles with', async () => {
+    // Card titles are printed as text, so `&#171;` has to be resolved here and
+    // not left for a browser that will never see it as markup.
+    wpFetch.mockResolvedValue(makeResponse([{ id: 7, title: { rendered: '&#171;Общее&nbsp;Дело&#187;<br>2021' } }]));
+
+    const { items } = await fetchNewsList();
+
+    expect(items[0].title).toBe('«Общее Дело» 2021');
+  });
+
   it('passes the category filter through to the query', async () => {
     wpFetch.mockResolvedValue(makeResponse([], { 'x-wp-total': '0', 'x-wp-totalpages': '0' }));
 
