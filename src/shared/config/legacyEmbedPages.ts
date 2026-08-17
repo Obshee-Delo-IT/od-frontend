@@ -19,7 +19,10 @@
  * `/my-account/` were **deleted in WordPress on 2026-08-17**, on prod and
  * od-dev both — the shop had been switched off in copy for years and drew 16
  * views in 91 days. They now 404, which is the right answer, and needed no
- * entry here to do it.
+ * entry here to do it. `/materials/order-materials/` went the same way — the
+ * page was what was left of that shop, a «Корзина заказов» button into `/cart/`
+ * over its own «заказ материалов не осуществляется» (see `docs/next-steps.md`
+ * for the mail-delivery reason the nav item went first).
  *
  * Three of the 23 are deliberately **not** here — `/healthy-russia/`,
  * `/healthy-kids/` and `/healthy-youth/`, the programme pages. Their `cmsms_*`
@@ -49,10 +52,6 @@ export const LEGACY_EMBED_PAGES = [
   '/get-involved/join/',
   '/materials/audio-roliki-social-reklama/',
   '/materials/disk/',
-  // Deleted on prod 2026-08-17, still published on od-dev. This line goes when
-  // the od-dev copy does — while it exists, dropping it would render that page
-  // natively, dead «Корзина заказов» button and all. See `docs/next-steps.md`.
-  '/materials/order-materials/',
   '/materials/pppuiv-constructor/',
   '/добровольчество/',
 ];
