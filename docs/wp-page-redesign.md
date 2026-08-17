@@ -73,7 +73,7 @@ Block usage across the same set, most-used first: `column` 1212 · `paragraph` 8
 Two known traps in the rendered output:
 
 - **Dynamic blocks emit absolute links to the WordPress origin.** `wp:query` output carries `href="https://od-dev.tmweb.ru/<id>/"` and a WP-origin `srcset`. Images are handled by `resolveContentImages`; **links are not**, so they navigate the visitor off the site. Tracked as **D6c** in [`implementation-plan.md`](./implementation-plan.md) — fix it in the pipeline, not in the content.
-- **`parsePost` lifts a leading gallery or carousel into a separate slot.** It runs on pages too, but `WpPage` renders that slot immediately above the body, so nothing moves in practice, and only 2 pages carry a gallery at all. Not a concern; noted so nobody re-derives it.
+- **`parsePost`'s hero lift is off for pages** — `WpPage` passes `liftHeader: false`, since 2026-08-17. It is not a "leading block" rule as it reads: it matches the **first** carousel or gallery anywhere in the document and removes **its whole parent**, so a gallery an editor drops into a column takes that column's text with it. On a post the parent is the wrapper the migrator put there; on a page it is arbitrary. Measured over od-dev's 170 pages: 2 carry a gallery, **neither** as a leading top-level block, and **both** would lose a sibling (`/sp/` a heading). Nothing to lift, everything to lose. Posts and films keep the lift.
 
 ## 5. Prerequisites and things that break outside this file
 

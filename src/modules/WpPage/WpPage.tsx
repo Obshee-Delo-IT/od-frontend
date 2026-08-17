@@ -37,19 +37,16 @@ export const wpPageMetadata = ({ page, path }: WpPageProps): Metadata => {
 };
 
 export const WpPage = async ({ page }: WpPageProps) => {
-  const parsed = parsePost(await resolveContentImages(page.contentHtml));
+  /* `liftHeader: false` — the hero lift is a news/film layout rule, and applying
+     it here only ever destroyed content: it removes the lifted block's whole
+     parent, which on a page is the column an editor dropped the gallery into.
+     Both od-dev pages that carry one would lose a sibling, and neither has it
+     as a leading block, so there is nothing to lift and everything to lose. */
+  const parsed = parsePost(await resolveContentImages(page.contentHtml), { liftHeader: false });
 
   return (
     <Box display="flex" flexDirection="column" gap={40} py={48}>
       <PageHeader title={page.title} breadcrumbs={[{ label: 'Главная', href: '/' }, { label: page.title }]} />
-
-      {/* `parsePost` lifts a leading carousel or gallery out of the body; on a
-          page there is nothing else to do with it but put it back on top. */}
-      {parsed.header && (
-        <ImagePreviewClient>
-          <GutenbergProvider>{parsed.header}</GutenbergProvider>
-        </ImagePreviewClient>
-      )}
 
       <ImagePreviewClient>
         <GutenbergProvider as="section">{parsed.body}</GutenbergProvider>

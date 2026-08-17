@@ -16,7 +16,23 @@ const findCarouselOrGallery = (children: DOMNode[]) => {
   return { carousel: isElement(carousel) ? carousel : null, gallery: isElement(gallery) ? gallery : null };
 };
 
-export const parsePost = (data = ''): PostContent => {
+interface ParsePostOptions {
+  /**
+   * Lift the first carousel or gallery out of the body and return it as `header`.
+   *
+   * On by default, because that is the news and film layout: the hero sits above
+   * the date and the article text. **It removes the block's whole parent**, not
+   * just the block — on a post that parent is the wrapper the migrator put
+   * around it, but on an arbitrary page it is whatever column the editor
+   * happened to drop the gallery into, siblings included. Measured over od-dev
+   * 2026-08-17: of the 170 published pages exactly 2 carry a gallery, **neither**
+   * as a leading top-level block, and **both** would lose sibling content
+   * (`/sp/` a heading). So `WpPage` passes `false` — see `wp-page-redesign.md`.
+   */
+  liftHeader?: boolean;
+}
+
+export const parsePost = (data = '', { liftHeader = true }: ParsePostOptions = {}): PostContent => {
   let header: string | JSX.Element | JSX.Element[] = '';
 
   const body = parse(data, {
@@ -25,7 +41,7 @@ export const parsePost = (data = ''): PostContent => {
         return <></>;
       }
 
-      if (!isElement(domNode)) {
+      if (!isElement(domNode) || !liftHeader) {
         return domNode;
       }
 
