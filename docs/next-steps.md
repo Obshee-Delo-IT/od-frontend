@@ -147,3 +147,36 @@ decision, made once, where editors can see it.
 `allinone_bannerWithPlaylist` slide («Проекты. Развитие. Общество.»), untouched
 because it wasn't in scope. If ОБЩЕЕДЕЛО-ПРО is meant to disappear from the
 site rather than just from the nav, that slide is the other half.
+
+---
+
+## The WordPress editor is not WYSIWYG — deferred 2026-08-17
+
+**What's true today.** The design system's CSS lives in this repo, nested under
+`.gutenberg` and loaded only by the Next app ([`wp-page-redesign.md`](./wp-page-redesign.md)).
+WordPress is headless and loads none of it, so the block editor shows a page in
+default Gutenberg styling — right structure, wrong everything else. An editor
+choosing between two layouts is choosing blind and has to check the result on
+the frontend.
+
+**Why it was left.** Through workstream D the pages are built by us, from Figma
+mocks, with the browser open — so the person editing already sees the real
+thing. The cost only lands when editors start authoring pages themselves.
+
+**What it would take**, cheapest first:
+
+1. **Serve the compiled Gutenberg CSS at a stable URL** from this app (a copy in
+   `public/`, since Next hashes its own CSS filenames) and enqueue that URL in
+   `od-design.php` on `enqueue_block_editor_assets`. Cross-origin stylesheets
+   need no CORS, so this is two lines on each side.
+2. **The scope root is the catch.** Our rules are nested under `.gutenberg`; the
+   editor wraps content in `.editor-styles-wrapper`, so nothing would match.
+   Either emit a second build with both roots, or add `.editor-styles-wrapper`
+   as an alias in `gutenberg-provider.css`. `add_editor_style()` rewrites
+   selectors for classic editor styles but will not fix a nested root.
+3. **It is a copy, and copies drift.** Whatever ships has to be produced by the
+   build rather than pasted, or the editor will eventually preview a design the
+   site no longer has.
+
+**Trigger to do it:** the first page an editor is expected to lay out without
+us. Until then, the frontend is the preview.

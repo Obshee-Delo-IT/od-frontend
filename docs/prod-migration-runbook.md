@@ -22,6 +22,7 @@ Related: [`implementation-plan.md`](./implementation-plan.md) (task state) · [`
 | **B6** | **Media offload origin unconfirmed for prod.** | `WP_MEDIA_CDN` defaults to the od-dev bucket; a different prod bucket breaks every image. | §1.5 + §4.1 |
 | ~~B7~~ | ~~Hosting/deploy target undecided~~ — **decided: Beget VPS + Coolify, images built in GitHub Actions → GHCR.** | Remaining work is the CI push step (§4.7), not a decision. | §4 |
 | **B8** | **Only 6 content routes are redesigned** — `/`, `/news/`, `/materials/articles/`, `/video/` + `/video/<segment>/`, and the post detail at `/<id>`. | Launching without the A6 legacy fallback means ~170 pages 404. **Launch gate, not a migration step** — see §6. Those pages are **13.5 % of entry traffic but 20.0 % of pageviews** — the second number is what visitors will actually see. | A6 |
+| **B10** | **Prod runs WordPress 5.5.5**, pinned by an active `wp-downgrade`. | `cmsms-gutenberg-upgrade` emits `wp:query`, `wp:details` and `wp:group`, and the layout classes `gutenberg.css` keys on (`is-layout-flex`) are emitted by core **5.9+**. On 5.5.5 the query blocks render **empty** — that is the news feed on ~80 regional `/contacts/*` pages — and every `wp:columns` stacks. It fails quietly: the page answers 200 with content missing. **Must happen before the migrator runs.** | §2.7 |
 | ~~B9~~ | ~~The redesigned routes don't match live URLs.~~ — **FIXED 2026-08-13 (A8).** `/<id>` is served directly by `app/[...slug]/page.tsx` and the four film categories by `app/video/[segment]/page.tsx`; `src/proxy.ts` (driven by `resolveLegacyUrl` in `src/shared/config/legacyRedirects.ts`) redirects the rest — the **whole** `/category/*` family, `/video/short/` and every `/page/N/` shape — in **a single 301 each**; `trailingSlash: true` matches the live URL form. F4's sitemap/robots/canonicals shipped alongside, so nothing we advertise redirects. | Was **59 % of all site entries**. Now a **verification** concern rather than a build one — gate 12 in §5 is what proves it, and it is scriptable. | verify in §5 |
 
 ---
@@ -150,6 +151,32 @@ ssh od-root 'cd ~/public_html && wp --skip-plugins --skip-themes eval "
 ⚠️ **Two known gaps, both about legacy pages, both live only once A6 ships.** The plugin reports post type `post` only, so **editing a legacy page purges nothing** — the fallback route would serve its cached render for up to an hour. And prod caches its own HTML with **WP Rocket** (§2 of `wp-backend.md`), which the fallback fetches: purging Next before WP Rocket just re-caches the stale copy. When A6 lands, the order is WP Rocket first, then the frontend, and the plugin needs to start sending `paths` for pages — the endpoint already accepts them.
 
 **2.6 Two dead links — ~~to remove~~ done 2026-08-15, on prod and od-dev both.** The `sidebar_bottom` links widget's `/sp/` (leyka form, no money taken since 2022-01-05) and menu item 27971 «Заказать материалы» (CF7 order form, mail lands in spam). Deleted at the source, so the frontend filters neither any more. What was removed, how to restore it, and what has to be decided before either comes back: [`next-steps.md`](./next-steps.md). Both pages still answer 200 on the A6 fallback — the links went, not the pages.
+
+**2.7 Upgrade WordPress core (B10), then convert the content.** Prod is held at **5.5.5** by an active `wp-downgrade`, and everything downstream assumes modern core: the migrator writes `wp:query` / `wp:details` / `wp:group`, and `gutenberg.css` keys on the `is-layout-flex` layout classes core only emits from **5.9**. od-dev — which is what the frontend has been built and measured against — is on **6.8.8 / PHP 8.2** (read 2026-08-17).
+
+Order matters: **core first, migrator second.** Converting content under 5.5.5 produces markup that install cannot render, and the failure is silent — a query block renders as an empty `<div>`, so a regional contacts page answers 200 with its news feed missing.
+
+```bash
+ssh od-root 'cd ~/public_html && wp --skip-plugins --skip-themes plugin deactivate wp-downgrade'
+ssh od-root 'cd ~/public_html && wp --skip-plugins --skip-themes core update && wp --skip-plugins --skip-themes core update-db'
+ssh od-root 'cd ~/public_html && wp --skip-plugins --skip-themes core version'
+```
+
+⚠ **Take the DB snapshot through the BeGet panel first** (§7), and expect the *old theme* to be the risk here, not core: prod still renders its own pages with CMSMasters, whose newest release predates WP 6. That is acceptable only because the theme is on the way out — but the A6 frozen copy must be **captured before the upgrade**, or the fallback inherits whatever the upgrade breaks in the old theme. Prod's site PHP is 7.x (`mod_php7`), so also check the minimum PHP of the core version being installed before starting.
+
+Then run the content conversion — [`wp-page-passthrough.md` §6](./wp-page-passthrough.md#6-running-the-migrator) — `wp cmsms backup` first, since it is what makes the rest reversible, and only then `wp cmsms migrate`.
+
+**2.8 Apply the page fixes.** Workstream D's WordPress-side changes are a script in this repo, not admin edits, precisely so this step is one command. Procedure and guarantees: [`wp-page-redesign.md`](./wp-page-redesign.md).
+
+```bash
+scp wp/scripts/od-pages.php od-root:public_html/
+ssh od-root 'cd ~/public_html && wp --skip-plugins --skip-themes eval-file od-pages.php'         # dry run
+ssh od-root 'cd ~/public_html && wp --skip-plugins --skip-themes eval-file od-pages.php apply'
+```
+
+`apply` is a positional argument, not a `--flag`: `wp eval-file` hands positionals to the script in `$args` and rejects unknown flags outright.
+
+It is idempotent by detection — a page already in its target shape is skipped — so a re-run after further work is safe.
 
 ---
 
