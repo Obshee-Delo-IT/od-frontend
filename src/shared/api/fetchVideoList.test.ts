@@ -27,7 +27,7 @@ describe('fetchVideoList', () => {
         [
           {
             id: 71561,
-            title: { rendered: 'Наркотики' },
+            title: { rendered: '&#171;Наркотики&#187;' },
             link: 'https://wp.test/?p=71561',
             date: '2023-08-30T06:52:13',
             categories: [581, 52],
@@ -58,6 +58,8 @@ describe('fetchVideoList', () => {
 
     const [film] = result.items;
     expect(film.id).toBe(71561);
+    // The title is printed as text — WP's entities are decoded, not passed on.
+    expect(film.title).toBe('«Наркотики»');
     expect(film.categories).toEqual([581, 52]);
     expect(film.watchUrl).toBeNull();
     expect(film.downloads).toEqual([

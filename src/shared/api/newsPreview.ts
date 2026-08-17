@@ -10,7 +10,12 @@ const MAX_PREVIEW = 300;
  * A tag becomes a **space**, not nothing: `<p>a</p><p>b</p>` and a title broken
  * with `<br>` are two words, and deleting the tag outright glues them into one.
  * The cost is a stray space where a tag sits mid-word (`<b>но</b>вости`), which
- * is both rarer and less damaging in a meta description than a run-on.
+ * is both rarer and less damaging in a title or meta description than a run-on.
+ *
+ * Every WordPress `title.rendered` goes through this on the way out of a
+ * fetcher: it is HTML, and every place this site shows a title — cards, `<h1>`,
+ * breadcrumbs, `<title>`, `alt`/`aria-label` — prints it as text, where a
+ * `&#171;` would stay literal.
  */
 export const stripHtml = (html?: string | null): string => {
   if (!html) {

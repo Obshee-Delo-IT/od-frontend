@@ -515,6 +515,14 @@ WP media is **already offloaded to a Yandex object-storage bucket**; that decisi
 
 `next/image` is wired through `resolveMediaUrl`; `remotePatterns` covers the WP origin, the Punycode legacy domain and the media CDN; `minimumCacheTTL: 86400`. WP's *sized* variants return 500, so we deliberately request full-size only (`toFullSizeImageUrl`) and let Next re-optimise.
 
+### WP titles are HTML — decoded once, at the fetcher boundary, 2026-08-17
+
+`title.rendered` is markup, and this site prints titles as **text** everywhere: cards, the article `<h1>`, breadcrumbs, `<title>`, `alt` and `aria-label`. So a title WordPress renders as `&#171;Общее Дело&#187;` reached the page literally — visible on every news card, the `/video` catalogue, the film page and the news article, and guillemets — which WP renders as `&#171;`/`&#187;` — are in **1 114 of the 8 241 published post titles**, «Общее Дело» itself among them.
+
+The fix is one call, `stripHtml` (`shared/api/newsPreview.ts` — tags to a space, then `decodeEntities`), applied where the WP shape is mapped to ours rather than where it is displayed: `fetchLatestNews`, `fetchNewsList`, `fetchFilms`, `mapVideoSummary` (so `fetchVideoList` *and* `fetchVideo`), `toNavItems` for menu labels, and `NewsArticle`'s two direct reads of the raw post. `fetchWpPage` already did this, which is why native WP pages were the one surface that came out right. `SimilarNews` was correct by accident — it ran the title through `html-react-parser`, which decodes — and now uses `stripHtml` like everything else, so `title.rendered` has no remaining raw reader.
+
+The boundary is the fetcher on purpose: a title has one plain-text form and many display sites, and the alternative is remembering to decode at each of them.
+
 ---
 
 ## 5. Shipped — quality (F)

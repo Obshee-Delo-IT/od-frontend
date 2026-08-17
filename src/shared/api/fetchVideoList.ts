@@ -2,7 +2,7 @@ import { WP_TAGS, wpCache } from './cacheTags';
 import { extractFirstImage } from './extractFirstImage';
 import { wpBaseUrl, wpFetch } from './httpClient';
 import { resolveMediaUrl } from './mediaUrl';
-import { buildNewsPreview } from './newsPreview';
+import { buildNewsPreview, stripHtml } from './newsPreview';
 
 /** A single downloadable variant of a film, as held in the generic ACF slots. */
 export interface VideoDownload {
@@ -111,7 +111,7 @@ export const mapVideoSummary = async (post: RawVideoPost): Promise<VideoSummary>
   const acf = post.acf ?? {};
   return {
     id: post.id ?? 0,
-    title: post.title?.rendered ?? '',
+    title: stripHtml(post.title?.rendered),
     link: post.link ?? '#',
     date: post.date ?? null,
     thumbnailUrl: await resolveMediaUrl(
