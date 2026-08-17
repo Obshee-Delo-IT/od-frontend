@@ -1,6 +1,16 @@
 /* Figma `Frame 33928` (handbooks) and the `team-1` cards: white, radius 12
    (`radius/4`), padding 20 (`spacing/4`), and — checked by pixel-sampling the
-   card's edge — no border and no shadow in any variant. */
+   card's edge — no border and no shadow in any variant.
+
+   **Every selector that styles a `p`, `ul`, `li`, `a` or `img` here is doubled.**
+   This card renders *inside* `<GutenbergProvider>` — that is the whole point of
+   it, it replaces a link in a WordPress body — and `gutenberg.css` styles those
+   five elements by tag name, which inside `.gutenberg` becomes `.gutenberg p`
+   (0,1,1). A single module class is (0,1,0) and loses: the name came out at 16px
+   with a 1em bottom margin, the contact list carried `ul`'s 1.5em indent and
+   `li`'s 0.5em row margin, and the links took the body link colour. Doubling the
+   class is the same trick `modules/Header` uses against Radix's `:where()` rules
+   — see `implementation-notes.md` §C9. */
 .card {
   display: flex;
   padding: 20px;
@@ -30,23 +40,23 @@
 
 /* One 18/140% text node in Figma, two lines with different fills — so the two
    paragraphs carry no gap between them and the line-height does the spacing. */
-.name,
-.subtitle {
+.name.name,
+.subtitle.subtitle {
   margin: 0;
   font-size: var(--font-size-4);
   line-height: var(--line-height-4);
 }
 
-.name {
+.name.name {
   color: var(--red-8);
   font-weight: 700;
 }
 
-.subtitle {
+.subtitle.subtitle {
   color: var(--gray-7);
 }
 
-.contacts {
+.contacts.contacts {
   display: flex;
   /* Bottom of the text column. Figma draws `space-between` on the photo card and
      an explicit bottom anchor on the wide one; with a column that can grow these
@@ -60,13 +70,14 @@
   list-style: none;
 }
 
-.contact {
+.contact.contact {
   display: flex;
   align-items: center;
+  margin: 0;
   gap: 12px;
 }
 
-.contact a {
+.contact.contact a {
   color: var(--red-8);
   font-size: var(--font-size-4);
   line-height: var(--line-height-4);
@@ -74,7 +85,7 @@
   text-decoration: none;
 }
 
-.contact a:hover {
+.contact.contact a:hover {
   color: var(--red-10);
   text-decoration: underline;
 }
@@ -97,7 +108,7 @@
   border-radius: 12px;
 }
 
-.photo img {
+.photo.photo img {
   object-fit: cover;
 }
 
@@ -106,7 +117,7 @@
   gap: 20px;
 }
 
-.withPhoto .name {
+.withPhoto .name.name {
   color: var(--gray-9);
   font-size: var(--font-size-5);
   line-height: 130%;
@@ -120,7 +131,7 @@
   gap: 10px;
 }
 
-.withPhoto .subtitle {
+.withPhoto .subtitle.subtitle {
   font-size: var(--font-size-3);
   line-height: var(--line-height-3);
 }

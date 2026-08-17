@@ -188,3 +188,81 @@ thing. The cost only lands when editors start authoring pages themselves.
 
 **Trigger to do it:** the first page an editor is expected to lay out without
 us. Until then, the frontend is the preview.
+
+---
+
+## `WpPage` breadcrumbs start at «Главная», the mocks start at the parent
+
+**Found 2026-08-17**, redesigning `/materials/metodichki/`. Figma `handbooks`
+draws «Материалы › Методические пособия»; `WpPage` renders «Главная ›
+Методические пособия», because it builds the trail from two literals — the root
+and the page's own title. Every one of the ~150 native WP pages is the same, and
+every mock in a section shows its parent.
+
+**Why it wasn't done with that page.** The data is there — page 27642's
+`post_parent` is 20225 (`materials`) — but `fetchWpPage` doesn't request `parent`,
+and a trail needs each ancestor's *title*, so a deep page is one extra request
+per level (or one `?include=` request once the ids are known, which needs the
+chain first). That is a `WpPage` change affecting every native page, and it does
+not belong to one page's commit.
+
+**What it would take:** add `parent` to `fetchWpPage`'s `_fields`, walk it with a
+`cache()`d `fetchWpPage`-by-id, cap the depth (nothing on od-dev is deeper than
+two), and fall back to today's «Главная» when a parent is missing or unpublished.
+The crumb should link the parent's own path, which for `materials` is a native
+route already.
+
+---
+
+## `.wp-block-group h2` lowercases «Россия»
+
+**Found 2026-08-17.** `gutenberg.css` has
+`.wp-block-group h2 { text-transform: lowercase }` with a `::first-letter`
+override, which sentence-cases the all-caps headings WordPress content is full
+of. It also lowercases every *proper noun* after the first word:
+`/materials/metodichki/` rendered «Здоровая россия — общее дело» until those
+three headings were removed for the mock, and any page that keeps a heading with
+a place or a name in it will do the same.
+
+**The real fix is content, not CSS** — sentence-case the headings in WordPress
+(an `od-pages.php` transform can do a page at a time) and delete the rule. Until
+then, check every heading a redesigned page keeps.
+
+**Scale unmeasured.** Worth counting the headings that hold a capitalised word
+past the first before deciding whether this is a sweep or a handful.
+
+---
+
+## Profile 46651's slug names a different person
+
+**Found 2026-08-17.** The record titled «Андрей Алексеевич Рязанов» has
+`post_name` `гордикова-екатерина` (percent-encoded) and `_wp_old_slug`
+`екатерина-гордикова`: it was Екатерина Гордикова and was retitled in place
+without re-slugging. `/materials/metodichki/` now links it, so the wrong name is
+visible in the href.
+
+**Not fixable from here, and that is the interesting part.** After cutover
+`/profile/*` is still served by the A6 iframe against the frozen copy, which is
+keyed on the **live** path — so re-slugging od-dev's record would make the page
+404 in the iframe. The slug can only change once `/profile/[slug]` is a native
+route (D3, Tier 2), and even then it wants a `_wp_old_slug` redirect.
+
+**Also: 46651 is unlikely to be the only one.** Worth a pass comparing each
+`profile`'s title against its slug once D3 starts — 139 records, and the
+mismatches are the ones whose URLs are wrong for search too.
+
+---
+
+## The three `metodichki` covers are the wrong image files
+
+**Found 2026-08-17.** Figma `handbooks` shows flat poster artwork; WordPress
+holds photographs of the printed booklets on white grounds, which is what the
+live site has always shown. `.od-covers img` crops to the mock's 387×546 with
+`object-fit: cover`, so the row is even either way and the layout already fits
+the designer's renders — but each card carries a band of the photo's own white
+background, where the mock has artwork to its edges.
+
+**What to do:** ask Design for the three cover files, upload them to the media
+library and repoint the three `<img src>`s. No code change; an `od-pages.php`
+transform or three admin edits. The same question will come up for
+`/materials/plakati/` and `/materials/zakladki/`, so ask once.

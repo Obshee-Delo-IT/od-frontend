@@ -279,3 +279,85 @@ th {
 .wp-block-column {
   position: relative;
 }
+
+/* A row of poster covers with a «Подробнее» pill laid over each one — Figma
+   `handbooks` (`779:4133`), which is `/materials/metodichki/`.
+
+   Reached by the `od-covers` class the *content* carries, written by
+   `wp/scripts/od-pages.php` (ladder rung 2, `docs/wp-page-redesign.md` §2):
+   nothing in Gutenberg's markup tells a grid of book covers apart from any other
+   three-column row, so there is nothing else to key on. A class beats
+   block-library's own `:where(.wp-block-columns…)` gap rule on specificity, which
+   is why this needs no `!important` even though our stylesheet is imported
+   first. */
+.od-covers {
+  /* Figma leaves 120 between the covers and the next section's heading. The two
+     empty `group > columns > column` pairs that used to sit there were the old
+     theme's spacers and gave nothing — they are dropped by `od-pages.php`, so the
+     rhythm has to be real. */
+  margin-bottom: 120px;
+  gap: 40px;
+
+  @media (--mobile) {
+    margin-bottom: 60px;
+  }
+}
+
+/* The **column** is what gets capped, not the picture. The pill is positioned
+   against the column (`.wp-block-column` is already `position: relative`, just
+   above), so if the column were allowed to outgrow the poster — which is what
+   happens when block-library stacks the row at its own 781px breakpoint — the
+   pill would end up wider than the picture it sits on. At 1440 the column is
+   386.7 of the 1240 content width, so the cap is inert there. */
+.od-covers .wp-block-column {
+  max-width: 387px;
+  margin-inline: auto;
+}
+
+/* The posters are raw `<img>` inside a paragraph rather than `wp:image` blocks,
+   still carrying the migrator's hard-coded `width`/`height`, and their three
+   sources have three different aspect ratios (232×300, 220×300, 226×300). One
+   ratio plus `cover` is what makes the row even; `height` comes from the base
+   `img` rule's `auto`. */
+.od-covers img {
+  width: 100%;
+  border-radius: 16px;
+  aspect-ratio: 387 / 546;
+  object-fit: cover;
+}
+
+/* No gap between a poster and the pill it carries — the base `p` rule's `1em`
+   bottom margin would push the next column's content out of line. */
+.od-covers p {
+  margin: 0;
+}
+
+/* Figma insets the pill 12 from the card's sides and 14 from its bottom edge. */
+.od-covers .wp-block-button {
+  position: absolute;
+  right: 12px;
+  bottom: 14px;
+  left: 12px;
+}
+
+/* The `white` Button variant — white fill, red label, the inverse of the
+   design-system default above, because here it sits on the artwork. Figma draws
+   no hover state for it; this is the Outline variant's, which is the closest
+   thing the system has.
+
+   The disable is for the `is-style-outline` pair at the top of this file, which
+   ends in the same compound at a higher specificity. It is not a cascade hazard:
+   a button is either inside `.od-covers` or carrying `is-style-outline`, and no
+   button on this site is both. */
+/* stylelint-disable no-descending-specificity */
+.od-covers .wp-block-button .wp-block-button__link {
+  width: 100%;
+  background-color: var(--white);
+  color: var(--red-8);
+}
+
+.od-covers .wp-block-button .wp-block-button__link:hover {
+  background-color: var(--red-1);
+  color: var(--red-10);
+}
+/* stylelint-enable no-descending-specificity */

@@ -167,7 +167,7 @@ A media-asset catalog. Many sub-frames have dozens of children each — these ar
 | Article (materials landing) | `article` (`1012:10934`) | 16 children |
 | Article content (reader view) | `article-content` (`966:8461`) | 9 children |
 | Materials index | `ads` (`778:2206`) | 2 children — ✅ shipped as `app/materials/page.tsx` |
-| Handbooks | `handbooks` (`779:4133`) | 1749 × 1440 |
+| Handbooks | `handbooks` (`779:4133`) | 1749 × 1440 — ✅ shipped 2026-08-17 as `/materials/metodichki/`, with **no route**: CSS + a content script. No mobile variant exists (checked all 589 frames in the section — nothing under 1440 wide) |
 | Books | `books` (`966:6650`) | 3108 × 1440 |
 | Disks (DVDs/CDs) | `disks` (`966:8062`) | small |
 | Printing | `printing` (`966:2949`) | small |

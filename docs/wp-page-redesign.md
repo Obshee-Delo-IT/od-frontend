@@ -14,8 +14,10 @@ Two files, split by lifetime:
 
 | file | what | when it runs | PHP floor |
 | --- | --- | --- | --- |
-| `wp/scripts/od-pages.php` | one-shot content fixes — strip a page's `<style>`, rewrite blocks, set a `className` | by hand, `wp eval-file` | CLI PHP (8.2 on prod) — modern syntax fine |
+| `wp/scripts/od-pages.php` ✅ | one-shot content fixes — strip a page's `<style>`, rewrite blocks, set a `className` | by hand, `wp eval-file` | CLI PHP (8.2 on prod) — modern syntax fine |
 | `wp/mu-plugins/od-design.php` | runtime registration — block styles, patterns, editor palette | every request, forever | **PHP 7.0 syntax only** |
+
+**`od-pages.php` exists** since 2026-08-17, written for the first page through this flow (`/materials/metodichki/`, [`implementation-notes.md`](./implementation-notes.md)). Its five transforms are the ones the next pages are most likely to need again — drop the migrator's empty spacer groups, put a `className` on a block, move a redundant heading into an image's `alt`, replace a `wp:details` accordion, append a link to a body — so read it before writing a sixth.
 
 **The PHP floor on the second file is not a style preference.** Production's *site* PHP is 7.x (`mod_php7`) while its CLI is 8.2, and 7.4+ syntax in an mu-plugin is a parse error that takes the whole site down the moment it loads. `wp/mu-plugins/od-revalidate.php` is written to that floor for the same reason — read its header before editing either.
 
@@ -31,7 +33,9 @@ Two files, split by lifetime:
 
 ### Tests
 
-`wp/tests/od-pages.test.php`, plain `assert`, no PHPUnit and no composer — run it with `php wp/tests/od-pages.test.php`. It covers the pure transforms only, and **every transform gets the idempotency case**: `f(f(x)) === f(x)`. Fixtures are real `post_content` captured from od-dev.
+`wp/tests/od-pages.test.php`, no PHPUnit and no composer — run it with `php wp/tests/od-pages.test.php` (exit 0 / exit 1, 45 assertions today). It covers the pure transforms only, and **every transform gets the idempotency case**: `f(f(x)) === f(x)`. Fixtures are real `post_content` captured from od-dev into `wp/tests/__fixtures__/` — recapture them rather than editing them by hand.
+
+**Not PHP's `assert()`, despite what this section used to say.** `zend.assertions` is `-1` on the dev machine and on both servers, which compiles `assert()` out of the file entirely: the tests would have printed nothing and exited 0 no matter what the transforms did. A one-line `od_test()` helper — an `if` and an `exit(1)` — cannot be switched off by an ini setting.
 
 ## 2. Where a fix goes — the ladder
 
@@ -42,6 +46,8 @@ Stop at the first rung that holds.
 3. **An inline `<style>` on the page**, for one or two genuinely page-local cases. Cheaper than a dropdown nobody else will use — *but scope it*: prefix every selector with a class on the page's own wrapper. Unscoped author CSS from the old theme is what threw the `/materials/` captions onto the site header ([`wp-page-passthrough.md` §4](./wp-page-passthrough.md#4-bugs-and-where-each-was-fixed)); a page's CSS competes with ours on ordinary specificity and it is not layered.
 4. **`register_block_style()` / `register_block_pattern()`** in `od-design.php`. Both are PHP-only, no JS and no build step. Reach for them when a variant repeats often enough that hand-typing a class becomes a typo risk, or when an editor needs to insert a whole prefab section themselves. A registered style appears in the editor's Стиль panel and lands in the markup as `is-style-<slug>`.
 5. **A custom block.** Last resort — it needs JS in the editor and therefore a build step on the WordPress side. No case for one is known today.
+
+**A sixth thing, off the ladder: a link that becomes a component.** Some blocks are not a styling problem at all — they are a *record* the page is retyping. `/materials/metodichki/` had a coordinator's name, role and three contact lines pasted into a `<details>`, and the same person's `profile` record next to it. There is no rung for that: no CSS makes prose into data. What it takes instead is a **`/profile/…` link alone in its own paragraph**, which `parsePost`'s `embeds` option swaps for a `PersonCard` built from the record (`src/modules/WpPage/profileEmbeds.tsx`, B-CPT in the notes). Reach for it when a page repeats something WordPress already holds as a record; it needs no registration, and if the record goes away the link still works. It is **not** a general escape hatch — a page's own content stays content.
 
 **Colour and spacing controls in the editor** were considered as `theme.json` (injected by the `wp_theme_json_data_theme` filter) and dropped as too much machinery. If editors ever need to pick a brand colour rather than have it, the simple form is the classic-theme API — `add_theme_support('editor-color-palette', …)` plus `add_theme_support('disable-custom-colors')` in `od-design.php`, which is a few lines and emits `has-<slug>-color` classes we already control.
 
@@ -76,6 +82,8 @@ Known traps in the rendered output. The first four are **pipeline** problems, no
 - **Root-relative `/wp-content/…` links 404 on this site.** Not the same shape as the bullet above: these are already paths, and the file they name lives only on the WordPress host. **12 724 across 5 052 published posts, 286 across 37 pages** — which is why it was fixed in the pipeline and not in a content script. Handled since 2026-08-17 (**D6d**, [`implementation-notes.md`](./implementation-notes.md)): `resolveContentLinks` puts `WP_BASE` back on them. **Nothing to do per page.**
 - **`core/archives` renders `/date/YYYY/MM/`, and there is no such route.** Today only od-dev's scratch page `72892 test` carries any (all 170 of them), so this is a note rather than work — but the block sits in the editor's inserter, and anything an editor builds with it lands on a 404.
 - **Grep for hrefs with both quote characters.** Some blocks emit `href='…'` (`core/archives` among them), most emit `href="…"`. A double-quote-only pattern reports a confident zero and sends you looking in the wrong place — it did here, and the `/date/` links were invisible until the pattern was widened.
+- **`gutenberg.css` lowercases every `h2` inside a group**, then re-capitalises the first letter (`.wp-block-group h2 { text-transform: lowercase }`). It sentence-cases the shouty headings WordPress is full of, and it also turns «Здоровая Россия» into «Здоровая россия» — it was doing exactly that on `/materials/metodichki/` until those headings were removed. Check any heading you keep, and expect this to need replacing with sentence-cased *content* rather than a `text-transform`. Recorded in [`next-steps.md`](./next-steps.md).
+- **A React component rendered into a body loses to `gutenberg.css`'s tag rules.** Everything in that file is authored bare (`p`, `ul`, `li`, `a`, `img`) and becomes `.gutenberg p` — specificity (0,1,1), which beats any single CSS-module class (0,1,0). `PersonCard` came out with 16px text, a 1em paragraph margin, `ul`'s 1.5em indent and `li`'s row margin before its selectors were doubled (`.name.name`). Double the class on anything styling one of those five elements inside a body.
 - **`parsePost`'s hero lift is off for pages** — `WpPage` passes `liftHeader: false`, since 2026-08-17. It is not a "leading block" rule as it reads: it matches the **first** carousel or gallery anywhere in the document and removes **its whole parent**, so a gallery an editor drops into a column takes that column's text with it. On a post the parent is the wrapper the migrator put there; on a page it is arbitrary. Measured over od-dev's 170 pages: 2 carry a gallery, **neither** as a leading top-level block, and **both** would lose a sibling (`/sp/` a heading). Nothing to lift, everything to lose. Posts and films keep the lift.
 
 ## 5. Prerequisites and things that break outside this file

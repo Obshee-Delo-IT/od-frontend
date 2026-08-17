@@ -410,6 +410,29 @@ Built ahead of its entry traffic on purpose: **107 entries against 939 views (8.
 
 Deferred: the newsletter block is *not* in the Figma frame — kept anyway, since the live page has one and every other index route ends with it.
 
+### `/materials/metodichki/` — the first page through the redesign flow (D8), 2026-08-17
+
+Figma `handbooks` (`779:4133`). 56 entries in 91 days, and the first exercise of the procedure in [`wp-page-redesign.md`](./wp-page-redesign.md): **no route was added.** The path already rendered natively through the catch-all, so the whole change is CSS in this repo plus a content script in `wp/scripts/od-pages.php` — which did not exist before this and is what the next two Tier-2 pages inherit.
+
+**What the page was:** four `wp:group`s, two of them empty spacers left by CMSMasters rows; three columns each with an `h2` repeating the title printed on the poster below it; and, at the bottom, a **collapsed `<details>`** holding the coordinator as five paragraphs pasted out of Telegram (`text-entity-link`, `data-entity-type="MessageEntity*"` — the Telegram anchor had no `href` at all, so «Телеграмм: @paramon1302» was dead text). Two of the three «Подробнее» buttons pointed at `общее-дело.рф`, i.e. off-site (fixed in the pipeline, D6e).
+
+Four content transforms, each idempotent by detection and each with its own test plus an `f(f(x)) === f(x)` case:
+
+- **the two empty spacer groups are dropped.** They rendered as empty divs and gave no spacing at all, so the mock's 120px between the covers and the next heading is now a real `margin-bottom` on the cover row. Dropping them first is also what makes "the first `wp:columns` block" a reliable thing to point at.
+- **`od-covers` goes on the cover row**, block attribute and class list both, exactly as the editor's «Дополнительные CSS-классы» field writes it. Nothing in Gutenberg's markup tells a grid of book covers from any other three-column row.
+- **each `h2` moves into its poster's `alt`.** The mock draws the covers captionless because the title is printed on the artwork; deleting the headings outright would have lost those words for a screen reader and for search. It also replaced the migrator's own alt text, which was «metodichka-mult» on two of the three.
+- **the `<details>` becomes an `h2` plus a link to the coordinator's `profile` record.** The accordion was `[cmsms_toggle]`, not anyone's decision about this content, and the mock shows the card open. The duplication goes with it — see B-CPT above for why the marker is a link.
+
+**The two contacts only the page had** — the Telegram handle and the VK page — were written into profile 46651 in the same run, since neither record was a superset of the other and the card can only show what the record holds.
+
+Three things the mock asks for and the content cannot give:
+
+- **The covers are the wrong files.** Figma shows flat poster artwork; WordPress holds 3D photos of the printed booklets on white grounds, which is what the live site has always shown. `object-fit: cover` at the mock's 387×546 makes the row even either way, and if the designer's renders are ever uploaded the CSS already fits them.
+- **The breadcrumb reads «Главная»**, the mock «Материалы». `WpPage` hard-codes the root crumb for all ~150 native pages; giving it the real parent chain needs `post_parent` and the parent titles, and belongs to D6b rather than to one page. Recorded in [`next-steps.md`](./next-steps.md).
+- **Profile 46651's slug names a different person** — `гордикова-екатерина`, because the record was retitled from Екатерина Гордикова to Андрей Рязанов without re-slugging (`_wp_old_slug` is `екатерина-гордикова`). The link therefore reads oddly. **Re-slugging is not safe from here:** the A6 frozen copy is keyed on the live path, so a new slug would 404 in the iframe that still serves `/profile/*`. Left as found and reported.
+
+**`wp/scripts/od-pages.php`** is dry-run by default (`apply` is a *positional* argument — `wp eval-file` rejects `--flags` it does not own), addresses records by path or title rather than id, and writes through `$wpdb->update` after `wp_save_post_revision`, never `wp_update_post`, because the migrator's `save_post` hook deletes the `nvp_content_copy` backup on update. Applied to od-dev 2026-08-17: 2 records changed, and a second dry-run reported **0 left**, which is the convergence check. `wp/tests/od-pages.test.php` is plain `assert` over real captured bodies — 45 assertions, `php wp/tests/od-pages.test.php`.
+
 ---
 
 ## 4. Shipped — data & media (B, E)
