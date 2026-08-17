@@ -129,7 +129,19 @@ Checked before shipping it:
 
 Applied to the two tile pages on od-dev (`wp cmsms migrate --post=57271,57269`) and verified in a browser at 1440: grey panels, red captions over the pictures, tiles navigating to their child pages. Two cosmetic differences from the live site remain, both ours rather than the content's: the picture sits left instead of right (the page says `text-align: right`, our `gutenberg.css` says `img { display: block }`), and panels in a row are equal-height (Gutenberg columns are flex; the old theme floated them). Not worth emulating a dead theme for.
 
-**Not yet applied to the other 2 822 records** — that is a bulk content operation on od-dev and wants its own decision, not a side effect of a bug fix.
+**Run across all of od-dev on 2026-08-17** — not because posts needed it (on a post the restored link is almost always a thumbnail pointing at its own full-size original, and the lightbox intercepts anything under `/wp-content/uploads/` and displays `img.currentSrc` regardless, so nothing rendered differently), but because **prod migrates in full at cutover**: od-dev has to be the content prod will have, or it is testing something else. Re-running is safe by construction — `migrate` always converts from the `nvp_content_copy` backup, never from the current body. 2 657 records changed, 5 821 were already identical; a second dry-run afterwards reported 0 left, which is the convergence check.
+
+**The bulk run is what found the link shapes a two-page sample never would.** `esc_url()` prefixes `http://` to any value with no scheme and no leading slash, so three link shapes needed handling before the restored href was an improvement:
+
+| In the shortcode | `esc_url()` gave | Now |
+| --- | --- | --- |
+| `printed-products` (a bare relative slug, on `/materials/`) | `http://printed-products` — a nonexistent host | left relative, resolves to `/materials/printed-products` |
+| `wp-content/uploads/…jpg` (no leading slash) | relative to the post's own URL | `/wp-content/uploads/…jpg` |
+| `i/wp-content/uploads/…jpg` (a typo, 3 posts) | `http://i/wp-content/…` — host `i` | `/wp-content/uploads/…jpg` |
+
+The first is escaped with `esc_attr` instead of `esc_url` (no colon can reach that branch, so `javascript:`/`data:` cannot either); the other two are normalised to the root path — only when the value has no scheme and is not already absolute, so a link to another domain is never rewritten. Without the normalisation those hrefs would also miss `ImagePreviewClient`'s `/wp-content/uploads/` test and navigate somewhere broken instead of opening the lightbox.
+
+Not fixed, because it is not ours: profile 21157 carries `href="http://+7-903-722-53-29"` **in the original body** — someone typed a phone number into WP's link field years ago. Content junk on a record no route renders yet.
 
 **WooCommerce shortcodes are handed over unexpanded.** REST returns `[woocommerce_cart]` verbatim — only the theme expands it, so the four shop pages had to stay on the opt-out list. They were deleted instead; see §7.
 
