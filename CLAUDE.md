@@ -37,6 +37,8 @@ Caveat on `generate:types`: **follow it with Prettier** — `npx prettier --writ
 
 Messages follow the log: `type(SCOPE): lowercase summary`, where `SCOPE` is the workstream item from `docs/implementation-plan.md` (`A8`, `B3`, `D7`, …) or the area (`scripts`, `repo`, `runbook`) — e.g. `feat(B4): secret-gated /api/revalidate/`. Branch first if you're on `main`, and only push when asked.
 
+**Merge with `--no-ff`, always.** `git merge --no-ff <branch>` even when a fast-forward is possible, so every branch leaves a merge commit and the log keeps showing what shipped together as one unit. Never `--ff-only`, never a bare `git merge` that silently fast-forwards.
+
 ## Env vars
 
 Required: `WP_USER`, `WP_PASSWORD`, `WP_BASE` (a WordPress application password — see README). Optional: `WP_MEDIA_CDN` (media bucket origin; defaulted in `src/shared/api/mediaCdn.ts`, `""` disables the rewrite), `SITE_URL` (this deployment's public origin — feeds `metadataBase`, every canonical, `sitemap.xml` and `robots.txt`; defaults to `https://obshee-delo.ru` in `src/shared/config/site.ts`, so **any non-prod tier must set it explicitly** or it advertises prod's URLs), `REVALIDATE_SECRET` (shared secret for `POST /api/revalidate/`, B4 — unset means the endpoint 503s and purges nothing; **one secret per tier**), `KINESCOPE_TOKEN` (`film:kinescope` only, never at runtime), and later `WP_LEGACY_BASE` (the A6 frozen-copy origin).
