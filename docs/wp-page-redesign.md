@@ -21,6 +21,10 @@ Two files, split by lifetime:
 
 **The second file does not exist yet, and should not be created speculatively.** It appears the first time a design variant repeats often enough to earn a dropdown (§2, rung 4). Until then one script is the whole WordPress side.
 
+`od-pages.php` exists as of 2026-08-17 and holds one page, `/healthy-russia/` (D6e in the notes) — read `od_pages_healthy_russia()` before writing the second transform: the helpers for heading, paragraph, image and button blocks are already there, and so is the pattern for reading a page's own ids and links back out.
+
+**One thing that is not in the file and cannot be: `$wpdb`.** `wp eval-file` runs the script in a function scope, so the runner needs `global $wpdb;` — without it the write dies as a WordPress critical error *after* the dry-run line has already printed, which reads exactly like a successful run.
+
 ### What `od-pages.php` must guarantee
 
 - **Idempotent by detection, not by rewriting.** Each fix checks whether the page is already in its target shape and skips it. Re-running must not clobber an editor's later work — this script gets run again on every environment.
@@ -52,8 +56,8 @@ Stop at the first rung that holds.
 3. **Read the page's `post_content`**, not just the rendered HTML: `ssh timeweb 'cd od-dev/public_html && wp --url=https://od-dev.tmweb.ru post get <id> --field=post_content'`, or `?slug=` over REST. Everything in §4 is visible there and invisible in the browser. Two things about that command line — see §5: the host may need to be `timeweb-through-vpn`, and `--url` is not optional.
 4. **Classify every difference** against the ladder in §2 before writing anything. A difference that is really a missing parity rule (something the old theme supplied and Gutenberg does not) belongs in `gutenberg.css` — the same content arrives on production through the same migrator, so a page-by-page rebuild leaves the next page to break identically.
 5. **Implement** — CSS in the repo, content in `od-pages.php`, tests for each new transform.
-6. **Apply to od-dev** — dry-run, read it, then `--apply`.
-7. **Check in a browser at 1440 and 375**, against the mock.
+6. **Apply to od-dev** — `scp` the script over, dry-run, read it, then re-run with the positional `apply`, then run it a third time to see it report `already in shape, skipped`.
+7. **Purge the page, then check in a browser at 1440 and 375**, against the mock. The dev server keeps serving the copy it fetched before the write — the fastest purge is the B4 endpoint against localhost (`POST /api/revalidate/` with `{"postId": <id>, "paths": ["/<slug>/"]}`; source `.env` for the secret rather than printing it). Deleting `.next/cache` does **not** do it.
 8. **Commit the block** — CSS, script, tests and the doc change together, one commit, per `CLAUDE.md`.
 
 ## 4. What to look for in a page's content
@@ -87,6 +91,8 @@ Known traps in the rendered output. The first four are **pipeline** problems, no
 - **Adding a native Next route for a path retires its WordPress passthrough**, with no other edit: App Router gives a real route precedence over `[...slug]`.
 - **After any routing or redirect change, run `pnpm url:check`.**
 - **The WordPress editor is not WYSIWYG here** — the admin shows default Gutenberg, not this site. Tracked in [`next-steps.md`](./next-steps.md).
+- **`@wordpress/block-library`'s stylesheet is imported *after* `gutenberg.css`** (see `gutenberg-provider.css`), so on equal specificity **core wins**. A rule of ours on a single core class — `.od-programme-logo` against core's `.wp-block-image` — silently loses whatever core also sets, `margin` most often. Write `.wp-block-image.od-programme-logo`. Core's `!important`s (`align-items`, `flex-wrap` on every columns block) cannot be beaten at all, only worked with.
+- **Stylelint's `no-descending-specificity` decides where a new rule goes.** A block of card CSS appended mid-file will fail the lint against rules further down; ordering by ascending specificity, with the whole block after the existing single-class rules, is what passes. `pnpm lint:styles` reports the exact pair.
 
 ## 6. Done means
 

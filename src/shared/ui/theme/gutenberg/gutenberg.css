@@ -210,7 +210,7 @@ th {
 .wp-element-button.is-style-outline:hover {
   background-color: var(--red-1);
   box-shadow: inset 0 0 0 1px var(--red-10);
-  color: var(--white);
+  color: var(--red-10);
 }
 
 :where(.is-layout-flex) {
@@ -278,4 +278,174 @@ th {
    frontend knowing anything about the page's own CSS. */
 .wp-block-column {
   position: relative;
+}
+
+/* ------------------------------------------------------------------------- *
+ * The programme-page template — Figma `project-1` (`759:845`), D6e.
+ *
+ * Four classes, all of them written into `post_content` by
+ * `wp/scripts/od-pages.php`: an editor can move a card or add one from the
+ * admin, and the design follows. Nothing here is page-specific — the other two
+ * programme pages (`/healthy-kids/`, `/healthy-youth/`) get the same treatment
+ * from the same script when their turn comes.
+ * ------------------------------------------------------------------------- */
+
+/* The programme's own logo, in a card of its own at the top right — the mock
+   uses it in place of a second title, so it is deliberately not full width. */
+/* Two classes, not one: `.wp-block-image` sets a margin of its own, and core's
+   stylesheet is imported after this file — a single class ties and loses. */
+.wp-block-image.od-programme-logo {
+  max-width: 470px;
+  padding: 18px 12px;
+  border-radius: 12px;
+  margin: 0 0 40px auto;
+  background-color: var(--white);
+}
+
+.od-card {
+  padding: 24px 20px;
+  border-radius: 12px;
+  margin-bottom: 64px;
+  background-color: var(--white);
+}
+
+/* Beats the lowercasing rule above: «Здоровая Россия — ОБЩЕЕ ДЕЛО!» is a name,
+   and the mock sets it as written. */
+.od-card h2 {
+  text-transform: none;
+}
+
+.od-card :is(p, .wp-block-buttons):last-child {
+  margin-bottom: 0;
+}
+
+/* The goal card. Its drawing is decoration rather than content, so it is a
+   background here and not an image block — nothing for an editor to lose. */
+.od-card--goal {
+  display: flex;
+  align-items: center;
+  padding: 48px 40px;
+  gap: 64px;
+}
+
+.od-card--goal::before {
+  flex: 0 0 314px;
+  aspect-ratio: 314 / 340;
+  background: url('/figma/programme-goal.svg') center / contain no-repeat;
+  content: '';
+}
+
+.od-card--goal > .wp-block-group__inner-container {
+  max-width: 640px;
+  flex: 1;
+}
+
+/* The task cards: one white card per column, equal height because core pins
+   `align-items: initial !important` on every columns block. */
+.od-cards {
+  margin-bottom: 64px;
+  gap: 40px;
+}
+
+.od-cards > .wp-block-column {
+  padding: 24px 20px;
+  border-radius: 16px;
+  background-color: var(--white);
+}
+
+.od-cards h3 {
+  margin-bottom: 24px;
+  color: var(--red-8);
+  font-size: var(--font-size-8);
+  line-height: 130%;
+}
+
+.od-cards p:last-child {
+  margin-bottom: 0;
+}
+
+/* The film posters. `margin-top: auto` on the button keeps the row of buttons
+   on one line when the posters differ in height. */
+.od-poster-cards {
+  gap: 40px;
+}
+
+.od-poster-cards > .wp-block-column {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.od-poster-cards .wp-block-image {
+  margin: 0;
+}
+
+/* One shape for every poster. The films' own covers are not a consistent ratio
+   — «Наркотики» is landscape where the rest are portrait — and left alone that
+   one card is half the height of its neighbours. `contain` rather than `cover`
+   because cropping a poster to fit cuts the film's title off it. */
+.od-poster-cards img {
+  width: 100%;
+  padding: 8px;
+  border-radius: 12px;
+  aspect-ratio: 3 / 4;
+  background-color: var(--white);
+  object-fit: contain;
+}
+
+.od-poster-cards .wp-block-buttons {
+  margin-top: auto;
+}
+
+/* The methodology card — a columns block that *is* the card, with the cover
+   flush against its left edge and the text centred beside it. */
+.od-card--flush {
+  padding: 0 20px 0 0;
+  gap: 40px;
+}
+
+.od-card--flush > .wp-block-column:last-child {
+  align-self: center;
+  padding: 24px 0;
+}
+
+.od-card--flush .wp-block-image {
+  margin: 0;
+}
+
+.od-card--flush .wp-block-image img {
+  width: 100%;
+  border-radius: 12px;
+}
+
+@media (--mobile) {
+  .od-programme-logo {
+    max-width: none;
+    margin-left: 0;
+  }
+
+  .od-card--goal {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 24px 20px;
+    gap: 24px;
+  }
+
+  .od-card--goal::before {
+    width: 100%;
+    max-width: 240px;
+    flex: 0 0 auto;
+  }
+
+  .od-card--flush {
+    padding: 0 0 24px;
+  }
+
+  .od-card--flush > .wp-block-column:last-child {
+    padding: 0 20px;
+  }
+
+  .od-card--flush .wp-block-image img {
+    border-radius: 12px 12px 0 0;
+  }
 }
