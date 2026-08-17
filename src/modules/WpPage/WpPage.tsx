@@ -1,5 +1,5 @@
 import { canonicalUrl } from '@/shared/config/site';
-import { parsePost, resolveContentImages } from '@/shared/lib/wpContent';
+import { parsePost, resolveContentHtml } from '@/shared/lib/wpContent';
 import { Box } from '@/shared/ui/components/Box';
 import { ImagePreviewClient } from '@/shared/ui/components/ImagePreview';
 import { PageHeader } from '@/shared/ui/components/PageHeader';
@@ -13,7 +13,7 @@ import type { Metadata } from 'next';
  * in `shared/config/legacyEmbedPages.ts`.
  *
  * Structurally a news article without the news furniture: same Gutenberg
- * pipeline (`resolveContentImages` → `parsePost` → `GutenbergProvider`), no
+ * pipeline (`resolveContentHtml` → `parsePost` → `GutenbergProvider`), no
  * date, no similar-posts rail, and a `PageHeader` on top because a WP page
  * carries its title outside the body — the post body supplies its own.
  */
@@ -42,7 +42,7 @@ export const WpPage = async ({ page }: WpPageProps) => {
      parent, which on a page is the column an editor dropped the gallery into.
      Both od-dev pages that carry one would lose a sibling, and neither has it
      as a leading block, so there is nothing to lift and everything to lose. */
-  const parsed = parsePost(await resolveContentImages(page.contentHtml), { liftHeader: false });
+  const parsed = parsePost(await resolveContentHtml(page.contentHtml), { liftHeader: false });
 
   return (
     <Box display="flex" flexDirection="column" gap={40} py={48}>

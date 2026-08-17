@@ -1,12 +1,16 @@
 /**
- * Turn a WordPress menu URL into a link this site can serve.
+ * Turn a WordPress URL into a link this site can serve.
  *
- * WP stores main-navigation items as **absolute** URLs against its own origin
- * (`https://od-dev.tmweb.ru/video/`). Rendered as-is, every nav click walks the
- * visitor off the frontend and onto the WordPress host — which on prod is the
+ * WP stores main-navigation items — and every link a dynamic block renders, and
+ * most links an editor pastes into a body — as **absolute** URLs against its own
+ * origin (`https://od-dev.tmweb.ru/video/`). Rendered as-is, every click walks
+ * the visitor off the frontend and onto the WordPress host, which on prod is the
  * old site. Editors also mix in relative paths (`/materials/`) and genuinely
  * external destinations (`https://pro.obshee-delo.ru`), so this only strips the
  * origin when it is one of ours.
+ *
+ * Two callers: the header menu (`toNavItems`) and post/page bodies
+ * (`resolveContentLinks`).
  *
  * Internal = the WordPress origin (`WP_BASE`) or the site's own public origin
  * (`SITE_URL`). Anything else is returned untouched, and an unparseable value

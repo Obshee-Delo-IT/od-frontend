@@ -1,6 +1,6 @@
 import { stripHtml } from '@/shared/api/newsPreview';
+import { toInternalHref } from '@/shared/lib/wpContent/toInternalHref';
 import { NavItem, SourceNavItem } from '../types';
-import { toInternalHref } from './toInternalHref';
 
 /**
  * Top-level entries first, so a child is never read before the parent it has to
