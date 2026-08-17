@@ -242,6 +242,16 @@ Two things the swap had to restate: Radix's content panel is a padded white card
 
 **Every colour selector is doubled (`.link.primary`).** `theme-override.css` paints `.rt-Text:where([data-accent-color])` red-8 and every `.rt-Link:hover` red-10; `:where()` contributes nothing, so those are one class each — a lone `.primary` ties and loses on source order. It was measured rendering red-8 before the fix, which is the sort of thing only a browser tells you.
 
+### C12. The CSS modules lost to Radix in `next start` and only there — 2026-08-17
+
+**A production-only, site-wide bug, found redesigning `/materials/metodichki/` and present since long before it.** Every page's H1 rendered **24px in `next start` and 48px in `next dev`** — Radix's default heading size instead of the `page header` mock's `text/9/bold`, in PT Sans instead of PT Sans Narrow, in ink instead of red, and un-uppercased. `PageHeader`'s `.title`, `CardSection`'s `.heading`, `Dropdown`'s `.trigger` and two `Button` size modifiers: **8 elements across `/materials/`, `/projects/`, `/video/` and `/news/`.** Verified against `origin/main` before the fix, so it is not this branch's doing.
+
+**Cause: import order decides the cascade, and `import/order` was enforcing the wrong one.** A CSS-module class and the Radix rule it overrides are usually the same specificity — `.title` vs `.rt-Heading` — so source order is the tiebreak, and in a production build that order is the order modules first enter the graph. `@radix-ui/themes/styles.css` was imported inside `radix-provider.tsx`, i.e. behind `@/shared/ui/theme`; the alphabetiser puts `@/modules/Footer` and `@/modules/Header` above that in `layout.tsx`, and those two chain in **every** shared CSS module. So Radix's sheet landed *after* the modules and won every tie. `next dev` loads CSS per-module in a different order and looked correct, which is exactly what kept it hidden — and the repo has never been deployed, so nothing else would have caught it.
+
+**Fix: the two stylesheets move to the top of `app/layout.tsx`**, as side-effect imports ahead of everything (`import/order` ignores unassigned imports, which is why `global.css` already sat there). `radix-provider.tsx` keeps the `<Theme>` and a comment saying where its styles went; it has exactly one consumer, so there is nowhere for them to go missing.
+
+**How it was found and proved, because "looks right" would not have done it.** A script walks every element carrying a CSS-module class on four pages, snapshots 13 computed properties in `next dev` and in `next start`, and diffs them. It reported 8 elements before and **"NO DIFFERENCES"** after. That comparison is worth re-running after any change to the stylesheet import order — it is the only thing that distinguishes a real style from one that merely wins in dev.
+
 ---
 
 ## 3. Shipped — pages (D)

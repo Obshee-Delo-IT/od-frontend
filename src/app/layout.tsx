@@ -1,4 +1,16 @@
 import '@/shared/ui/styles/global.css';
+/* Radix's stylesheet and our token overrides are imported **here**, ahead of
+   every component, and not in `radix-provider.tsx` where they used to live.
+   They set the cascade order for the whole app, and in a production build that
+   order is the order modules first enter the graph — so with them inside the
+   provider, `import/order`'s alphabetising put `@/modules/Footer` and
+   `@/modules/Header` (which chain in every shared CSS module) *before*
+   `@/shared/ui/theme`, and Radix's own rules then won every tie against a
+   module class. `next dev` loads CSS differently and looked right, which is what
+   hid it: the H1 rendered 48px in dev and 24px in `next start`. See
+   `docs/next-steps.md`. */
+import '@radix-ui/themes/styles.css';
+import '@/shared/ui/theme/radix/theme-override.css';
 import { PT_Sans as PTSans, PT_Sans_Narrow as PtSansNarrow } from 'next/font/google';
 import { Footer } from '@/modules/Footer';
 import { HeaderServer } from '@/modules/Header';
