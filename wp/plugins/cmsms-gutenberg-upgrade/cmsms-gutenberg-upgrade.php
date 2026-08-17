@@ -490,6 +490,12 @@ function welfare_to_gutenberg($content) {
         if (!$url) return '';
 
         $link = isset($atts['link']) ? trim($atts['link']) : '';
+        //-- Часть ссылок на файлы записана без ведущего слеша ("wp-content/…").
+        //-- Относительный href разрешался бы от адреса записи, то есть в никуда,
+        //-- поэтому приводим к корневому пути.
+        if (preg_match('#^wp-content/#', $link)) {
+            $link = '/' . $link;
+        }
         $href = $link !== '' ? $link : $url;
         //-- Без link="" поведение прежнее: ссылка на сам файл, лайтбокс.
         //-- Ссылка на этот же файл — тоже media, а не custom: так её видит редактор.
