@@ -3,7 +3,7 @@ import { cachedFetchVideo, fetchVideoList, resolveMediaUrl } from '@/shared/api'
 import { wpBaseUrl } from '@/shared/api/httpClient';
 import { ALL_FILM_CATEGORY_IDS, catalogueHref } from '@/shared/config/filmCategories';
 import { canonicalUrl } from '@/shared/config/site';
-import { parsePost, resolveContentImages } from '@/shared/lib/wpContent';
+import { parsePost, resolveContentHtml } from '@/shared/lib/wpContent';
 import { Box } from '@/shared/ui/components/Box';
 import { Breadcrumbs } from '@/shared/ui/components/Breadcrumbs';
 import { ImagePreviewClient } from '@/shared/ui/components/ImagePreview';
@@ -84,7 +84,7 @@ export const FilmPage = async ({ id }: FilmPageProps) => {
     ...film.downloads,
     ...extracted.downloads.filter((download) => !knownDownloadUrls.has(download.url)),
   ];
-  const parsed = parsePost(await resolveContentImages(extracted.html));
+  const parsed = parsePost(await resolveContentHtml(extracted.html));
   const rawPosterImageUrl = film.posterImageUrl ?? extracted.posterImageUrl;
   const posterImageUrl = rawPosterImageUrl ? await resolveMediaUrl(rawPosterImageUrl) : null;
   const posterAspectRatio = film.posterImageUrl ? aspectRatioFromUrl(film.posterImageUrl) : extracted.posterAspectRatio;

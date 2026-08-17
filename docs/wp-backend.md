@@ -387,7 +387,9 @@ The resolution pipeline (all under `src/shared/api/`, applied at fetch/render ti
 | `imageUrl.ts` → `toFullSizeImageUrl` | strip the `-WxH` suffix to the full-size original (leaves `-scaled` alone) |
 | `mediaCdn.ts` → `getWpMediaCdn` / `DEFAULT_WP_MEDIA_CDN` | committed CDN base; `WP_MEDIA_CDN` env overrides it, `""` disables. Also feeds `next.config.ts` `images.remotePatterns` so the host is always allowlisted |
 | `mediaUrl.ts` → `resolveMediaUrl` | full-size **and** CDN-when-the-object-exists (cached HEAD, 200-only), else WP origin. Used by `fetchFilms` / `fetchLatestNews` |
-| `src/modules/News/utils/resolveContentImages.ts` | runs every news-body `<img>` through `resolveMediaUrl` and strips `srcset` / `sizes`; applied in the news route before `parsePost` |
+| `shared/lib/wpContent/resolveContentImages.ts` | runs every body `<img>` through `resolveMediaUrl` and strips `srcset` / `sizes` |
+| `shared/lib/wpContent/resolveContentLinks.ts` | makes WordPress-origin `<a>` hrefs root-relative (D6c), leaving the `wp-content` / `wp-admin` / … trees absolute — those files exist only on the WordPress host |
+| `shared/lib/wpContent/resolveContentHtml.ts` | the two above, composed. **The pipeline's entry point**, ahead of `parsePost` — use it rather than either half |
 
 `next/image` then resizes the full-size source and caches the result (`images.minimumCacheTTL` = 1 day; re-uploads get a new filename → new cache key, and expiry is served stale-while-revalidate). Two images stay low-quality for reasons outside the frontend: one source is missing from the bucket entirely, and a featured-news post's only image is a 599×599 original.
 

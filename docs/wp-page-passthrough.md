@@ -34,7 +34,7 @@ There is deliberately no `/news/<id>` or `/video/<id>` — see `CLAUDE.md`.
 
 ## 2. Is a page rendered differently from a post?
 
-**The content pipeline is all but identical.** Both run `resolveContentImages(html)` → `parsePost` → `<GutenbergProvider>`. One deliberate difference since 2026-08-17: `parsePost`'s hero lift — the first carousel/gallery pulled out into a separate `header` slot — is **on for posts and films, off for pages** (`liftHeader: false`). It removes the matched block's whole *parent*, which is the migrator's wrapper on a post and an editor's column on a page; measured over od-dev's 170 pages, both of the two that carry a gallery would lose a sibling and neither has one to lift. Rationale in [`wp-page-redesign.md`](./wp-page-redesign.md).
+**The content pipeline is all but identical.** Both run `resolveContentHtml(html)` — images through `resolveMediaUrl`, WordPress-origin `<a>` hrefs made root-relative (D6c) — → `parsePost` → `<GutenbergProvider>`. One deliberate difference since 2026-08-17: `parsePost`'s hero lift — the first carousel/gallery pulled out into a separate `header` slot — is **on for posts and films, off for pages** (`liftHeader: false`). It removes the matched block's whole *parent*, which is the migrator's wrapper on a post and an editor's column on a page; measured over od-dev's 170 pages, both of the two that carry a gallery would lose a sibling and neither has one to lift. Rationale in [`wp-page-redesign.md`](./wp-page-redesign.md).
 
 Only the furniture around it differs:
 

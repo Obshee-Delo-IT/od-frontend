@@ -1,6 +1,6 @@
 import { Fragment } from 'react';
 import { fetchFooter } from '@/shared/api';
-import { resolveContentImages } from '@/shared/lib/wpContent';
+import { resolveContentHtml } from '@/shared/lib/wpContent';
 import css from './Footer.module.css';
 import { renderFooterWidget } from './utils/renderFooterWidget';
 
@@ -18,12 +18,13 @@ export const Footer = async () => {
   const { data } = await fetchFooter();
 
   // The widget markup carries the WordPress logo straight from the origin,
-  // which is slow and 301s; every other image on the site goes through the
-  // resolution pipeline, so this one does too.
+  // which is slow and 301s, and the widgets' links absolute against that same
+  // origin; every other body on the site goes through the resolution pipeline,
+  // so this one does too.
   const widgets = await Promise.all(
     (data ?? []).map(async (block) => ({
       id: block.id,
-      html: block.rendered ? await resolveContentImages(block.rendered) : '',
+      html: block.rendered ? await resolveContentHtml(block.rendered) : '',
     }))
   );
 

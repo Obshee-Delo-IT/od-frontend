@@ -4,7 +4,7 @@ import { cachedFetchNews } from '@/shared/api/fetchNews';
 import { buildNewsPreview, stripHtml } from '@/shared/api/newsPreview';
 import { canonicalUrl } from '@/shared/config/site';
 import { formatDate } from '@/shared/lib/formatDate';
-import { parsePost, resolveContentImages } from '@/shared/lib/wpContent';
+import { parsePost, resolveContentHtml } from '@/shared/lib/wpContent';
 import { Box } from '@/shared/ui/components/Box';
 import { Breadcrumbs } from '@/shared/ui/components/Breadcrumbs';
 import { ImagePreviewClient } from '@/shared/ui/components/ImagePreview';
@@ -65,7 +65,7 @@ export const NewsArticle = async ({ id }: NewsArticleProps) => {
     { label: stripHtml(data?.title?.rendered) },
   ];
 
-  const parsed = parsePost(await resolveContentImages(data?.content?.rendered));
+  const parsed = parsePost(await resolveContentHtml(data?.content?.rendered));
   const date = formatDate(data?.date);
 
   return (
