@@ -8,9 +8,12 @@ const HREF_ATTR = /\bhref=["']([^"']*)["']/i;
 /**
  * WordPress's own trees, which exist on the WordPress host and nowhere else.
  * A media link (`/wp-content/uploads/…pdf`) made root-relative would 404 on
- * this site, so those keep their origin.
+ * this site, so those keep their origin — and one that arrives *already*
+ * root-relative gets the origin put back (D6d).
  */
 const WP_ONLY_PATH = /^\/wp-(content|admin|includes|json|login)/i;
+
+const wpOrigin = wpBaseUrl.replace(/\/+$/, '');
 
 /**
  * Rewrite the WordPress-origin links in a rendered post or page body to paths
@@ -23,9 +26,17 @@ const WP_ONLY_PATH = /^\/wp-(content|admin|includes|json|login)/i;
  * and onto the CMS — on production, onto the old site. `resolveContentImages`
  * already does the equivalent for `<img>`; this is its half for `<a>`.
  *
+ * The `/wp-content/…` trees move the other way (**D6d**). Those files exist on
+ * the WordPress host and nowhere else, so an absolute link to one keeps its
+ * origin — and a link that WordPress stored *without* one gets it back, since
+ * root-relative it resolves against us and 404s. Editors write that shape
+ * constantly: 12 724 such hrefs across 5 052 posts on od-dev, 286 across 37
+ * pages. `resolveMediaUrl`'s `absoluteWpUrl` has done the same for `<img src>`
+ * from the start; this is the `<a href>` half of it.
+ *
  * Only `<a>` is touched, and only when the origin is ours (see
- * {@link toInternalHref}); external destinations and relative hrefs pass
- * through untouched, as do links into WordPress's own file trees.
+ * {@link toInternalHref}); external destinations and other relative hrefs pass
+ * through untouched.
  */
 export const resolveContentLinks = (html?: string | null): string => {
   if (!html) {
@@ -36,6 +47,12 @@ export const resolveContentLinks = (html?: string | null): string => {
     const href = tag.match(HREF_ATTR)?.[1];
     if (!href) {
       return tag;
+    }
+
+    // D6d — a path into WordPress's own trees, with no origin on it. The file
+    // it names lives only on the WordPress host, so as written it 404s here.
+    if (WP_ONLY_PATH.test(href)) {
+      return tag.replace(HREF_ATTR, `href="${wpOrigin}${href}"`);
     }
 
     const internal = toInternalHref(href, [wpBaseUrl, siteUrl]);

@@ -45,6 +45,19 @@ describe('resolveContentLinks', () => {
     expect(resolveContentLinks(html)).toBe(html);
   });
 
+  it('gives a root-relative WordPress path its origin back (D6d)', () => {
+    const html = '<a href="/wp-content/uploads/2020/04/22-scaled.jpg">фото</a>';
+    expect(resolveContentLinks(html)).toBe(
+      '<a href="https://wp.test/wp-content/uploads/2020/04/22-scaled.jpg">фото</a>'
+    );
+  });
+
+  it('is idempotent over the D6d rewrite — the absolute form is then left alone', () => {
+    const once = resolveContentLinks('<a href="/wp-includes/js/x.js" download>с</a>');
+    expect(once).toBe('<a href="https://wp.test/wp-includes/js/x.js" download>с</a>');
+    expect(resolveContentLinks(once)).toBe(once);
+  });
+
   it('leaves relative hrefs, anchors and mailto alone', () => {
     const html = '<a href="/materials/">м</a><a href="#top">в</a><a href="mailto:a@b.ru">п</a>';
     expect(resolveContentLinks(html)).toBe(html);
