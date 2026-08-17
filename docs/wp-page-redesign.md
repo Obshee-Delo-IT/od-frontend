@@ -10,18 +10,21 @@ Production still holds CMSMasters shortcodes and is converted by `cmsms-gutenber
 
 Therefore every content change is expressed as code, and applying the whole of workstream D to production is **running one script**.
 
-Two files, split by lifetime:
+Three files, split by lifetime:
 
 | file | what | when it runs | PHP floor |
 | --- | --- | --- | --- |
 | `wp/scripts/od-pages.php` | one-shot content fixes — strip a page's `<style>`, rewrite blocks, set a `className` | by hand, `wp eval-file` | CLI PHP (8.2 on prod) — modern syntax fine |
+| `wp/scripts/od-terms.php` | taxonomy the content model needs — create a term, tag the posts that belong to it | by hand, `wp eval-file` | same |
 | `wp/mu-plugins/od-design.php` | runtime registration — block styles, patterns, editor palette | every request, forever | **PHP 7.0 syntax only** |
 
 **The PHP floor on the second file is not a style preference.** Production's *site* PHP is 7.x (`mod_php7`) while its CLI is 8.2, and 7.4+ syntax in an mu-plugin is a parse error that takes the whole site down the moment it loads. `wp/mu-plugins/od-revalidate.php` is written to that floor for the same reason — read its header before editing either.
 
 **The second file does not exist yet, and should not be created speculatively.** It appears the first time a design variant repeats often enough to earn a dropdown (§2, rung 4). Until then one script is the whole WordPress side.
 
-`od-pages.php` exists as of 2026-08-17 and holds one page, `/healthy-russia/` (D6e in the notes) — read `od_pages_healthy_russia()` before writing the second transform: the helpers for heading, paragraph, image and button blocks are already there, and so is the pattern for reading a page's own ids and links back out.
+`od-pages.php` exists as of 2026-08-17 and holds one page, `/healthy-russia/` (D6e in the notes) — read `od_pages_healthy_russia()` before writing the second transform: the helpers for heading, paragraph, image, button and carousel blocks are already there, and so is the pattern for reading a page's own ids and links back out.
+
+`od-terms.php` is the same shape — dry run by default, `apply` to write, idempotent — for the case where the *content model* is what a page needs rather than the page's own markup. It holds one tag so far, `programma-zdorovaya-rossiya`. Keep the two apart: a page is rebuilt from its CMSMasters original whenever its design changes, a term is applied once and must not be, and a query block cannot be written until its term exists.
 
 **One thing that is not in the file and cannot be: `$wpdb`.** `wp eval-file` runs the script in a function scope, so the runner needs `global $wpdb;` — without it the write dies as a WordPress critical error *after* the dry-run line has already printed, which reads exactly like a successful run.
 
@@ -102,7 +105,7 @@ Known traps in the rendered output. The first four are **pipeline** problems, no
 
 - The page matches the mock at 1440 and 375.
 - No `<style>` left on the page except a scoped, deliberate one.
-- Every WordPress-side change is in `wp/scripts/od-pages.php`, idempotent, with a test.
+- Every WordPress-side change is in `wp/scripts/od-pages.php` (markup) or `wp/scripts/od-terms.php` (taxonomy), idempotent, with a test.
 - `php wp/tests/od-pages.test.php` passes, and `pnpm lint · type-check · test` are green.
 - If the page was on the legacy-embed list, it is off it.
 - Committed as one block, with the doc updates in the same commit.

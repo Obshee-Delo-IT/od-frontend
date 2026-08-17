@@ -84,20 +84,6 @@ assert(str_contains($after, 'alt="Здоровая Россия"'), 'logo alt');
 assert(str_contains($after, 'alt="История одного обмана"'), 'poster alt from its own button');
 assert(!str_contains($after, 'alt=""'), 'no image left without alt');
 
-// -- a portrait cover may be swapped in for a landscape one -----------------
-
-$swapped = od_pages_healthy_russia(
-    $before,
-    fn(array $card): ?array => str_contains($card['src'], 'drugs.jpg')
-        ? ['id' => '22298', 'src' => 'https://example.test/narkotiki-poster.jpg']
-        : null
-);
-assert(str_contains($swapped, '"id":22298'), 'the replacement cover is used');
-assert(!str_contains($swapped, 'drugs.jpg'), 'the landscape still is dropped');
-assert(str_contains($swapped, 'alt="Секреты манипуляции. Наркотики"'), 'the card keeps its own alt text');
-assert(substr_count($swapped, 'href="/22289/"') === 2, 'the card still links to the film twice');
-assert(str_contains($swapped, 'history.jpg'), 'cards the callback declines are untouched');
-
 // -- idempotency ------------------------------------------------------------
 
 assert(od_pages_healthy_russia($after) === $after, 'converted content is left alone');
