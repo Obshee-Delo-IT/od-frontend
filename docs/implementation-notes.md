@@ -522,6 +522,24 @@ Read-only pass over od-dev's two cmsms CPTs, to size D3 before building it. Full
 - **Contact details are prose**: phone on 92/139, email on 113/139, in mixed formats. That — not "region" — is what the "promote to ACF?" question is actually about.
 - **`project` re-verified dead**: 0 published, no REST taxonomies, nothing links to it. D6 «Программы» stays plain WP pages.
 
+### B-CPT. `profile` read for real — `PersonCard` and the page↔profile link, 2026-08-17
+
+The recon above sized D3; this is the first thing built on it, pulled forward because `/materials/metodichki/` needs a coordinator card and D8 shouldn't invent a second way to draw a person.
+
+**The relation is a link in the body, because WordPress can't express any other.** Checked every angle on od-dev: page 27642's 37 meta keys are all cmsms layout residue, the *only* ACF group on the install targets `post_format == video`, `get_object_taxonomies('page')` is **empty** — pages carry no taxonomy at all — and `[cmsms_profiles]` survives on no published page. There is nothing to join on. So the marker is what an editor can already make: **a link to the profile page, alone in its own paragraph**, which is also core WordPress's own "a URL on its own line is an embed" convention. `collectProfileHrefs` finds them, `parsePost`'s new `embeds` option swaps them for a rendered card.
+
+Three things that shaped it:
+
+- **The wrapper is replaced, not the anchor.** Putting the card where the `<a>` was leaves `<article>` inside the `<p>` WordPress wrote; the browser re-parses that into something else and hydration fails on the difference. So only an element whose *sole* non-whitespace child is the marked link qualifies — which is also what keeps a link written mid-sentence a link.
+- **`embeds` is a `Map`.** The keys are content, and `'__proto__' in {}` is `true`.
+- **A missing record leaves the link.** That is the argument for a link over a `className` marker: unpublish the profile, or delete this code, and the body still reads correctly. A class renders as nothing.
+
+**Contacts are read by URL scheme, not by parsing prose.** The plan's open question was parse / backfill into ACF / drop the row. The answer is narrower than parsing: `parseProfileBody` reads only the *anchors*, and only their `tel:` / `mailto:` / `t.me` / `vk.com` shape, so nothing depends on wording, punctuation or a «Телефон:» label. Free text is touched in one place — the role line, the body's first bold run — and that has `meta.cmsms_profile_subtitle` behind it. **The known limit, asserted in the test:** a record that *types* its number instead of linking it yields no rows (profile 72293 is one). Measuring how many of the 139 are in that state is D3's job, and the fix is a content pass, not a cleverer regex.
+
+**`PersonCard` is one component for all five Figma frames.** `Frame 33928` (the `handbooks` banner), the `team-1` grid cards, the `team-2` wide cards and the two contacts-page variants share ~85 % of their pixels: white, radius 12, padding 20, no border and no shadow anywhere (verified by pixel-sampling a card edge), a bold name, one gray secondary line, and contact rows of `[24px outline icon] 12 [red 18px link]` on a 6px gap. The only real difference is **whether there is a photo** — with one the card is `team-1` (photo beside the text, name in ink at 22), without one it is the banner (a `User` glyph in the contact-row indent, name in red at 18). That is a field being filled, not a variant, so there is no `variant` prop and no second component. The `team-2` full-bleed photo is the one genuine fork left, and it waits for `team-2`.
+
+Five 24px outline icons came with it — `user`, `phone-call`, `email`, `telegram`, `vk-outline` — exported from the Figma masters as real geometry and re-stroked to `currentColor`. `vk.svg` stays as it was: it is the filled circle the footer uses, a different mark.
+
 ### E3. File downloads — no build needed
 
 On od-dev the "Скачать фильм" buttons are **Gutenberg button blocks authored in the post body**, linking out to Yandex.Disk. Not a separate file-serving flow — they ride along in the post HTML we already render via `parsePost` + `GutenbergProvider`. Only watch-out: rendered content's external links/buttons must display correctly (Gutenberg button-block CSS) and open sensibly (`target`/`rel`).

@@ -1,5 +1,5 @@
-import parse, { DOMNode, Element, domToReact, Comment } from 'html-react-parser';
-import { Children, JSX, ReactElement } from 'react';
+import parse, { DOMNode, Element, Text, domToReact, Comment } from 'html-react-parser';
+import { Children, JSX, ReactElement, ReactNode } from 'react';
 
 type PostContent = {
   body?: string | JSX.Element | JSX.Element[];
@@ -7,6 +7,30 @@ type PostContent = {
 };
 
 const isElement = (node: unknown): node is Element => node instanceof Element;
+
+/** Whitespace-only text — the newlines WordPress leaves between blocks. */
+const isBlank = (node: DOMNode): boolean => node instanceof Text && !node.data.trim();
+
+/**
+ * The href of the link `node` exists only to hold, when that link has an embed
+ * waiting — otherwise `null`.
+ *
+ * Matching the **wrapper** rather than the anchor is not a detail: an embed put
+ * in the anchor's place would leave `<article>` inside the `<p>` WordPress wrote,
+ * which the browser's parser splits back apart and hydration then fails on. So
+ * only a paragraph (or any element) whose sole content is the link qualifies,
+ * which is also what makes this safe for links written mid-sentence — those keep
+ * being links.
+ */
+const soleEmbedHref = (node: Element, embeds: Map<string, ReactNode>): string | null => {
+  const children = (node.children as DOMNode[]).filter((child) => !isBlank(child));
+  const [only] = children;
+  if (children.length !== 1 || !isElement(only) || only.tagName !== 'a') {
+    return null;
+  }
+  const { href } = only.attribs;
+  return href && embeds.has(href) ? href : null;
+};
 
 const findCarouselOrGallery = (children: DOMNode[]) => {
   const carousel = children.find(
@@ -30,9 +54,23 @@ interface ParsePostOptions {
    * (`/sp/` a heading). So `WpPage` passes `false` — see `wp-page-redesign.md`.
    */
   liftHeader?: boolean;
+  /**
+   * Components to render in place of the links that point at them, keyed by
+   * href exactly as the body spells it.
+   *
+   * This is how a WordPress body reaches a React component with data of its own:
+   * the content holds a plain link, the page fetches whatever that link names,
+   * and the link is swapped for the rendered result. `WpPage` uses it for the
+   * `profile` records a page links (see `profileLinks.ts`); a body with
+   * no such link, or a page that passes nothing, parses exactly as before.
+   *
+   * A `Map`, not an object: the keys are content, and `'__proto__' in {}` is
+   * `true`.
+   */
+  embeds?: Map<string, ReactNode>;
 }
 
-export const parsePost = (data = '', { liftHeader = true }: ParsePostOptions = {}): PostContent => {
+export const parsePost = (data = '', { liftHeader = true, embeds }: ParsePostOptions = {}): PostContent => {
   let header: string | JSX.Element | JSX.Element[] = '';
 
   const body = parse(data, {
@@ -41,7 +79,18 @@ export const parsePost = (data = '', { liftHeader = true }: ParsePostOptions = {
         return <></>;
       }
 
-      if (!isElement(domNode) || !liftHeader) {
+      if (!isElement(domNode)) {
+        return domNode;
+      }
+
+      if (embeds?.size) {
+        const embedded = soleEmbedHref(domNode, embeds);
+        if (embedded) {
+          return <>{embeds.get(embedded)}</>;
+        }
+      }
+
+      if (!liftHeader) {
         return domNode;
       }
 

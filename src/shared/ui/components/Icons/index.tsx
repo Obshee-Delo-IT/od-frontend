@@ -5,9 +5,14 @@ import ChevronRight from '@/shared/ui/assets/icons/chevron-right.svg';
 import CirclePlay from '@/shared/ui/assets/icons/circle-play.svg';
 import Cross from '@/shared/ui/assets/icons/cross.svg';
 import Download from '@/shared/ui/assets/icons/download.svg';
+import Email from '@/shared/ui/assets/icons/email.svg';
 import Menu from '@/shared/ui/assets/icons/menu.svg';
 import Odnoklassniki from '@/shared/ui/assets/icons/odnoklassniki.svg';
+import PhoneCall from '@/shared/ui/assets/icons/phone-call.svg';
 import Search from '@/shared/ui/assets/icons/search.svg';
+import Telegram from '@/shared/ui/assets/icons/telegram.svg';
+import User from '@/shared/ui/assets/icons/user.svg';
+import VkOutline from '@/shared/ui/assets/icons/vk-outline.svg';
 import Vk from '@/shared/ui/assets/icons/vk.svg';
 import Youtube from '@/shared/ui/assets/icons/youtube.svg';
 
@@ -57,6 +62,23 @@ export const MenuIcon: React.FC<BaseIconProps> = ({ size = 20, ...props }) => (
 );
 export const SearchIcon: React.FC<BaseIconProps> = ({ size = 20, ...props }) => (
   <Search width={size} height={size} {...props} />
+);
+
+/** The contact rows of the profile card draw theirs at 24. */
+export const UserIcon: React.FC<BaseIconProps> = ({ size = 24, ...props }) => (
+  <User width={size} height={size} {...props} />
+);
+export const PhoneCallIcon: React.FC<BaseIconProps> = ({ size = 24, ...props }) => (
+  <PhoneCall width={size} height={size} {...props} />
+);
+export const EmailIcon: React.FC<BaseIconProps> = ({ size = 24, ...props }) => (
+  <Email width={size} height={size} {...props} />
+);
+export const TelegramIcon: React.FC<BaseIconProps> = ({ size = 24, ...props }) => (
+  <Telegram width={size} height={size} {...props} />
+);
+export const VkOutlineIcon: React.FC<BaseIconProps> = ({ size = 24, ...props }) => (
+  <VkOutline width={size} height={size} {...props} />
 );
 
 /** The three social marks are drawn at 30, in the footer and only there. */

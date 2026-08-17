@@ -4,6 +4,7 @@ import { Box } from '@/shared/ui/components/Box';
 import { ImagePreviewClient } from '@/shared/ui/components/ImagePreview';
 import { PageHeader } from '@/shared/ui/components/PageHeader';
 import { GutenbergProvider } from '@/shared/ui/theme';
+import { resolveProfileEmbeds } from './profileEmbeds';
 import type { WpPageContent } from '@/shared/api/fetchWpPage';
 import type { Metadata } from 'next';
 
@@ -42,7 +43,12 @@ export const WpPage = async ({ page }: WpPageProps) => {
      parent, which on a page is the column an editor dropped the gallery into.
      Both od-dev pages that carry one would lose a sibling, and neither has it
      as a leading block, so there is nothing to lift and everything to lose. */
-  const parsed = parsePost(await resolveContentHtml(page.contentHtml), { liftHeader: false });
+  const html = await resolveContentHtml(page.contentHtml);
+  /* A `/profile/…` link alone in its paragraph is the marker for "draw this
+     person here" — the only page↔profile relation WordPress can express, since
+     it has neither a meta field nor a shared taxonomy for one. See
+     `profileEmbeds.tsx`. */
+  const parsed = parsePost(html, { liftHeader: false, embeds: await resolveProfileEmbeds(html) });
 
   return (
     <Box display="flex" flexDirection="column" gap={40} py={48}>

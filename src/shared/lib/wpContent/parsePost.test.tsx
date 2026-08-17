@@ -26,4 +26,48 @@ describe('parsePost', () => {
     expect(screen.getByText('подпись под галереей')).toBeInTheDocument();
     expect(screen.getByAltText('фото')).toBeInTheDocument();
   });
+
+  describe('embeds', () => {
+    const embeds = new Map([['/profile/ryazanov/', <span key="k">карточка</span>]]);
+
+    it('replaces the paragraph a marked link is alone in, wrapper and all', () => {
+      const { body } = parsePost('<p><a href="/profile/ryazanov/">Андрей Рязанов</a></p>', { embeds });
+
+      const { container } = render(<div>{body}</div>);
+      expect(screen.getByText('карточка')).toBeInTheDocument();
+      expect(screen.queryByRole('link')).toBeNull();
+      // The `<p>` has to go with it: `<article>` inside `<p>` is re-parsed by the
+      // browser into something else and hydration then fails.
+      expect(container.querySelector('p')).toBeNull();
+    });
+
+    it('leaves a link that shares its paragraph with words', () => {
+      const { body } = parsePost('<p>Пишите <a href="/profile/ryazanov/">Андрею</a> напрямую.</p>', { embeds });
+
+      render(<div>{body}</div>);
+      expect(screen.getByRole('link', { name: 'Андрею' })).toBeInTheDocument();
+      expect(screen.queryByText('карточка')).toBeNull();
+    });
+
+    it('leaves a link with no embed waiting for it', () => {
+      const { body } = parsePost('<p><a href="/profile/someone-else/">Кто-то</a></p>', { embeds });
+
+      render(<div>{body}</div>);
+      expect(screen.getByRole('link', { name: 'Кто-то' })).toBeInTheDocument();
+    });
+
+    it('is not fooled by a content href that names an Object.prototype key', () => {
+      const { body } = parsePost('<p><a href="__proto__">н</a></p>', { embeds });
+
+      render(<div>{body}</div>);
+      expect(screen.getByRole('link', { name: 'н' })).toBeInTheDocument();
+    });
+
+    it('ignores the whitespace WordPress leaves around the link', () => {
+      const { body } = parsePost('<p>\n  <a href="/profile/ryazanov/">А</a>\n</p>', { embeds });
+
+      render(<div>{body}</div>);
+      expect(screen.getByText('карточка')).toBeInTheDocument();
+    });
+  });
 });

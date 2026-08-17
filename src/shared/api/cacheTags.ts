@@ -47,6 +47,16 @@ export const WP_TAGS = {
   menus: 'wp:menus',
   /** Widget sidebars (`/wp/v2/widgets`) — the footer. */
   widgets: 'wp:widgets',
+  /**
+   * The `profile` CPT — the regional coordinators embedded in page bodies (D8),
+   * and later `/profile/[slug]` itself (D3).
+   *
+   * **Nothing purges it yet.** `wp/mu-plugins/od-revalidate.php` only queues
+   * `post_type === 'post'`, so a coordinator edit — like a page edit — waits out
+   * the hour. The tag exists so the fetch is addressable the moment that
+   * changes; see `wp-backend.md` §6.5.
+   */
+  profiles: 'wp:profiles',
   /** `/wp/v2/search` results (B7). */
   search: 'wp:search',
 } as const;
