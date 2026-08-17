@@ -362,6 +362,29 @@ Same predicate, run the other way: `WP_ONLY_PATH` already existed in `resolveCon
 
 Verified over the same rendered corpus plus 400 rendered posts: root-relative `/wp-` hrefs **290 → 0** on pages and **20 → 0** on posts, no link left pointing off-site, idempotent on both.
 
+### D6e. `/healthy-russia/` rebuilt on the `project-1` template — 2026-08-17
+
+The first page redesigned under the flow in [`wp-page-redesign.md`](./wp-page-redesign.md), and the first use of `wp/scripts/od-pages.php`. Figma `project-1` (`759:845`); the page is WP post **60050**, native since D6b.
+
+**What the migrator left.** Six full-width `wp:group`s of `wp:columns`, with every heading and paragraph collapsed into a single `wp:paragraph` block of raw HTML (`<h2 class="cmsms_heading">` and all), a `wp:separator` between each image and its button, and four trailing `<h3>`s — three of them headings with nothing under them on the live site either, one a link.
+
+**Where each difference went**, by the ladder in the flow doc:
+
+- **Content → `od_pages_healthy_russia()` in `wp/scripts/od-pages.php`.** The card layout is structure, so the transform reads the page's own images, links and prose back out and re-emits them as real `core/heading`, `core/paragraph`, `core/image` and `core/buttons` blocks tagged `od-programme-logo` / `od-card` / `od-cards` / `od-card--flush` / `od-poster-cards`. Volatile values — attachment ids, upload paths, the four film post ids — are **extracted, never hardcoded**, because they differ between od-dev and production. Idempotent by detection: the transform returns the content untouched once it carries `od-card`, so a re-run never clobbers an editor. Two content wins fell out of it: every poster now links to its film instead of to the JPEG, and every image has alt text taken from its own button.
+- **Design → `gutenberg.css`.** Nine rules, all on the classes above, all in existing tokens (`--white`, `--red-8`, `--font-size-8`, radius 12/16 from the mock). Nothing is page-specific: `/healthy-kids/` and `/healthy-youth/` get the same treatment from the same script.
+- **The goal card's drawing** (Figma `Supporting volunteering`, `759:850`) is decoration, not content, so it is a CSS background from `public/figma/programme-goal.svg` rather than an image block — there is nothing there for an editor to delete by accident, and no upload to repeat on production.
+
+Also fixed in passing: `.is-style-outline:hover` painted white text on a near-white background — invisible on hover, on every outline button on the site.
+
+**Deliberate deviations from the mock**, both worth a word with Design:
+
+- **The red `<h1>` stays.** The mock replaces the page title with the programme's logo card; `PageHeader` is the site-wide convention and the H1 is what search sees. Removing it is a one-line change if Design insists.
+- **The film posters are a four-up grid, not a carousel.** The mock draws six items and arrows; the page has four, and a carousel for four cards is machinery with nothing to carry. The buttons keep the film titles rather than the mock's «Подробнее» — four identical links read badly to a screen reader. The covers are not one ratio («Наркотики» is landscape), so each sits `object-fit: contain` in a 3∶4 white frame; cropping to fit cut the film's title off the artwork.
+
+`php wp/tests/od-pages.test.php` covers the transform against the real captured `post_content` in `wp/tests/fixtures/` — structure, prose, preserved ids, what is dropped, idempotency, and that unrecognised input is refused rather than half-converted. Applied to od-dev and checked in a browser at 1440 and 375.
+
+**Three traps this hit**, all now in the flow doc: `wp eval-file` runs in a function scope so `$wpdb` needs a `global`; the dev server serves the old copy until the page's cache tag is purged; and core's block stylesheet is imported *after* `gutenberg.css`, so a single-class rule of ours ties with core's and loses.
+
 ### D7. Video — index 2026-06-04, player 2026-07-02
 
 Figma: index `video` (`706:3315`) + `video-filter` (`1554:17574`) + player `video-page` (`1566:10433`) + mobile `video-page-mob` (`1567:10735`, `1567:11844`) + download (`1581:10334`).
