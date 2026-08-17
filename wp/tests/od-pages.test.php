@@ -154,9 +154,29 @@ od_test(
 	)
 );
 
+/* ------------------------------------- od_strip_paragraph_spacing */
+
+$spaced = od_strip_paragraph_spacing( $alted );
+od_test( 'the migrator\'s inline spacing is gone from all three covers', ! preg_match( '~<p[^>]*(margin|padding)~', $spaced ) );
+od_test( 'text-align survives, and the attribute with it', 3 === substr_count( $spaced, 'style="text-align: center"' ) );
+od_test_idempotent( 'od_strip_paragraph_spacing', 'od_strip_paragraph_spacing', $alted );
+
+od_test(
+	'an attribute left empty is dropped, not kept as style=""',
+	od_strip_paragraph_spacing( '<p style="margin-bottom: 3px">т</p>' ) === '<p>т</p>'
+);
+od_test(
+	'a declaration whose name merely contains margin is kept',
+	str_contains( od_strip_paragraph_spacing( '<p style="scroll-margin-top: 4px">т</p>' ), 'scroll-margin-top' )
+);
+od_test(
+	'other elements are untouched — only paragraphs carry this debris',
+	od_strip_paragraph_spacing( '<div style="margin: 10px">т</div>' ) === '<div style="margin: 10px">т</div>'
+);
+
 /* --------------------------------------- od_details_to_profile_link */
 
-$linked = od_details_to_profile_link( $alted, OD_METODICHKI_COORDINATOR_HREF, OD_METODICHKI_COORDINATOR_NAME );
+$linked = od_details_to_profile_link( $spaced, OD_METODICHKI_COORDINATOR_HREF, OD_METODICHKI_COORDINATOR_NAME );
 od_test( 'the accordion is gone', ! str_contains( $linked, 'wp:details' ) );
 od_test( 'its summary becomes an h2', str_contains( $linked, '<h2 class="wp-block-heading">Заказать методические пособия</h2>' ) );
 od_test( 'the coordinator is one link, alone in its paragraph', str_contains( $linked, '<!-- wp:paragraph --><p><a href="' . OD_METODICHKI_COORDINATOR_HREF . '">' . OD_METODICHKI_COORDINATOR_NAME . '</a></p><!-- /wp:paragraph -->' ) );
@@ -165,7 +185,7 @@ od_test( 'and so is the duplicated phone number', ! str_contains( $linked, '8904
 od_test_idempotent(
 	'od_details_to_profile_link',
 	static fn( string $c ): string => od_details_to_profile_link( $c, OD_METODICHKI_COORDINATOR_HREF, OD_METODICHKI_COORDINATOR_NAME ),
-	$alted
+	$spaced
 );
 
 /* ------------------------------------------- the whole page fix, in order */

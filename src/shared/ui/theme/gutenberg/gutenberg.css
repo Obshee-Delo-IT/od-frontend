@@ -353,6 +353,15 @@ th {
 .od-covers .wp-block-button .wp-block-button__link {
   width: 100%;
   background-color: var(--white);
+  /* Figma draws no shadow, and on the mock's artwork it needs none: card 1's
+     poster has a near-black band baked in exactly where the pill sits. The real
+     media library holds photographs of the printed booklets on **white** grounds
+     instead (`docs/next-steps.md`), and sampling card 1's poster inside the
+     pill's own rect came back mean rgb(255,255,255) — a white fill on pure
+     white, boundary contrast 1:1, so the control had no edge at all while its
+     two neighbours read as pills. The system's own faint elevation draws that
+     edge and stays right when the designer's covers arrive. */
+  box-shadow: var(--shadow-sm);
   color: var(--red-8);
 }
 

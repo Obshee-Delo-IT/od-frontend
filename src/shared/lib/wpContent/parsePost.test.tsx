@@ -56,6 +56,25 @@ describe('parsePost', () => {
       expect(screen.getByRole('link', { name: 'Кто-то' })).toBeInTheDocument();
     });
 
+    /**
+     * A `wp:query` teaser renders the same post link twice — once inside the
+     * featured image's `<figure>`, once inside the title's `<h3>` — and both are
+     * sole-child anchors. `/contacts/kalmykiya/` and `/contacts/novosibirskaya/`
+     * are shaped exactly like this and would each have drawn the card twice.
+     */
+    it('ignores a sole-child link that is not in a paragraph — the wp:query teaser case', () => {
+      const teaser = `<li class="wp-block-post">
+        <figure class="wp-block-post-featured-image"><a href="/profile/ryazanov/"><img src="/p.jpg" alt=""/></a></figure>
+        <h3 class="wp-block-post-title"><a href="/profile/ryazanov/">Андрей Рязанов</a></h3>
+      </li>`;
+      const { body } = parsePost(teaser, { liftHeader: false, embeds });
+
+      const { container } = render(<div>{body}</div>);
+      expect(screen.queryByText('карточка')).toBeNull();
+      expect(container.querySelectorAll('article')).toHaveLength(0);
+      expect(screen.getAllByRole('link')).toHaveLength(2);
+    });
+
     it('is not fooled by a content href that names an Object.prototype key', () => {
       const { body } = parsePost('<p><a href="__proto__">н</a></p>', { embeds });
 

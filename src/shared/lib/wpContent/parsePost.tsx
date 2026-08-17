@@ -12,17 +12,30 @@ const isElement = (node: unknown): node is Element => node instanceof Element;
 const isBlank = (node: DOMNode): boolean => node instanceof Text && !node.data.trim();
 
 /**
- * The href of the link `node` exists only to hold, when that link has an embed
- * waiting — otherwise `null`.
+ * The href of the link this **paragraph** exists only to hold, when that link
+ * has an embed waiting — otherwise `null`.
  *
  * Matching the **wrapper** rather than the anchor is not a detail: an embed put
  * in the anchor's place would leave `<article>` inside the `<p>` WordPress wrote,
- * which the browser's parser splits back apart and hydration then fails on. So
- * only a paragraph (or any element) whose sole content is the link qualifies,
- * which is also what makes this safe for links written mid-sentence — those keep
- * being links.
+ * which the browser's parser splits back apart and hydration then fails on.
+ * Requiring the wrapper to hold nothing else is what keeps a link written
+ * mid-sentence a link.
+ *
+ * **And the wrapper has to be a `<p>`, not "any element".** It was any element
+ * for one commit, which is a bug WordPress hands you for free: a `wp:query`
+ * teaser renders the *same* post link twice, once wrapped in the featured
+ * image's `<figure>` and once in the title's `<h3>`, and each of those is a
+ * sole-child anchor. Swept over all 169 published od-dev pages there are exactly
+ * five sole-child profile links — one `<p>` (the marker `od-pages.php` writes)
+ * and two `<figure>`/`<h3>` pairs on `/contacts/kalmykiya/` and
+ * `/contacts/novosibirskaya/`, which would each have drawn the coordinator's
+ * card **twice** in place of a teaser. A paragraph is what the convention says
+ * and what the content actually means.
  */
 const soleEmbedHref = (node: Element, embeds: Map<string, ReactNode>): string | null => {
+  if (node.tagName !== 'p') {
+    return null;
+  }
   const children = (node.children as DOMNode[]).filter((child) => !isBlank(child));
   const [only] = children;
   if (children.length !== 1 || !isElement(only) || only.tagName !== 'a') {
@@ -63,6 +76,10 @@ interface ParsePostOptions {
    * and the link is swapped for the rendered result. `WpPage` uses it for the
    * `profile` records a page links (see `profileLinks.ts`); a body with
    * no such link, or a page that passes nothing, parses exactly as before.
+   *
+   * Only a link **alone in its own `<p>`** is swapped — see
+   * {@link soleEmbedHref} for why the paragraph is part of the contract and not
+   * an implementation detail.
    *
    * A `Map`, not an object: the keys are content, and `'__proto__' in {}` is
    * `true`.

@@ -176,6 +176,50 @@ function od_headings_into_image_alt( string $content ): string {
 }
 
 /**
+ * Strip `margin` and `padding` declarations from the inline `style` attribute of
+ * every paragraph, leaving the rest of the attribute alone.
+ *
+ * CMSMasters rows carried their spacing per element, and the migrator brought it
+ * across as inline style: the three cover paragraphs on `/materials/metodichki/`
+ * arrive with `padding: 0px`, `margin-bottom: 3px` and `margin-bottom: 0px`
+ * respectively. Inline style beats any stylesheet, so the odd `3px` in the middle
+ * made that column 3px taller than its poster — and because block-library forces
+ * `align-items` on a columns row, **all three** pills then sat 11px above their
+ * poster's edge instead of the 14 the mock draws, with the stacked layout showing
+ * 14/11/14. Spacing is the stylesheet's job; this hands it back.
+ *
+ * Idempotent: nothing is left to strip. `text-align` and anything else the author
+ * set survive, and a `style` attribute left empty is removed rather than kept as
+ * `style=""`.
+ */
+function od_strip_paragraph_spacing( string $content ): string {
+	return preg_replace_callback(
+		'~(<p\b[^>]*?\sstyle=")([^"]*)(")~i',
+		static function ( array $m ): string {
+			$kept = array_filter(
+				array_map( 'trim', explode( ';', $m[2] ) ),
+				static function ( string $declaration ): bool {
+					if ( '' === $declaration ) {
+						return false;
+					}
+					$property = strtolower( trim( strtok( $declaration, ':' ) ) );
+
+					return 0 !== strpos( $property, 'margin' ) && 0 !== strpos( $property, 'padding' );
+				}
+			);
+
+			if ( ! $kept ) {
+				// Drop the whole attribute, including the space before it.
+				return rtrim( substr( $m[1], 0, -strlen( ' style="' ) ) );
+			}
+
+			return $m[1] . implode( ';', $kept ) . $m[3];
+		},
+		$content
+	);
+}
+
+/**
  * Replace a `wp:details` accordion with its summary as an `h2` and a link to the
  * `profile` record whose contact details the accordion held as prose.
  *
@@ -268,6 +312,7 @@ function od_pages_fixes(): array {
 				$content = od_drop_empty_layout_groups( $content );
 				$content = od_class_on_first_columns( $content, 'od-covers' );
 				$content = od_headings_into_image_alt( $content );
+				$content = od_strip_paragraph_spacing( $content );
 
 				return od_details_to_profile_link(
 					$content,
