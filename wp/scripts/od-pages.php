@@ -54,12 +54,17 @@
  * once introduced are long gone. The fourth is a link, and it survives as the
  * methodology card's second button.
  *
- * @param string $content Stored `post_content`.
+ * @param string   $content     Stored `post_content`.
+ * @param callable|null $betterCover Given one card from {@see od_pages_column_media()},
+ *                                   returns a replacement `['id' => …, 'src' => …]`
+ *                                   or null to keep the page's own image. The
+ *                                   WP-CLI runner passes {@see od_pages_wp_portrait_cover()};
+ *                                   the tests pass nothing, so the transform stays pure.
  * @return string Rewritten content, or `$content` unchanged if it is already in
  *                the target shape.
  * @throws RuntimeException when the page does not look like the expected input.
  */
-function od_pages_healthy_russia(string $content): string
+function od_pages_healthy_russia(string $content, ?callable $betterCover = null): string
 {
     if (strpos($content, 'od-card') !== false) {
         return $content; // Already converted — leave the editor's copy alone.
@@ -105,14 +110,13 @@ function od_pages_healthy_russia(string $content): string
         . "</div>\n<!-- /wp:group -->\n\n";
 
     $out .= od_pages_heading(2, 'Задачи программы');
-    $out .= "<!-- wp:columns {\"className\":\"od-cards\"} -->\n<div class=\"wp-block-columns od-cards\">";
+    $slides = [];
     foreach ($tasks as $task) {
-        $out .= "<!-- wp:column -->\n<div class=\"wp-block-column\">"
-            . od_pages_heading(3, od_pages_inline_text($task[1]))
-            . od_pages_paragraph(od_pages_inline_text($task[2]))
-            . "</div>\n<!-- /wp:column -->\n";
+        $slides[] = od_pages_heading(3, od_pages_inline_text($task[1]))
+            . od_pages_paragraph(od_pages_inline_text($task[2]));
     }
-    $out .= "</div>\n<!-- /wp:columns -->\n\n";
+    // No arrows: three cards fit the desktop row, and the mobile mock swipes.
+    $out .= od_pages_carousel($slides, 'od-cards', false);
 
     $out .= "<!-- wp:columns {\"className\":\"od-card od-card--flush\"} -->\n"
         . "<div class=\"wp-block-columns od-card od-card--flush\">"
@@ -133,20 +137,19 @@ function od_pages_healthy_russia(string $content): string
         . "</div>\n<!-- /wp:columns -->\n\n";
 
     $out .= od_pages_heading(2, 'Проекты программы');
-    $out .= "<!-- wp:columns {\"className\":\"od-poster-cards\"} -->\n<div class=\"wp-block-columns od-poster-cards\">";
+    $slides = [];
     foreach ($posters as $poster) {
         // «Подробнее» as the mock has it, not the film's title: the poster above
         // is itself a link and carries the title as its alt text, so the card
         // already reads out as the film to a screen reader.
         $label = od_pages_inline_text($poster['label']);
-        $out .= "<!-- wp:column -->\n<div class=\"wp-block-column\">"
-            . od_pages_image_block($poster['id'], $poster['src'], $label, $poster['href'])
-            . od_pages_buttons([['href' => $poster['href'], 'label' => 'Подробнее']], '')
-            . "</div>\n<!-- /wp:column -->\n";
+        $cover = $betterCover === null ? null : $betterCover($poster);
+        $slides[] = od_pages_image_block($cover['id'] ?? $poster['id'], $cover['src'] ?? $poster['src'], $label, $poster['href'])
+            . od_pages_buttons([['href' => $poster['href'], 'label' => 'Подробнее']], '');
     }
-    $out .= "</div>\n<!-- /wp:columns -->";
+    $out .= od_pages_carousel($slides, 'od-poster-cards', true);
 
-    return $out;
+    return rtrim($out) . "\n";
 }
 
 /**
@@ -180,6 +183,58 @@ function od_pages_column_media(string $content): array
     }
 
     return $cards;
+}
+
+/**
+ * A `cb/carousel-v2` block — the Carousel Block plugin, which is what both mocks
+ * draw for these rows and the only carousel this site already runs: the frontend
+ * mounts a Swiper on every `.cb-carousel-block` it renders
+ * (`src/shared/ui/theme/gutenberg/Carousel/`), so a section written this way
+ * needs no frontend code at all, and an editor adds a fourth task or a seventh
+ * project by adding a slide.
+ *
+ * The `data-cb-*` attributes are what the frontend reads; the block comment is
+ * what the editor reads. Both say the same thing, as the plugin's own `save`
+ * does. Three slides per view above 900px — which is what both rows are on
+ * desktop — and one-and-a-bit below it, from the slide width in CSS.
+ *
+ * @param array<int, string> $slides Inner markup of each slide.
+ */
+function od_pages_carousel(array $slides, string $className, bool $navigation): string
+{
+    $attrs = json_encode(
+        [
+            'className' => $className,
+            'spaceBetween' => 40,
+            'navigation' => $navigation,
+            'breakpoints' => [['width' => 900, 'slidesPerView' => 3, 'slidesPerGroup' => 1]],
+        ],
+        JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE
+    );
+
+    $out = sprintf(
+        "<!-- wp:cb/carousel-v2 %s -->\n"
+            . '<div class="wp-block-cb-carousel-v2 cb-carousel-block %s" data-cb-slides-per-view="3"'
+            . ' data-cb-slides-per-group="1" data-cb-space-between="40" data-cb-speed="300"'
+            . ' data-cb-navigation="%s" data-cb-pagination="true" data-cb-loop="false"'
+            . ' data-cb-breakpoints="{&quot;900&quot;:{&quot;slidesPerView&quot;:3,&quot;slidesPerGroup&quot;:1}}">'
+            . '<div class="swiper"><div class="cb-wrapper swiper-wrapper">',
+        $attrs,
+        $className,
+        $navigation ? 'true' : 'false'
+    );
+
+    foreach ($slides as $slide) {
+        $out .= "<!-- wp:cb/slide-v2 -->\n<div class=\"wp-block-cb-slide-v2 cb-slide swiper-slide\">"
+            . $slide
+            . "</div>\n<!-- /wp:cb/slide-v2 -->\n";
+    }
+
+    return $out
+        . '</div></div><div class="cb-pagination swiper-pagination"></div>'
+        . '<div class="cb-button-prev swiper-button-prev"></div>'
+        . '<div class="cb-button-next swiper-button-next"></div>'
+        . "</div>\n<!-- /wp:cb/carousel-v2 -->\n\n";
 }
 
 /** A `core/image` block, optionally wrapped in a link and optionally classed. */
@@ -263,6 +318,67 @@ function od_pages_registry(): array
 }
 
 // ---------------------------------------------------------------------------
+// WordPress lookups. Everything above this line is a pure function of a string;
+// everything below needs a loaded WordPress and is only reachable from the
+// runner, which is why the transforms take it as a callback.
+// ---------------------------------------------------------------------------
+
+/**
+ * A portrait cover for a poster card whose own image is landscape.
+ *
+ * The cards are 3∶4. Most programme pages already carry a portrait cover, but
+ * «Наркотики» is a 480×270 still, and left alone that card letterboxes. The film
+ * it links to knows better: `poster_image_url` is the printable плакат, A4 and
+ * portrait, and eleven films carry one. So: keep the page's image when it is
+ * already portrait, and otherwise borrow the film's poster — but only if that is
+ * portrait too, because a wrong guess here is worse than the landscape still.
+ *
+ * @param array{id: string, src: string, href: string, label: string} $card
+ * @return array{id: string, src: string}|null
+ */
+function od_pages_wp_portrait_cover(array $card): ?array
+{
+    $current = wp_get_attachment_metadata((int) $card['id']);
+    if (!$current || $current['height'] > $current['width']) {
+        return null; // Already portrait — the page's own choice wins.
+    }
+
+    if (!preg_match('#/(\d+)/#', $card['href'], $film)) {
+        return null;
+    }
+
+    $url = (string) get_post_meta((int) $film[1], 'poster_image_url', true);
+    if ($url === '') {
+        return null;
+    }
+
+    $id = attachment_url_to_postid($url);
+    if (!$id) {
+        // Attachments imported from the old punycode domain keep a `guid` that
+        // no longer matches any URL this site serves; the file name still does.
+        // Two candidates, because WordPress attaches an oversized upload under
+        // its `-scaled` copy while the field still points at the original.
+        global $wpdb;
+        $file = basename((string) parse_url($url, PHP_URL_PATH));
+        $scaled = preg_replace('#(\.[a-z]+)$#i', '-scaled$1', $file);
+        $id = (int) $wpdb->get_var($wpdb->prepare(
+            "SELECT post_id FROM {$wpdb->postmeta}
+              WHERE meta_key = '_wp_attached_file' AND (meta_value LIKE %s OR meta_value LIKE %s)
+              LIMIT 1",
+            '%' . $wpdb->esc_like($file),
+            '%' . $wpdb->esc_like($scaled)
+        ));
+    }
+
+    $meta = $id ? wp_get_attachment_metadata($id) : null;
+    if (!$meta || $meta['height'] <= $meta['width']) {
+        return null;
+    }
+
+    return ['id' => (string) $id, 'src' => (string) wp_get_attachment_url($id)];
+}
+
+// ---------------------------------------------------------------------------
 // Runner. Everything above is a pure function and is what the tests exercise.
 // ---------------------------------------------------------------------------
 
@@ -283,7 +399,7 @@ foreach (od_pages_registry() as $path => $transform) {
     }
 
     try {
-        $new = $transform($page->post_content);
+        $new = $transform($page->post_content, 'od_pages_wp_portrait_cover');
     } catch (Throwable $e) {
         WP_CLI::warning(sprintf('%s (#%d): %s', $path, $page->ID, $e->getMessage()));
         continue;

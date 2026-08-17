@@ -358,14 +358,25 @@ h2:has(+ .od-cards, + .od-poster-cards) {
   line-height: 140%;
 }
 
-/* The task cards: one white card per column, equal height because core pins
-   `align-items: initial !important` on every columns block. */
+/* Both rows are `cb/carousel-v2` blocks, so more than three tasks or projects
+   need no new markup — see `od_pages_carousel()`. The base carousel styling is
+   already the mock's (32px round arrows, 8px bullets) and lives in
+   `Carousel/custom-carousel.css`, which is `@nested-import`ed *after* this
+   file: every rule below that touches a slide, an arrow or the bullets carries
+   `.wp-block-cb-carousel-v2` as well, or it ties on specificity and loses. */
+
+/* The task cards: three slots on desktop, a swipe on a phone. */
 .od-cards {
   margin-bottom: 120px;
-  gap: 40px;
 }
 
-.od-cards > .wp-block-column {
+.wp-block-cb-carousel-v2.od-cards .cb-wrapper {
+  align-items: stretch;
+}
+
+.wp-block-cb-carousel-v2.od-cards .swiper-slide {
+  height: auto;
+  max-height: none;
   padding: 24px 20px;
   border-radius: 16px;
   background-color: var(--white);
@@ -387,22 +398,46 @@ h2:has(+ .od-cards, + .od-poster-cards) {
   margin-bottom: 0;
 }
 
+/* Above 900px all three cards are on screen at once and the mock draws no
+   controls at all; the bullets, and the room the block reserves for them,
+   come back on a phone. */
+.wp-block-cb-carousel-v2.od-cards .cb-pagination.swiper-pagination {
+  display: none;
+}
+
+.wp-block-cb-carousel-v2.od-cards[data-cb-pagination='true'] .swiper-horizontal {
+  margin-bottom: 0;
+}
+
 /* The film posters. Each card *is* its poster, with the link floated over the
-   bottom of the artwork — the column is already positioned by the rule above. */
-.od-poster-cards {
-  gap: 40px;
+   bottom of the artwork. */
+.wp-block-cb-carousel-v2.od-poster-cards .swiper-slide {
+  position: relative;
+  max-height: none;
 }
 
-.od-poster-cards .wp-block-image {
-  margin: 0;
+/* `linkDestination: custom` wraps the poster in an inline `<a>`, and a
+   percentage width on a replaced element inside one resolves against the
+   anchor, not the slide — so the poster stopped short of the card the moment
+   the slide grew wider than the file. */
+.od-poster-cards .swiper-slide a {
+  display: block;
 }
 
-/* One shape for every poster. The films' own covers are not a consistent ratio
-   — «Наркотики» is landscape where the rest are portrait — and left alone that
-   one card is half the height of its neighbours. `contain` rather than `cover`
-   because cropping a poster to fit cuts the film's title off it. */
-.od-poster-cards img {
+/* One shape for every poster. The films' own covers are not a consistent ratio,
+   and left alone a landscape one is half the height of its neighbours.
+   `contain` rather than `cover` because cropping a poster to fit cuts the
+   film's title off it — `od_pages_wp_portrait_cover()` prefers a portrait cover
+   where the film has one, and this is what happens when it does not. */
+/* The base carousel clamps a slide, its figure and its image to 360px, which is
+   right for a gallery in a news body and half a poster here. */
+.wp-block-cb-carousel-v2.od-poster-cards .swiper-slide figure {
+  max-height: none;
+}
+
+.wp-block-cb-carousel-v2.od-poster-cards .swiper-slide img {
   width: 100%;
+  max-height: none;
   border-radius: 12px;
   aspect-ratio: 387 / 546;
   background-color: var(--white);
@@ -430,6 +465,7 @@ h2:has(+ .od-cards, + .od-poster-cards) {
   background-color: var(--gray-2);
   color: var(--red-10);
 }
+
 
 /* The methodology card — a columns block that *is* the card, with the cover
    flush against its left edge and the text centred beside it. */
@@ -460,7 +496,7 @@ h2:has(+ .od-cards, + .od-poster-cards) {
   margin: 0;
 }
 
-.od-card--flush .wp-block-image img {
+.wp-block-columns.od-card--flush .wp-block-image img {
   width: 100%;
   border-radius: 12px;
 }
@@ -474,11 +510,33 @@ h2:has(+ .od-cards, + .od-poster-cards) {
 
   .od-card,
   .od-cards {
-    margin-bottom: 40px;
+    margin-bottom: 80px;
   }
 
   h2:has(+ .od-cards, + .od-poster-cards) {
     margin-bottom: 24px;
+  }
+
+  /* Below 900px the adapter switches to `slidesPerView: 'auto'` and takes the
+     slide width from here — 280px, so the next card peeks and the row reads as
+     something to swipe. */
+  .wp-block-cb-carousel-v2.od-cards .swiper-slide,
+  .wp-block-cb-carousel-v2.od-poster-cards .swiper-slide {
+    width: 280px;
+    max-width: 280px;
+  }
+
+  .wp-block-cb-carousel-v2.od-cards .cb-pagination.swiper-pagination {
+    display: flex;
+  }
+
+  .wp-block-cb-carousel-v2.od-cards[data-cb-pagination='true'] .swiper-horizontal {
+    margin-bottom: 32px;
+  }
+
+  /* Bullets only: a phone swipes, and the mock draws no arrows here. */
+  .wp-block-cb-carousel-v2.od-poster-cards :is(.cb-button-prev, .cb-button-next) {
+    display: none;
   }
 
   .od-card--goal {
@@ -516,7 +574,7 @@ h2:has(+ .od-cards, + .od-poster-cards) {
     font-size: var(--font-size-4);
   }
 
-  .od-card--flush .wp-block-image img {
+  .wp-block-columns.od-card--flush .wp-block-image img {
     border-radius: 12px 12px 0 0;
   }
 }
