@@ -143,6 +143,8 @@ The first is escaped with `esc_attr` instead of `esc_url` (no colon can reach th
 
 Not fixed, because it is not ours: profile 21157 carries `href="http://+7-903-722-53-29"` **in the original body** — someone typed a phone number into WP's link field years ago. Content junk on a record no route renders yet.
 
+**The converter also emitted a redundant `<style>` after every gallery — removed 2026-08-17.** It wrote a `wp:html` block laying the gallery out by column, next to markup that already carries `has-nested-images is-cropped columns-N`, which is exactly what `@wordpress/block-library` keys its own column and `object-fit: cover` rules on — and that stylesheet is loaded by the frontend. Redundant, and its first rule was `.wp-block-image img { width: 100%; height: 100%; object-fit: cover }` with no gallery in the selector, so wherever it survived it cropped every standalone image in the body. It reached od-dev on **2 247 published records**; on posts nobody saw it because `parsePost` lifted the gallery *and its whole column* out of the body, taking the style with it (§2). Removing it at the source is what keeps prod's conversion from reproducing all 2 247. Existing bodies still carry it — stripping those is page cleanup, [`wp-page-redesign.md`](./wp-page-redesign.md).
+
 **WooCommerce shortcodes are handed over unexpanded.** REST returns `[woocommerce_cart]` verbatim — only the theme expands it, so the four shop pages had to stay on the opt-out list. They were deleted instead; see §7.
 
 **Cyrillic slugs never match.** WordPress stores them percent-encoded and we compare paths decoded, so those pages fall through to the iframe. Deliberate: matching both forms costs two round trips on every miss, to serve pages with no measurable traffic.
