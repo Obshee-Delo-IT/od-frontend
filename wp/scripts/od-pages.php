@@ -116,10 +116,13 @@ function od_pages_healthy_russia(string $content): string
 
     $out .= "<!-- wp:columns {\"className\":\"od-card od-card--flush\"} -->\n"
         . "<div class=\"wp-block-columns od-card od-card--flush\">"
-        . "<!-- wp:column {\"width\":\"31%\"} -->\n<div class=\"wp-block-column\" style=\"flex-basis:31%\">"
+        // No `width` on either column: the mock's 386/774 split is a proportion of
+        // this card, not of the page, and an inline `flex-basis` would beat the
+        // stylesheet that knows the difference.
+        . "<!-- wp:column -->\n<div class=\"wp-block-column\">"
         . od_pages_image_block($booklet['id'], $booklet['src'], 'Обложка методички «Здоровая Россия — ОБЩЕЕ ДЕЛО!»')
         . "</div>\n<!-- /wp:column -->\n"
-        . "<!-- wp:column {\"width\":\"69%\"} -->\n<div class=\"wp-block-column\" style=\"flex-basis:69%\">"
+        . "<!-- wp:column -->\n<div class=\"wp-block-column\">"
         . od_pages_heading(2, 'Здоровая Россия — ОБЩЕЕ ДЕЛО!')
         . od_pages_paragraph(od_pages_inline_text($prose[1]))
         . od_pages_buttons([
@@ -132,10 +135,13 @@ function od_pages_healthy_russia(string $content): string
     $out .= od_pages_heading(2, 'Проекты программы');
     $out .= "<!-- wp:columns {\"className\":\"od-poster-cards\"} -->\n<div class=\"wp-block-columns od-poster-cards\">";
     foreach ($posters as $poster) {
+        // «Подробнее» as the mock has it, not the film's title: the poster above
+        // is itself a link and carries the title as its alt text, so the card
+        // already reads out as the film to a screen reader.
         $label = od_pages_inline_text($poster['label']);
         $out .= "<!-- wp:column -->\n<div class=\"wp-block-column\">"
             . od_pages_image_block($poster['id'], $poster['src'], $label, $poster['href'])
-            . od_pages_buttons([['href' => $poster['href'], 'label' => $label]], 'center')
+            . od_pages_buttons([['href' => $poster['href'], 'label' => 'Подробнее']], '')
             . "</div>\n<!-- /wp:column -->\n";
     }
     $out .= "</div>\n<!-- /wp:columns -->";
@@ -214,21 +220,21 @@ function od_pages_paragraph(string $text): string
 }
 
 /**
- * A `core/buttons` block of outline buttons — the only button style the
- * `project-1` template draws.
+ * A `core/buttons` block. `project-1` draws two kinds: the outline button that
+ * is the default here, and the solid one the poster cards lay over the artwork —
+ * which carries no block style, because its colours come from
+ * `.od-poster-cards` in `gutenberg.css` rather than from a core style.
  *
  * @param array<int, array{href: string, label: string}> $buttons
  */
-function od_pages_buttons(array $buttons, string $justify = ''): string
+function od_pages_buttons(array $buttons, string $style = 'is-style-outline'): string
 {
-    $layout = $justify === ''
-        ? ''
-        : sprintf(' {"layout":{"type":"flex","justifyContent":"%s"}}', $justify);
+    $attrs = $style === '' ? '' : sprintf(' {"className":"%s"}', $style);
+    $class = 'wp-block-button' . ($style === '' ? '' : ' ' . $style);
 
-    $out = sprintf("<!-- wp:buttons%s -->\n<div class=\"wp-block-buttons\">", $layout);
+    $out = "<!-- wp:buttons -->\n<div class=\"wp-block-buttons\">";
     foreach ($buttons as $button) {
-        $out .= "<!-- wp:button {\"className\":\"is-style-outline\"} -->\n"
-            . "<div class=\"wp-block-button is-style-outline\">"
+        $out .= sprintf("<!-- wp:button%s -->\n<div class=\"%s\">", $attrs, $class)
             . sprintf('<a class="wp-block-button__link wp-element-button" href="%s">%s</a>', $button['href'], $button['label'])
             . "</div>\n<!-- /wp:button -->\n";
     }

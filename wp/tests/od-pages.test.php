@@ -55,6 +55,12 @@ foreach (['/19864/', '/19871/', '/58926/', '/22289/'] as $film) {
 assert(str_contains($after, 'href="https://metodic.obshee-delo.ru/">Сайт методички'), 'methodology button kept');
 assert(str_contains($after, 'href="https://metodic.obshee-delo.ru/download.html">Методические материалы'), 'downloads link kept');
 
+// -- buttons ----------------------------------------------------------------
+
+assert(substr_count($after, '>Подробнее</a>') === 4, 'the poster cards say what the mock says');
+// Twice per button: once in the block attributes, once in the rendered class.
+assert(substr_count($after, 'is-style-outline') === 4, 'only the two methodology buttons are outline buttons');
+
 // -- what the template drops ------------------------------------------------
 
 assert(!str_contains($after, '<hr'), 'migrator separators gone');
@@ -63,6 +69,7 @@ assert(!str_contains($after, 'fontstyle0'), 'old theme span gone');
 assert(!str_contains($after, 'Документальные фильмы'), 'empty trailing heading gone');
 assert(!str_contains($after, '<br'), 'hard line break gone');
 assert(!str_contains($after, 'text-align: center'), 'inline alignment gone');
+assert(!str_contains($after, 'flex-basis'), 'column widths are left to the stylesheet');
 
 // -- alt text ---------------------------------------------------------------
 
