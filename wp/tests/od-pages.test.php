@@ -24,12 +24,19 @@ $after = od_pages_healthy_russia($before);
 
 assert(str_contains($after, 'wp-block-image size-full od-programme-logo'), 'logo card');
 assert(str_contains($after, '<div class="wp-block-group od-card od-card--goal">'), 'goal card');
-assert(str_contains($after, '<div class="wp-block-columns od-cards">'), 'task cards');
+assert(str_contains($after, 'cb-carousel-block od-cards"'), 'task carousel');
 assert(str_contains($after, '<div class="wp-block-columns od-card od-card--flush">'), 'methodology card');
-assert(str_contains($after, '<div class="wp-block-columns od-poster-cards">'), 'poster row');
+assert(str_contains($after, 'cb-carousel-block od-poster-cards"'), 'poster carousel');
 
-assert(substr_count($after, '<!-- wp:column -->') === 7, 'three task cards and four posters');
+assert(substr_count($after, '<!-- wp:cb/slide-v2 -->') === 7, 'three task cards and four posters');
+assert(substr_count($after, '<!-- wp:column -->') === 2, 'only the methodology card is still a columns block');
 assert(substr_count($after, '<!-- wp:image ') === 6, 'logo, booklet and four posters');
+assert(substr_count($after, 'data-cb-pagination="true"') === 2, 'both carousels carry dots');
+
+// Arrows on the projects row, which can outgrow its three slots; none on the
+// tasks, which are three cards on desktop and a swipe on a phone.
+assert(str_contains($after, '"className":"od-cards","spaceBetween":40,"navigation":false'), 'tasks have no arrows');
+assert(str_contains($after, '"className":"od-poster-cards","spaceBetween":40,"navigation":true'), 'projects have arrows');
 
 // -- prose ------------------------------------------------------------------
 
@@ -76,6 +83,20 @@ assert(!str_contains($after, 'flex-basis'), 'column widths are left to the style
 assert(str_contains($after, 'alt="Здоровая Россия"'), 'logo alt');
 assert(str_contains($after, 'alt="История одного обмана"'), 'poster alt from its own button');
 assert(!str_contains($after, 'alt=""'), 'no image left without alt');
+
+// -- a portrait cover may be swapped in for a landscape one -----------------
+
+$swapped = od_pages_healthy_russia(
+    $before,
+    fn(array $card): ?array => str_contains($card['src'], 'drugs.jpg')
+        ? ['id' => '22298', 'src' => 'https://example.test/narkotiki-poster.jpg']
+        : null
+);
+assert(str_contains($swapped, '"id":22298'), 'the replacement cover is used');
+assert(!str_contains($swapped, 'drugs.jpg'), 'the landscape still is dropped');
+assert(str_contains($swapped, 'alt="Секреты манипуляции. Наркотики"'), 'the card keeps its own alt text');
+assert(substr_count($swapped, 'href="/22289/"') === 2, 'the card still links to the film twice');
+assert(str_contains($swapped, 'history.jpg'), 'cards the callback declines are untouched');
 
 // -- idempotency ------------------------------------------------------------
 
