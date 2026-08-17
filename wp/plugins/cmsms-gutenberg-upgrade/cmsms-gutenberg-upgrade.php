@@ -405,6 +405,14 @@ function welfare_to_gutenberg($content) {
     $content = preg_replace('/\[cmsms_divider[^\]]*\]/', '<!-- wp:separator --><hr class="wp-block-separator"/><!-- /wp:separator -->', $content);
 
     //--  Галерея --
+    //-- Раньше следом за галереей писался <!-- wp:html --> со <style>, который
+    //-- раскладывал её по колонкам. Он лишний: разметка ниже несёт
+    //-- has-nested-images / is-cropped / columns-N, а под эти классы колонки и
+    //-- object-fit уже сделаны в @wordpress/block-library, который грузит
+    //-- фронтенд. Хуже того, его первое правило (.wp-block-image img { height:
+    //-- 100%; object-fit: cover }) не привязано к галерее и растягивало любую
+    //-- одиночную картинку записи. На постах это не было видно только потому,
+    //-- что parsePost выносил галерею вместе с её колонкой и стиль уезжал с ней.
     $content = preg_replace_callback('/\[cmsms_gallery([^\]]*)\](.*?)\[\/cmsms_gallery\]/s', function ($m) {
     $atts_str   = $m[1];
     $images_str = trim($m[2]);
@@ -444,29 +452,6 @@ function welfare_to_gutenberg($content) {
 <?php endforeach; ?>
 </figure>
 <!-- /wp:gallery -->
-
-<!-- wp:html -->
-<style>
-.wp-block-image img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}    
-.wp-block-gallery.cmsms-gallery-fixed.is-layout-flex {
-  justify-content: flex-start;
-}
-.wp-block-gallery.cmsms-gallery-fixed.is-layout-flex .wp-block-image {
-  flex-grow: 0 !important;
-}
-:root {
-  --cmsms-gallery-gap: var(--wp--style--gallery-gap, var(--wp--style--block-gap, .5em));
-}
-.wp-block-gallery.cmsms-gallery-fixed.is-layout-flex.columns-<?php echo $columns; ?> .wp-block-image {
-  flex-basis: calc((100% - (<?php echo $columns; ?> - 1) * var(--cmsms-gallery-gap)) / <?php echo $columns; ?>);
-  max-width:  calc((100% - (<?php echo $columns; ?> - 1) * var(--cmsms-gallery-gap)) / <?php echo $columns; ?>);
-}
-</style>
-<!-- /wp:html -->
     <?php
         return ob_get_clean();
     }, $content);

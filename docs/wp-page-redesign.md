@@ -62,7 +62,7 @@ Measured over od-dev's 170 published pages, 2026-08-17:
 
 | | count | why it matters |
 | --- | --- | --- |
-| pages with an inline `<style>` | 30 | old-theme author CSS, unscoped; usually the cause when a page renders wrong |
+| pages with an inline `<style>` | 30 | old-theme author CSS, unscoped; usually the cause when a page renders wrong. A gallery's neighbouring `<style>` is the migrator's own and always redundant — strip it, see [`wp-page-passthrough.md` §5](./wp-page-passthrough.md#5-the-migrator-dropped-every-image-link--fixed-at-the-source) |
 | pages with a `className` | 89 | migrator residue (`cmsms_*`) and real hooks mixed together |
 | pages with `wp:html` | 34 | an escape hatch that bypasses the whole design system — convert to real blocks |
 | pages with `wp:query` | 86 | ~80 of them are the regional `/contacts/*` template |
