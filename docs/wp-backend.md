@@ -118,7 +118,9 @@ The plugin is **CMSMasters Content Composer 1.6.2**, active, and its header says
 
 Two consequences already in §4.4's ordering, restated here because this is where they're checkable:
 
-- **`pl-categs` is registered with no `show_in_rest`** (`:92`, `$pl_categs_args`), which is why `/wp/v2/pl-categs` 404s. Re-registration is the one chance to add it.
+- **`pl-categs` is registered with no `show_in_rest`** (`:92`, `$pl_categs_args`), which is why `/wp/v2/pl-categs` 404s. Re-registration is the one chance to add it. It *is* `public` and `publicly_queryable`, though, which is what lets `core/query` filter on it — see the next point.
+- **75 published pages already depend on this taxonomy through `core/query`.** The migrator converted every `[cmsms_profiles]` into a `wp:query` over `postType: profile` filtered by `taxQuery`, so the regional coordinator lists are **already WordPress-native** and need no shortcode and no plugin — only the CPT and the taxonomy registered. That is the answer to "what replaces `[cmsms_profiles]`": nothing, it is already replaced. (Those 75 blocks were filtering on the wrong taxonomy until 2026-08-17 — [`wp-page-passthrough.md` §5a](./wp-page-passthrough.md).)
+- **Register it in an mu-plugin, not the theme's `functions.php`.** §4.5 offers either, and for the CPT the theme is the wrong home: a post type registered by a theme disappears the moment the theme changes, taking 205 rows out of the admin and out of REST with it. `wp/mu-plugins/` is already the convention in this repo, with the canonical copy under version control — mind its **PHP 7.0 floor**, since an mu-plugin loads on every request and prod's site PHP is 7.x.
 - The registration is **~15 lines of `register_post_type` + `register_taxonomy`**, so owning it is cheap; the content needs nothing, being clean Gutenberg already.
 
 **Key takeaways:**
