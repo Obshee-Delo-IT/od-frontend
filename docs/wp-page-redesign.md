@@ -49,7 +49,7 @@ Stop at the first rung that holds.
 
 1. **Find the mock.** [`page-mocks.md`](./page-mocks.md) maps the Figma `design` page to routes and carries node ids. Read it with `figma-mcp-go` by **frame name**, navigating to a small sub-frame (`search_nodes` → `get_node` → `save_screenshots`); reading a whole page frame times out.
 2. **Look at what renders now.** `pnpm dev`, open the path. Confirm it is native and not the iframe — a native page has a `PageHeader`; check `src/shared/config/legacyEmbedPages.ts`. **If the page is on that list, removing it is part of the change.**
-3. **Read the page's `post_content`**, not just the rendered HTML: `wp post get <id> --field=post_content`, or `?slug=` over REST. Everything in §4 is visible there and invisible in the browser.
+3. **Read the page's `post_content`**, not just the rendered HTML: `ssh timeweb 'cd od-dev/public_html && wp --url=https://od-dev.tmweb.ru post get <id> --field=post_content'`, or `?slug=` over REST. Everything in §4 is visible there and invisible in the browser. Two things about that command line — see §5: the host may need to be `timeweb-through-vpn`, and `--url` is not optional.
 4. **Classify every difference** against the ladder in §2 before writing anything. A difference that is really a missing parity rule (something the old theme supplied and Gutenberg does not) belongs in `gutenberg.css` — the same content arrives on production through the same migrator, so a page-by-page rebuild leaves the next page to break identically.
 5. **Implement** — CSS in the repo, content in `od-pages.php`, tests for each new transform.
 6. **Apply to od-dev** — dry-run, read it, then `--apply`.
@@ -78,6 +78,8 @@ Two known traps in the rendered output:
 ## 5. Prerequisites and things that break outside this file
 
 - **Production's WordPress core must be upgraded before any of this reaches it.** Prod is pinned to 5.5.5 by `wp-downgrade`; the migrator emits `wp:query`, `wp:details` and `wp:group`, and the layout classes our CSS keys on (`is-layout-flex`) are emitted by core 5.9+. On 5.5.5 query blocks render empty and columns stack. Runbook blocker **B10**.
+- **Every `wp` command on od-dev needs `--url=https://od-dev.tmweb.ru`.** Without it `clearfy-pro` sees an empty host and 301s to `https://`, and WP-CLI aborts with a redirect backtrace before running the command. `--path=` does not help; `cd od-dev/public_html` first, because a path-mode run trips the same redirect.
+- **od-dev may be unreachable from a home machine.** Since 2026-08-17 `vh426.timeweb.ru` times out on both 22 and 443 from some networks — a timeout, not a refusal, so the block is on the way, not on the server. The SSH alias **`timeweb-through-vpn`** (in `servers-agent/ssh/config`) is the same host with `ProxyJump vpn` and its own multiplex socket; use it when plain `timeweb` hangs. The **dev server** fetches `WP_BASE` directly and has no such alias — tunnel it (`sudo ssh -f -N -L 443:od-dev.tmweb.ru:443 vpn` plus a `127.0.0.1 od-dev.tmweb.ru` line in `/etc/hosts`; `-L` resolves the name on the vpn side, so the hosts entry does not loop) or `WP_BASE` stays unreachable and every page renders empty.
 - **Re-run the migrator on a page before designing it** if it still carries shortcodes — `wp cmsms migrate --post=<id>`. The full od-dev sweep was completed 2026-08-17.
 - **Adding a native Next route for a path retires its WordPress passthrough**, with no other edit: App Router gives a real route precedence over `[...slug]`.
 - **After any routing or redirect change, run `pnpm url:check`.**
