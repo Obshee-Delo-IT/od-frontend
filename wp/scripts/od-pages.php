@@ -54,17 +54,12 @@
  * once introduced are long gone. The fourth is a link, and it survives as the
  * methodology card's second button.
  *
- * @param string   $content     Stored `post_content`.
- * @param callable|null $betterCover Given one card from {@see od_pages_column_media()},
- *                                   returns a replacement `['id' => …, 'src' => …]`
- *                                   or null to keep the page's own image. The
- *                                   WP-CLI runner passes {@see od_pages_wp_portrait_cover()};
- *                                   the tests pass nothing, so the transform stays pure.
+ * @param string $content Stored `post_content`.
  * @return string Rewritten content, or `$content` unchanged if it is already in
  *                the target shape.
  * @throws RuntimeException when the page does not look like the expected input.
  */
-function od_pages_healthy_russia(string $content, ?callable $betterCover = null): string
+function od_pages_healthy_russia(string $content): string
 {
     if (strpos($content, 'od-card') !== false) {
         return $content; // Already converted — leave the editor's copy alone.
@@ -143,8 +138,7 @@ function od_pages_healthy_russia(string $content, ?callable $betterCover = null)
         // is itself a link and carries the title as its alt text, so the card
         // already reads out as the film to a screen reader.
         $label = od_pages_inline_text($poster['label']);
-        $cover = $betterCover === null ? null : $betterCover($poster);
-        $slides[] = od_pages_image_block($cover['id'] ?? $poster['id'], $cover['src'] ?? $poster['src'], $label, $poster['href'])
+        $slides[] = od_pages_image_block($poster['id'], $poster['src'], $label, $poster['href'])
             . od_pages_buttons([['href' => $poster['href'], 'label' => 'Подробнее']], '');
     }
     $out .= od_pages_carousel($slides, 'od-poster-cards', true);
@@ -318,67 +312,6 @@ function od_pages_registry(): array
 }
 
 // ---------------------------------------------------------------------------
-// WordPress lookups. Everything above this line is a pure function of a string;
-// everything below needs a loaded WordPress and is only reachable from the
-// runner, which is why the transforms take it as a callback.
-// ---------------------------------------------------------------------------
-
-/**
- * A portrait cover for a poster card whose own image is landscape.
- *
- * The cards are 3∶4. Most programme pages already carry a portrait cover, but
- * «Наркотики» is a 480×270 still, and left alone that card letterboxes. The film
- * it links to knows better: `poster_image_url` is the printable плакат, A4 and
- * portrait, and eleven films carry one. So: keep the page's image when it is
- * already portrait, and otherwise borrow the film's poster — but only if that is
- * portrait too, because a wrong guess here is worse than the landscape still.
- *
- * @param array{id: string, src: string, href: string, label: string} $card
- * @return array{id: string, src: string}|null
- */
-function od_pages_wp_portrait_cover(array $card): ?array
-{
-    $current = wp_get_attachment_metadata((int) $card['id']);
-    if (!$current || $current['height'] > $current['width']) {
-        return null; // Already portrait — the page's own choice wins.
-    }
-
-    if (!preg_match('#/(\d+)/#', $card['href'], $film)) {
-        return null;
-    }
-
-    $url = (string) get_post_meta((int) $film[1], 'poster_image_url', true);
-    if ($url === '') {
-        return null;
-    }
-
-    $id = attachment_url_to_postid($url);
-    if (!$id) {
-        // Attachments imported from the old punycode domain keep a `guid` that
-        // no longer matches any URL this site serves; the file name still does.
-        // Two candidates, because WordPress attaches an oversized upload under
-        // its `-scaled` copy while the field still points at the original.
-        global $wpdb;
-        $file = basename((string) parse_url($url, PHP_URL_PATH));
-        $scaled = preg_replace('#(\.[a-z]+)$#i', '-scaled$1', $file);
-        $id = (int) $wpdb->get_var($wpdb->prepare(
-            "SELECT post_id FROM {$wpdb->postmeta}
-              WHERE meta_key = '_wp_attached_file' AND (meta_value LIKE %s OR meta_value LIKE %s)
-              LIMIT 1",
-            '%' . $wpdb->esc_like($file),
-            '%' . $wpdb->esc_like($scaled)
-        ));
-    }
-
-    $meta = $id ? wp_get_attachment_metadata($id) : null;
-    if (!$meta || $meta['height'] <= $meta['width']) {
-        return null;
-    }
-
-    return ['id' => (string) $id, 'src' => (string) wp_get_attachment_url($id)];
-}
-
-// ---------------------------------------------------------------------------
 // Runner. Everything above is a pure function and is what the tests exercise.
 // ---------------------------------------------------------------------------
 
@@ -399,7 +332,7 @@ foreach (od_pages_registry() as $path => $transform) {
     }
 
     try {
-        $new = $transform($page->post_content, 'od_pages_wp_portrait_cover');
+        $new = $transform($page->post_content);
     } catch (Throwable $e) {
         WP_CLI::warning(sprintf('%s (#%d): %s', $path, $page->ID, $e->getMessage()));
         continue;

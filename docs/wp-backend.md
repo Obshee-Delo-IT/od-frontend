@@ -116,6 +116,12 @@ Beyond core (`post`, `page`, `attachment`, …), od-dev registers:
 
 Standard WP taxonomies (`category`, `post_tag`, `nav_menu`, `post_format`) are also present and carry most of the model this repo actually consumes.
 
+**Tags this project created**, as opposed to inherited — all of them from `wp/scripts/od-terms.php`, which is where they are re-created on any other environment:
+
+| Tag | od-dev id | On | Why |
+| --- | --- | --- | --- |
+| `programma-zdorovaya-rossiya` «Программа «Здоровая Россия»» | 665 | 6 films | The «Здоровая Россия» methodology is nine lessons, each built on one film, and nothing in the inherited model said which films those are. Three of the nine have no post on the site at all; the tag's docblock names them. Do not confuse it with the inherited tag **72** «Здоровая Россия - Общее дело», which is on ten news posts from 2015–16 and on no film.
+
 **None of the cmsms taxonomies are registered with `show_in_rest`** (verified 2026-08-13), so a headless frontend cannot read them at all — `/wp/v2/types/profile` reports its taxonomies as `["post_tag"]` and nothing else. That matters for D3: there is no coordinator-by-region filter to be had from `pl-categs` unless the re-registration in §4.5 adds `'show_in_rest' => true`. See §3.5 for what the data offers instead.
 
 ### 3.3 Category ids the frontend hardcodes
