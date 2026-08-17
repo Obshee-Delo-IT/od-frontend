@@ -362,6 +362,14 @@ Same predicate, run the other way: `WP_ONLY_PATH` already existed in `resolveCon
 
 Verified over the same rendered corpus plus 400 rendered posts: root-relative `/wp-` hrefs **290 → 0** on pages and **20 → 0** on posts, no link left pointing off-site, idempotent on both.
 
+### D6e. `общее-дело.рф` counted as one of our own origins — 2026-08-17
+
+Found while reading `/materials/metodichki/` for its redesign: two of its three «Подробнее» buttons point at `https://xn----9sbkcac6brh7h.xn--p1ai/materials/…`, the Punycode form of **общее-дело.рф**. That is not another site — it is the organisation's second domain for *this* one, and the live site's own navigation mixes both hosts freely (see the `menu-item` hrefs in `src/shared/legacy/__fixtures__/team.html`). Editors paste whichever host their browser happened to show them. Left absolute, each of those buttons walks the visitor off the frontend, and after cutover onto the old WordPress.
+
+So the alias joins `WP_BASE` and `SITE_URL` in one list — `internalOrigins()` in `shared/config/site.ts` — read by **both** callers of `toInternalHref`, page/post bodies and the header menu. One line of data, no new code path, and it covers every page rather than the one page that surfaced it.
+
+**Only the bare origin.** The two sibling subdomains stay external on purpose, and are asserted so: `помощь.общее-дело.рф` (`xn--d1aadek5agm.…`) is the donation host the header CTA already hard-codes, and `xn--80a7adb.…` is the statistics site. `toInternalHref` compares whole origins, so neither can match by suffix. Links into the alias's own `/wp-content/` tree also stay absolute, through the same `WP_ONLY_PATH` guard as D6c — that host serves those files, ours does not.
+
 ### D7. Video — index 2026-06-04, player 2026-07-02
 
 Figma: index `video` (`706:3315`) + `video-filter` (`1554:17574`) + player `video-page` (`1566:10433`) + mobile `video-page-mob` (`1567:10735`, `1567:11844`) + download (`1581:10334`).
