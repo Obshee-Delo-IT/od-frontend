@@ -120,14 +120,14 @@ position 26.
 lands in spam — the same "quietly lost, not visibly broken" path documented in
 [`newsletter-unisender.md`](./newsletter-unisender.md).
 
-**The page went too.** It is **deleted on prod** as of 2026-08-17 (`/materials/order-materials/`
-404s), so the restore note above no longer applies there — bringing the entry
-back means recreating the page first. It is **still published on od-dev**; delete
-it there with `wp --url=https://od-dev.tmweb.ru post delete 22125` and then drop
-its entry from [`legacyEmbedPages.ts`](../src/shared/config/legacyEmbedPages.ts),
-in that order — see [`wp-page-passthrough.md`](./wp-page-passthrough.md) §7 for
-why the order matters. The one page that linked to it, `/materials/disk/`, is
-already cleaned on both tiers.
+**The page went too, 2026-08-17.** Deleted on prod, trashed on od-dev
+(`wp post delete 22125`), and its entry dropped from
+[`legacyEmbedPages.ts`](../src/shared/config/legacyEmbedPages.ts) — in that
+order, because while the od-dev copy was still published, removing the entry
+first would have rendered it natively. `/materials/order-materials/` now 404s,
+so the restore note above no longer applies as written: bringing the nav entry
+back means recreating the page first. The one page that linked to it,
+`/materials/disk/`, is cleaned on both tiers.
 
 **Next:** it comes back only with a delivery path that works — the form wired
 to something other than host mail, or the page replaced by an address people
