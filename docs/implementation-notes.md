@@ -505,6 +505,18 @@ So the alias joins `WP_BASE` and `SITE_URL` in one list — `internalOrigins()` 
 
 **Only the bare origin.** The two sibling subdomains stay external on purpose, and are asserted so: `помощь.общее-дело.рф` (`xn--d1aadek5agm.…`) is the donation host the header CTA already hard-codes, and `xn--80a7adb.…` is the statistics site. `toInternalHref` compares whole origins, so neither can match by suffix. Links into the alias's own `/wp-content/` tree also stay absolute, through the same `WP_ONLY_PATH` guard as D6c — that host serves those files, ours does not.
 
+### D6j. `/materials/printed-products/`, and one folder for the drawings — 2026-08-18
+
+Figma `printing` (`966:2949`), and the first sub-page built on the card system rather than on a template of its own. WP page **#57271**, three rows of two photo-and-caption columns from the migrator, out as two rows of three cards. Nothing new was needed: `od_pages_tiles()`, `.od-tiles`, the same fingerprint-then-rewrite shape.
+
+**Six cards where the mock draws five, and 3 + 3 where it draws 3 + 2.** «Плакаты Общего Дела» was added to the live page in 2024, after the frame was drawn, and points at a Yandex Disk folder rather than a page here. Keeping a live link a mock predates is the call D6f already made; with six cards the mock's second row (two wide) would leave a third sitting alone at half width, so both rows are portrait threes instead. Its drawing is the poster one, borrowed from «Социальная реклама».
+
+**The drawings moved to `public/figma/cards/`, one folder for all of them.** They had been filed per page — `public/figma/projects/od-pro.svg`, `public/figma/materials/…` — which only works while no drawing appears twice. This page broke that on sight: `printing` draws «Наши книги» with the charts illustration that is «Общее дело ПРО» on `/projects/`, «Листовки и буклеты» with «Видеоматериалы»'s, «Наклейки на автомобиль» with «Онлайн курсы»'s. Figma pairs drawing to card **by name**, and reuses freely. So the folder is now a mirror of `src/shared/ui/assets/illustrations/`, file for file, and each card's CSS rule names the drawing it wants. Twelve files instead of sixteen, and the next page adds none.
+
+**The test stopped assuming the filename.** It used to check `public/figma/<page>/<card-id>.svg` exists, which was really a naming convention pretending to be a contract. `od_test_tile_drawings()` now reads `gutenberg.css`, finds the `.od-tile--<id>::before` rule and checks the file *that* names — so a card added without a drawing fails, whatever it is called.
+
+**Breadcrumbs learned the parent chain.** The sub-page mocks draw «Материалы → Печатная продукция», where `WpPage` had a fixed «Главная → this page». `fetchWpPage` now returns `ancestors`, walking `parent` upwards — one request per level, capped at three, and a level that fails ends the trail rather than the page. Every WP page below the top level gets it; «Главная» stays in front, which is a superset of the mock's trail and of every native route's. The deepest published page on this site is three levels (`/about/reviews/letters/`).
+
 ### D7. Video — index 2026-06-04, player 2026-07-02
 
 Figma: index `video` (`706:3315`) + `video-filter` (`1554:17574`) + player `video-page` (`1566:10433`) + mobile `video-page-mob` (`1567:10735`, `1567:11844`) + download (`1581:10334`).

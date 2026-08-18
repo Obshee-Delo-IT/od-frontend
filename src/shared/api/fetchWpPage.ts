@@ -21,6 +21,11 @@ import { buildNewsPreview, stripHtml } from './newsPreview';
  * payload to what the page renders.
  */
 
+export interface WpPageAncestor {
+  title: string;
+  href: string;
+}
+
 export interface WpPageContent {
   id: number;
   /** Plain text — WP renders titles with entities and the odd `<br>`. */
@@ -29,11 +34,18 @@ export interface WpPageContent {
   contentHtml: string;
   /** Meta description, WP's excerpt falling back to the body. */
   description: string | null;
+  /**
+   * The page's parents, outermost first — the breadcrumb trail above it, which
+   * is what the sub-page mocks draw («Материалы → Печатная продукция»).
+   * Empty for a top-level page, which is most of them.
+   */
+  ancestors: WpPageAncestor[];
 }
 
 interface RawPage {
   id?: number;
   link?: string;
+  parent?: number;
   title?: { rendered?: string };
   content?: { rendered?: string };
   excerpt?: { rendered?: string };
@@ -46,6 +58,43 @@ const pathnameOf = (link: string): string | null => {
   } catch {
     return null;
   }
+};
+
+/**
+ * Walks `parent` upwards, outermost first.
+ *
+ * One request per level, so the cap is not a formality: WP allows any depth,
+ * and this runs on a route that must stay statically generatable. Three covers
+ * every published page on this site (`/about/reviews/letters/` is the deepest),
+ * and a fourth level would simply start its trail one page in.
+ *
+ * A level that fails to load ends the trail rather than failing the page: a
+ * breadcrumb is navigation, and half of it beats a 500.
+ */
+const MAX_ANCESTORS = 3;
+
+const fetchAncestors = async (parentId: number): Promise<WpPageAncestor[]> => {
+  const trail: WpPageAncestor[] = [];
+  let id = parentId;
+
+  while (id > 0 && trail.length < MAX_ANCESTORS) {
+    // Sequential by nature: each level's id comes from the one below it.
+    const res = await wpFetch(`/wp/v2/pages/${id}?_fields=link,parent,title`, wpCache([WP_TAGS.pages]));
+    if (!res.ok) {
+      break;
+    }
+
+    const raw = (await res.json()) as RawPage | null;
+    const href = raw?.link ? pathnameOf(raw.link) : null;
+    if (!href) {
+      break;
+    }
+
+    trail.unshift({ title: stripHtml(raw?.title?.rendered), href });
+    id = raw?.parent ?? 0;
+  }
+
+  return trail;
 };
 
 /**
@@ -67,7 +116,7 @@ export const fetchWpPage = async (path: string): Promise<WpPageContent | null> =
   const query = new URLSearchParams({
     slug,
     per_page: '10',
-    _fields: 'id,link,title,content,excerpt',
+    _fields: 'id,link,parent,title,content,excerpt',
   });
   const res = await wpFetch(`/wp/v2/pages?${query}`, wpCache([WP_TAGS.pages]));
   if (!res.ok) {
@@ -87,6 +136,7 @@ export const fetchWpPage = async (path: string): Promise<WpPageContent | null> =
     title: stripHtml(page.title?.rendered),
     contentHtml: page.content?.rendered ?? '',
     description: buildNewsPreview(page.excerpt?.rendered, page.content?.rendered),
+    ancestors: await fetchAncestors(page.parent ?? 0),
   };
 };
 
