@@ -44,6 +44,7 @@ assert(str_contains($after, '"key":"od_card_cover"'), 'the cover is bound to the
 assert(str_contains($after, '"source":"core/post-meta"'), 'through the block bindings API');
 assert(!str_contains($after, 'post-featured-image'), 'the 16∶9 still is not what this card shows');
 assert(str_contains($after, '<!-- wp:post-title {"level":3,"isLink":true} /-->'), 'the title is the card\'s link');
+assert(str_contains($after, 'alt="" loading="lazy"'), 'a плакат is heavy and the row is below the fold');
 assert(!str_contains($after, 'drugs.jpg'), 'the migrator\'s hand-picked posters are gone');
 
 // Arrows on the projects row, which can outgrow its three slots; none on the

@@ -412,38 +412,56 @@ h2:has(+ .od-cards, + .od-poster-cards) {
 /* The film posters. The row is a `core/query` over the programme's tag, so a
    card is a `<li class="wp-block-post">` rather than a `cb/slide-v2`, and the
    base carousel's slide rules — including its 360px clamp — never match it.
-   Swiper is told about the class in `Carousel/CarouselAdapter.ts`. */
+   Swiper is told about the class in `Carousel/CarouselAdapter.ts`.
+
+   The pill sits over the artwork by **grid**, not by positioning it: both
+   children take the same cell, and the one later in the document paints on top.
+   That leaves the card the only positioned box in the subtree, which is what
+   lets the title's link stretch across the whole of it — see the `::after`
+   below. Position the pill instead and that overlay resolves against the pill.
+
+   The bullets hang 20px below the row, so the margin is what keeps them off the
+   footer — the mock leaves ~70px between the two. */
+.od-poster-cards {
+  margin-bottom: 60px;
+}
+
 .od-poster-cards .wp-block-post {
   position: relative;
+  display: grid;
   flex-shrink: 0;
   margin: 0;
 }
 
-.od-poster-cards .wp-block-image {
+.od-poster-cards .wp-block-image,
+.od-poster-cards .wp-block-post-title {
   margin: 0;
+  grid-area: 1 / 1;
 }
 
 /* One shape for every cover, whatever the film was given. `contain` rather than
    `cover` because cropping a poster to fit cuts the film's title off it, and
    these are a mix: a film with a printable плакат shows it, a film without one
-   falls back to its 16∶9 still — see `wp/mu-plugins/od-film-meta.php`. */
+   falls back to its 16∶9 still — see `wp/mu-plugins/od-film-meta.php`.
+
+   The backdrop behind a letterboxed still is dark, not white: every poster the
+   mock draws is dark artwork edge to edge, and the pill below is white — on a
+   white backdrop it vanished into the card. A плакат covers the box, so this is
+   only ever seen on the fallback. */
 .od-poster-cards .wp-block-image img {
   width: 100%;
   border-radius: 12px;
   aspect-ratio: 387 / 546;
-  background-color: var(--white);
+  background-color: var(--gray-9);
   object-fit: contain;
 }
 
-/* The card's link is its title, floated over the bottom of the artwork as the
-   mock's pill. A binding cannot produce a permalink, so the cover is not a link
-   — which leaves the title as the one accessible name the card needs. */
+/* The card's link is its title, drawn as the mock's pill 12px inside the bottom
+   of the artwork. A binding cannot produce a permalink, so the cover is not a
+   link — which leaves the title as the one accessible name the card needs. */
 .od-poster-cards .wp-block-post-title {
-  position: absolute;
-  right: 12px;
-  bottom: 12px;
-  left: 12px;
-  margin: 0;
+  align-self: end;
+  padding: 12px;
 }
 
 .od-poster-cards .wp-block-post-title a {
@@ -457,6 +475,17 @@ h2:has(+ .od-cards, + .od-poster-cards) {
   line-height: 1.4;
   text-align: center;
   transition: background-color 0.2s ease;
+}
+
+/* The pill is what a reader sees; the whole card is what they can click. A
+   pseudo-element's hit area belongs to the element that owns it, so this makes
+   the cover open the film *and* lights the pill on hovering anywhere on the
+   card — while leaving the card one link with one accessible name, which a
+   second anchor around the cover would not. */
+.od-poster-cards .wp-block-post-title a::after {
+  position: absolute;
+  content: '';
+  inset: 0;
 }
 
 .od-poster-cards .wp-block-post-title a:hover {
