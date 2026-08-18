@@ -172,11 +172,21 @@ ssh od-root 'cd ~/public_html && wp --skip-plugins --skip-themes eval "
        var_export( get_registered_meta_keys( \"post\", \"profile\" )[\"cmsms_profile_subtitle\"][\"show_in_rest\"] ?? null, true ) );"'
    ```
    Expect `Профили | Регионы | tax_rest=true | meta_rest=true`. Russian labels are the tell that our file, not cmsms, is the live registration.
-3. **Then deactivate, and flush.** `wp plugin deactivate cmsms-content-composer` followed by `wp rewrite flush` — same slugs, so the rules come back identical, but the flush costs nothing and a stale rule set is a 404 on every `/profile/…`.
+3. **Then deactivate, delete, and flush.** `wp plugin deactivate cmsms-content-composer`, then `wp plugin delete cmsms-content-composer`, then `wp rewrite flush` — same slugs, so the rules come back identical, but the flush costs nothing and a stale rule set is a 404 on every `/profile/…`.
+
+   ⚠️ **Deleting is not optional tidying.** The plugin ships three PHP files that bootstrap WordPress from `$_SERVER['SCRIPT_FILENAME']` instead of `admin-ajax.php` and read `$_POST` with no nonce and no capability check: `framework/inc/cmsms-composer-templates-operator.php`, `inc/project/projects-loader.php`, `inc/post/posts-loader.php`. **A deactivated plugin's files still answer HTTP** — with the plugin off on od-dev all three returned 200 to an unauthenticated GET *and* POST, and **all three answer 200 on prod today**. Verify they 404 afterwards:
+   ```bash
+   for p in framework/inc/cmsms-composer-templates-operator.php inc/project/projects-loader.php inc/post/posts-loader.php; do
+     curl -s -o /dev/null -w "%{http_code} $p\n" "https://obshee-delo.ru/wp-content/plugins/cmsms-content-composer/$p"
+   done
+   ```
+   Nothing is lost by deleting: the theme bundles the plugin as `themes/welfare/framework/admin/inc/plugins/cmsms-content-composer.zip`, a zip is not executed, and `cmsms-gutenberg-upgrade` never calls into the plugin — it is pure `preg_replace_callback` over the raw `post_content`, so it converts shortcodes whether or not they are registered.
 
 **Verify after deactivating** — this is the od-dev list, and every one of them passed there: `/wp/v2/profile` 200 and `?slug=` still resolving percent-encoded Cyrillic; `/wp/v2/pl-categs` 200 (it 404s while cmsms owns it); `meta.cmsms_profile_subtitle` still in the payload; `wp-login.php`, the WP home page, one `/contacts/<region>/` and one `/profile/<slug>/` all 200 over HTTP — that last pair is what proves nothing in the `welfare` theme fataled without the plugin, `single-profile.php` included; and `wp cmsms migrate --dry-run` still runs, since the migrator must survive the plugin it converts away from.
 
-**Two things not to do.** Don't register the CPT in a theme's `functions.php` — a theme swap would take 205 records out of the admin and out of REST. And don't `wp plugin delete cmsms-content-composer` in the same session: while any environment still holds unconverted shortcodes, that plugin is the only thing that can show what they were supposed to render.
+**Two things not to do.** Don't register the CPT in a theme's `functions.php` — a theme swap would take 205 records out of the admin and out of REST. And don't skip step 2's verification: installing the mu-plugin *after* deactivating means a window in which 205 records have no post type, and the 75 regional query blocks ask for one that does not exist.
+
+**One theme landmine to leave documented rather than fixed:** `themes/welfare/framework/function/theme-functions.php:1535` calls `new TwitterOAuth(...)`, a class that lived only in the deleted plugin, behind a guard that loads the wrong file. It is unreachable while the theme's Twitter widget is in no sidebar — check `wp option get sidebars_widgets` on prod before assuming the same, and if the widget is placed anywhere, remove it first.
 
 ⚠️ **Prod is WordPress 5.5.5 on PHP 7.x.** Everything `od-profile.php` calls predates 5.5 (`register_post_meta` is 4.9.8, `show_in_rest` on meta and taxonomies is 4.7), and the file is written to the same 7.0 floor as `od-revalidate.php` for the same reason — a parse error in an mu-plugin takes the whole site down. **Rollback is `rm`** plus reactivating the plugin.
 

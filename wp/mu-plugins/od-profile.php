@@ -103,6 +103,14 @@ function od_profile_register() {
 				'pages'      => true,
 				'feeds'      => true,
 			),
+			// `post_tag` is declared here for a subtle reason: re-registering a post
+			// type **resets its taxonomy list**, and `post_tag` was attached to
+			// `profile` at `init` priority 10 by `cmsms-gutenberg-upgrade`
+			// (`register_taxonomy_for_object_type`, so editors could tag a
+			// coordinator's region). Running at 20 without this line silently
+			// detached it — two of the 139 records carry a tag. Regions belong in
+			// `pl-categs`, but a taxonomy is not something to drop by accident.
+			'taxonomies'          => array( 'post_tag' ),
 			// `trackbacks` and `comments` are in the list because they were, and a
 			// support silently dropped is an editor's missing panel.
 			'supports'            => array(
@@ -159,11 +167,17 @@ function od_profile_register() {
 	);
 
 	// The coordinator's region — «Магнитогорск», free text — filled on 130 of the
-	// 139 published records. It is `cmsms_`-prefixed because cmsms created it, and
-	// it keeps that name on purpose: renaming would mean rewriting 130 rows to buy
-	// nothing. `fetchProfile` reads it as the card's second line when the body has
-	// no bolded role, so losing it from REST would blank that line on 56 cards.
-	// **Exclude this key from any `cmsms_%` postmeta purge.**
+	// 139 published records. It is `cmsms_`-prefixed because the cmsms theme wrote
+	// it, and it keeps that name on purpose: renaming would mean rewriting 130 rows
+	// to buy nothing. `fetchProfile` reads it as the card's second line when the
+	// body has no bolded role, so losing it from REST would blank that line on 56
+	// cards. **Exclude this key from any `cmsms_%` postmeta purge.**
+	//
+	// Note it was **`cmsms-gutenberg-upgrade`** that put this key in REST, not
+	// `cmsms-content-composer` — that plugin registered no post meta at all, and
+	// the theme read this one with a bare `get_post_meta`. So this line is a
+	// duplicate registration today and the load-bearing one the moment the
+	// migrator is removed after cutover.
 	register_post_meta(
 		'profile',
 		'cmsms_profile_subtitle',

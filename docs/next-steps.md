@@ -276,6 +276,35 @@ second, smaller cost: the sources are 0.773 / 0.733 / 0.707 against the 387:546
 box (0.7088), so `cover` trims 8.3% / 3.2% / 0.3% of the width — enough that the
 third cover's «ПРОГРАММА» band sits partly under the pill.
 
+## Three unauthenticated PHP entry points are live on production
+
+**Found 2026-08-18** while removing `cmsms-content-composer` from od-dev. The
+plugin ships three files that bootstrap WordPress themselves from
+`$_SERVER['SCRIPT_FILENAME']` instead of going through `admin-ajax.php`, and read
+`$_POST` with no nonce and no capability check:
+
+```
+wp-content/plugins/cmsms-content-composer/framework/inc/cmsms-composer-templates-operator.php
+wp-content/plugins/cmsms-content-composer/inc/project/projects-loader.php
+wp-content/plugins/cmsms-content-composer/inc/post/posts-loader.php
+```
+
+All three answer **200 on `https://obshee-delo.ru/` today** to an unauthenticated
+request. **Deactivating the plugin does not close them** — a deactivated plugin's
+files are still served; measured on od-dev, where all three kept returning 200
+until the directory was deleted, and 404 immediately after.
+
+**What to do:** delete the plugin directory on prod. That is already step 3 of
+[`prod-migration-runbook.md` §2.6](./prod-migration-runbook.md), so this needs no
+separate work — but it is worth doing on its own schedule rather than waiting for
+the cutover, since it is live exposure on the public site. It costs nothing: the
+theme keeps the plugin as a `.zip` for reference, and `cmsms-gutenberg-upgrade`
+never calls into it.
+
+While looking: `wp-content/plugins/wp-optimize/vendor/mrclay/minify/server-info.php`
+is a second self-bootstrapping file, from a different plugin. Unchecked — worth
+one `curl` when someone is in there.
+
 ## 1 492 rows the cmsms deactivation orphaned
 
 **Measured 2026-08-18**, right after `cmsms-content-composer` was switched off on
