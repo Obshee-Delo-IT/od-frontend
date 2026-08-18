@@ -29,6 +29,10 @@
 /**
  * Tag slug => the tag's name and the posts that carry it.
  *
+ * One entry per programme whose page carries a «Проекты программы» row: that row
+ * is a `core/query` over the tag, so tagging a film in the admin is the whole
+ * job of adding one. `/healthy-kids/` has no such row and no tag.
+ *
  * «Здоровая Россия» is a programme of nine lessons, each built on one film, and
  * the page at `/healthy-russia/` shows four of them chosen by hand. Tagging the
  * films is what makes the set a query rather than a hand-kept list.
@@ -64,6 +68,21 @@ function od_terms_registry(): array
                 'one-deception-story',                // №6 «История одного обмана»
                 'narkotiki-sekrety-manipuljacii',     // №7 «Наркотики. Секреты манипуляции»
                 'алкоголь-незримый-враг',             // №8 «Алкоголь. Незримый враг»
+            ],
+        ],
+        'programma-zdorovaya-molodezh' => [
+            'name' => 'Программа «Здоровая молодежь»',
+            'alt_from_title' => true,
+            // The six the page at `/healthy-youth/` linked by hand, in the order
+            // the mock draws them. The row itself is ordered by date, so this
+            // list is what belongs to the programme, not what it looks like.
+            'posts' => [
+                'man-five-secrets',                    // «Пять секретов настоящего мужчины»
+                'грязные-слова',                       // «Грязные слова»
+                'фильм-как-научиться-любить-пошагова',  // «Как научиться любить?»
+                'woman-nature-secret',                 // «Тайна природы женщины»
+                'путь-героя-фильм-о-игровой-зависимост', // «Путь героя»
+                'фильм-четыре-ключа-к-твоим-победам',   // «Четыре ключа к твоим победам»
             ],
         ],
     ];
@@ -151,7 +170,10 @@ function od_terms_alt_from_title(WP_Post $post, bool $apply): void
         return;
     }
 
-    $alt = wp_strip_all_tags(get_the_title($post));
+    // Decoded, not just stripped: several film titles store their guillemets as
+    // `&#171;`, and an alt attribute goes through `esc_attr()` on the way out —
+    // which would escape the ampersand again and read the entity aloud.
+    $alt = html_entity_decode(wp_strip_all_tags(get_the_title($post)), ENT_QUOTES, 'UTF-8');
     WP_CLI::log(sprintf('#%d: cover %d has no alt, to be «%s»', $post->ID, $thumbnail, $alt));
 
     if ($apply) {
