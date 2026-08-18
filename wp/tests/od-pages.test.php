@@ -492,6 +492,30 @@ od_test('converted content is left alone', od_pages_healthy_kids($kids, 667) ===
 // ===========================================================================
 
 $projectsBefore = file_get_contents(__DIR__ . '/fixtures/projects.before.html');
+/**
+ * Every card in a converted row has a drawing: a `background-image` rule in
+ * `gutenberg.css` naming a file that exists. The card id is what the rule hangs
+ * on, so the two are one contract — and the pairing is by name, not by
+ * convention, since Figma reuses one drawing across pages.
+ */
+function od_test_tile_drawings(string $html, array $ids): void
+{
+    static $css = null;
+    $css = $css ?? file_get_contents(__DIR__ . '/../../src/shared/ui/theme/gutenberg/gutenberg.css');
+
+    foreach ($ids as $id) {
+        od_test($id . ': card class', str_contains($html, 'od-tile od-tile--' . $id . '"'));
+
+        $found = preg_match(
+            '#\.od-tile--' . preg_quote($id, '#') . "::before \{\s*background-image: url\('([^']+)'\)#",
+            $css,
+            $rule
+        );
+        od_test($id . ': a drawing rule in gutenberg.css', $found === 1);
+        od_test($id . ': the file that rule names', $found === 1 && file_exists(__DIR__ . '/../../public' . $rule[1]));
+    }
+}
+
 $projects = od_pages_projects($projectsBefore, 0);
 
 od_test('two rows of cards', substr_count($projects, '<div class="wp-block-columns od-tiles">') === 2);
@@ -500,12 +524,7 @@ od_test('each card links once — the heading is not a second link', substr_coun
 od_test('the second row is the only one with a heading', str_contains($projects, '<h2 class="wp-block-heading">Проекты</h2>'));
 od_test('the first is named by the page title', substr_count($projects, '<h2 ') === 1);
 
-// The card ids are what `gutenberg.css` hangs each drawing on, so they are as
-// much part of the contract as the markup — `public/figma/projects/<id>.svg`.
-foreach (['healthy-russia', 'healthy-kids', 'healthy-youth', 'od-pro', 'video', 'online-courses'] as $id) {
-    od_test($id . ': card class', str_contains($projects, 'od-tile od-tile--' . $id . '"'));
-    od_test($id . ': drawing', file_exists(__DIR__ . '/../../public/figma/projects/' . $id . '.svg'));
-}
+od_test_tile_drawings($projects, ['healthy-russia', 'healthy-kids', 'healthy-youth', 'od-pro', 'video', 'online-courses']);
 
 od_test('programme title, as the mock sets it', str_contains($projects, '<h3 class="wp-block-heading">Здоровая Россия</h3>'));
 od_test('and it points at the page WordPress serves', str_contains($projects, '<a href="/healthy-russia/">Подробнее</a>'));
@@ -536,10 +555,7 @@ od_test('one row block', substr_count($materials, '<div class="wp-block-columns 
 od_test('four cards', substr_count($materials, 'class="wp-block-column od-tile od-tile--') === 4);
 od_test('the page title names the only section', !str_contains($materials, '<h2 '));
 
-foreach (['metodichki', 'printed-products', 'articles', 'social-reklama'] as $id) {
-    od_test($id . ': card class', str_contains($materials, 'od-tile od-tile--' . $id . '"'));
-    od_test($id . ': drawing', file_exists(__DIR__ . '/../../public/figma/materials/' . $id . '.svg'));
-}
+od_test_tile_drawings($materials, ['metodichki', 'printed-products', 'articles', 'social-reklama']);
 
 od_test('the mock\'s title, not the page\'s longer caption', str_contains($materials, '<h3 class="wp-block-heading">Методические пособия</h3>'));
 od_test('the relative href became the real path', str_contains($materials, '<a href="/materials/printed-products/">Подробнее</a>'));
@@ -553,9 +569,38 @@ od_test('the caption\'s tail went with it', !str_contains($materials, 'Обще�
 
 od_test('converted content is left alone', od_pages_materials($materials, 0) === $materials);
 
+// ===========================================================================
+// `/materials/printed-products/` — Figma `printing`, the same hub one level down.
+// ===========================================================================
+
+$printedBefore = file_get_contents(__DIR__ . '/fixtures/printed-products.before.html');
+$printed = od_pages_printed_products($printedBefore, 0);
+
+// 3 + 3, not the mock's 3 + 2: the page has a sixth card the mock predates, and
+// a third wide card would sit alone at half width.
+od_test('two rows of three', substr_count($printed, '<div class="wp-block-columns od-tiles">') === 2);
+od_test('six cards', substr_count($printed, 'class="wp-block-column od-tile od-tile--') === 6);
+od_test('no wide row here', !str_contains($printed, 'od-tiles--wide'));
+od_test('the page title names the only section', !str_contains($printed, '<h2 '));
+
+od_test_tile_drawings($printed, ['books', 'zakladki', 'booklet', 'disk', 'autosticker', 'plakaty']);
+
+od_test('the mock\'s title', str_contains($printed, '<h3 class="wp-block-heading">Наши книги</h3>'));
+od_test('«Общее дело» keeps its capitals, which the mock drops', str_contains($printed, '<h3 class="wp-block-heading">Диски Общего Дела</h3>'));
+od_test('every card points where the page pointed', str_contains($printed, '<a href="/materials/zakladki/">Подробнее</a>'));
+// Added to the live page in 2024, after `printing` was drawn — kept, because a
+// mock predating a link is not a reason to drop it.
+od_test('including the one the mock has no card for', str_contains($printed, '<a href="https://disk.yandex.ru/d/hm_77Uv33LH7vN">Подробнее</a>'));
+
+od_test('the old theme\'s hover-zoom is gone', !str_contains($printed, '<style'));
+od_test('and the class it styled', !str_contains($printed, 'textcapt'));
+od_test('the photos are not the mock\'s drawings', !str_contains($printed, '<!-- wp:image '));
+
+od_test('converted content is left alone', od_pages_printed_products($printed, 0) === $printed);
+
 // -- every transform refuses input it does not recognise --------------------------------
 
-foreach (['od_pages_healthy_youth', 'od_pages_healthy_kids', 'od_pages_projects', 'od_pages_materials'] as $transform) {
+foreach (['od_pages_healthy_youth', 'od_pages_healthy_kids', 'od_pages_projects', 'od_pages_materials', 'od_pages_printed_products'] as $transform) {
     $threw = false;
     try {
         $transform('<!-- wp:paragraph --><p>что-то другое</p><!-- /wp:paragraph -->', 666);

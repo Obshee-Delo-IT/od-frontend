@@ -432,6 +432,56 @@ function od_pages_materials(string $content, int $filmTagId): string
 }
 
 /**
+ * `/materials/printed-products/` — Figma `printing` (`966:2949`), the first of
+ * the section's sub-pages and the same hub shape as its parent: the migrator
+ * leaves three rows of two photo-and-caption columns, and they become cards.
+ *
+ * **Six cards where the mock draws five.** «Плакаты Общего Дела» was added to
+ * the live page in 2024, after `printing` was drawn, and it points at a Yandex
+ * Disk folder rather than a page here. Dropping a live link because a mock
+ * predates it is the worse outcome — the call D6f made on the programme pages —
+ * so it stays, and that is also why the rows are 3 + 3 portrait rather than the
+ * mock's 3 + 2: a third wide card would sit alone at half width, where six read
+ * as two full rows. Its drawing is the poster one, borrowed from «Социальная
+ * реклама»; Figma reuses drawings across pages anyway.
+ *
+ * Titles are the mock's, which match the page's own captions bar «Диски общего
+ * дела» — the mock lowercases the organisation's name and the page does not, so
+ * the page wins that one.
+ *
+ * @param string $content   Stored `post_content`.
+ * @param int    $filmTagId Unused: this page carries no film row.
+ * @return string Rewritten content, or `$content` unchanged if it is already in
+ *                the target shape.
+ * @throws RuntimeException when the page does not look like the expected input.
+ */
+function od_pages_printed_products(string $content, int $filmTagId): string
+{
+    if (strpos($content, 'od-tile') !== false) {
+        return $content; // Already converted — leave the editor's copy alone.
+    }
+
+    $cards = od_pages_column_media($content);
+    if (count($cards) !== 6) {
+        throw new RuntimeException(sprintf('unexpected input: %d group columns', count($cards)));
+    }
+
+    $out = od_pages_tiles([
+        ['id' => 'books', 'title' => 'Наши книги', 'href' => '/materials/books/'],
+        ['id' => 'zakladki', 'title' => 'Закладки для книг', 'href' => '/materials/zakladki/'],
+        ['id' => 'booklet', 'title' => 'Листовки и буклеты', 'href' => '/materials/booklet/'],
+    ]);
+
+    $out .= od_pages_tiles([
+        ['id' => 'disk', 'title' => 'Диски Общего Дела', 'href' => '/materials/disk/'],
+        ['id' => 'autosticker', 'title' => 'Наклейки на автомобиль', 'href' => '/materials/autosticker/'],
+        ['id' => 'plakaty', 'title' => 'Плакаты Общего Дела', 'href' => 'https://disk.yandex.ru/d/hm_77Uv33LH7vN'],
+    ]);
+
+    return rtrim($out) . "\n";
+}
+
+/**
  * Every `wp:column` of the page that holds an image, paired with the button that
  * sits under it in the same column — which is how the migrator lays out both the
  * methodology block and the film posters. Reading them out this way keeps the
@@ -1294,6 +1344,11 @@ function od_pages_registry(): array
             'label' => 'D6h · /materials/ — the section index, as a WordPress page',
             'path' => 'materials',
             'fix' => 'od_pages_materials',
+        ],
+        [
+            'label' => 'D6j · /materials/printed-products/ — Figma `printing` (966:2949)',
+            'path' => 'materials/printed-products',
+            'fix' => 'od_pages_printed_products',
         ],
     ];
 }

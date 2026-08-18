@@ -55,7 +55,17 @@ export const WpPage = async ({ page }: WpPageProps) => {
 
   return (
     <Box display="flex" flexDirection="column" gap={40} pt={20} pb={48}>
-      <PageHeader title={page.title} breadcrumbs={[{ label: 'Главная', href: '/' }, { label: page.title }]} />
+      {/* «Главная → …parents → this page». The mocks for sub-pages start at the
+          parent («Материалы → Печатная продукция»); keeping «Главная» in front
+          is a superset of that and of every native route's trail. */}
+      <PageHeader
+        title={page.title}
+        breadcrumbs={[
+          { label: 'Главная', href: '/' },
+          ...page.ancestors.map((ancestor) => ({ label: ancestor.title, href: ancestor.href })),
+          { label: page.title },
+        ]}
+      />
 
       <ImagePreviewClient>
         <GutenbergProvider as="section">{parsed.body}</GutenbergProvider>

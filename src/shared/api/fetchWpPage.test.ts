@@ -36,7 +36,49 @@ describe('fetchWpPage', () => {
       title: 'Здоровая Россия 2021',
       contentHtml: '<div class="wp-block-group">тело</div>',
       description: 'Программа',
+      ancestors: [],
     });
+  });
+
+  /**
+   * The breadcrumb the sub-page mocks draw. One request per level, outermost
+   * first, so `/materials/printed-products/` reads «Материалы → Печатная
+   * продукция» rather than starting at the page itself.
+   */
+  it('walks the parent chain into a breadcrumb trail', async () => {
+    wpFetch
+      .mockResolvedValueOnce(
+        makeResponse([page({ link: 'https://wp.test/materials/printed-products/', parent: 20225 })])
+      )
+      .mockResolvedValueOnce(
+        makeResponse({ link: 'https://wp.test/materials/', parent: 0, title: { rendered: 'Материалы' } })
+      );
+
+    const result = await fetchWpPage('/materials/printed-products/');
+
+    expect(result?.ancestors).toEqual([{ title: 'Материалы', href: '/materials/' }]);
+  });
+
+  it('stops the trail where a level fails rather than failing the page', async () => {
+    wpFetch
+      .mockResolvedValueOnce(makeResponse([page({ link: 'https://wp.test/materials/plakati/', parent: 20225 })]))
+      .mockResolvedValueOnce(makeResponse({ code: 'boom' }, 500));
+
+    await expect(fetchWpPage('/materials/plakati/')).resolves.toMatchObject({ ancestors: [] });
+  });
+
+  /** Depth is capped: each level is a request on a route that must stay static. */
+  it('climbs no more than three levels', async () => {
+    wpFetch.mockResolvedValueOnce(makeResponse([page({ link: 'https://wp.test/a/b/c/d/e/', parent: 2 })]));
+    for (let i = 0; i < 6; i += 1) {
+      wpFetch.mockResolvedValueOnce(
+        makeResponse({ link: `https://wp.test/level-${i}/`, parent: 3, title: { rendered: `L${i}` } })
+      );
+    }
+
+    const result = await fetchWpPage('/a/b/c/d/e/');
+
+    expect(result?.ancestors).toHaveLength(3);
   });
 
   /**

@@ -170,7 +170,7 @@ A media-asset catalog. Many sub-frames have dozens of children each — these ar
 | Handbooks | `handbooks` (`779:4133`) | 1749 × 1440 — ✅ shipped 2026-08-17 as `/materials/metodichki/`, with **no route**: CSS + a content script. No mobile variant exists (checked all 589 frames in the section — nothing under 1440 wide) |
 | Books | `books` (`966:6650`) | 3108 × 1440 |
 | Disks (DVDs/CDs) | `disks` (`966:8062`) | small |
-| Printing | `printing` (`966:2949`) | small |
+| Printing | `printing` (`966:2949`) | small — ✅ shipped 2026-08-18 (D6j) as WP page #57271 |
 | Flyers | `flyers` (`966:7747`) | 11 children |
 | Social ads | `social-ads` (`966:8538`) | 1676 × 1440 |
 | Social posters | `social-posters` (`998:9524`) | 5643 × 1440 (largest — ~88 asset cells) |

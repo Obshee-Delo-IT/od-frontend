@@ -693,9 +693,15 @@ h2:has(+ .od-cards, + .od-poster-cards) {
 
 /* The drawing is decoration, so it is a background and not an image block —
    the same call the goal card makes, and for the same reason: there is nothing
-   in the content for an editor to lose. One file per card id under
-   `public/figma/projects/`; a card added in the admin matches no rule below and
-   draws an empty box, which keeps the row aligned and says what is missing. */
+   in the content for an editor to lose.
+
+   `public/figma/cards/` is the whole set, mirroring
+   `src/shared/ui/assets/illustrations/` file for file, and each card's rule
+   below names the one Figma pairs it with — the pairing is by name, not by
+   position, and the same drawing appears on more than one page («Наши книги»
+   and «Общее дело ПРО» are both the charts one). A card added in the admin
+   matches no rule and draws an empty box, which keeps the row aligned and says
+   what is missing. */
 .od-tile::before {
   display: block;
   max-width: 335px;
@@ -706,27 +712,27 @@ h2:has(+ .od-cards, + .od-poster-cards) {
 }
 
 .od-tile--healthy-russia::before {
-  background-image: url('/figma/projects/healthy-russia.svg');
+  background-image: url('/figma/cards/healthy-russia.svg');
 }
 
 .od-tile--healthy-kids::before {
-  background-image: url('/figma/projects/healthy-kids.svg');
+  background-image: url('/figma/cards/healthy-kids.svg');
 }
 
 .od-tile--healthy-youth::before {
-  background-image: url('/figma/projects/healthy-youth.svg');
+  background-image: url('/figma/cards/healthy-youth.svg');
 }
 
 .od-tile--od-pro::before {
-  background-image: url('/figma/projects/od-pro.svg');
+  background-image: url('/figma/cards/direction-2.svg');
 }
 
 .od-tile--video::before {
-  background-image: url('/figma/projects/video.svg');
+  background-image: url('/figma/cards/direction-5.svg');
 }
 
 .od-tile--online-courses::before {
-  background-image: url('/figma/projects/online-courses.svg');
+  background-image: url('/figma/cards/direction-3.svg');
 }
 
 .od-tile h3 {
@@ -777,19 +783,46 @@ h2:has(+ .od-tiles) {
 }
 
 .od-tile--metodichki::before {
-  background-image: url('/figma/materials/metodichki.svg');
+  background-image: url('/figma/cards/materials-metodichki.svg');
 }
 
 .od-tile--printed-products::before {
-  background-image: url('/figma/materials/printed-products.svg');
+  background-image: url('/figma/cards/materials-printed.svg');
 }
 
 .od-tile--articles::before {
-  background-image: url('/figma/materials/articles.svg');
+  background-image: url('/figma/cards/materials-articles.svg');
 }
 
 .od-tile--social-reklama::before {
-  background-image: url('/figma/materials/social-reklama.svg');
+  background-image: url('/figma/cards/materials-social.svg');
+}
+
+/* `/materials/printed-products/` — Figma `printing` (`966:2949`). Five of these
+   six are the mock's own cards; «Плакаты Общего Дела» is a 2024 addition the
+   mock predates and borrows the poster drawing. */
+.od-tile--books::before {
+  background-image: url('/figma/cards/direction-2.svg');
+}
+
+.od-tile--zakladki::before {
+  background-image: url('/figma/cards/direction-4.svg');
+}
+
+.od-tile--booklet::before {
+  background-image: url('/figma/cards/direction-5.svg');
+}
+
+.od-tile--disk::before {
+  background-image: url('/figma/cards/direction-1.svg');
+}
+
+.od-tile--autosticker::before {
+  background-image: url('/figma/cards/direction-3.svg');
+}
+
+.od-tile--plakaty::before {
+  background-image: url('/figma/cards/materials-social.svg');
 }
 
 .od-tiles--wide .od-tile {
