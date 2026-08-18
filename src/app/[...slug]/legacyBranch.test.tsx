@@ -126,7 +126,9 @@ describe('the native WP page branch (D6)', () => {
 
     const meta = await metadata(['healthy-russia']);
 
-    expect(meta.title).toBe('Здоровая Россия');
+    // The organisation's name is appended here rather than by a root
+    // `title.template`, which the native routes' own titles already carry.
+    expect(meta.title).toBe('Здоровая Россия — ОБЩЕЕ ДЕЛО');
     expect(meta.alternates?.canonical).toContain('/healthy-russia/');
   });
 

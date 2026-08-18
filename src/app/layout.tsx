@@ -14,7 +14,7 @@ import '@/shared/ui/theme/radix/theme-override.css';
 import { PT_Sans as PTSans, PT_Sans_Narrow as PtSansNarrow } from 'next/font/google';
 import { Footer } from '@/modules/Footer';
 import { HeaderServer } from '@/modules/Header';
-import { siteUrl } from '@/shared/config/site';
+import { SITE_NAME, siteUrl } from '@/shared/config/site';
 import { RadixProvider } from '@/shared/ui/theme';
 import css from './layout.module.css';
 import type { Metadata } from 'next';
@@ -32,7 +32,6 @@ const ptSansNarrow = PtSansNarrow({
   weight: ['700'],
 });
 
-const SITE_NAME = 'ОБЩЕЕ ДЕЛО';
 const SITE_DESCRIPTION = 'Общероссийская общественная организация';
 
 export const metadata: Metadata = {

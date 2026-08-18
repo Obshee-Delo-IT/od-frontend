@@ -1,4 +1,4 @@
-import { canonicalUrl } from '@/shared/config/site';
+import { canonicalUrl, SITE_NAME } from '@/shared/config/site';
 import { parsePost, resolveContentHtml } from '@/shared/lib/wpContent';
 import { Box } from '@/shared/ui/components/Box';
 import { ImagePreviewClient } from '@/shared/ui/components/ImagePreview';
@@ -28,12 +28,15 @@ export interface WpPageProps {
 export const wpPageMetadata = ({ page, path }: WpPageProps): Metadata => {
   const url = canonicalUrl(path);
   const description = page.description ?? undefined;
+  // The suffix every native route writes into its own title. A WP title is an
+  // editor's sentence — «Материалы» on its own is not what a tab should read.
+  const title = `${page.title} — ${SITE_NAME}`;
 
   return {
-    title: page.title,
+    title,
     description,
     alternates: { canonical: url },
-    openGraph: { type: 'article', url, locale: 'ru_RU', title: page.title, description },
+    openGraph: { type: 'article', url, locale: 'ru_RU', title, description },
   };
 };
 
