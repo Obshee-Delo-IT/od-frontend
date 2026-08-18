@@ -205,16 +205,15 @@ function od_pages_healthy_youth(string $content, int $filmTagId): string
     }
 
     $out = od_pages_image_block($logo['id'], $logo['src'], 'Здоровая молодежь', '', 'od-programme-logo');
-    $out .= od_pages_goal_card(od_pages_inline_text($goal[1]));
+    $out .= od_pages_goal_card(
+        od_pages_inline_text($goal[1]),
+        [['href' => $booklet['href'], 'label' => od_pages_inline_text($booklet['label'])]]
+    );
     $out .= od_pages_heading(2, 'Задачи программы');
     $out .= od_pages_numbered_tasks($tasks);
     $out .= od_pages_note(od_pages_inline_text($note[1]));
     $out .= od_pages_heading(2, 'Проекты программы');
     $out .= od_pages_carousel(od_pages_film_query($filmTagId), 'od-poster-cards', true);
-    $out .= od_pages_buttons(
-        [['href' => $booklet['href'], 'label' => od_pages_inline_text($booklet['label'])]],
-        'od-materials'
-    );
 
     return rtrim($out) . "\n";
 }
@@ -222,24 +221,24 @@ function od_pages_healthy_youth(string $content, int $filmTagId): string
 /**
  * `/healthy-kids/` — «Здоровые дети», Figma `project-3` (`759:1117`).
  *
- * The shortest of the three: a logo, a goal card, three numbered task cards and
- * the approval note. The programme has no «Проекты программы» row in the mock
- * and no films tagged for one, so there is no query block here and the
- * transform takes no term id.
+ * The shortest of the three: a logo, a goal card, three numbered task cards, the
+ * approval note and the programme's films. `project-3` draws no «Проекты
+ * программы» row — it was drawn before the «Команда Познавалова» cartoons were
+ * identified as this programme's lessons — but the row is the same query block
+ * the other two pages carry, over this programme's own tag.
  *
  * Dropped: the portrait beside the goal text, which linked to the same YouTube
  * playlist as the «Фильмы программы» heading below it and which the mock
  * replaces with the template's own drawing. Both trailing headings are links
- * and both survive as the page's buttons.
+ * and both survive under the goal paragraph.
  *
- * @param string $content Stored `post_content`.
- * @param int    $_filmTagId Unused — this page has no film row. The registry
- *                           calls every transform the same way.
+ * @param string $content   Stored `post_content`.
+ * @param int    $filmTagId Term id of `programma-zdorovye-deti`.
  * @return string Rewritten content, or `$content` unchanged if it is already in
  *                the target shape.
  * @throws RuntimeException when the page does not look like the expected input.
  */
-function od_pages_healthy_kids(string $content, int $_filmTagId = 0): string
+function od_pages_healthy_kids(string $content, int $filmTagId): string
 {
     if (strpos($content, 'od-card') !== false) {
         return $content; // Already converted — leave the editor's copy alone.
@@ -267,20 +266,21 @@ function od_pages_healthy_kids(string $content, int $_filmTagId = 0): string
     }
 
     $out = od_pages_image_block($logo['id'], $logo['src'], 'Здоровые дети', '', 'od-programme-logo');
-    $out .= od_pages_goal_card(od_pages_inline_text($goal[1]));
-    $out .= od_pages_heading(2, 'Задачи программы');
-    $out .= od_pages_numbered_tasks($tasks);
-    $out .= od_pages_note(od_pages_inline_text($note[1]));
-    $out .= od_pages_buttons(
+    $out .= od_pages_goal_card(
+        od_pages_inline_text($goal[1]),
         array_map(
             static fn(array $link): array => [
                 'href' => od_pages_site_link($link[1]),
                 'label' => od_pages_inline_text($link[2]),
             ],
             $links
-        ),
-        'od-materials'
+        )
     );
+    $out .= od_pages_heading(2, 'Задачи программы');
+    $out .= od_pages_numbered_tasks($tasks);
+    $out .= od_pages_note(od_pages_inline_text($note[1]));
+    $out .= od_pages_heading(2, 'Проекты программы');
+    $out .= od_pages_carousel(od_pages_film_query($filmTagId), 'od-poster-cards', true);
 
     return rtrim($out) . "\n";
 }
@@ -461,21 +461,38 @@ function od_pages_film_query(int $tagId): string
  * The goal card — the same `core/group` on all three programme pages: a heading,
  * one paragraph, and the template's drawing, which `gutenberg.css` supplies as a
  * background so there is nothing decorative for an editor to lose.
+ *
+ * The programme's own materials hang under that paragraph. Neither mock draws
+ * them, and neither mock has anywhere else to put a live download either — this
+ * is the one place on the page where a link about the programme reads as being
+ * about the programme.
+ *
+ * @param array<int, array{href: string, label: string}> $links
  */
-function od_pages_goal_card(string $text): string
+function od_pages_goal_card(string $text, array $links = []): string
 {
-    return "<!-- wp:group {\"className\":\"od-card od-card--goal\",\"layout\":{\"type\":\"constrained\"}} -->\n"
+    $out = "<!-- wp:group {\"className\":\"od-card od-card--goal\",\"layout\":{\"type\":\"constrained\"}} -->\n"
         . '<div class="wp-block-group od-card od-card--goal">'
         . od_pages_heading(2, 'Цель программы')
-        . od_pages_paragraph($text)
-        . "</div>\n<!-- /wp:group -->\n\n";
+        . od_pages_paragraph($text);
+
+    foreach ($links as $link) {
+        $out .= sprintf(
+            "<!-- wp:paragraph {\"className\":\"od-card-link\"} -->\n<p class=\"od-card-link\"><a href=\"%s\">%s</a></p>\n<!-- /wp:paragraph -->\n\n",
+            $link['href'],
+            $link['label']
+        );
+    }
+
+    return $out . "</div>\n<!-- /wp:group -->\n\n";
 }
 
 /**
- * The «Задачи программы» row of `project-2`/`project-3`: one paragraph per card
- * and nothing else. The «01», «02», … the mock draws above each is a counter in
- * `gutenberg.css`, so an editor who adds, removes or reorders a slide never has
- * to renumber anything.
+ * The «Задачи программы» row of `project-2`/`project-3`: «01», «02», … above one
+ * paragraph per card, where `project-1` puts a title. The number is written into
+ * the block rather than drawn by a CSS counter — it is one short string an
+ * editor can see and retype, against a rule that has to be understood before it
+ * can be changed.
  *
  * `slidesPerView` follows the number of cards rather than the template's three,
  * because the mock widens two cards to fill the row instead of leaving a hole.
@@ -486,7 +503,13 @@ function od_pages_goal_card(string $text): string
  */
 function od_pages_numbered_tasks(array $tasks): string
 {
-    $slides = array_map('od_pages_paragraph', $tasks);
+    $slides = [];
+    foreach (array_values($tasks) as $index => $task) {
+        $slides[] = sprintf(
+            "<!-- wp:paragraph {\"className\":\"od-task-number\"} -->\n<p class=\"od-task-number\">%02d</p>\n<!-- /wp:paragraph -->\n\n",
+            $index + 1
+        ) . od_pages_paragraph($task);
+    }
 
     return od_pages_carousel(od_pages_slides($slides), 'od-cards od-cards--numbered', false, count($slides));
 }
@@ -580,10 +603,9 @@ function od_pages_paragraph(string $text): string
  *
  * @param array<int, array{href: string, label: string}> $buttons
  */
-function od_pages_buttons(array $buttons, string $className = ''): string
+function od_pages_buttons(array $buttons): string
 {
-    $attrs = $className === '' ? '' : sprintf(' {"className":"%s"}', $className);
-    $out = sprintf("<!-- wp:buttons%s -->\n<div class=\"wp-block-buttons%s\">", $attrs, $className === '' ? '' : ' ' . $className);
+    $out = "<!-- wp:buttons -->\n<div class=\"wp-block-buttons\">";
     foreach ($buttons as $button) {
         $out .= "<!-- wp:button {\"className\":\"is-style-outline\"} -->\n"
             . '<div class="wp-block-button is-style-outline">'
@@ -607,9 +629,10 @@ function od_pages_inline_text(string $html): string
 }
 
 /**
- * Page path => the transform that rebuilds it and the tag its film row queries.
- * Every page workstream D has rebuilt. An empty tag slug means the page has no
- * such row — the transform is still called the same way, with `0`.
+ * Page path => the transform that rebuilds it and the tag its «Проекты
+ * программы» row queries. Every page workstream D has rebuilt. An empty tag slug
+ * means the page has no such row — the transform is still called the same way,
+ * with `0`. `wp/scripts/od-films.php` is what creates the tags.
  *
  * @return array<string, array{0: callable-string, 1: string}>
  */
@@ -618,7 +641,7 @@ function od_pages_registry(): array
     return [
         'healthy-russia' => ['od_pages_healthy_russia', 'programma-zdorovaya-rossiya'],
         'healthy-youth' => ['od_pages_healthy_youth', 'programma-zdorovaya-molodezh'],
-        'healthy-kids' => ['od_pages_healthy_kids', ''],
+        'healthy-kids' => ['od_pages_healthy_kids', 'programma-zdorovye-deti'],
     ];
 }
 
@@ -643,10 +666,10 @@ foreach (od_pages_registry() as $path => [$transform, $tagSlug]) {
     }
 
     // Resolved here rather than written into a transform: term ids are
-    // per-environment. `wp/scripts/od-terms.php` is what creates them.
+    // per-environment. `wp/scripts/od-films.php` is what creates them.
     $filmTag = $tagSlug === '' ? null : get_term_by('slug', $tagSlug, 'post_tag');
     if ($tagSlug !== '' && !$filmTag) {
-        WP_CLI::warning(sprintf('%s: tag `%s` is missing — run `od-terms.php apply` first.', $path, $tagSlug));
+        WP_CLI::warning(sprintf('%s: tag `%s` is missing — run `od-films.php apply` first.', $path, $tagSlug));
         continue;
     }
 

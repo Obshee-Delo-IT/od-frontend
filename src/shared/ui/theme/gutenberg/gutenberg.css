@@ -358,6 +358,13 @@ h2:has(+ .od-cards, + .od-poster-cards) {
   line-height: 140%;
 }
 
+/* The programme's materials hang under the goal, at body size rather than the
+   card's 24px — it is a link about the programme, not part of its statement.
+   Two classes, because `.od-card--goal p` above would otherwise win. */
+.od-card--goal .od-card-link {
+  font-size: var(--font-size-4);
+}
+
 /* Both rows are `cb/carousel-v2` blocks, so more than three tasks or projects
    need no new markup — see `od_pages_carousel()`. The base carousel styling is
    already the mock's (32px round arrows, 8px bullets) and lives in
@@ -370,13 +377,6 @@ h2:has(+ .od-cards, + .od-poster-cards) {
   margin-bottom: 120px;
 }
 
-/* `project-2` and `project-3` number their task cards «01», «02», … where
-   `project-1` titles them. That ordinal is the card's position in the row and
-   nothing else, so it is a counter here rather than text in `post_content`:
-   an editor who adds, removes or reorders a slide never renumbers anything. */
-.od-cards--numbered {
-  counter-reset: od-task;
-}
 
 .wp-block-cb-carousel-v2.od-cards .cb-wrapper {
   align-items: stretch;
@@ -391,22 +391,16 @@ h2:has(+ .od-cards, + .od-poster-cards) {
 }
 
 /* One rule for both, because the mock draws them identically — 32px red above
-   24px of space, whether the card leads with a title or with its number. */
+   24px of space, whether the card leads with a title (`project-1`) or with its
+   number (`project-2`, `project-3`). The number is a paragraph rather than an
+   `<h3>`, so the weight a heading gets for free is set here. */
 .od-cards h3,
-.od-cards--numbered .cb-slide::before {
+.od-cards--numbered .od-task-number {
   margin-bottom: 24px;
   color: var(--red-8);
   font-size: var(--font-size-8);
-  line-height: 130%;
-}
-
-/* A pseudo-element is not a heading, so the weight an `<h3>` gets for free is
-   set here. */
-.od-cards--numbered .cb-slide::before {
-  display: block;
-  content: counter(od-task, decimal-leading-zero);
-  counter-increment: od-task;
   font-weight: 700;
+  line-height: 130%;
 }
 
 .od-cards p {
@@ -444,13 +438,6 @@ h2:has(+ .od-cards, + .od-poster-cards) {
    collapse into the row's own bottom margin and lose. */
 .od-cards:has(+ .od-note) {
   margin-bottom: 65px;
-}
-
-/* The programme's own materials — a download or a playlist the mock leaves no
-   room for. Rather than invent a section for them they go last, after
-   everything the mock does draw. */
-.od-materials {
-  margin-bottom: 80px;
 }
 
 /* The film posters. The row is a `core/query` over the programme's tag, so a
