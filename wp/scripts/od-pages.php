@@ -358,10 +358,13 @@ function od_pages_projects(string $content, int $filmTagId): string
  * has a single accessible name — the same trick the film posters use.
  *
  * @param array<int, array{id: string, title: string, href: string}> $tiles
+ * @param string $className Row class — `od-tiles` for the three-up portrait
+ *                          cards, plus `od-tiles--wide` for the 598×280 pair
+ *                          `/materials/` draws.
  */
-function od_pages_tiles(array $tiles): string
+function od_pages_tiles(array $tiles, string $className = 'od-tiles'): string
 {
-    $out = "<!-- wp:columns {\"className\":\"od-tiles\"} -->\n<div class=\"wp-block-columns od-tiles\">";
+    $out = sprintf("<!-- wp:columns {\"className\":\"%s\"} -->\n<div class=\"wp-block-columns %s\">", $className, $className);
 
     foreach ($tiles as $tile) {
         $class = 'od-tile od-tile--' . $tile['id'];
@@ -375,6 +378,55 @@ function od_pages_tiles(array $tiles): string
     }
 
     return $out . "</div>\n<!-- /wp:columns -->\n\n";
+}
+
+/**
+ * `/materials/` — the section hub, Figma `ads` (`778:2206`).
+ *
+ * The same move as `/projects/` and for the same reason (D6g): four links with
+ * a drawing each, shipped as `app/materials/page.tsx` over a hard-coded array
+ * while WordPress had the page — #20225, «Наши материалы» — published at that
+ * URL underneath it. The route is deleted and the four cards are blocks.
+ *
+ * What the migrator leaves is those same four links, as two rows of two columns
+ * with a photo above a `<span class="textcapt">` caption, then a `<style>` block
+ * of the old theme's hover-zoom, then a MailPoet form whose plugin is gone —
+ * `[wysija_form id="2"]` renders as its own text. All of it goes: the captions
+ * are longer than the mock's titles, the photos are not the mock's drawings,
+ * and neither the CSS nor the dead shortcode has anywhere to be. `/materials/`
+ * had no subscribe form on the redesigned page either — `NewsletterSignup` is
+ * behind a feature flag that is off.
+ *
+ * The row is one `core/columns` of four, not two of two: `.od-tiles--wide` is a
+ * two-track grid, so the cards flow 2 + 2 on their own and a fifth would open a
+ * third row without an editor thinking about it.
+ *
+ * @param string $content   Stored `post_content`.
+ * @param int    $filmTagId Unused: this page carries no film row.
+ * @return string Rewritten content, or `$content` unchanged if it is already in
+ *                the target shape.
+ * @throws RuntimeException when the page does not look like the expected input.
+ */
+function od_pages_materials(string $content, int $filmTagId): string
+{
+    if (strpos($content, 'od-tile') !== false) {
+        return $content; // Already converted — leave the editor's copy alone.
+    }
+
+    $cards = od_pages_column_media($content);
+    if (count($cards) !== 4) {
+        throw new RuntimeException(sprintf('unexpected input: %d group columns', count($cards)));
+    }
+
+    return rtrim(od_pages_tiles(
+        [
+            ['id' => 'metodichki', 'title' => 'Методические пособия', 'href' => '/materials/metodichki/'],
+            ['id' => 'printed-products', 'title' => 'Печатная продукция', 'href' => '/materials/printed-products/'],
+            ['id' => 'articles', 'title' => 'Статьи для газет и журналов', 'href' => '/materials/articles/'],
+            ['id' => 'social-reklama', 'title' => 'Социальная реклама', 'href' => '/materials/social-reklama/'],
+        ],
+        'od-tiles od-tiles--wide'
+    )) . "\n";
 }
 
 /**
@@ -735,6 +787,7 @@ function od_pages_registry(): array
         'healthy-youth' => ['od_pages_healthy_youth', 'programma-zdorovaya-molodezh'],
         'healthy-kids' => ['od_pages_healthy_kids', 'programma-zdorovye-deti'],
         'projects' => ['od_pages_projects', ''],
+        'materials' => ['od_pages_materials', ''],
     ];
 }
 

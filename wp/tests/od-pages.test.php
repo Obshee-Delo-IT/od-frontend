@@ -249,9 +249,38 @@ assert(!str_contains($projects, 'ОБЩЕЕ ДЕЛО</h2>'), 'the shouted progra
 
 assert(od_pages_projects($projects, 0) === $projects, 'converted content is left alone');
 
-// -- all three refuse input they do not recognise --------------------------------
+// ===========================================================================
+// `/materials/` — Figma `ads`, the same card at 598×280.
+// ===========================================================================
 
-foreach (['od_pages_healthy_youth', 'od_pages_healthy_kids', 'od_pages_projects'] as $transform) {
+$materialsBefore = file_get_contents(__DIR__ . '/fixtures/materials.before.html');
+$materials = od_pages_materials($materialsBefore, 0);
+
+// One row of four, not two of two: `.od-tiles--wide` is a two-track grid.
+assert(substr_count($materials, '<div class="wp-block-columns od-tiles od-tiles--wide">') === 1, 'one row block');
+assert(substr_count($materials, 'class="wp-block-column od-tile od-tile--') === 4, 'four cards');
+assert(!str_contains($materials, '<h2 '), 'the page title names the only section');
+
+foreach (['metodichki', 'printed-products', 'articles', 'social-reklama'] as $id) {
+    assert(str_contains($materials, 'od-tile od-tile--' . $id . '"'), $id . ': card class');
+    assert(file_exists(__DIR__ . '/../../public/figma/materials/' . $id . '.svg'), $id . ': drawing');
+}
+
+assert(str_contains($materials, '<h3 class="wp-block-heading">Методические пособия</h3>'), 'the mock\'s title, not the page\'s longer caption');
+assert(str_contains($materials, '<a href="/materials/printed-products/">Подробнее</a>'), 'the relative href became the real path');
+assert(str_contains($materials, '<a href="/materials/social-reklama/">Подробнее</a>'), 'and the rest keep theirs');
+
+assert(!str_contains($materials, '<style'), 'the old theme\'s hover-zoom is gone');
+assert(!str_contains($materials, 'textcapt'), 'and the class it styled');
+assert(!str_contains($materials, 'wysija_form'), 'the dead MailPoet shortcode is gone');
+assert(!str_contains($materials, '<!-- wp:image '), 'the photos are not the mock\'s drawings');
+assert(!str_contains($materials, 'Общего Дела'), 'the caption\'s tail went with it');
+
+assert(od_pages_materials($materials, 0) === $materials, 'converted content is left alone');
+
+// -- every transform refuses input it does not recognise --------------------------------
+
+foreach (['od_pages_healthy_youth', 'od_pages_healthy_kids', 'od_pages_projects', 'od_pages_materials'] as $transform) {
     $threw = false;
     try {
         $transform('<!-- wp:paragraph --><p>что-то другое</p><!-- /wp:paragraph -->', 666);
