@@ -282,6 +282,27 @@ Data via `fetchNewsList` (`src/shared/api/fetchNewsList.ts`) — paginated `/wp/
 
 **GitHub:** newsletter *submission* wiring still open (#54); markup side is #66/#39.
 
+### D3. `/team/` — the roster as eleven `profile` records, 2026-08-18
+
+Figma `team-1` (`706:1584`) and `team-1-mob` (`1256:5981`). The page needed **no route**: `/team/` is WordPress page 59436 and the catch-all was already rendering it natively (D6b), duplicate `<h1>` and grey `.team-member` boxes included. So the change is content plus two config additions.
+
+**The body is now eleven links and nothing else**, in one `wp:group` classed `od-team` (`od_pages_team()`). `parsePost`'s `embeds` seam swaps each for a `PersonCard`, which is the mechanism B-CPT built for `/materials/metodichki/` — the page keeps a link, the record keeps the data, the card is ours. Dropped: the page's own `<h1>`, the `wp:html` block carrying the old theme's CSS, and the boxes it styled.
+
+**The roster is production's, not od-dev's** — hardcoded in `OD_TEAM` rather than read out of the page, which is the one place `od-pages.php` departs from its own house rule. od-dev's copy of this page lists 13 people; the live site lists 11, and the two sets differ by six. A transform that reads the page would have converted a stale roster on od-dev and a current one on prod, from the same code.
+
+Four things this turned up, all of which cost a rewrite of the first attempt:
+
+- **The records held the *regional* role, not the federal one.** Six of eleven would have come out labelled «Координатор по Кингисеппскому району» on a page about the department they run. One record cannot hold two roles — so the federal role is *prepended* as the new first bold line, which is the one `parseProfileBody` reads, and the regional line stays right under it. Safe because a `/contacts/<region>/` page's `wp:query` renders only the featured image and the title: the role line in a record's body is read by `/profile/<slug>/` and by our cards, nowhere else.
+- **Five of eleven had no phone the card could show** — the numbers were plain text, the known `next-steps.md` item. `od_canonical_tel_links()` links them, and rewrites existing `tel:` hrefs to one spelling (`tel:+79037225329`) so the merge below can tell «the number the record has» from «the number the page has». It also groups a label stored as a bare run of digits, on the way past an existing link as well as on the way in — `+79062755758` reads as a phone number now.
+- **Which card variant to draw is a fact about the page.** `handbooks` draws its coordinator without a portrait, `team-1` draws one, and both are the same component with `photo` filled or empty. `profileEmbeds.tsx` decides from the `od-team` class the content carries — the same class `gutenberg.css` lays the grid out with.
+- **The cards are not the group's own children.** WordPress wraps a `wp:group`'s children in `wp-block-group__inner-container`, so the grid on `.od-team` laid out exactly one item and every card came out half-width in a single column. `display: contents` on the wrapper fixes it and keeps working if a future WordPress stops emitting one.
+
+**One record had to be created**: Анна Панферова is on the team page in prose and has no `profile` record under any status on either server. `od_wp_create_profiles()` makes the shell — title, slug, and the photograph, imported from production when the local library has not got it — and `od-pages.php` fills in the role and the contacts from the same `OD_TEAM` entry as everyone else's. Run order is od-wp first, then od-pages.
+
+**Two config additions on the frontend.** `shared/config/pageSections.ts` is a table of two: it gives `/team/` and `/about/supervisory/` the tab strip the mock draws (they are unrelated pages in WordPress — different parents, no shared taxonomy) and the shorter H1 Figma uses, since the long WP title is what the tab itself says. And `MAX_PROFILES_PER_PAGE` went from 8 to 16: the cap predated a page with a roster, and 11 links would have silently lost three.
+
+**Left as it is, deliberately:** three cards show a contact the team page does not — Варламов's 2016 gmail, Васильев's Pskov address, Чагаев's city landline — because they are in the record and deleting a contact nobody has said is dead is not this pass's call. The breadcrumbs are «Главная › О нас › Команда», a superset of the mock's «О нас ›», so this page is not the only one on the site that starts somewhere other than «Главная».
+
 ### D6. Projects index (`app/projects/page.tsx`) — 2026-08-15
 
 Figma: `projects` (`706:1775`). **Index only** — the three `project-1/2/3` detail mocks stay unbuilt, and the plan's reason holds: zero `/projects/<slug>/` URLs in 91 days, and the `project` CPT is 21 Lorem-ipsum drafts (B-CPT). The index itself is worth building — 794 views / 85 entries, **9.3×**, the section's whole traffic.

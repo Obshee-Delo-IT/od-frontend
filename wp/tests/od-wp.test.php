@@ -48,4 +48,24 @@ foreach (['programma-zdorovaya-rossiya', 'programma-zdorovaya-molodezh', 'progra
 od_test('six of the programme\'s nine lesson films exist as posts — see the registry docblock', count($registry['programma-zdorovaya-rossiya']['films']) === 6);
 od_test('all seven «Здоровая молодежь» lessons have one', count($registry['programma-zdorovaya-molodezh']['films']) === 7);
 
+/* ------------------------------------------------- the records to be created */
+
+$profiles = od_wp_profiles();
+od_test('one record is missing on both servers — Анна Панферова', count($profiles) === 1);
+
+foreach ($profiles as $entry) {
+    od_test($entry['slug'] . ': slug is a plain ASCII slug', (bool) preg_match('#^[a-z0-9-]+$#', $entry['slug']));
+    od_test($entry['slug'] . ': has a title', trim($entry['title']) !== '');
+    od_test($entry['slug'] . ': photograph is a root-relative upload path', str_starts_with($entry['photo'], '/wp-content/uploads/'));
+    od_test($entry['slug'] . ': the origin is added at import time, not stored', !str_contains($entry['photo'], '://'));
+
+    $body = od_wp_profile_body($entry['photo']);
+    // The contract with `od-pages.php`: that script writes the role and the
+    // contacts into this block, and refuses a record without one.
+    od_test($entry['slug'] . ': the body has the paragraph block od-pages.php fills', str_contains($body, '<!-- wp:paragraph -->'));
+    od_test($entry['slug'] . ': and it is left empty here', str_contains($body, "<!-- wp:paragraph -->\n<!-- /wp:paragraph -->"));
+    od_test($entry['slug'] . ': the photograph is in the body as well as the thumbnail', 2 === substr_count($body, $entry['photo']));
+    od_test($entry['slug'] . ': two columns, the shape all 139 records share', 2 === substr_count($body, '<!-- wp:column '));
+}
+
 od_test_summary();

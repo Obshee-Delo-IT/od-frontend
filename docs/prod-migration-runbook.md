@@ -272,9 +272,44 @@ in this install offloads on upload. `resolveMediaUrl` handles that by design —
 probes the CDN, takes the bucket's 301 as "absent" and falls back — but it is one
 more reason to keep §5's image check on this page.
 
+**`/team/` needs `od-wp.php` to have run, and one thing to check by hand.** The
+roster is eleven links to eleven `profile` records (`OD_TEAM` in `od-pages.php`),
+and production is short of two of them:
+
+- **Анна Панферова has no record at all**, under any status, on either server.
+  `od_wp_create_profiles()` creates it — and on production it will *find* the
+  photograph already in the library (attachment 74543 as of 2026-08-18) rather
+  than importing a second copy, because it looks the path up before downloading.
+- **Александр Касатиков's record is a `draft` on production** (71225) and
+  published on od-dev. `get_page_by_path()` finds a draft, so `od-pages.php` will
+  write his role and contacts into it — but `/wp/v2/profile?slug=` returns only
+  published records, so his card renders as a plain link until somebody publishes
+  it. Decide with the client, then `wp post update 71225 --post_status=publish`.
+
+Check both after the run:
+
+```bash
+ssh od-root 'cd ~/public_html && wp --skip-plugins --skip-themes post list --post_type=profile \
+  --post_status=any --fields=ID,post_status,post_title --posts_per_page=400 --format=csv \
+  | grep -iE "панферова|касатиков"'
+```
+
+**The roster in `OD_TEAM` was read off production**, so unlike every other entry
+in `od-pages.php` it is not derived from the page it rewrites — od-dev's copy of
+`/team/` lists a 13-person roster six of whom have left. If the live page has
+changed since 2026-08-18, update `OD_TEAM` before running this, because the
+transform will not read the new names out of the page.
+
 `od-wp.php` addresses posts by slug, so it reports which of the programmes' films production is missing rather than tagging the wrong ones. It also fills each film's `poster_image_url` from an upload path — root-relative in the registry, with production's own origin put back by `home_url()` at write time — and never overwrites a value that is already there. Read that output before running `od-pages.php`.
 
 `apply` is a positional argument, not a `--flag`: `wp eval-file` hands positionals to the script in `$args` and rejects unknown flags outright.
+
+⚠️ **Run this only after §2.7's core upgrade, and address records by slug.** One
+registry entry — the `/materials/metodichki/` coordinator — is addressed by
+`title`, which is a WP_Query var added in **5.7**. On 5.5.5 it is ignored, the
+lookup returns two records, and the runner refuses the entry with a warning
+rather than writing to the wrong one. Every other entry uses `path`, which works
+on any version.
 
 It is idempotent by detection — a page already in its target shape is skipped — so a re-run after further work is safe.
 

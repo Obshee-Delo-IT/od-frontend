@@ -1,8 +1,10 @@
+import { resolvePageSection } from '@/shared/config/pageSections';
 import { canonicalUrl } from '@/shared/config/site';
 import { parsePost, resolveContentHtml } from '@/shared/lib/wpContent';
 import { Box } from '@/shared/ui/components/Box';
 import { ImagePreviewClient } from '@/shared/ui/components/ImagePreview';
 import { PageHeader } from '@/shared/ui/components/PageHeader';
+import { Tabs } from '@/shared/ui/components/Tabs';
 import { GutenbergProvider } from '@/shared/ui/theme';
 import { resolveProfileEmbeds } from './profileEmbeds';
 import type { WpPageContent } from '@/shared/api/fetchWpPage';
@@ -37,7 +39,12 @@ export const wpPageMetadata = ({ page, path }: WpPageProps): Metadata => {
   };
 };
 
-export const WpPage = async ({ page }: WpPageProps) => {
+export const WpPage = async ({ page, path }: WpPageProps) => {
+  /* Two pages are a tabbed pair with a heading of their own — see
+     `shared/config/pageSections.ts`. Everything else takes the WP title and
+     «Главная › <that title>», which is what this route has always drawn. */
+  const section = resolvePageSection(path);
+
   /* `liftHeader: false` — the hero lift is a news/film layout rule, and applying
      it here only ever destroyed content: it removes the lifted block's whole
      parent, which on a page is the column an editor dropped the gallery into.
@@ -52,7 +59,11 @@ export const WpPage = async ({ page }: WpPageProps) => {
 
   return (
     <Box display="flex" flexDirection="column" gap={40} pt={20} pb={48}>
-      <PageHeader title={page.title} breadcrumbs={[{ label: 'Главная', href: '/' }, { label: page.title }]} />
+      <PageHeader
+        title={section?.title ?? page.title}
+        breadcrumbs={section?.breadcrumbs ?? [{ label: 'Главная', href: '/' }, { label: page.title }]}
+        tabs={section && <Tabs items={section.tabs} activeValue={section.activeValue} aria-label="Разделы «О нас»" />}
+      />
 
       <ImagePreviewClient>
         <GutenbergProvider as="section">{parsed.body}</GutenbergProvider>

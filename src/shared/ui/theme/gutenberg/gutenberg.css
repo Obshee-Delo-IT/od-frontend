@@ -934,3 +934,45 @@ h2:has(+ .od-tiles) {
     border-radius: 12px 12px 0 0;
   }
 }
+
+/* ------------------------------------------------------------------------- *
+ * The team roster — Figma `team-1` (`706:1584`) / `team-1-mob` (`1256:5981`),
+ * D3.
+ *
+ * `od_pages_team()` writes `/team/`'s body as one `wp:group` of nothing but
+ * `<p><a href="/profile/…">Name</a></p>` markers, which `parsePost` swaps for
+ * `<PersonCard photo …>` — so the grid's children are the cards themselves,
+ * with no paragraph left in between. There is nothing in Gutenberg's own markup
+ * that says "roster" rather than "group of paragraphs", which is why the class
+ * exists; `profileEmbeds.tsx` reads the same class to decide that these cards
+ * carry a portrait.
+ *
+ * Figma: two 600-wide cards in the 1240 column, 40 between them both ways. The
+ * card's own height comes from the 259-tall photo it contains, so the rows are
+ * even without a track size here.
+ *
+ * **The cards are not the group's own children**, and that cost an hour once:
+ * WordPress renders `wp:group` as the classed `<div>` wrapping a
+ * `wp-block-group__inner-container`, so a grid on `.od-team` alone lays out one
+ * item — the wrapper — and every card comes out half-width in a single column.
+ * `display: contents` takes that wrapper out of the layout instead of moving the
+ * grid onto it, which keeps this working whether or not the WordPress in front of
+ * it still emits one. */
+.od-team {
+  display: grid;
+  gap: 40px;
+  grid-template-columns: repeat(2, 1fr);
+}
+
+.od-team > .wp-block-group__inner-container {
+  display: contents;
+}
+
+/* `team-1-mob` stacks them; the card's own mobile rules shrink the photo and
+   put the text under it. */
+@media (--mobile) {
+  .od-team {
+    gap: 20px;
+    grid-template-columns: 1fr;
+  }
+}

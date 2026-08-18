@@ -358,7 +358,13 @@ od-dev. Its other post types were not re-registered — deliberately, they are d
 re-registers and D3 reads. Worth doing before a prod dump/restore, not before
 launch.
 
-## Linkify the contacts inside `profile` bodies
+## Linkify the contacts inside `profile` bodies — the other 128
+
+**Eleven are done** (D3, 2026-08-18): the transform exists as
+`od_canonical_tel_links()` in `od-pages.php`, and the `/team/` records run through
+it. It links plain-text numbers, rewrites existing `tel:` hrefs to one spelling,
+and groups a label stored as a bare run of digits. What is left is the *sweep* —
+the same function over the whole post type instead of eleven named entries.
 
 **Measured 2026-08-18.** Of 139 published records, **82 hold a phone number typed
 as plain text** outside any anchor and 5 an e-mail, against 24 that link the phone
@@ -377,6 +383,20 @@ backfilling ACF fields — see [`wp-backend.md` §3.1](./wp-backend.md), "Fields
 
 Note `od-pages.php` currently resolves a target by path or title, one record per
 entry; a sweep over a whole post type needs a third resolver kind (~10 lines).
+E-mails and bare `vk.com`/`t.me` URLs are still unhandled — `od_canonical_tel_links()`
+is phones only.
+
+## Three team cards show a contact the team page does not
+
+**Found 2026-08-18, while building `/team/`.** A card lists every contact its
+record links, in document order, so three of the eleven show one more row than
+Figma draws: Варламов's `obshee.delo21@gmail.com` (in his record since ~2016, next
+to the `l.varlamov@obshee-delo.ru` the live page gives), Васильев's regional
+`pskov@obshee-delo.ru` beside the team's `pro@obshee-delo.ru`, and Чагаев's
+`+7-495-722-53-29` landline above his mobile. None is provably dead, and deleting
+a contact is not a thing to guess at — **ask the client which to drop**, then one
+line each in `od-pages.php`. Capping the card at one row per kind is the wrong fix:
+Бальцевич's two mobiles are both in the mock.
 
 ## `/contacts/samarskaya/` lists no coordinators, and the term exists
 

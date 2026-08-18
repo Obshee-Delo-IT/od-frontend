@@ -44,7 +44,7 @@ Five files, split by lifetime:
 
 ### Tests
 
-`wp/tests/od-pages.test.php`, no PHPUnit and no composer — run it with `php wp/tests/od-pages.test.php` (exit 0 / exit 1, 273 assertions today; `od-wp.test.php` adds 83 and `od-revalidate.test.php` 13, all three on `wp/tests/harness.php`). It covers the pure transforms only, and **every transform gets the idempotency case**: `f(f(x)) === f(x)`. Fixtures are real `post_content` captured from od-dev into `wp/tests/fixtures/` — recapture them rather than editing them by hand.
+`wp/tests/od-pages.test.php`, no PHPUnit and no composer — run it with `php wp/tests/od-pages.test.php` (exit 0 / exit 1, 352 assertions today; `od-wp.test.php` adds 92 and `od-revalidate.test.php` 13, all three on `wp/tests/harness.php`). It covers the pure transforms only, and **every transform gets the idempotency case**: `f(f(x)) === f(x)`. Fixtures are real `post_content` captured from od-dev into `wp/tests/fixtures/` — recapture them rather than editing them by hand.
 
 **Not PHP's `assert()`, despite what this section used to say.** `zend.assertions` is `-1` on the dev machine and on both servers, which compiles `assert()` out of the file entirely: the tests would have printed nothing and exited 0 no matter what the transforms did. A one-line `od_test()` helper — an `if` and an `exit(1)` — cannot be switched off by an ini setting.
 
@@ -61,6 +61,11 @@ Stop at the first rung that holds.
 5. **A custom block.** Last resort — it needs JS in the editor and therefore a build step on the WordPress side. No case for one is known today.
 
 **A sixth thing, off the ladder: a link that becomes a component.** Some blocks are not a styling problem at all — they are a *record* the page is retyping. `/materials/metodichki/` had a coordinator's name, role and three contact lines pasted into a `<details>`, and the same person's `profile` record next to it. There is no rung for that: no CSS makes prose into data. What it takes instead is a **`/profile/…` link alone in its own paragraph**, which `parsePost`'s `embeds` option swaps for a `PersonCard` built from the record (`src/modules/WpPage/profileEmbeds.tsx`, B-CPT in the notes). Reach for it when a page repeats something WordPress already holds as a record; it needs no registration, and if the record goes away the link still works. It is **not** a general escape hatch — a page's own content stays content.
+
+`/team/` is the same move at eleven times the size (D3), and it turned up two things the one-card case could not:
+
+- **Which card variant to draw is a fact about the page, not about the record.** `PersonCard` shows a portrait when it is given one, and the two mocks disagree for the same person: `handbooks` draws its coordinator as a photo-less banner, `team-1` draws a photo. So the marker is a class on the content — `od-team`, written by `od_pages_team()` — and `profileEmbeds.tsx` reads the same class `gutenberg.css` lays the grid out with. One class, two readers.
+- **A record can hold only one first bold line, and two pages want different ones.** The regional `/contacts/<region>/` pages are about «Координатор по Тульской области»; the team page is about the same person's «Уполномоченный по развитию в ЦФО». The fix is that the *federal* role is prepended, so it is the line `parseProfileBody` reads while the regional one stays right under it — and nothing is lost, because a regional page's `wp:query` renders only the featured image and the title. Check what a page actually renders from a record before rewriting its body.
 
 **Colour and spacing controls in the editor** were considered as `theme.json` (injected by the `wp_theme_json_data_theme` filter) and dropped as too much machinery. If editors ever need to pick a brand colour rather than have it, the simple form is the classic-theme API — `add_theme_support('editor-color-palette', …)` plus `add_theme_support('disable-custom-colors')` in `od-design.php`, which is a few lines and emits `has-<slug>-color` classes we already control.
 

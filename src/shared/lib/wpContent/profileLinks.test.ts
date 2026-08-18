@@ -20,9 +20,14 @@ describe('collectProfileHrefs', () => {
     expect(collectProfileHrefs(html)).toEqual([]);
   });
 
-  it('caps the fan-out at 8 — the input is editor-controlled and each one is a WP request', () => {
+  it('caps the fan-out at 16 — the input is editor-controlled and each one is a WP request', () => {
     const html = Array.from({ length: 20 }, (_, i) => `<a href="/profile/p${i}/">p</a>`).join('');
-    expect(collectProfileHrefs(html)).toHaveLength(8);
+    expect(collectProfileHrefs(html)).toHaveLength(16);
+  });
+
+  it('clears /team/, the page that needs the most — 11 links, none dropped', () => {
+    const html = Array.from({ length: 11 }, (_, i) => `<p><a href="/profile/p${i}/">p</a></p>`).join('');
+    expect(collectProfileHrefs(html)).toHaveLength(11);
   });
 
   it('answers for an empty body', () => {

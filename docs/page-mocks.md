@@ -66,7 +66,7 @@ The largest section after `Материалы`. Covers an "About" landing plus 6
 | --- | --- | --- |
 | About index | `about` (`706:70`) | `about-mob` (`1248:4488`) |
 | Learn more | `about-learn-more` (`706:1257`) | `about-learn-more-mob` (`1251:4457`) |
-| Team — variant 1 | `team-1` (`706:1584`) | `team-1-mob` (`1256:5981`) |
+| Team — variant 1 ✅ `/team/`, 2026-08-18 | `team-1` (`706:1584`) | `team-1-mob` (`1256:5981`) |
 | Team — variant 2 | `team-2` (`708:3736`) | `team-2-mob` (`1258:6333`) |
 | Documents | `documents` (`706:3499`) | — |
 | Story | `story` (`706:3568`) | `story` (`1261:7163`) |

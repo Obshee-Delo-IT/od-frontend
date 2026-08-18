@@ -1272,6 +1272,340 @@ function od_pages_profile_ryazanov(string $content, int $_filmTagId = 0): string
 }
 
 /**
+ * `/team/` — the roster, and the eleven records behind it. Figma `team-1`
+ * (`706:1584`) and `team-1-mob` (`1256:5981`), D3.
+ *
+ * Every fact this page states about a person — the role, the phone, the e-mail,
+ * the photograph — is stated again in that person's `profile` record. It is the
+ * relation `/materials/metodichki/` has with its one coordinator, eleven times
+ * over, so it goes the same way: the page keeps one link per person and nothing
+ * else, the record keeps the data, and `PersonCard` draws it
+ * (`src/modules/WpPage/profileEmbeds.tsx`).
+ *
+ * **The roster is written here rather than read out of the page, and that is
+ * deliberate.** od-dev's copy of this page is stale — it lists 13 people, six of
+ * whom are no longer on it, and two of the current eleven are missing. The live
+ * site is the roster; this list is production's, read 2026-08-18, and it is the
+ * content fix rather than incidental structure.
+ *
+ * **The role is the half that cannot come from the record as it stands.** A
+ * record holds its person's *regional* role — «Координатор по Тульской области» —
+ * because that is what the 75 `/contacts/<region>/` pages are about, and the team
+ * page is about the same person's federal one. One record, two true answers. So
+ * the federal role is *prepended* as the record's new first bold line, which is
+ * the line {@see parseProfileBody()} reads, and the regional line stays right
+ * under it: `/profile/<slug>/` now states both, and neither page loses anything.
+ *
+ * The same pass gives each record the contacts the team page had and it did not,
+ * and canonicalises its phone numbers into `tel:` links — most were plain text,
+ * which is why cards drew no phone row (`docs/next-steps.md`).
+ */
+const OD_TEAM = [
+    [
+        'name' => 'Варламов Леонид Геннадьевич',
+        'href' => '/profile/varlamov/',
+        'role' => 'Председатель правления организации, член Межведомственного совета по общественному здоровью Департамента здравоохранения города Москвы',
+        'contacts' => [
+            ['mailto:l.varlamov@obshee-delo.ru', 'l.varlamov@obshee-delo.ru'],
+            ['https://vk.com/l.varlamov', 'https://vk.com/l.varlamov'],
+        ],
+    ],
+    [
+        'name' => 'Калашников Павел Сергеевич',
+        'href' => '/profile/kalashnikov-pavel/',
+        'role' => 'Руководитель департамента фандрайзинга, член Наблюдательного совета организации',
+        'contacts' => [
+            ['tel:+79251906699', '+7 925 190-66-99'],
+            ['mailto:p.kalashnikov@obshee-delo.ru', 'p.kalashnikov@obshee-delo.ru'],
+        ],
+    ],
+    [
+        'name' => 'Чагаев Дмитрий Владимирович',
+        'href' => '/profile/chagaev/',
+        'role' => 'Руководитель департамента по связям с госструктурами',
+        'contacts' => [
+            ['tel:+79037225329', '+7 903 722-53-29'],
+            ['mailto:chagaev@mail.ru', 'chagaev@mail.ru'],
+        ],
+    ],
+    [
+        'name' => 'Васильев Михаил Геннадьевич',
+        'href' => '/profile/%d0%b2%d0%b0%d1%81%d0%b8%d0%bb%d1%8c%d0%b5%d0%b2-%d0%bc%d0%b8%d1%85%d0%b0%d0%b8%d0%bb-%d0%b3%d0%b5%d0%bd%d0%bd%d0%b0%d0%b4%d1%8c%d0%b5%d0%b2%d0%b8%d1%87/',
+        'role' => 'Руководитель департамента по развитию добровольчества, руководитель оргкомитета ежегодного Всероссийского конкурса «Общее дело — ПРО»',
+        'contacts' => [
+            ['tel:+79113592167', '+7 911 359-21-67'],
+            ['mailto:pro@obshee-delo.ru', 'pro@obshee-delo.ru'],
+            ['https://vk.com/newpskovregion', 'https://vk.com/newpskovregion'],
+        ],
+    ],
+    [
+        'name' => 'Дегтярёв Алексей Анатольевич',
+        'href' => '/profile/%d0%b4%d0%b5%d0%b3%d1%82%d1%8f%d1%80%d1%91%d0%b2-%d0%b0%d0%bb%d0%b5%d0%ba%d1%81%d0%b5%d0%b9-%d0%b0%d0%bd%d0%b0%d1%82%d0%be%d0%bb%d1%8c%d0%b5%d0%b2%d0%b8%d1%87/',
+        'role' => 'Руководитель медиа департамента',
+        'contacts' => [
+            ['tel:+79629507561', '+7 962 950-75-61'],
+            ['mailto:post27@bk.ru', 'post27@bk.ru'],
+        ],
+    ],
+    [
+        'name' => 'Моисеев Олег Олегович',
+        'href' => '/profile/moiseev-oleg-olegovich/',
+        'role' => 'Руководитель департамента профилактики',
+        'contacts' => [
+            ['tel:+79037748061', '+7 903 774-80-61'],
+            ['mailto:moiseev_od@mail.ru', 'moiseev_od@mail.ru'],
+        ],
+    ],
+    [
+        'name' => 'Бальцевич Вячеслав Павлович',
+        'href' => '/profile/baltsevich/',
+        'role' => 'Уполномоченный по развитию в УФО',
+        'contacts' => [
+            ['tel:+79826119777', '+7 982 611-97-77'],
+            ['tel:+79292211999', '+7 929 221-19-99'],
+            ['mailto:baltsevich77@bk.ru', 'baltsevich77@bk.ru'],
+        ],
+    ],
+    [
+        'name' => 'Касатиков Александр Юрьевич',
+        'href' => '/profile/%d0%ba%d0%b0%d1%81%d0%b0%d1%82%d0%b8%d0%ba%d0%be%d0%b2-%d0%b0%d0%bb%d0%b5%d0%ba%d1%81%d0%b0%d0%bd%d0%b4%d1%80-%d1%8e%d1%80%d1%8c%d0%b5%d0%b2%d0%b8%d1%87/',
+        'role' => 'Уполномоченный по развитию в ЦФО',
+        'contacts' => [
+            ['tel:+79030377708', '+7 903 037-77-08'],
+            ['mailto:SilaOtechestva@mail.ru', 'SilaOtechestva@mail.ru'],
+        ],
+    ],
+    [
+        'name' => 'Панферова Анна Андреевна',
+        'href' => '/profile/panferova-anna-andreevna/',
+        'role' => 'Первый заместитель Уполномоченного по развитию в ЦФО',
+        'contacts' => [
+            ['tel:+79653536761', '+7 965 353-67-61'],
+            ['mailto:anyapan88@yandex.ru', 'anyapan88@yandex.ru'],
+        ],
+    ],
+    [
+        'name' => 'Тарасов Сергей Валентинович',
+        'href' => '/profile/%d1%82%d0%b0%d1%80%d0%b0%d1%81%d0%be%d0%b2-%d1%81%d0%b5%d1%80%d0%b3%d0%b5%d0%b9-%d0%b2%d0%b0%d0%bb%d0%b5%d0%bd%d1%82%d0%b8%d0%bd%d0%be%d0%b2%d0%b8%d1%87/',
+        'role' => 'Заместитель руководителя департамента информационной политики и комплексной безопасности',
+        'contacts' => [
+            ['tel:+79062755758', '+7 906 275-57-58'],
+            ['mailto:politbez_od@mail.ru', 'politbez_od@mail.ru'],
+        ],
+    ],
+    [
+        'name' => 'Чернов Евгений Павлович',
+        'href' => '/profile/%d1%87%d0%b5%d1%80%d0%bd%d0%be%d0%b2-%d0%b5%d0%b2%d0%b3%d0%b5%d0%bd%d0%b8%d0%b9-%d0%bf%d0%b0%d0%b2%d0%bb%d0%be%d0%b2%d0%b8%d1%87/',
+        'role' => 'Руководитель департамента информационной политики и комплексной безопасности',
+        'contacts' => [
+            ['tel:+79111620252', '+7 911 162-02-52'],
+            ['mailto:politbez@obshee-delo.ru', 'politbez@obshee-delo.ru'],
+        ],
+    ],
+];
+
+/**
+ * `/profile/<slug>/` → `<slug>`, the form `get_page_by_path()` takes.
+ *
+ * Left percent-encoded when that is how the record spells it: `get_page_by_path()`
+ * round-trips the string through `urldecode`/`rawurlencode` and `post_name` is
+ * stored in a case-insensitive collation, so the lowercase hex the content
+ * carries matches the uppercase hex WordPress builds.
+ */
+function od_profile_slug(string $href): string
+{
+    $segments = explode('/', trim($href, '/'));
+
+    return (string) end($segments);
+}
+
+/**
+ * `/team/` — the page itself: eleven profile links in one grid, and nothing else.
+ *
+ * Dropped: the `<h1>`, because the route draws the page title itself; the
+ * `wp:html` block holding the old theme's `.team-member` CSS; and the grey
+ * rounded boxes that CSS styled. What replaces them is `od-team`, the class both
+ * `gutenberg.css` (the two-column grid) and `profileEmbeds.tsx` (draw these cards
+ * with a portrait) key on.
+ *
+ * @param string $content    Stored `post_content`.
+ * @param int    $_filmTagId Unused — see {@see od_pages_metodichki()}.
+ * @throws RuntimeException when the page is neither converted nor the shape this
+ *                          converts.
+ */
+function od_pages_team(string $content, int $_filmTagId = 0): string
+{
+    if (od_has_block_class($content, 'od-team')) {
+        return $content;
+    }
+
+    if (!str_contains($content, 'team-member')) {
+        throw new RuntimeException('no `.team-member` boxes — not the shape this converts');
+    }
+
+    $links = '';
+    foreach (OD_TEAM as $member) {
+        $links .= od_pages_paragraph('<a href="' . od_attr($member['href']) . '">' . $member['name'] . '</a>');
+    }
+
+    return "<!-- wp:group {\"className\":\"od-team\"} -->\n<div class=\"wp-block-group od-team\">\n"
+        . rtrim($links) . "\n</div>\n<!-- /wp:group -->";
+}
+
+/**
+ * `+7 (903) 037-77-08` → `tel:+79030377708`, or `''` when the text is not a
+ * Russian phone number.
+ *
+ * Eleven digits beginning `7` or `8` — the one shape every number in these
+ * records has, and a strict enough test that a year or a house number in the
+ * prose beside them cannot pass it.
+ */
+function od_tel_href(string $text): string
+{
+    $digits = preg_replace('~\D+~', '', $text);
+
+    if (strlen($digits) !== 11 || !in_array($digits[0], ['7', '8'], true)) {
+        return '';
+    }
+
+    return 'tel:+7' . substr($digits, 1);
+}
+
+/**
+ * `+79062755758` → `+7 906 275-57-58` — a number stored as one run of digits, in
+ * the grouping the mock and most of the corpus use.
+ *
+ * Only that case. A number an editor has already grouped — `+7 (962) 950-75-61`,
+ * `8-903-774-8061` — keeps its own spelling, because that spelling is a choice and
+ * a bare run of eleven digits is the absence of one.
+ */
+function od_tel_label(string $text): string
+{
+    $trimmed = trim($text);
+
+    if (!preg_match('~^\+?\d{11}$~', $trimmed)) {
+        return $text;
+    }
+
+    $digits = preg_replace('~\D+~', '', $trimmed);
+
+    return sprintf(
+        '+7 %s %s-%s-%s',
+        substr($digits, 1, 3),
+        substr($digits, 4, 3),
+        substr($digits, 7, 2),
+        substr($digits, 9, 2)
+    );
+}
+
+/**
+ * Every phone number in a `profile` body as one `tel:` link, spelled one way.
+ *
+ * Two halves, and both are needed by the third caller downstream. Existing
+ * `tel:` hrefs are rewritten to the digits-only form, because a record that
+ * writes `tel:+7-903-722-53-29` and a merge that offers `tel:+79037225329` are
+ * the same number and would otherwise both end up on the card. Then plain-text
+ * numbers — 92 of the 139 records write them that way, which is why their cards
+ * drew no phone row at all — become links.
+ *
+ * Both halves also pass their **visible** text through {@see od_tel_label()}, so
+ * a number stored as one run of digits reads as a number on the card. The label
+ * has to be fixed on the way past an existing link too, not only on the way in:
+ * a record linked by an earlier run of this script is the common case, and its
+ * text is inside the anchor where the plain-text pass will never look again.
+ *
+ * The split keeps whole anchors and every tag as delimiters, so only text
+ * *outside* markup is rewritten: a number already linked is left alone, and one
+ * inside an attribute is never seen.
+ */
+function od_canonical_tel_links(string $content): string
+{
+    $content = preg_replace_callback(
+        '~<a\b([^>]*)href="tel:([^"]*)"([^>]*)>([^<]*)</a>~i',
+        static function (array $m): string {
+            $href = od_tel_href($m[2]);
+
+            return $href === ''
+                ? $m[0]
+                : '<a' . $m[1] . 'href="' . $href . '"' . $m[3] . '>' . od_tel_label($m[4]) . '</a>';
+        },
+        $content
+    );
+
+    $parts = preg_split('~(<a\b[^>]*>.*?</a>|<[^>]+>)~si', $content, -1, PREG_SPLIT_DELIM_CAPTURE);
+
+    foreach ($parts as $i => $part) {
+        if ($i % 2 === 1 || (!str_contains($part, '7') && !str_contains($part, '8'))) {
+            continue;
+        }
+
+        $parts[$i] = preg_replace_callback(
+            '~(?<![\d\-])(?:\+7|8)[\s\-()]*\d[\d\s\-()]{7,}\d~u',
+            static function (array $m): string {
+                $href = od_tel_href($m[0]);
+
+                return $href === '' ? $m[0] : '<a href="' . $href . '">' . od_tel_label($m[0]) . '</a>';
+            },
+            $part
+        );
+    }
+
+    return implode('', $parts);
+}
+
+/**
+ * The team role and the team page's contacts, as the record's **first** lines.
+ *
+ * First, not appended, and that is the point: {@see parseProfileBody()} reads the
+ * body's first bold line as the role and takes contacts in document order, so a
+ * card leads with whatever the record leads with. Several of these records lead
+ * with a contact that has not been current since 2017.
+ *
+ * A line already there is not written twice, which is what makes a re-run a
+ * no-op.
+ *
+ * @param array<int, array{0: string, 1: string}> $contacts href, label.
+ * @throws RuntimeException when the record has no paragraph block to lead.
+ */
+function od_prepend_profile_lead(string $content, string $role, array $contacts): string
+{
+    $lines = str_contains($content, '<strong>' . $role . '</strong>')
+        ? ''
+        : '<p><strong>' . $role . '</strong></p>' . "\n";
+
+    foreach ($contacts as list($href, $label)) {
+        if (!str_contains($content, $href)) {
+            $lines .= '<p><a href="' . od_attr($href) . '">' . od_attr($label) . '</a></p>' . "\n";
+        }
+    }
+
+    if ($lines === '') {
+        return $content;
+    }
+
+    $open = strpos($content, '<!-- wp:paragraph -->');
+    if ($open === false) {
+        throw new RuntimeException('no `wp:paragraph` block to lead — not the shape this converts');
+    }
+
+    return substr_replace($content, "\n" . rtrim($lines), $open + strlen('<!-- wp:paragraph -->'), 0);
+}
+
+/**
+ * One team member's `profile` record: canonical phone links, then the federal
+ * role and the contacts only `/team/` carried.
+ *
+ * @param string                                  $content    Stored `post_content`.
+ * @param int                                     $_filmTagId Unused — see {@see od_pages_metodichki()}.
+ * @param string                                  $role       The federal role, from {@see OD_TEAM}.
+ * @param array<int, array{0: string, 1: string}> $contacts   href, label.
+ */
+function od_pages_profile_team(string $content, int $_filmTagId, string $role, array $contacts): string
+{
+    return od_prepend_profile_lead(od_canonical_tel_links($content), $role, $contacts);
+}
+
+/**
  * Every record workstream D rewrites, newest last.
  *
  * `path` is resolved with `get_page_by_path()` — exact and hierarchy-aware.
@@ -1281,11 +1615,21 @@ function od_pages_profile_ryazanov(string $content, int $_filmTagId = 0): string
  * what creates those tags. Term ids are per-environment, so the
  * runner resolves the slug and hands the transform the id.
  *
- * @return array<int, array{label: string, fix: callable-string, path?: string, title?: string, post_type?: string, tag?: string}>
+ * `args` is passed on to the transform after those two, which is what lets one
+ * function serve eleven records that differ only in their data (see `OD_TEAM`).
+ *
+ * ⚠️ **`title` needs WordPress 5.7 and production runs 5.5.5.** The query var did
+ * not exist before then, so 5.5 ignores it, `get_posts()` returns the two newest
+ * records of that type and the runner refuses the entry rather than writing to the
+ * wrong one — a warning, not damage, but the entry does nothing there. Address a
+ * record by `path` where it matters on production; the slug is a valid address
+ * even when it names the wrong person.
+ *
+ * @return array<int, array{label: string, fix: callable-string, path?: string, title?: string, post_type?: string, tag?: string, args?: array<int, mixed>}>
  */
 function od_pages_registry(): array
 {
-    return [
+    $registry = [
         [
             'label' => 'D6e · /healthy-russia/ — Figma `project-1` (759:845)',
             'path' => 'healthy-russia',
@@ -1325,7 +1669,27 @@ function od_pages_registry(): array
             'path' => 'materials',
             'fix' => 'od_pages_materials',
         ],
+        [
+            'label' => 'D3 · /team/ — Figma `team-1` (706:1584)',
+            'path' => 'team',
+            'fix' => 'od_pages_team',
+        ],
     ];
+
+    // One entry per team member, because each is a record of its own — the list
+    // is `OD_TEAM` so that the page's links and the records they address cannot
+    // drift apart.
+    foreach (OD_TEAM as $member) {
+        $registry[] = [
+            'label' => sprintf('D3 · profile «%s» — the team role and the contacts only /team/ had', $member['name']),
+            'post_type' => 'profile',
+            'path' => od_profile_slug($member['href']),
+            'fix' => 'od_pages_profile_team',
+            'args' => [$member['role'], $member['contacts']],
+        ];
+    }
+
+    return $registry;
 }
 
 // ---------------------------------------------------------------------------
@@ -1378,7 +1742,7 @@ foreach (od_pages_registry() as $entry) {
     }
 
     try {
-        $new = $entry['fix']($post->post_content, $filmTag ? (int) $filmTag->term_id : 0);
+        $new = $entry['fix']($post->post_content, $filmTag ? (int) $filmTag->term_id : 0, ...($entry['args'] ?? []));
     } catch (Throwable $e) {
         WP_CLI::warning(sprintf('%s (#%d): %s', $entry['label'], $post->ID, $e->getMessage()));
         continue;

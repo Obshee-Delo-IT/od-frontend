@@ -572,9 +572,138 @@ od_test('the caption\'s tail went with it', !str_contains($materials, 'Обще�
 
 od_test('converted content is left alone', od_pages_materials($materials, 0) === $materials);
 
+/* ---------------------------------------------- /team/ and its records (D3) */
+
+$team      = file_get_contents(__DIR__ . '/fixtures/page-team.html');
+$chagaev   = file_get_contents(__DIR__ . '/fixtures/profile-chagaev.html');
+$kasatikov = file_get_contents(__DIR__ . '/fixtures/profile-kasatikov.html');
+
+od_test('the fixture is od-dev\'s stale roster', 13 === substr_count($team, 'class="team-member"'));
+
+$roster = od_pages_team($team, 0);
+
+od_test('the class both the grid CSS and the card variant read', str_contains($roster, '{"className":"od-team"}'));
+od_test('and it is on the rendered wrapper too', str_contains($roster, 'class="wp-block-group od-team"'));
+od_test('eleven links — production\'s roster, not the fixture\'s', 11 === substr_count($roster, '<a href="/profile/'));
+od_test(
+    'each alone in its own paragraph, which is what parsePost swaps for a card',
+    11 === substr_count($roster, "<!-- wp:paragraph -->\n<p><a href=\"/profile/")
+);
+od_test('the old theme\'s stylesheet is gone', !str_contains($roster, '<style'));
+od_test('and the boxes it styled', !str_contains($roster, 'team-member'));
+od_test('and the body\'s own <h1>, which the page header draws', !str_contains($roster, '<h1'));
+// The point of hardcoding the roster: od-dev lists six people the live site does
+// not, and misses two it does.
+od_test('nobody who has left the team is still listed', !str_contains($roster, 'Рябовичева') && !str_contains($roster, 'Максимченко'));
+od_test('and the two od-dev was missing are on it', str_contains($roster, 'Панферова Анна Андреевна') && str_contains($roster, 'Чернов Евгений Павлович'));
+od_test('converted content is left alone', od_pages_team($roster, 0) === $roster);
+
+foreach (OD_TEAM as $member) {
+    od_test(
+        $member['name'] . ': linked from the page under their own name',
+        str_contains($roster, '<a href="' . $member['href'] . '">' . $member['name'] . '</a>')
+    );
+}
+
+/* -------------------------------------------------------- od_profile_slug */
+
+od_test('od_profile_slug takes the last segment', od_profile_slug('/profile/varlamov/') === 'varlamov');
+od_test(
+    'and leaves percent-encoding spelled the way the record spells it',
+    od_profile_slug('/profile/%d1%87%d0%b5%d1%80%d0%bd%d0%be%d0%b2/') === '%d1%87%d0%b5%d1%80%d0%bd%d0%be%d0%b2'
+);
+
+/* ------------------------------------------------------------ od_tel_href */
+
+od_test('od_tel_href normalises a formatted number', od_tel_href('+7 (903) 037-77-08') === 'tel:+79030377708');
+od_test('a leading 8 becomes +7', od_tel_href('8-925-190-66-99') === 'tel:+79251906699');
+od_test('a year is not a phone number', od_tel_href('2008') === '');
+od_test('nor is a ten-digit string', od_tel_href('903 123-45-67') === '');
+
+/* ----------------------------------------------------------- od_tel_label */
+
+od_test('od_tel_label groups a bare run of digits', od_tel_label('+79062755758') === '+7 906 275-57-58');
+od_test('a leading 8 is grouped as +7 too', od_tel_label('89113592167') === '+7 911 359-21-67');
+od_test('an editor\'s own grouping is left alone', od_tel_label('+7 (962) 950-75-61') === '+7 (962) 950-75-61');
+od_test('and so is anything that is not a number', od_tel_label('обратитесь в приёмную') === 'обратитесь в приёмную');
+
+/* -------------------------------------------------- od_canonical_tel_links */
+
+od_test('the fixture writes both its hrefs with dashes', 2 === substr_count($chagaev, 'href="tel:+7-'));
+$canon = od_canonical_tel_links($chagaev);
+od_test('the city number\'s href is the digits form', str_contains($canon, 'href="tel:+74957225329"'));
+od_test('the mobile number\'s too', str_contains($canon, 'href="tel:+79037225329"'));
+od_test('and the visible number is left exactly as it was', str_contains($canon, '>+7-495-722-53-29</a>'));
+od_test_idempotent('od_canonical_tel_links (already linked)', 'od_canonical_tel_links', $chagaev);
+
+od_test('the second fixture writes its number as plain text', str_contains($kasatikov, 'Тел.: +7 903 037-77-08'));
+$linked = od_canonical_tel_links($kasatikov);
+od_test(
+    'a plain-text number becomes a link, label untouched',
+    str_contains($linked, 'Тел.: <a href="tel:+79030377708">+7 903 037-77-08</a>')
+);
+od_test('an address that was already a link is not linked twice', 1 === substr_count($linked, 'mailto:SilaOtechestva@mail.ru'));
+od_test_idempotent('od_canonical_tel_links (plain text)', 'od_canonical_tel_links', $kasatikov);
+
+// The label is fixed on the way past an existing link, not only when one is made:
+// a record this script has already linked keeps its text inside the anchor.
+$bare = od_canonical_tel_links('<p><a href="tel:+79062755758">+79062755758</a></p>');
+od_test('an already-linked bare number is grouped', $bare === '<p><a href="tel:+79062755758">+7 906 275-57-58</a></p>');
+od_test_idempotent('od_canonical_tel_links (bare label)', 'od_canonical_tel_links', '<p><a href="tel:+79062755758">+79062755758</a></p>');
+
+// The guard that keeps prose out: a record with a date in it must come back with
+// the date as text.
+od_test(
+    'a year in the prose is not turned into a phone link',
+    od_canonical_tel_links('<p>Юридическое - 2008 г.</p>') === '<p>Юридическое - 2008 г.</p>'
+);
+od_test(
+    'and a number inside an attribute is never seen',
+    od_canonical_tel_links('<img alt="8-925-190-66-99" />') === '<img alt="8-925-190-66-99" />'
+);
+
+/* ------------------------------------------------------ od_pages_profile_team */
+
+$kasatikovMember = null;
+foreach (OD_TEAM as $member) {
+    if ($member['name'] === 'Касатиков Александр Юрьевич') {
+        $kasatikovMember = $member;
+    }
+}
+od_test('the roster holds the member the fixture is', $kasatikovMember !== null);
+
+$led = od_pages_profile_team($kasatikov, 0, $kasatikovMember['role'], $kasatikovMember['contacts']);
+
+// This is the whole reason the lead is prepended rather than appended:
+// `parseProfileBody()` reads the *first* bold line as the card's subtitle.
+od_test('the federal role is the body\'s first bold line', str_contains($led, '<strong>Уполномоченный по развитию в ЦФО</strong>'));
+od_test(
+    'and it comes before the regional one, which is still there',
+    strpos($led, 'Уполномоченный по развитию в ЦФО') < strpos($led, 'Координатор по Тульской области')
+);
+od_test('the lead sits inside the paragraph block, not before it', str_contains($led, "<!-- wp:paragraph -->\n<p><strong>Уполномоченный"));
+od_test('the phone the card needs is now a link', str_contains($led, 'href="tel:+79030377708"'));
+od_test('a contact the record already had is not repeated', 1 === substr_count($led, 'mailto:SilaOtechestva@mail.ru'));
+od_test('nothing the record held is lost', str_contains($led, 'https://vk.com/id44507712'));
+od_test_idempotent(
+    'od_pages_profile_team',
+    static fn(string $c): string => od_pages_profile_team($c, 0, $kasatikovMember['role'], $kasatikovMember['contacts']),
+    $kasatikov
+);
+
+// A record whose body is not the shape every `profile` has is refused rather than
+// led with a paragraph of its own.
+$threw = false;
+try {
+    od_pages_profile_team('<h2>ничего похожего</h2>', 0, 'Роль', []);
+} catch (RuntimeException $e) {
+    $threw = true;
+}
+od_test('a record with no paragraph block is refused', $threw);
+
 // -- every transform refuses input it does not recognise --------------------------------
 
-foreach (['od_pages_healthy_youth', 'od_pages_healthy_kids', 'od_pages_projects', 'od_pages_materials'] as $transform) {
+foreach (['od_pages_healthy_youth', 'od_pages_healthy_kids', 'od_pages_projects', 'od_pages_materials', 'od_pages_team'] as $transform) {
     $threw = false;
     try {
         $transform('<!-- wp:paragraph --><p>что-то другое</p><!-- /wp:paragraph -->', 666);
