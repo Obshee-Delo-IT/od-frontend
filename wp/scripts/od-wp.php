@@ -1,40 +1,35 @@
 <?php
 /**
- * od-films.php — the film-side data workstream D needs WordPress to carry:
- * which films belong to a programme, and the two fields a programme card reads
- * off each of them.
+ * od-wp.php — the WordPress-side data workstream D needs, everything that is not
+ * a page's own markup.
  *
- *     wp --url=https://od-dev.tmweb.ru eval-file od-films.php           # dry run
- *     wp --url=https://od-dev.tmweb.ru eval-file od-films.php apply     # write
+ *     wp --url=https://od-dev.tmweb.ru eval-file od-wp.php           # dry run
+ *     wp --url=https://od-dev.tmweb.ru eval-file od-wp.php apply     # write
  *
- * Separate from `od-pages.php` on purpose: that one rewrites a page's
- * `post_content` and is re-run whenever a page's design changes, this one only
- * ever adds to a film post. They also run at different moments — a tag has to
- * exist before a page can query it — and this file has to survive on
- * production, where the pages are rebuilt from their own CMSMasters originals.
+ * Separate from `od-pages.php` on purpose, and the line between them is what a
+ * change is *made of*: that one rewrites a page's `post_content` and is re-run
+ * whenever a page's design changes, this one edits WordPress objects — terms,
+ * postmeta, attachment metadata — and only ever adds to them. They also run at
+ * different moments: a tag has to exist before a page can query it.
  *
  * Why a script rather than clicks in the admin: od-dev's database never travels
- * to production, so anything set by hand here is set nowhere.
+ * to production, so anything set by hand here is set nowhere. Applying the whole
+ * of workstream D to production is running these two files.
  *
- * Three things per film, all idempotent:
- *
- * - **The programme's tag.** `wp_set_post_terms(…, append: true)` leaves
- *   whatever else the post is tagged with; a term already on a post is skipped,
- *   and the tag itself is created only if missing.
- * - **Alt text on the featured image**, taken from the post's own title when it
- *   has none. An editor's wording always wins. A cover with no alt is a link
- *   with no accessible name wherever it renders as one.
- * - **`poster_image_url`**, the portrait плакат a programme card prefers over
- *   the 16∶9 still (see `wp/mu-plugins/od-film-meta.php`). Only ever filled in
- *   when empty, and only where the artwork exists and is portrait — a landscape
- *   file letterboxes in the card exactly as the still does, so it buys nothing.
+ * **Adding a task.** One function, called from the runner at the bottom, taking
+ * `$apply` and doing nothing but logging when it is false. Whatever it needs to
+ * know goes in a registry function above it, so the data can be read and tested
+ * without WordPress. There is one task today —
+ * {@see od_wp_tag_programme_films()} — and no framework for a second, because
+ * two calls in a row is not a thing that needs one.
  *
  * House rules, same as `od-pages.php`: dry run by default, writing takes the
- * positional argument `apply`, and **posts are addressed by slug**, never by id,
- * because ids differ per environment. The slugs below are written in readable
- * Cyrillic; WordPress stores them percent-encoded, which is what
- * `sanitize_title()` produces. Upload paths are relative for the same reason —
- * the origin is put back with `home_url()` at write time.
+ * positional argument `apply`, everything is idempotent, and **posts are
+ * addressed by slug**, never by id, because ids differ per environment. The
+ * slugs below are written in readable Cyrillic; WordPress stores them
+ * percent-encoded, which is what `sanitize_title()` produces. Upload paths are
+ * root-relative for the same reason — the origin is put back with `home_url()`
+ * at write time.
  */
 
 /**
@@ -52,11 +47,11 @@
  * «Алкоголь. Взгляд изнутри», «Наркотики. Медицинские и социальные
  * последствия». Add their slugs when they are published.
  *
- * **«Здоровая молодежь»** is seven lessons. Four map to a film outright; two
- * more are the films the page itself linked and read like the remaining
- * lessons under other names («Тайна природы женщины» for «Девушка в современном
- * социуме», «Как научиться любить?» for «Уровни развития отношений»). The
- * seventh, «Опасность ВИЧ и других ЗППП», has no film on the site.
+ * **«Здоровая молодежь»** is seven lessons, and all seven have a film. Four
+ * match by name; the other three are titled differently from the lesson they
+ * belong to — «Тайна природы женщины» is «Девушка в современном социуме»,
+ * «Как научиться любить?» is «Уровни развития отношений», and «Докажи, что
+ * любишь» is «Опасность ВИЧ и других ЗППП».
  *
  * **«Здоровые дети»** is the «Команда Познавалова» cartoons. Two are the
  * lessons named on the page; a third, «Задача по зубам» (`70847`), is in the
@@ -64,7 +59,7 @@
  *
  * @return array<string, array{name: string, films: array<string, string>}>
  */
-function od_films_registry(): array
+function od_wp_programmes(): array
 {
     return [
         'programma-zdorovaya-rossiya' => [
@@ -85,11 +80,12 @@ function od_films_registry(): array
             // library. «Путь героя»'s is 420×359 and stays unset.
             'films' => [
                 'фильм-четыре-ключа-к-твоим-победам' => '',   // №1 — has a плакат of its own
-                'woman-nature-secret' => '/wp-content/uploads/2021/02/plakats_2office_woman.jpg',
-                'man-five-secrets' => '/wp-content/uploads/2021/02/plakats_2office_man.jpg',
+                'woman-nature-secret' => '/wp-content/uploads/2021/02/plakats_2office_woman.jpg', // №2
+                'man-five-secrets' => '/wp-content/uploads/2021/02/plakats_2office_man.jpg',      // №3
                 'путь-героя-фильм-о-игровой-зависимост' => '', // №4 — only landscape artwork exists
-                'фильм-как-научиться-любить-пошагова' => '/wp-content/uploads/2021/02/how-to-love.jpg',
-                'грязные-слова' => '/wp-content/uploads/2021/02/dirty-words.jpg',
+                'фильм-как-научиться-любить-пошагова' => '/wp-content/uploads/2021/02/how-to-love.jpg', // №5
+                'грязные-слова' => '/wp-content/uploads/2021/02/dirty-words.jpg',                 // №6
+                'докажи-что-любишь' => '',                     // №7 «Опасность ВИЧ и других ЗППП»
             ],
         ],
         'programma-zdorovye-deti' => [
@@ -102,70 +98,67 @@ function od_films_registry(): array
     ];
 }
 
-// ---------------------------------------------------------------------------
-// Runner.
-// ---------------------------------------------------------------------------
+/**
+ * Task: every programme's films, as {@see od_wp_programmes()} describes them —
+ * the tag, the cover's alt text and the портретный плакат. Three writes, all of
+ * them additive, none of them ever overwriting a value already there.
+ */
+function od_wp_tag_programme_films(bool $apply): void
+{
+    foreach (od_wp_programmes() as $slug => $programme) {
+        $term = get_term_by('slug', $slug, 'post_tag');
 
-if (!defined('WP_CLI') || !WP_CLI) {
-    return;
-}
+        if (!$term) {
+            WP_CLI::log(sprintf('%s: tag missing, to be created as «%s»', $slug, $programme['name']));
 
-$apply = in_array('apply', $args ?? [], true);
-WP_CLI::log($apply ? 'Applying changes.' : 'Dry run — pass `apply` to write.');
+            if ($apply) {
+                $created = wp_insert_term($programme['name'], 'post_tag', ['slug' => $slug]);
+                if (is_wp_error($created)) {
+                    WP_CLI::warning(sprintf('%s: %s', $slug, $created->get_error_message()));
+                    continue;
+                }
 
-foreach (od_films_registry() as $slug => $programme) {
-    $term = get_term_by('slug', $slug, 'post_tag');
+                $term = get_term($created['term_id'], 'post_tag');
+                WP_CLI::success(sprintf('%s: tag created (#%d)', $slug, $term->term_id));
+            }
+            // A dry run carries on without a term: the point of it is the list of
+            // films below, and a missing tag would otherwise hide all of them.
+        }
 
-    if (!$term) {
-        WP_CLI::log(sprintf('%s: tag missing, to be created as «%s»', $slug, $programme['name']));
+        foreach ($programme['films'] as $path => $poster) {
+            $post = get_page_by_path($path, OBJECT, 'post')
+                ?: get_page_by_path(sanitize_title($path), OBJECT, 'post');
 
-        if ($apply) {
-            $created = wp_insert_term($programme['name'], 'post_tag', ['slug' => $slug]);
-            if (is_wp_error($created)) {
-                WP_CLI::warning(sprintf('%s: %s', $slug, $created->get_error_message()));
+            if (!$post) {
+                WP_CLI::warning(sprintf('%s: no post with slug %s', $slug, $path));
                 continue;
             }
 
-            $term = get_term($created['term_id'], 'post_tag');
-            WP_CLI::success(sprintf('%s: tag created (#%d)', $slug, $term->term_id));
+            od_wp_alt_from_title($post, $apply);
+
+            if ($poster !== '') {
+                od_wp_poster($post, $poster, $apply);
+            }
+
+            if ($term && has_term($term->term_id, 'post_tag', $post->ID)) {
+                WP_CLI::log(sprintf('%s: %s (#%d) already tagged, skipped', $slug, $path, $post->ID));
+                continue;
+            }
+
+            WP_CLI::log(sprintf('%s: %s (#%d) «%s»', $slug, $path, $post->ID, get_the_title($post)));
+
+            if (!$apply || !$term) {
+                continue;
+            }
+
+            $set = wp_set_post_terms($post->ID, [$term->term_id], 'post_tag', true);
+            if (is_wp_error($set)) {
+                WP_CLI::warning(sprintf('%s: %s', $path, $set->get_error_message()));
+                continue;
+            }
+
+            WP_CLI::success(sprintf('%s: %s (#%d) tagged', $slug, $path, $post->ID));
         }
-        // A dry run carries on without a term: the point of it is the list of
-        // films below, and a missing tag would otherwise hide all of them.
-    }
-
-    foreach ($programme['films'] as $path => $poster) {
-        $post = get_page_by_path($path, OBJECT, 'post')
-            ?: get_page_by_path(sanitize_title($path), OBJECT, 'post');
-
-        if (!$post) {
-            WP_CLI::warning(sprintf('%s: no post with slug %s', $slug, $path));
-            continue;
-        }
-
-        od_films_alt_from_title($post, $apply);
-
-        if ($poster !== '') {
-            od_films_poster($post, $poster, $apply);
-        }
-
-        if ($term && has_term($term->term_id, 'post_tag', $post->ID)) {
-            WP_CLI::log(sprintf('%s: %s (#%d) already tagged, skipped', $slug, $path, $post->ID));
-            continue;
-        }
-
-        WP_CLI::log(sprintf('%s: %s (#%d) «%s»', $slug, $path, $post->ID, get_the_title($post)));
-
-        if (!$apply || !$term) {
-            continue;
-        }
-
-        $set = wp_set_post_terms($post->ID, [$term->term_id], 'post_tag', true);
-        if (is_wp_error($set)) {
-            WP_CLI::warning(sprintf('%s: %s', $path, $set->get_error_message()));
-            continue;
-        }
-
-        WP_CLI::success(sprintf('%s: %s (#%d) tagged', $slug, $path, $post->ID));
     }
 }
 
@@ -173,7 +166,7 @@ foreach (od_films_registry() as $slug => $programme) {
  * Name a post's featured image after the post, when it has no alt text of its
  * own. Never overwrites one — an editor's wording beats a title every time.
  */
-function od_films_alt_from_title(WP_Post $post, bool $apply): void
+function od_wp_alt_from_title(WP_Post $post, bool $apply): void
 {
     $thumbnail = get_post_thumbnail_id($post->ID);
     if (!$thumbnail) {
@@ -209,7 +202,7 @@ function od_films_alt_from_title(WP_Post $post, bool $apply): void
  * @param string $path Upload path, root-relative. The origin differs per
  *                     environment, so it is put back here rather than stored.
  */
-function od_films_poster(WP_Post $post, string $path, bool $apply): void
+function od_wp_poster(WP_Post $post, string $path, bool $apply): void
 {
     if (trim((string) get_post_meta($post->ID, 'poster_image_url', true)) !== '') {
         return;
@@ -224,3 +217,16 @@ function od_films_poster(WP_Post $post, string $path, bool $apply): void
         WP_CLI::success(sprintf('#%d: плакат set', $post->ID));
     }
 }
+
+// ---------------------------------------------------------------------------
+// Runner. Everything above is a function; this is the only thing that runs.
+// ---------------------------------------------------------------------------
+
+if (!defined('WP_CLI') || !WP_CLI) {
+    return;
+}
+
+$apply = in_array('apply', $args ?? [], true);
+WP_CLI::log($apply ? 'Applying changes.' : 'Dry run — pass `apply` to write.');
+
+od_wp_tag_programme_films($apply);

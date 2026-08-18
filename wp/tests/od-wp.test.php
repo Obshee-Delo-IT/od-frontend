@@ -1,11 +1,11 @@
 <?php
 /**
- * Tests for `wp/scripts/od-films.php`. The script's only pure part is its
+ * Tests for `wp/scripts/od-wp.php`. The script's only pure part is its
  * registry, and the failure it can actually have is a typo in it — a duplicated
  * slug silently tags one post twice and leaves another untagged, and neither
  * shows up in the run's output.
  *
- *     php wp/tests/od-films.test.php
+ *     php wp/tests/od-wp.test.php
  */
 
 declare(strict_types=1);
@@ -13,9 +13,9 @@ declare(strict_types=1);
 assert_options(ASSERT_ACTIVE, 1);
 assert_options(ASSERT_BAIL, 1);
 
-require __DIR__ . '/../scripts/od-films.php';
+require __DIR__ . '/../scripts/od-wp.php';
 
-$registry = od_films_registry();
+$registry = od_wp_programmes();
 assert($registry !== [], 'the registry is not empty');
 
 $seen = [];
@@ -51,5 +51,9 @@ assert(
     count($registry['programma-zdorovaya-rossiya']['films']) === 6,
     'six of the programme\'s nine lesson films exist as posts — see the registry docblock'
 );
+assert(
+    count($registry['programma-zdorovaya-molodezh']['films']) === 7,
+    'all seven «Здоровая молодежь» lessons have one'
+);
 
-echo "od-films: ok\n";
+echo "od-wp: ok\n";
