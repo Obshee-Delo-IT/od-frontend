@@ -517,6 +517,16 @@ Figma `printing` (`966:2949`), and the first sub-page built on the card system r
 
 **Breadcrumbs learned the parent chain.** The sub-page mocks draw «Материалы → Печатная продукция», where `WpPage` had a fixed «Главная → this page». `fetchWpPage` now returns `ancestors`, walking `parent` upwards — one request per level, capped at three, and a level that fails ends the trail rather than the page. Every WP page below the top level gets it; «Главная» stays in front, which is a superset of the mock's trail and of every native route's. The deepest published page on this site is three levels (`/about/reviews/letters/`).
 
+### D6k. `/materials/social-reklama/` — 2026-08-18
+
+Figma `social-ads` (`966:8538`), WP page **#57269**, and the fourth hub on the same cards. Five photo-and-caption columns out as **3 + 2** — three portrait cards then the wide pair — which is the mock's own shape: the page has exactly the five links the frame draws, so unlike D6j there was no sixth card to reflow around. Nothing new in the repo but five `background-image` rules, all naming drawings already there.
+
+**The frame disagrees with the shipped card, and the frame is the one that's wrong.** `social-ads` is drawn with bare rectangles — 387×400 portrait, 601×300 wide, drawings 170 wide against the left edge — where `printing` instances the components (`Frame 33823` 385×358, `Frame 33846` 598×280, drawing 335 centred). It is the only page mock in this set that doesn't instance the card, and every measurement it disagrees on is one the component fixes, so it reads as the older draft. Shipped on the components: 387×361 and 600×280, same as the three hubs above it.
+
+**Captions from the mock, one from the page.** «Плакаты», not the page's «Плакаты социальной рекламы» — the suffix is redundant under an H1 that already says it. The exception is «Ролики для **светодиодных** щитов»: the mock paraphrases them as «световых», while the page and the slug (`led-board-roliki`) name what they are, so the page wins — the same call «Диски Общего Дела» got its capitals by.
+
+**Two card ids now differ by one letter.** `.od-tile--plakati` is this page's «Плакаты» (`/materials/plakati/`); `.od-tile--plakaty` is printed-products' «Плакаты Общего Дела», which points at a Yandex Disk folder. Both are correct — the id is the last segment of the href — and the CSS says so where they sit. If a third poster card ever appears, that convention is the thing to revisit, not the names.
+
 ### D7. Video — index 2026-06-04, player 2026-07-02
 
 Figma: index `video` (`706:3315`) + `video-filter` (`1554:17574`) + player `video-page` (`1566:10433`) + mobile `video-page-mob` (`1567:10735`, `1567:11844`) + download (`1581:10334`).

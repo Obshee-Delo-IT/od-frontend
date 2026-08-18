@@ -482,6 +482,63 @@ function od_pages_printed_products(string $content, int $filmTagId): string
 }
 
 /**
+ * `/materials/social-reklama/` — Figma `social-ads` (`966:8538`), the section's
+ * second sub-page and the last of the four hubs built on the same cards.
+ *
+ * **Three portrait cards then two wide ones**, which is what the mock draws and
+ * what the page has — five links, no sixth to reflow around, so unlike
+ * `/materials/printed-products/` this one follows the frame exactly.
+ *
+ * `social-ads` is drawn with bare rectangles (387×400 and 601×300) rather than
+ * the card components `printing` uses (385×358 and 598×280), and its drawings
+ * sit 170 wide against the left edge instead of 335 centred. That is the frame
+ * being older, not a second card design: it is the only page mock in the set
+ * that does not instance `Frame 33823`, and every measurement it disagrees on
+ * is one the components fix. So the shipped cards follow `printing`.
+ *
+ * The captions are the mock's, shortened — «Плакаты», not «Плакаты социальной
+ * рекламы», on a page already titled «Социальная реклама». The exception is the
+ * LED boards: the mock paraphrases them as «световых», the page and the slug
+ * (`led-board-roliki`) both say «светодиодных», and the page is right about
+ * what the thing is — the same call the printed-products «Диски Общего Дела»
+ * capitals got.
+ *
+ * The page also carries a `wp:html` block of the old theme's hover-zoom CSS,
+ * which styled the caption-over-photo tiles this replaces. It goes with them.
+ */
+function od_pages_social_reklama(string $content, int $filmTagId): string
+{
+    if (strpos($content, 'od-tile') !== false) {
+        return $content; // Already converted — leave the editor's copy alone.
+    }
+
+    $cards = od_pages_column_media($content);
+    if (count($cards) !== 5) {
+        throw new RuntimeException(sprintf('unexpected input: %d group columns', count($cards)));
+    }
+
+    $out = od_pages_tiles([
+        ['id' => 'plakati', 'title' => 'Плакаты', 'href' => '/materials/plakati/'],
+        ['id' => 'billboards', 'title' => 'Придорожные щиты', 'href' => '/materials/billboards/'],
+        [
+            'id' => 'audio-roliki-social-reklama',
+            'title' => 'Аудио-ролики',
+            'href' => '/materials/audio-roliki-social-reklama/',
+        ],
+    ]);
+
+    $out .= od_pages_tiles(
+        [
+            ['id' => 'led-board-roliki', 'title' => 'Ролики для светодиодных щитов', 'href' => '/materials/led-board-roliki/'],
+            ['id' => 'sticker', 'title' => 'Стикеры', 'href' => '/materials/sticker/'],
+        ],
+        'od-tiles od-tiles--wide'
+    );
+
+    return rtrim($out) . "\n";
+}
+
+/**
  * Every `wp:column` of the page that holds an image, paired with the button that
  * sits under it in the same column — which is how the migrator lays out both the
  * methodology block and the film posters. Reading them out this way keeps the
@@ -1349,6 +1406,11 @@ function od_pages_registry(): array
             'label' => 'D6j · /materials/printed-products/ — Figma `printing` (966:2949)',
             'path' => 'materials/printed-products',
             'fix' => 'od_pages_printed_products',
+        ],
+        [
+            'label' => 'D6k · /materials/social-reklama/ — Figma `social-ads` (966:8538)',
+            'path' => 'materials/social-reklama',
+            'fix' => 'od_pages_social_reklama',
         ],
     ];
 }
