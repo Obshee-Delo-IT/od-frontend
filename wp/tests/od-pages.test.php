@@ -706,8 +706,11 @@ od_test('six stickers, two per row', substr_count($sticker, '<div class="wp-bloc
 od_test('the photos of them in use get their own heading', str_contains($sticker, '<h2 class="wp-block-heading">Примеры использования</h2>'));
 // Photographs of the material in use, with nothing to download — core's gallery
 // is already the mock's two-up layout and needs no rule in `gutenberg.css`.
-od_test('and are a gallery, not four more cards', substr_count($sticker, '<!-- wp:gallery {"columns":2') === 1);
-od_test('all four of them', substr_count($sticker, 'has-nested-images columns-2') === 1 && substr_count($sticker, 'wp-block-image size-full') === 10);
+// A `columns` grid, not a `core/gallery`: block-library stretches a gallery's
+// last lone picture to full width, and overriding it is a fight with a selector
+// carrying an id inside a `:not()`.
+od_test('and are a picture grid, not four more cards', substr_count($sticker, '"className":"od-figures od-figures--2"') === 2);
+od_test('all four of them', substr_count($sticker, 'wp-block-image size-full') === 10);
 od_test('the old theme\'s border class is gone', !str_contains($sticker, 'marginbottom'));
 od_test('converted content is left alone', od_pages_sticker($sticker, 0) === $sticker);
 
@@ -743,6 +746,95 @@ od_test('the script survives', str_contains($audio, 'Береги себя и п
 od_test('the download names what it is', substr_count($audio, '>Скачать аудио-ролик</a>') === 4);
 od_test('converted content is left alone', od_pages_audio_roliki($audio, 0) === $audio);
 
+// ===========================================================================
+// The five asset pages under `/materials/printed-products/` — D6m.
+// ===========================================================================
+
+// -- /materials/autosticker/ — Figma `car sticker` --------------------------
+
+$autosticker = od_pages_autosticker(file_get_contents(__DIR__ . '/fixtures/autosticker.before.html'), 0);
+
+od_test('seven stickers', substr_count($autosticker, 'od-asset">') === 7);
+od_test('three pictures each', substr_count($autosticker, '<!-- wp:image ') === 21);
+od_test('two downloads each — one per size', substr_count($autosticker, '>' . OD_ASSET_DOWNLOAD . '</a>') === 14);
+od_test('the page\'s shouted label is the section\'s', !str_contains($autosticker, 'СКАЧАТЬ МАКЕТ'));
+// Twenty-one of them, one per column, under a title that is already the page's
+// only first-level heading.
+od_test('the h1 per column is gone', !str_contains($autosticker, '<h1'));
+// Six say «Наклейка на стекло»; the seventh is the hood-and-doors set, which
+// names its own three pieces — and which is the last row `car sticker` draws.
+od_test('its text survives as the caption the mock draws', substr_count($autosticker, '>Наклейка на стекло</figcaption>') === 6);
+od_test('including the odd one out', str_contains($autosticker, '>Наклейка на капот и двери</figcaption>'));
+od_test('a number and its unit take a space', str_contains($autosticker, '>1130х745 мм</figcaption>'));
+od_test('and the second size too', str_contains($autosticker, '>1350х480 мм</figcaption>'));
+od_test('the separators are gone', !str_contains($autosticker, '<!-- wp:separator'));
+od_test('converted content is left alone', od_pages_autosticker($autosticker, 0) === $autosticker);
+
+// -- /materials/zakladki/ — no frame of its own -----------------------------
+
+$zakladki = od_pages_zakladki(file_get_contents(__DIR__ . '/fixtures/zakladki.before.html'), 0);
+
+// Nine bookmarks, one `.cdr` with all of them in it — so one card, not nine.
+od_test('one card', substr_count($zakladki, 'od-asset">') === 1);
+od_test('holding all nine bookmarks', substr_count($zakladki, '<!-- wp:image ') === 9);
+od_test('four up', substr_count($zakladki, '"className":"od-figures od-figures--4"') === 3);
+od_test('one download for the lot', substr_count($zakladki, 'wp-block-button__link') === 1);
+od_test('named as the page named it', str_contains($zakladki, '>Скачать версию для печати .cdr</a>'));
+od_test('the intro stays outside the card', strpos($zakladki, 'Представляем вашему вниманию') < strpos($zakladki, 'od-asset'));
+od_test('converted content is left alone', od_pages_zakladki($zakladki, 0) === $zakladki);
+
+// -- /materials/booklet/ — Figma `flyers` -----------------------------------
+
+$booklet = od_pages_booklet(file_get_contents(__DIR__ . '/fixtures/booklet.before.html'), 0);
+
+od_test('three cards', substr_count($booklet, 'od-asset">') === 3);
+od_test('under the page\'s own two headings', str_contains($booklet, '<h2 class="wp-block-heading">Листовки</h2>') && str_contains($booklet, '<h2 class="wp-block-heading">Буклеты</h2>'));
+// The mock replaces those headings with a «Все / Листовки / Буклеты» tab strip;
+// a filter over three cards is a control to build and maintain for nothing.
+od_test('and not the mock\'s tab strip', !str_contains($booklet, 'wp-block-buttons is-content-justification'));
+od_test('the two faces are captions now', substr_count($booklet, '>Сторона А</figcaption>') === 2 && substr_count($booklet, '>Сторона Б</figcaption>') === 2);
+od_test('not paragraphs above the picture', !str_contains($booklet, '<p>Сторона'));
+od_test('one download per card', substr_count($booklet, 'wp-block-button__link') === 3);
+od_test('the coordinator becomes the profile card', str_contains($booklet, OD_METODICHKI_COORDINATOR_HREF));
+od_test('and stops being an accordion', !str_contains($booklet, 'wp:details'));
+od_test('the MailPoet form is gone', !str_contains($booklet, 'wysija_form'));
+od_test('so is the old theme\'s stylesheet', !str_contains($booklet, '<style'));
+od_test('converted content is left alone', od_pages_booklet($booklet, 0) === $booklet);
+
+// -- /materials/disk/ — Figma `disks` ---------------------------------------
+
+$disk = od_pages_disk(file_get_contents(__DIR__ . '/fixtures/disk.before.html'), 0);
+
+od_test('four discs', substr_count($disk, 'od-asset">') === 4);
+od_test('the card holds the disc and its download', substr_count($disk, '>Скачать образ диска</a>') === 4);
+// The shop's four pages were deleted in WordPress on 2026-08-17, so this link
+// pointed at nothing — and it was the only reason the page was on the embed list.
+od_test('the dead WooCommerce link is gone', !str_contains($disk, 'add-to-cart'));
+od_test('with the old theme\'s classes on it', !str_contains($disk, 'cmsms_button'));
+od_test('the prose reads beside the card, not inside it', strpos($disk, 'На диске представлены') > strpos($disk, 'od-asset'));
+od_test('each disc keeps its name', str_contains($disk, '<h3 class="wp-block-heading">Диск «Тайна природы женщины»</h3>'));
+od_test('the MailPoet form is gone', !str_contains($disk, 'wysija_form'));
+od_test('converted content is left alone', od_pages_disk($disk, 0) === $disk);
+
+// -- /materials/books/ — Figma `books` --------------------------------------
+
+$books = od_pages_books(file_get_contents(__DIR__ . '/fixtures/books.before.html'), 0);
+
+od_test('two books', substr_count($books, 'od-asset">') === 2);
+od_test('each with its trailer', substr_count($books, '<!-- wp:embed ') === 2);
+od_test('and its cover', substr_count($books, '<!-- wp:image ') === 2);
+// The migrator left the whole aside as one paragraph block holding raw `<h3>`s,
+// a bare `<img>` and three dash-and-`<br>` lists.
+od_test('the cover keeps the id its class carried', str_contains($books, '<!-- wp:image {"id":28683'));
+od_test('the shops are lists now', substr_count($books, '<!-- wp:list -->') === 6);
+od_test('with an item each', substr_count($books, '<!-- wp:list-item -->') === 26);
+od_test('under a heading per city', str_contains($books, '<h3 class="wp-block-heading">В Санкт-Петербурге</h3>'));
+od_test('every shop keeps its link', str_contains($books, 'href="http://www.bookvoed.ru/book?id=6897044"'));
+// The trailing «;» is sometimes inside the shop's own link.
+od_test('and none of them keeps its semicolon', !str_contains($books, ';</a>'));
+od_test('the dashes that made the list are gone', !str_contains($books, '<li>- '));
+od_test('converted content is left alone', od_pages_books($books, 0) === $books);
+
 // -- every transform refuses input it does not recognise --------------------------------
 
 foreach ([
@@ -757,6 +849,11 @@ foreach ([
     'od_pages_sticker',
     'od_pages_led_board_roliki',
     'od_pages_audio_roliki',
+    'od_pages_autosticker',
+    'od_pages_zakladki',
+    'od_pages_booklet',
+    'od_pages_disk',
+    'od_pages_books',
 ] as $transform) {
     $threw = false;
     try {

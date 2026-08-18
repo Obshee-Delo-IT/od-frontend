@@ -541,6 +541,20 @@ Figma `social-posters` (`998:9524`), `social-banners` (`1009:10590`), `social-st
 
 Copy: the mock's «Скачать файл для печати» replaces the page's «Скачать в качестве для печати» everywhere it appears — same promise, fewer words, and it is what eight of the nine frames print. The two pages that are not print material name their own thing.
 
+### D6m. The five asset pages under `/materials/printed-products/` — 2026-08-18
+
+Figma `books` (`966:6650`), `flyers` (`966:7747`), `disks` (`966:8062`), `car sticker` (`966:8388`); `/materials/zakladki/` has no frame at all. WP pages **#28682 · #31136 · #20582 · #20301 · #38310**. Same `.od-asset` card as D6l, so the repo gained no new component — three CSS rules and five transforms.
+
+**The rule the section settles on: the card is around the asset.** Seven frames wrap the whole row because the row *is* the asset — a poster, its photo in the street, its download. `disks` and `books` inset only the media, because both carry a paragraph of real prose beside it, and the two shipped that way: on `/materials/disk/` the card holds the disc and «Скачать образ диска» with the description reading next to it, on `/materials/books/` it holds the cover and the shops with the pitch and the trailer next to it. That is the same reading of both frames, not a deviation from either.
+
+**Two dead things went out with the redesign.** `/materials/disk/`'s «Добавить в корзину» links were the last of the WooCommerce shop, whose four pages were deleted in WordPress on 2026-08-17 — they pointed at `/materials/disk/?add-to-cart=19772`, which does nothing. They were also the only reason that page was on the legacy embed list, so it comes off with them, and the section now has no entry there at all. `/materials/booklet/`'s MailPoet form went the way every other one has.
+
+**`/materials/books/`'s aside was one paragraph block.** The migrator left the cover as a bare `<img>` with a `wp-image-28683` class, three `<h3>`s written as raw HTML inside the paragraph, and the shops as `- name;<br>` runs. It comes apart into the blocks it should always have been: a `core/image` whose id is read off the class, a heading per city, a `core/list` under each, every shop's link intact. The trailing «;» is sometimes *inside* the shop's own link («Библио-Глобус;»), which is why trimming it is not a `rtrim`.
+
+**`core/gallery` was tried and dropped.** `/materials/zakladki/`'s nine bookmarks and `/materials/sticker/`'s four photos are picture grids with nothing to download, which is what a gallery is for — but block-library sizes a gallery figure `width: calc(25% - …)` with `flex-grow: 1`, so a last row holding one picture stretches to the full width, and the rules to fix it carry an id inside a `:not()` and outrank anything reasonable. They are `core/columns` classed `od-figures` instead: the same markup this file writes everywhere else, four lines of CSS, and a lone last picture stays a quarter wide.
+
+`/materials/autosticker/` shipped twenty-one `<h1>`s, one per column, the same migrator artefact `/materials/led-board-roliki/` had; they are the captions the mock draws under each picture now. `/materials/booklet/` keeps its «Листовки» and «Буклеты» headings where `flyers` draws a «Все / Листовки / Буклеты» tab strip — a filter over three cards is a control to build and maintain for nothing — and its coordinator accordion goes through the same `od_details_to_profile_link()` as `/materials/metodichki/`, to the same person's card.
+
 ### D7. Video — index 2026-06-04, player 2026-07-02
 
 Figma: index `video` (`706:3315`) + `video-filter` (`1554:17574`) + player `video-page` (`1566:10433`) + mobile `video-page-mob` (`1567:10735`, `1567:11844`) + download (`1581:10334`).

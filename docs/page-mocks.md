@@ -168,21 +168,21 @@ A media-asset catalog. Many sub-frames have dozens of children each — these ar
 | Article content (reader view) | `article-content` (`966:8461`) | 9 children |
 | Materials index | `ads` (`778:2206`) | 2 children — ✅ shipped; a WordPress page since 2026-08-18 (D6h) |
 | Handbooks | `handbooks` (`779:4133`) | 1749 × 1440 — ✅ shipped 2026-08-17 as `/materials/metodichki/`, with **no route**: CSS + a content script. No mobile variant exists (checked all 589 frames in the section — nothing under 1440 wide) |
-| Books | `books` (`966:6650`) | 3108 × 1440 |
-| Disks (DVDs/CDs) | `disks` (`966:8062`) | small |
+| Books | `books` (`966:6650`) | 3108 × 1440 — ✅ shipped 2026-08-18 (D6m) as WP page #28682 |
+| Disks (DVDs/CDs) | `disks` (`966:8062`) | small — ✅ shipped 2026-08-18 (D6m) as WP page #20301; came off the legacy list with the dead WooCommerce links |
 | Printing | `printing` (`966:2949`) | small — ✅ shipped 2026-08-18 (D6j) as WP page #57271 |
-| Flyers | `flyers` (`966:7747`) | 11 children |
+| Flyers | `flyers` (`966:7747`) | 11 children — ✅ shipped 2026-08-18 (D6m) as WP page #20582 (`/materials/booklet/`); the mock's tab strip is not built |
 | Social ads | `social-ads` (`966:8538`) | 1676 × 1440 — ✅ shipped 2026-08-18 (D6k) as WP page #57269. Drawn with bare rectangles, not the card components: follow `printing` for the geometry |
 | Social posters | `social-posters` (`998:9524`) | 5643 × 1440 (largest — ~88 asset cells) — ✅ shipped 2026-08-18 (D6l) as WP page #20307, 15 cards two-up |
 | Social stickers | `social-sticker` (`1013:11191`) | 2801 × 1440 — ✅ shipped 2026-08-18 (D6l) as WP page #20458 |
 | Social banners | `social-banners` (`1009:10590`) | 3215 × 1440 — ✅ shipped 2026-08-18 (D6l) as WP page #20422; the most regular page in the set and the one `.od-asset` is measured from |
 | Social videos | `social-video` (`1012:11084`) | 2255 × 1440 — ✅ shipped 2026-08-18 (D6l) as WP page #31288 |
 | Social audio | `social-audio` (`1009:10756`) | 2067 × 1440 — ✅ shipped 2026-08-18 (D6l) as WP page #34964; the `[cmsms_audio]` shortcodes became `core/audio`, which is what took the page off the legacy list |
-| Car sticker | `car sticker` (`966:8388`) | 65 children |
+| Car sticker | `car sticker` (`966:8388`) | 65 children — ✅ shipped 2026-08-18 (D6m) as WP page #38310 (`/materials/autosticker/`) |
 
 Plus 7 `Status` badges.
 
-**Repo:** ✅ the index (2026-08-15 as `app/materials/page.tsx` — the `ads` frame, four static group cards; moved into WP page #20225 on 2026-08-18, D6h, and the route deleted) and `app/materials/articles/`; ✅ both hubs (`printed-products` D6j, `social-reklama` D6k) and the five asset pages under the second of them (D6l, 2026-08-18 — `.od-asset` in `gutenberg.css` plus a transform each in `od-pages.php`, no route and no component); ❌ the five under the first (`books`, `zakladki`, `booklet`, `disk`, `autosticker`) and the two article templates. This section has the largest design surface and likely the heaviest CMS / media integration. Component prerequisites are now all built (`Pagination` ✅ C4, `Carousel` ✅ C8, `Tabs` ✅ C5 — for switching between material types); what remains blocking is the CMS taxonomy (no `material` CPT exists) and the asset-hosting capacity plan (Workstream E1).
+**Repo:** ✅ the index (2026-08-15 as `app/materials/page.tsx` — the `ads` frame, four static group cards; moved into WP page #20225 on 2026-08-18, D6h, and the route deleted) and `app/materials/articles/`; ✅ both hubs (`printed-products` D6j, `social-reklama` D6k) and all ten asset pages under them (D6l + D6m, 2026-08-18 — one `.od-asset` card in `gutenberg.css` plus a transform each in `od-pages.php`, no route and no component); ❌ only the two `article` templates. `/materials/zakladki/` has no frame of its own and was built on the same card. This section has the largest design surface and likely the heaviest CMS / media integration. Component prerequisites are now all built (`Pagination` ✅ C4, `Carousel` ✅ C8, `Tabs` ✅ C5 — for switching between material types); what remains blocking is the CMS taxonomy (no `material` CPT exists) and the asset-hosting capacity plan (Workstream E1).
 
 > **Don't read the size of this section as permission to defer it.** Real traffic puts Materials **#3 by search entries**, and `/materials/plakati/` is the #6 entry page on the whole site. **4 of the 14 sub-pages carry 62 % of the section's entries** (plakati · zakladki · articles · metodichki), so the index plus those four are **Tier 2 — before prod**; the other ten ride the A6 fallback. The index itself is worth building for a second reason the entry ranking hides: **939 views against 107 entries (8.8×)** — almost nobody arrives there from search, but it is how the section gets browsed. And `/materials/articles/` needed no build at all — **✅ shipped 2026-08-13 as a thin alias route** (`app/materials/articles/page.tsx`) listing category 578, a superset of the legacy page's 14 curated links; its five child pages stay on the fallback. See [`implementation-plan.md` §D8](./implementation-plan.md) and the launch tiering.
 

@@ -595,25 +595,34 @@ function od_pages_column_media(string $content): array
 const OD_ASSET_DOWNLOAD = 'Скачать файл для печати';
 
 /**
- * A `core/gallery` of photographs — the material in use, with nothing to
- * download. Core's own stylesheet lays it out at the `columns` given, so this
- * needs no rule in `gutenberg.css`.
+ * A grid of pictures with nothing to download — the material in use, or the
+ * nine bookmarks that share one file.
+ *
+ * Deliberately **not** `core/gallery`. Block-library sizes a gallery figure as
+ * `width: calc(25% - …)` with `flex-grow: 1`, which means the last row's lone
+ * picture stretches to the full width, and every override of it is a
+ * specificity fight with a rule carrying an id inside a `:not()`. A `columns`
+ * block classed `od-figures` is the same markup this file already writes
+ * everywhere else and the CSS for it is four lines.
  *
  * @param array<int, array{id: string, src: string, href: string}> $images
  */
-function od_pages_gallery(array $images, int $columns = 2): string
+function od_pages_figures(array $images, int $perRow = 2): string
 {
-    $out = sprintf(
-        "<!-- wp:gallery {\"columns\":%d,\"linkTo\":\"none\"} -->\n<figure class=\"wp-block-gallery has-nested-images columns-%d is-cropped\">\n",
-        $columns,
-        $columns
-    );
+    $out = '';
+    $class = sprintf('od-figures od-figures--%d', $perRow);
 
-    foreach ($images as $image) {
-        $out .= od_pages_asset_image(['id' => $image['id'], 'src' => $image['src'], 'href' => '']);
+    foreach (array_chunk($images, $perRow) as $row) {
+        $out .= sprintf("<!-- wp:columns {\"className\":\"%s\"} -->\n<div class=\"wp-block-columns %s\">", $class, $class);
+        foreach ($row as $image) {
+            $out .= "<!-- wp:column -->\n<div class=\"wp-block-column\">\n"
+                . od_pages_asset_image(['id' => $image['id'], 'src' => $image['src'], 'href' => $image['href']])
+                . "</div>\n<!-- /wp:column -->\n";
+        }
+        $out .= "</div>\n<!-- /wp:columns -->\n\n";
     }
 
-    return $out . "</figure>\n<!-- /wp:gallery -->\n\n";
+    return $out;
 }
 
 /**
@@ -785,7 +794,9 @@ function od_pages_audio(string $src): string
  *     texts: array<int, string>,
  *     embeds: array<int, string>,
  *     audio: string,
- *     labelled: bool
+ *     labelled: bool,
+ *     sides: string,
+ *     raw: string
  * }>>
  */
 function od_pages_asset_rows(string $content): array
@@ -819,11 +830,14 @@ function od_pages_asset_rows(string $content): array
  * heading — the one thing that tells a photo of a poster on a wall apart from
  * the poster itself, and it is a paragraph rather than anything structural.
  *
- * @return array{images: array, buttons: array, headings: array, texts: array, embeds: array, audio: string, labelled: bool}
+ * @return array{images: array, buttons: array, headings: array, texts: array, embeds: array, audio: string, labelled: bool, sides: string, raw: string}
  */
 function od_pages_asset_column(string $column): array
 {
-    $out = ['images' => [], 'buttons' => [], 'headings' => [], 'texts' => [], 'embeds' => [], 'audio' => '', 'labelled' => false];
+    $out = [
+        'images' => [], 'buttons' => [], 'headings' => [], 'texts' => [], 'embeds' => [],
+        'audio' => '', 'labelled' => false, 'sides' => '', 'raw' => $column,
+    ];
 
     if (preg_match_all('#<!-- wp:image \{"id":(\d+).*?<figure[^>]*>(?:<a href="([^"]*)">)?<img src="([^"]+)"#s', $column, $images, PREG_SET_ORDER)) {
         foreach ($images as $image) {
@@ -851,6 +865,12 @@ function od_pages_asset_column(string $column): array
             }
             if (mb_stripos($prose, 'Примеры использования') === 0) {
                 $out['labelled'] = true;
+                continue;
+            }
+            // `/materials/booklet/` labels the two faces of a flyer this way,
+            // as a paragraph above the picture rather than a caption on it.
+            if (preg_match('~^Сторона\s+[АБ]$~u', $prose)) {
+                $out['sides'] = $prose;
                 continue;
             }
             $out['texts'][] = $prose;
@@ -1861,7 +1881,7 @@ function od_pages_sticker(string $content, int $filmTagId): string
     return rtrim(
         od_pages_assets($cards)
         . od_pages_heading(2, 'Примеры использования')
-        . od_pages_gallery($examples)
+        . od_pages_figures($examples)
     ) . "\n";
 }
 
@@ -1977,6 +1997,376 @@ function od_pages_audio_roliki(string $content, int $filmTagId): string
 }
 
 /**
+ * `/materials/autosticker/` — Figma `car sticker` (`966:8388`).
+ *
+ * Seven stickers, each already three columns: the artwork, then the two sizes
+ * it is printed at with a photo of a car wearing it and a download under each.
+ * The mock draws exactly that, so the row becomes a card and the headings that
+ * sat *above* each picture become the captions the mock puts below them.
+ *
+ * They were `h1`s — the migrator wrote one per column, so the page shipped
+ * twenty-one of them under a title that is already its only first-level
+ * heading. As captions they stop being headings at all.
+ *
+ * @param string $content   Stored `post_content`.
+ * @param int    $filmTagId Unused: this page carries no film row.
+ * @throws RuntimeException when the page does not look like the expected input.
+ */
+function od_pages_autosticker(string $content, int $filmTagId): string
+{
+    if (od_has_block_class($content, 'od-asset')) {
+        return $content; // Already converted — leave the editor's copy alone.
+    }
+
+    $out = '';
+    $cards = 0;
+    foreach (od_pages_asset_rows($content) as $row) {
+        if (count($row) !== 3) {
+            continue;
+        }
+
+        $columns = [];
+        foreach ($row as $column) {
+            if ($column['images'] === []) {
+                continue 2;
+            }
+            $blocks = od_pages_asset_image($column['images'][0], od_pages_spaced_unit($column['headings'][0] ?? ''));
+            if ($column['buttons'] !== []) {
+                $blocks .= od_pages_downloads([['href' => $column['buttons'][0]['href'], 'label' => OD_ASSET_DOWNLOAD]]);
+            }
+            $columns[] = ['width' => '33.33%', 'blocks' => $blocks];
+        }
+
+        $out .= od_pages_asset_card(od_pages_columns($columns));
+        $cards++;
+    }
+
+    if ($cards !== 7) {
+        throw new RuntimeException(sprintf('unexpected input: %d sticker rows', $cards));
+    }
+
+    return rtrim($out) . "\n";
+}
+
+/** «1130х745мм» → «1130х745 мм». A number and its unit take a space between. */
+function od_pages_spaced_unit(string $caption): string
+{
+    return preg_replace('~(\d)\s*мм~u', '$1 мм', $caption);
+}
+
+/**
+ * `/materials/zakladki/` — no frame of its own; built on the card the rest of
+ * the section uses.
+ *
+ * Nine bookmarks and **one** download for all of them — a single `.cdr` with
+ * the lot in it, which is why this is one card holding a gallery rather than
+ * nine cards holding one picture each. The intro paragraph stays outside it:
+ * it introduces the page, not the file.
+ *
+ * @param string $content   Stored `post_content`.
+ * @param int    $filmTagId Unused: this page carries no film row.
+ * @throws RuntimeException when the page does not look like the expected input.
+ */
+function od_pages_zakladki(string $content, int $filmTagId): string
+{
+    if (od_has_block_class($content, 'od-asset')) {
+        return $content; // Already converted — leave the editor's copy alone.
+    }
+
+    $intro = '';
+    $images = [];
+    $buttons = [];
+
+    foreach (od_pages_asset_rows($content) as $row) {
+        foreach ($row as $column) {
+            foreach ($column['images'] as $image) {
+                $images[] = $image;
+            }
+            foreach ($column['buttons'] as $button) {
+                $buttons[] = $button;
+            }
+            foreach ($column['texts'] as $text) {
+                $intro = $intro === '' ? $text : $intro;
+            }
+        }
+    }
+
+    if (count($images) !== 9 || count($buttons) !== 1 || $intro === '') {
+        throw new RuntimeException(sprintf('unexpected input: %d bookmarks, %d buttons', count($images), count($buttons)));
+    }
+
+    return rtrim(
+        od_pages_paragraph($intro)
+        . od_pages_asset_card(od_pages_figures($images, 4) . od_pages_downloads([$buttons[0]]))
+    ) . "\n";
+}
+
+/**
+ * `/materials/booklet/` — Figma `flyers` (`966:7747`).
+ *
+ * Three cards under the page's own two headings: the pair of A5 flyers that
+ * share one file, the «Твои ответные санкции» flyer with its two sides, and the
+ * booklet with its two sides. The mock replaces the headings with a
+ * «Все / Листовки / Буклеты» tab strip; the headings ship instead, because a
+ * filter over three cards is a control to build and maintain for nothing, and
+ * the mock's own tabs are decoration on a page that shows everything anyway.
+ *
+ * The «Сторона А» / «Сторона Б» labels were paragraphs floating above their
+ * pictures and become the pictures' captions, the same as «Примеры
+ * использования» elsewhere in the section.
+ *
+ * The accordion at the foot goes through {@see od_details_to_profile_link()} —
+ * the same coordinator, the same card, as `/materials/metodichki/`.
+ *
+ * @param string $content   Stored `post_content`.
+ * @param int    $filmTagId Unused: this page carries no film row.
+ * @throws RuntimeException when the page does not look like the expected input.
+ */
+function od_pages_booklet(string $content, int $filmTagId): string
+{
+    if (od_has_block_class($content, 'od-asset')) {
+        return $content; // Already converted — leave the editor's copy alone.
+    }
+
+    $sections = [];
+    $cards = [];
+
+    foreach (od_pages_asset_rows($content) as $row) {
+        $heading = $row[0]['headings'][0] ?? '';
+        if (count($row) === 1 && $heading !== '' && $row[0]['images'] === []) {
+            $sections[] = ['title' => $heading, 'cards' => count($cards)];
+            continue;
+        }
+
+        $columns = [];
+        $download = null;
+        foreach ($row as $column) {
+            if ($column['images'] === []) {
+                continue;
+            }
+            if ($column['buttons'] !== []) {
+                $download = $column['buttons'][0];
+            }
+            $columns[] = [
+                'width' => $column['sides'] === '' ? '50%' : '25%',
+                'blocks' => od_pages_asset_image($column['images'][0], $column['sides']),
+            ];
+        }
+
+        if ($columns === [] || $download === null) {
+            continue;
+        }
+
+        $cards[] = od_pages_columns($columns)
+            . od_pages_downloads([['href' => $download['href'], 'label' => OD_ASSET_DOWNLOAD]]);
+    }
+
+    if (count($sections) !== 2 || count($cards) !== 3) {
+        throw new RuntimeException(sprintf('unexpected input: %d headings, %d cards', count($sections), count($cards)));
+    }
+
+    $out = '';
+    foreach ($sections as $index => $section) {
+        $out .= od_pages_heading(2, $section['title']);
+        $next = $sections[$index + 1]['cards'] ?? count($cards);
+        foreach (array_slice($cards, $section['cards'], $next - $section['cards']) as $card) {
+            $out .= od_pages_asset_card($card);
+        }
+    }
+
+    return rtrim($out . od_pages_contact_block($content)) . "\n";
+}
+
+/**
+ * The «Заказать листовки и буклеты» accordion, as the heading and profile link
+ * {@see od_details_to_profile_link()} makes of it — read off the original body,
+ * because everything else on this page is rebuilt from scratch.
+ */
+function od_pages_contact_block(string $content): string
+{
+    if (!preg_match('~<!--\s*wp:details\b.*?<!--\s*/wp:details\s*-->~s', $content, $found)) {
+        return '';
+    }
+
+    return "\n" . od_details_to_profile_link($found[0], OD_METODICHKI_COORDINATOR_HREF, OD_METODICHKI_COORDINATOR_NAME) . "\n";
+}
+
+/**
+ * `/materials/disk/` — Figma `disks` (`966:8062`).
+ *
+ * Four discs. Unlike the rest of the section these carry a paragraph of real
+ * prose each, so the card holds the thing you download — the disc and its
+ * button — and the description sits beside it on the page, which is what the
+ * frame draws and the rule the section follows: **the card is around the
+ * asset**, and prose long enough to read is not part of it.
+ *
+ * The «Добавить в корзину» link under every button goes. It is what is left of
+ * the WooCommerce shop, and the shop's four pages were deleted in WordPress on
+ * 2026-08-17 — the link points at `/materials/disk/?add-to-cart=19772`, which
+ * now does nothing. It is also the only reason this page was on the legacy
+ * embed list, so the entry goes with it.
+ *
+ * @param string $content   Stored `post_content`.
+ * @param int    $filmTagId Unused: this page carries no film row.
+ * @throws RuntimeException when the page does not look like the expected input.
+ */
+function od_pages_disk(string $content, int $filmTagId): string
+{
+    if (od_has_block_class($content, 'od-asset')) {
+        return $content; // Already converted — leave the editor's copy alone.
+    }
+
+    $discs = [];
+    foreach (od_pages_asset_rows($content) as $row) {
+        if (count($row) !== 1) {
+            continue;
+        }
+        $column = $row[0];
+
+        if ($column['images'] !== [] && $column['headings'] !== []) {
+            $discs[] = ['title' => $column['headings'][0], 'cover' => $column['images'][0], 'texts' => $column['texts']];
+            continue;
+        }
+        if ($column['buttons'] !== [] && $discs !== []) {
+            $discs[count($discs) - 1]['download'] = $column['buttons'][0];
+        }
+    }
+
+    $out = '';
+    foreach ($discs as $disc) {
+        if (!isset($disc['download'])) {
+            throw new RuntimeException(sprintf('unexpected input: «%s» has no download', $disc['title']));
+        }
+
+        $prose = od_pages_heading(3, $disc['title']);
+        foreach ($disc['texts'] as $paragraph) {
+            $prose .= od_pages_paragraph($paragraph);
+        }
+
+        $out .= od_pages_columns([
+            [
+                'width' => '33.33%',
+                'blocks' => od_pages_asset_card(
+                    od_pages_asset_image($disc['cover'])
+                    . od_pages_downloads([['href' => $disc['download']['href'], 'label' => 'Скачать образ диска']])
+                ),
+            ],
+            ['width' => '66.67%', 'blocks' => $prose],
+        ]) . "\n";
+    }
+
+    if (count($discs) !== 4) {
+        throw new RuntimeException(sprintf('unexpected input: %d discs', count($discs)));
+    }
+
+    return rtrim($out) . "\n";
+}
+
+/**
+ * `/materials/books/` — Figma `books` (`966:6650`).
+ *
+ * Two books, each a long pitch with the film's trailer under it and a list of
+ * where to buy the thing beside it. The same call as `/materials/disk/`: the
+ * card is around the asset — here the cover and the shops — and the prose reads
+ * on the page.
+ *
+ * The page stores that aside as one `core/paragraph` block holding raw
+ * `<h3>`s, a cover `<img>` that never became a `wp:image`, and three
+ * dash-and-`<br>` lists. All of it comes apart into the blocks it should have
+ * been: a heading per city and a `core/list` under each, with every shop's link
+ * kept as it was written.
+ *
+ * @param string $content   Stored `post_content`.
+ * @param int    $filmTagId Unused: this page carries no film row.
+ * @throws RuntimeException when the page does not look like the expected input.
+ */
+function od_pages_books(string $content, int $filmTagId): string
+{
+    if (od_has_block_class($content, 'od-asset')) {
+        return $content; // Already converted — leave the editor's copy alone.
+    }
+
+    $books = [];
+    foreach (od_pages_asset_rows($content) as $row) {
+        if (count($row) === 1 && $row[0]['headings'] !== [] && $row[0]['images'] === []) {
+            $books[] = ['title' => $row[0]['headings'][0], 'texts' => [], 'embeds' => [], 'aside' => ''];
+            continue;
+        }
+        if (count($row) !== 2 || $books === []) {
+            continue;
+        }
+
+        $book = count($books) - 1;
+        $books[$book]['texts'] = $row[0]['texts'];
+        $books[$book]['embeds'] = $row[0]['embeds'];
+        $books[$book]['aside'] = $row[1]['raw'];
+    }
+
+    if (count($books) !== 2) {
+        throw new RuntimeException(sprintf('unexpected input: %d books', count($books)));
+    }
+
+    $out = '';
+    foreach ($books as $book) {
+        $prose = '';
+        foreach ($book['texts'] as $paragraph) {
+            $prose .= od_pages_paragraph($paragraph);
+        }
+        foreach ($book['embeds'] as $embed) {
+            $prose .= od_pages_embed($embed);
+        }
+
+        $out .= od_pages_heading(2, $book['title'])
+            . od_pages_columns([
+                ['width' => '66.67%', 'blocks' => $prose],
+                ['width' => '33.33%', 'blocks' => od_pages_asset_card(od_pages_shop_list($book['aside']))],
+            ])
+            . "\n";
+    }
+
+    return rtrim($out) . "\n";
+}
+
+/**
+ * The «где купить» aside of `/materials/books/`, as blocks.
+ *
+ * The cover is a bare `<img>` with a `wp-image-NNN` class rather than a
+ * `wp:image` block — the migrator left it inside a paragraph — so the id comes
+ * off the class. Everything after it is `<h3>` followed by a paragraph of
+ * `- shop;<br>` lines.
+ */
+function od_pages_shop_list(string $aside): string
+{
+    $out = '';
+
+    if (preg_match('~<img[^>]*\bwp-image-(\d+)[^>]*\bsrc="([^"]+)"~', $aside, $cover)) {
+        $out .= od_pages_asset_image(['id' => $cover[1], 'src' => $cover[2], 'href' => '']);
+    }
+
+    preg_match_all('~<h3>(.*?)</h3>\s*<p>(.*?)</p>~s', $aside, $blocks, PREG_SET_ORDER);
+    foreach ($blocks as $block) {
+        $items = '';
+        foreach (preg_split('~<br\s*/?>~i', $block[2]) as $line) {
+            $item = trim(preg_replace('~^\s*[-–—]\s*~u', '', trim($line)));
+            // The trailing «;» is sometimes inside the shop's own link
+            // («Библио-Глобус;»), so it cannot just be trimmed off the end.
+            $item = preg_replace('~[;.]\s*(</a>)?\s*$~u', '$1', od_pages_inline_text($item));
+            if ($item !== '') {
+                $items .= sprintf("<!-- wp:list-item -->\n<li>%s</li>\n<!-- /wp:list-item -->\n", $item);
+            }
+        }
+        if ($items === '') {
+            continue;
+        }
+
+        $out .= od_pages_heading(3, rtrim(od_pages_inline_text($block[1]), ':'))
+            . "<!-- wp:list -->\n<ul class=\"wp-block-list\">\n" . $items . "</ul>\n<!-- /wp:list -->\n\n";
+    }
+
+    return $out;
+}
+
+/**
  * Every record workstream D rewrites, newest last.
  *
  * `path` is resolved with `get_page_by_path()` — exact and hierarchy-aware.
@@ -2064,6 +2454,31 @@ function od_pages_registry(): array
             'label' => 'D6l · /materials/audio-roliki-social-reklama/ — Figma `social-audio` (1009:10756)',
             'path' => 'materials/audio-roliki-social-reklama',
             'fix' => 'od_pages_audio_roliki',
+        ],
+        [
+            'label' => 'D6m · /materials/books/ — Figma `books` (966:6650)',
+            'path' => 'materials/books',
+            'fix' => 'od_pages_books',
+        ],
+        [
+            'label' => 'D6m · /materials/zakladki/ — no frame; the section\'s card',
+            'path' => 'materials/zakladki',
+            'fix' => 'od_pages_zakladki',
+        ],
+        [
+            'label' => 'D6m · /materials/booklet/ — Figma `flyers` (966:7747)',
+            'path' => 'materials/booklet',
+            'fix' => 'od_pages_booklet',
+        ],
+        [
+            'label' => 'D6m · /materials/disk/ — Figma `disks` (966:8062)',
+            'path' => 'materials/disk',
+            'fix' => 'od_pages_disk',
+        ],
+        [
+            'label' => 'D6m · /materials/autosticker/ — Figma `car sticker` (966:8388)',
+            'path' => 'materials/autosticker',
+            'fix' => 'od_pages_autosticker',
         ],
     ];
 }

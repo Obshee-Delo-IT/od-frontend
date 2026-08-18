@@ -22,9 +22,11 @@
  * `post_content`: **11 published pages** still hold one (`[cmsms_sidebar]` on
  * seven, plus `[cmsms_contact_form]`, `[cmsms_selected_products]`,
  * `[cmsms_audios]`), and all 11 are covered — nine by the list below, `/news/`
- * by its native route, and `/materials/audio-roliki-social-reklama/` by having
- * the shortcode taken out of it: D6l turned its four `[cmsms_audio]` file paths
- * into `core/audio` blocks, which is the only reason that page was ever here. Four published *posts* hold one too
+ * by its native route, and two by having the thing that put them here taken
+ * out: D6l turned `/materials/audio-roliki-social-reklama/`'s four
+ * `[cmsms_audio]` file paths into `core/audio` blocks, and D6m dropped
+ * `/materials/disk/`'s «Добавить в корзину» links, which were the last of the
+ * WooCommerce shop and pointed at pages deleted in WordPress on 2026-08-17. Four published *posts* hold one too
  * (`[cmsms_slider]`, `[cmsms_audios]`, `[cmsms_table]`, `[cmsms_tabs]`, ids
  * 41045 / 56178 / 62556 / 64555), and those are cosmetic: each expands to under
  * 450 bytes, so the body around them renders. The reason to care at all is the
@@ -66,7 +68,6 @@ export const LEGACY_EMBED_PAGES = [
   '/contacts/',
   '/get-involved/',
   '/get-involved/join/',
-  '/materials/disk/',
   '/materials/pppuiv-constructor/',
   '/добровольчество/',
 ];
