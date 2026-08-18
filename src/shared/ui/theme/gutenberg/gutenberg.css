@@ -370,6 +370,14 @@ h2:has(+ .od-cards, + .od-poster-cards) {
   margin-bottom: 120px;
 }
 
+/* `project-2` and `project-3` number their task cards «01», «02», … where
+   `project-1` titles them. That ordinal is the card's position in the row and
+   nothing else, so it is a counter here rather than text in `post_content`:
+   an editor who adds, removes or reorders a slide never renumbers anything. */
+.od-cards--numbered {
+  counter-reset: od-task;
+}
+
 .wp-block-cb-carousel-v2.od-cards .cb-wrapper {
   align-items: stretch;
 }
@@ -382,11 +390,23 @@ h2:has(+ .od-cards, + .od-poster-cards) {
   background-color: var(--white);
 }
 
-.od-cards h3 {
+/* One rule for both, because the mock draws them identically — 32px red above
+   24px of space, whether the card leads with a title or with its number. */
+.od-cards h3,
+.od-cards--numbered .cb-slide::before {
   margin-bottom: 24px;
   color: var(--red-8);
   font-size: var(--font-size-8);
   line-height: 130%;
+}
+
+/* A pseudo-element is not a heading, so the weight an `<h3>` gets for free is
+   set here. */
+.od-cards--numbered .cb-slide::before {
+  display: block;
+  content: counter(od-task, decimal-leading-zero);
+  counter-increment: od-task;
+  font-weight: 700;
 }
 
 .od-cards p {
@@ -407,6 +427,30 @@ h2:has(+ .od-cards, + .od-poster-cards) {
 
 .wp-block-cb-carousel-v2.od-cards[data-cb-pagination='true'] .swiper-horizontal {
   margin-bottom: 0;
+}
+
+/* The approval note. On `/healthy-russia/` the same sentence is the methodology
+   card's body; `project-2` and `project-3` have no such card and set it as a
+   paragraph of its own, 24px and bold, across the whole column. */
+.od-note {
+  margin-bottom: 120px;
+  font-size: var(--font-size-6);
+  font-weight: 700;
+  line-height: 130%;
+}
+
+/* 65px under the task row rather than the 120 every other block gets. `:has`
+   because the gap belongs to the row above: a `margin-top` on the note would
+   collapse into the row's own bottom margin and lose. */
+.od-cards:has(+ .od-note) {
+  margin-bottom: 65px;
+}
+
+/* The programme's own materials — a download or a playlist the mock leaves no
+   room for. Rather than invent a section for them they go last, after
+   everything the mock does draw. */
+.od-materials {
+  margin-bottom: 80px;
 }
 
 /* The film posters. The row is a `core/query` over the programme's tag, so a
@@ -536,8 +580,17 @@ h2:has(+ .od-cards, + .od-poster-cards) {
   }
 
   .od-card,
-  .od-cards {
+  .od-cards,
+  .od-note {
     margin-bottom: 80px;
+  }
+
+  .od-note {
+    font-size: var(--font-size-5);
+  }
+
+  .od-cards:has(+ .od-note) {
+    margin-bottom: 40px;
   }
 
   h2:has(+ .od-cards, + .od-poster-cards) {

@@ -102,11 +102,7 @@ function od_pages_healthy_russia(string $content, int $filmTagId): string
 
     $out = od_pages_image_block($logo['id'], $logo['src'], 'Здоровая Россия', '', 'od-programme-logo');
 
-    $out .= "<!-- wp:group {\"className\":\"od-card od-card--goal\",\"layout\":{\"type\":\"constrained\"}} -->\n"
-        . "<div class=\"wp-block-group od-card od-card--goal\">"
-        . od_pages_heading(2, 'Цель программы')
-        . od_pages_paragraph(od_pages_inline_text($goal[1]))
-        . "</div>\n<!-- /wp:group -->\n\n";
+    $out .= od_pages_goal_card(od_pages_inline_text($goal[1]));
 
     $out .= od_pages_heading(2, 'Задачи программы');
     $slides = [];
@@ -140,6 +136,151 @@ function od_pages_healthy_russia(string $content, int $filmTagId): string
     // programme's tag, so tagging a film in the admin puts it on the page.
     $out .= od_pages_heading(2, 'Проекты программы');
     $out .= od_pages_carousel(od_pages_film_query($filmTagId), 'od-poster-cards', true);
+
+    return rtrim($out) . "\n";
+}
+
+/**
+ * `/healthy-youth/` — «Здоровая молодежь», Figma `project-2` (`759:1379`).
+ *
+ * The same template as `/healthy-russia/`, with three differences the mock
+ * draws and this transform follows:
+ *
+ * - **The task cards are numbered, not titled.** `project-1` gives each card an
+ *   `<h3>`; `project-2` and `project-3` give it «01», «02», … in the same red
+ *   32px. That ordinal is not content — it is the position of the card in the
+ *   row — so it is a CSS counter in `gutenberg.css` and nothing is written here.
+ * - **Two tasks, so two cards, not three.** The mock widens them to 600px
+ *   rather than leaving a hole, which is what the carousel's fourth argument
+ *   buys: `slidesPerView` follows the number of slides.
+ * - **The approval note stands alone.** On `/healthy-russia/` it is the body of
+ *   the methodology card; here there is no such card and it is a 24px paragraph
+ *   between the tasks and the projects.
+ *
+ * Dropped: the booklet cover, which the mock has no slot for — its download
+ * link survives as the page's one trailing button, and so the trailing
+ * «Методические материалы» heading, which pointed at that same file, goes with
+ * it. The six poster images are the page's fingerprint and nothing more: the
+ * row itself is a query over the programme's tag, exactly as on
+ * `/healthy-russia/`.
+ *
+ * @param string $content   Stored `post_content`.
+ * @param int    $filmTagId Term id of `programma-zdorovaya-molodezh`.
+ * @return string Rewritten content, or `$content` unchanged if it is already in
+ *                the target shape.
+ * @throws RuntimeException when the page does not look like the expected input.
+ */
+function od_pages_healthy_youth(string $content, int $filmTagId): string
+{
+    if (strpos($content, 'od-card') !== false) {
+        return $content; // Already converted — leave the editor's copy alone.
+    }
+
+    $logo = null;
+    $booklet = null;
+    $posters = [];
+    foreach (od_pages_column_media($content) as $card) {
+        if ($card['href'] === '') {
+            $logo = $logo ?? $card;
+        } elseif (strpos($card['href'], 'disk.yandex.ru') !== false) {
+            $booklet = $booklet ?? $card;
+        } else {
+            $posters[] = $card;
+        }
+    }
+
+    preg_match('#Цель программы</h2>\s*<p>(.*?)</p>#s', $content, $goal);
+    preg_match('#<p><span class="fontstyle0">(.*?)</span></p>#s', $content, $note);
+    $tasks = od_pages_task_paragraphs($content);
+
+    if ($logo === null || $booklet === null || count($posters) !== 6) {
+        throw new RuntimeException(
+            sprintf('unexpected media: logo=%d booklet=%d posters=%d', $logo !== null, $booklet !== null, count($posters))
+        );
+    }
+    if (count($tasks) !== 2 || empty($goal[1]) || empty($note[1])) {
+        throw new RuntimeException(
+            sprintf('unexpected prose: tasks=%d goal=%d note=%d', count($tasks), !empty($goal[1]), !empty($note[1]))
+        );
+    }
+
+    $out = od_pages_image_block($logo['id'], $logo['src'], 'Здоровая молодежь', '', 'od-programme-logo');
+    $out .= od_pages_goal_card(od_pages_inline_text($goal[1]));
+    $out .= od_pages_heading(2, 'Задачи программы');
+    $out .= od_pages_numbered_tasks($tasks);
+    $out .= od_pages_note(od_pages_inline_text($note[1]));
+    $out .= od_pages_heading(2, 'Проекты программы');
+    $out .= od_pages_carousel(od_pages_film_query($filmTagId), 'od-poster-cards', true);
+    $out .= od_pages_buttons(
+        [['href' => $booklet['href'], 'label' => od_pages_inline_text($booklet['label'])]],
+        'od-materials'
+    );
+
+    return rtrim($out) . "\n";
+}
+
+/**
+ * `/healthy-kids/` — «Здоровые дети», Figma `project-3` (`759:1117`).
+ *
+ * The shortest of the three: a logo, a goal card, three numbered task cards and
+ * the approval note. The programme has no «Проекты программы» row in the mock
+ * and no films tagged for one, so there is no query block here and the
+ * transform takes no term id.
+ *
+ * Dropped: the portrait beside the goal text, which linked to the same YouTube
+ * playlist as the «Фильмы программы» heading below it and which the mock
+ * replaces with the template's own drawing. Both trailing headings are links
+ * and both survive as the page's buttons.
+ *
+ * @param string $content Stored `post_content`.
+ * @param int    $_filmTagId Unused — this page has no film row. The registry
+ *                           calls every transform the same way.
+ * @return string Rewritten content, or `$content` unchanged if it is already in
+ *                the target shape.
+ * @throws RuntimeException when the page does not look like the expected input.
+ */
+function od_pages_healthy_kids(string $content, int $_filmTagId = 0): string
+{
+    if (strpos($content, 'od-card') !== false) {
+        return $content; // Already converted — leave the editor's copy alone.
+    }
+
+    $media = od_pages_column_media($content);
+    $logo = $media[0] ?? null;
+
+    preg_match('#Цель программы</h2>\s*<p>(.*?)</p>#s', $content, $goal);
+    preg_match('#<p><span class="fontstyle0">(.*?)</span></p>#s', $content, $note);
+    preg_match_all('#<li>(.*?)</li>#s', $content, $found, PREG_SET_ORDER);
+    preg_match_all('#<h3><a href="([^"]+)">([^<]+)</a></h3>#', $content, $links, PREG_SET_ORDER);
+
+    $tasks = array_map(static fn(array $task): string => od_pages_inline_text($task[1]), $found);
+
+    if ($logo === null || count($tasks) !== 3 || count($links) !== 2) {
+        throw new RuntimeException(
+            sprintf('unexpected input: logo=%d tasks=%d links=%d', $logo !== null, count($tasks), count($links))
+        );
+    }
+    if (empty($goal[1]) || empty($note[1])) {
+        throw new RuntimeException(
+            sprintf('unexpected prose: goal=%d note=%d', !empty($goal[1]), !empty($note[1]))
+        );
+    }
+
+    $out = od_pages_image_block($logo['id'], $logo['src'], 'Здоровые дети', '', 'od-programme-logo');
+    $out .= od_pages_goal_card(od_pages_inline_text($goal[1]));
+    $out .= od_pages_heading(2, 'Задачи программы');
+    $out .= od_pages_numbered_tasks($tasks);
+    $out .= od_pages_note(od_pages_inline_text($note[1]));
+    $out .= od_pages_buttons(
+        array_map(
+            static fn(array $link): array => [
+                'href' => od_pages_site_link($link[1]),
+                'label' => od_pages_inline_text($link[2]),
+            ],
+            $links
+        ),
+        'od-materials'
+    );
 
     return rtrim($out) . "\n";
 }
@@ -193,24 +334,24 @@ function od_pages_column_media(string $content): array
  *                      hand-written slides, {@see od_pages_film_query()} for a
  *                      query. Either way it is the block's `.swiper`.
  */
-function od_pages_carousel(string $track, string $className, bool $navigation): string
+function od_pages_carousel(string $track, string $className, bool $navigation, int $slidesPerView = 3): string
 {
     $attrs = json_encode(
         [
             'className' => $className,
             'spaceBetween' => 40,
             'navigation' => $navigation,
-            'breakpoints' => [['width' => 900, 'slidesPerView' => 3, 'slidesPerGroup' => 1]],
+            'breakpoints' => [['width' => 900, 'slidesPerView' => $slidesPerView, 'slidesPerGroup' => 1]],
         ],
         JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE
     );
 
     return sprintf(
         "<!-- wp:cb/carousel-v2 %s -->\n"
-            . '<div class="wp-block-cb-carousel-v2 cb-carousel-block %s" data-cb-slides-per-view="3"'
+            . '<div class="wp-block-cb-carousel-v2 cb-carousel-block %s" data-cb-slides-per-view="%d"'
             . ' data-cb-slides-per-group="1" data-cb-space-between="40" data-cb-speed="300"'
             . ' data-cb-navigation="%s" data-cb-pagination="true" data-cb-loop="false"'
-            . ' data-cb-breakpoints="{&quot;900&quot;:{&quot;slidesPerView&quot;:3,&quot;slidesPerGroup&quot;:1}}">'
+            . ' data-cb-breakpoints="{&quot;900&quot;:{&quot;slidesPerView&quot;:%d,&quot;slidesPerGroup&quot;:1}}">'
             . '%s'
             . '<div class="cb-pagination swiper-pagination"></div>'
             . '<div class="cb-button-prev swiper-button-prev"></div>'
@@ -218,7 +359,9 @@ function od_pages_carousel(string $track, string $className, bool $navigation): 
             . "</div>\n<!-- /wp:cb/carousel-v2 -->\n\n",
         $attrs,
         $className,
+        $slidesPerView,
         $navigation ? 'true' : 'false',
+        $slidesPerView,
         $track
     );
 }
@@ -314,6 +457,85 @@ function od_pages_film_query(int $tagId): string
         . "</div>\n<!-- /wp:query -->\n\n";
 }
 
+/**
+ * The goal card — the same `core/group` on all three programme pages: a heading,
+ * one paragraph, and the template's drawing, which `gutenberg.css` supplies as a
+ * background so there is nothing decorative for an editor to lose.
+ */
+function od_pages_goal_card(string $text): string
+{
+    return "<!-- wp:group {\"className\":\"od-card od-card--goal\",\"layout\":{\"type\":\"constrained\"}} -->\n"
+        . '<div class="wp-block-group od-card od-card--goal">'
+        . od_pages_heading(2, 'Цель программы')
+        . od_pages_paragraph($text)
+        . "</div>\n<!-- /wp:group -->\n\n";
+}
+
+/**
+ * The «Задачи программы» row of `project-2`/`project-3`: one paragraph per card
+ * and nothing else. The «01», «02», … the mock draws above each is a counter in
+ * `gutenberg.css`, so an editor who adds, removes or reorders a slide never has
+ * to renumber anything.
+ *
+ * `slidesPerView` follows the number of cards rather than the template's three,
+ * because the mock widens two cards to fill the row instead of leaving a hole.
+ * No arrows either way: the whole row is on screen above 900px, and below it the
+ * cards are a swipe.
+ *
+ * @param array<int, string> $tasks Plain text of each card.
+ */
+function od_pages_numbered_tasks(array $tasks): string
+{
+    $slides = array_map('od_pages_paragraph', $tasks);
+
+    return od_pages_carousel(od_pages_slides($slides), 'od-cards od-cards--numbered', false, count($slides));
+}
+
+/**
+ * The approval note. On `/healthy-russia/` the same sentence is the methodology
+ * card's body; the other two pages have no such card and the mock sets it as a
+ * standalone 24px paragraph of its own.
+ */
+function od_pages_note(string $text): string
+{
+    return sprintf("<!-- wp:paragraph {\"className\":\"od-note\"} -->\n<p class=\"od-note\">%s</p>\n<!-- /wp:paragraph -->\n\n", $text);
+}
+
+/**
+ * A link the old content wrote against the live site's own domain, made
+ * root-relative — `resolveContentLinks` only rewrites the WordPress origin, so
+ * without this the reader is sent to the site this one replaces.
+ *
+ * Exact hosts, and only the bare and `www.` forms: `metodic.obshee-delo.ru` is a
+ * different site that has to keep its origin. The Punycode form is what a
+ * browser sends and what some of the content already carries.
+ */
+function od_pages_site_link(string $href): string
+{
+    $hosts = 'общее-дело\.рф|xn----9sbkcac6brh7h\.xn--p1ai|obshee-delo\.ru';
+
+    return preg_replace(sprintf('#^https?://(?:www\.)?(?:%s)(?=/)#ui', $hosts), '', $href);
+}
+
+/**
+ * The «Задачи программы» paragraphs of `/healthy-youth/`, where the migrator
+ * left the tasks as ordinary `<p>`s between that heading and the approval note
+ * rather than as the `<strong>`-labelled pairs `/healthy-russia/` carries or the
+ * `<ul>` `/healthy-kids/` does.
+ *
+ * @return array<int, string>
+ */
+function od_pages_task_paragraphs(string $content): array
+{
+    if (!preg_match('#Задачи программы</h2>(.*?)<p><span#s', $content, $block)) {
+        return [];
+    }
+
+    preg_match_all('#<p>(.*?)</p>#s', $block[1], $found, PREG_SET_ORDER);
+
+    return array_map(static fn(array $task): string => od_pages_inline_text($task[1]), $found);
+}
+
 /** A `core/image` block, optionally wrapped in a link and optionally classed. */
 function od_pages_image_block(string $id, string $src, string $alt, string $href = '', string $className = ''): string
 {
@@ -358,9 +580,10 @@ function od_pages_paragraph(string $text): string
  *
  * @param array<int, array{href: string, label: string}> $buttons
  */
-function od_pages_buttons(array $buttons): string
+function od_pages_buttons(array $buttons, string $className = ''): string
 {
-    $out = "<!-- wp:buttons -->\n<div class=\"wp-block-buttons\">";
+    $attrs = $className === '' ? '' : sprintf(' {"className":"%s"}', $className);
+    $out = sprintf("<!-- wp:buttons%s -->\n<div class=\"wp-block-buttons%s\">", $attrs, $className === '' ? '' : ' ' . $className);
     foreach ($buttons as $button) {
         $out .= "<!-- wp:button {\"className\":\"is-style-outline\"} -->\n"
             . '<div class="wp-block-button is-style-outline">'
@@ -383,11 +606,19 @@ function od_pages_inline_text(string $html): string
     return trim(preg_replace('#\s+#u', ' ', $text));
 }
 
-/** Page path => transform. Every page workstream D has rebuilt. */
+/**
+ * Page path => the transform that rebuilds it and the tag its film row queries.
+ * Every page workstream D has rebuilt. An empty tag slug means the page has no
+ * such row — the transform is still called the same way, with `0`.
+ *
+ * @return array<string, array{0: callable-string, 1: string}>
+ */
 function od_pages_registry(): array
 {
     return [
-        'healthy-russia' => 'od_pages_healthy_russia',
+        'healthy-russia' => ['od_pages_healthy_russia', 'programma-zdorovaya-rossiya'],
+        'healthy-youth' => ['od_pages_healthy_youth', 'programma-zdorovaya-molodezh'],
+        'healthy-kids' => ['od_pages_healthy_kids', ''],
     ];
 }
 
@@ -404,22 +635,23 @@ global $wpdb; // `eval-file` runs the script in a function scope, where it is no
 $apply = in_array('apply', $args ?? [], true);
 WP_CLI::log($apply ? 'Applying changes.' : 'Dry run — pass `apply` to write.');
 
-// Resolved here rather than written into a transform: term ids are
-// per-environment. `wp/scripts/od-terms.php` is what creates it.
-$filmTag = get_term_by('slug', 'programma-zdorovaya-rossiya', 'post_tag');
-if (!$filmTag) {
-    WP_CLI::error('tag `programma-zdorovaya-rossiya` is missing — run `od-terms.php apply` first.');
-}
-
-foreach (od_pages_registry() as $path => $transform) {
+foreach (od_pages_registry() as $path => [$transform, $tagSlug]) {
     $page = get_page_by_path($path);
     if (!$page) {
         WP_CLI::warning(sprintf('%s: no such page', $path));
         continue;
     }
 
+    // Resolved here rather than written into a transform: term ids are
+    // per-environment. `wp/scripts/od-terms.php` is what creates them.
+    $filmTag = $tagSlug === '' ? null : get_term_by('slug', $tagSlug, 'post_tag');
+    if ($tagSlug !== '' && !$filmTag) {
+        WP_CLI::warning(sprintf('%s: tag `%s` is missing — run `od-terms.php apply` first.', $path, $tagSlug));
+        continue;
+    }
+
     try {
-        $new = $transform($page->post_content, (int) $filmTag->term_id);
+        $new = $transform($page->post_content, $filmTag ? (int) $filmTag->term_id : 0);
     } catch (Throwable $e) {
         WP_CLI::warning(sprintf('%s (#%d): %s', $path, $page->ID, $e->getMessage()));
         continue;
