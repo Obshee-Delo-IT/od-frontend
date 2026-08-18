@@ -669,6 +669,61 @@ h2:has(+ .od-tiles) {
   margin-bottom: 45px;
 }
 
+/* `/materials/` — Figma `ads` (`778:2206`) draws the same card at 598×280 with
+   the drawing beside the text, two to a row. One columns block of four flows
+   into 2 + 2 on its own, and a fifth card opens a third row with no edit here.
+
+   Two tracks and two rows inside the card: the text takes the left column, the
+   title against the top and «Подробнее» against the bottom, and the drawing
+   spans both rows on the right. A flex row would need the title and the link
+   wrapped in a box of their own — markup an editor would have to keep intact. */
+.wp-block-columns.od-tiles--wide {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.od-tile--metodichki::before {
+  background-image: url('/figma/materials/metodichki.svg');
+}
+
+.od-tile--printed-products::before {
+  background-image: url('/figma/materials/printed-products.svg');
+}
+
+.od-tile--articles::before {
+  background-image: url('/figma/materials/articles.svg');
+}
+
+.od-tile--social-reklama::before {
+  background-image: url('/figma/materials/social-reklama.svg');
+}
+
+.od-tiles--wide .od-tile {
+  display: grid;
+  min-height: 280px;
+  gap: 0 24px;
+  /* The drawings are ~200 wide, and a background has no intrinsic size for a
+     track to follow — so the column is fixed at theirs rather than at a share
+     of the card, which would take 300 of the 550 and wrap every title. */
+  grid-template-columns: minmax(min-content, 1fr) 200px;
+  grid-template-rows: 1fr 1fr;
+}
+
+.od-tiles--wide .od-tile::before {
+  height: 230px;
+  margin: 0;
+  grid-area: 1 / 2 / 3 / 3;
+}
+
+.od-tiles--wide .od-tile h3 {
+  margin-bottom: 0;
+  grid-area: 1 / 1;
+}
+
+.od-tiles--wide .od-tile .od-tile-link {
+  align-self: end;
+  grid-area: 2 / 1;
+}
+
 @media (--mobile) {
   .od-programme-logo {
     max-width: none;
@@ -704,6 +759,23 @@ h2:has(+ .od-tiles) {
 
   h2:has(+ .od-tiles) {
     margin-bottom: 24px;
+  }
+
+  /* The wide card goes back to being the portrait one: below 900px the row is a
+     single column, where the drawing reads better above the text than beside
+     it — which is what the `ads` mock draws too. */
+  .od-tiles--wide .od-tile {
+    display: block;
+    min-height: 0;
+  }
+
+  .od-tiles--wide .od-tile::before {
+    height: 200px;
+    margin: 0 auto 45px;
+  }
+
+  .od-tiles--wide .od-tile h3 {
+    margin-bottom: 10px;
   }
 
   /* Below 900px the adapter switches to `slidesPerView: 'auto'` and takes the

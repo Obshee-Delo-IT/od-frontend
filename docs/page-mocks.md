@@ -166,7 +166,7 @@ A media-asset catalog. Many sub-frames have dozens of children each — these ar
 | --- | --- | --- |
 | Article (materials landing) | `article` (`1012:10934`) | 16 children |
 | Article content (reader view) | `article-content` (`966:8461`) | 9 children |
-| Materials index | `ads` (`778:2206`) | 2 children — ✅ shipped as `app/materials/page.tsx` |
+| Materials index | `ads` (`778:2206`) | 2 children — ✅ shipped; a WordPress page since 2026-08-18 (D6h) |
 | Handbooks | `handbooks` (`779:4133`) | 1749 × 1440 |
 | Books | `books` (`966:6650`) | 3108 × 1440 |
 | Disks (DVDs/CDs) | `disks` (`966:8062`) | small |
@@ -182,7 +182,7 @@ A media-asset catalog. Many sub-frames have dozens of children each — these ar
 
 Plus 7 `Status` badges.
 
-**Repo:** ✅ the index (`app/materials/page.tsx`, 2026-08-15 — the `ads` frame, four static group cards) and `app/materials/articles/`; ❌ the rest. This section has the largest design surface and likely the heaviest CMS / media integration. Component prerequisites are now all built (`Pagination` ✅ C4, `Carousel` ✅ C8, `Tabs` ✅ C5 — for switching between material types); what remains blocking is the CMS taxonomy (no `material` CPT exists) and the asset-hosting capacity plan (Workstream E1).
+**Repo:** ✅ the index (2026-08-15 as `app/materials/page.tsx` — the `ads` frame, four static group cards; moved into WP page #20225 on 2026-08-18, D6h, and the route deleted) and `app/materials/articles/`; ❌ the rest. This section has the largest design surface and likely the heaviest CMS / media integration. Component prerequisites are now all built (`Pagination` ✅ C4, `Carousel` ✅ C8, `Tabs` ✅ C5 — for switching between material types); what remains blocking is the CMS taxonomy (no `material` CPT exists) and the asset-hosting capacity plan (Workstream E1).
 
 > **Don't read the size of this section as permission to defer it.** Real traffic puts Materials **#3 by search entries**, and `/materials/plakati/` is the #6 entry page on the whole site. **4 of the 14 sub-pages carry 62 % of the section's entries** (plakati · zakladki · articles · metodichki), so the index plus those four are **Tier 2 — before prod**; the other ten ride the A6 fallback. The index itself is worth building for a second reason the entry ranking hides: **939 views against 107 entries (8.8×)** — almost nobody arrives there from search, but it is how the section gets browsed. And `/materials/articles/` needed no build at all — **✅ shipped 2026-08-13 as a thin alias route** (`app/materials/articles/page.tsx`) listing category 578, a superset of the legacy page's 14 curated links; its five child pages stay on the fallback. See [`implementation-plan.md` §D8](./implementation-plan.md) and the launch tiering.
 

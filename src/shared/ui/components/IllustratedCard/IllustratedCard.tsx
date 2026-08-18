@@ -6,17 +6,6 @@ export interface IllustratedCardProps {
   href: string;
   /** The card's drawing, imported as a component by `@svgr/webpack`. */
   Illustration: React.FC<React.SVGProps<SVGElement>>;
-  /**
-   * Figma `Frame 33845` — the 598×280 landscape card that fills a row of two,
-   * drawing beside the text instead of above it. `/materials/` picks it per
-   * row; see `toCardRows`.
-   */
-  wide?: boolean;
-  /**
-   * `h3` under a section heading, `h2` where the section draws none — see
-   * `CardSection`. Only the level differs; the styling is the card's own.
-   */
-  headingAs?: 'h2' | 'h3';
 }
 
 /**
@@ -24,23 +13,20 @@ export interface IllustratedCardProps {
  * illustration box, then the title and a «Подробнее» link. The whole card is
  * clickable: the link's `::after` is stretched over it.
  *
- * Shared because the same card appears in three shapes — the home page's
- * `Directions` carousel, `/materials/`'s rows, and the `wide` variant those
- * rows of two use.
+ * One caller left: the home page's `Directions` carousel. The two surfaces that
+ * drew the same card as static rows — `/projects/` and `/materials/` — are
+ * WordPress pages since D6g, where the card is a `core/column` classed
+ * `od-tile` and `gutenberg.css` styles it. The `wide` variant (598×280, drawing
+ * beside the text) and the `headingAs` switch went with them; `.od-tiles--wide`
+ * is where that shape lives now.
  */
-export const IllustratedCard: React.FC<IllustratedCardProps> = ({
-  title,
-  href,
-  Illustration,
-  wide = false,
-  headingAs: Title = 'h3',
-}) => (
-  <article className={wide ? `${css.card} ${css.wide}` : css.card}>
+export const IllustratedCard: React.FC<IllustratedCardProps> = ({ title, href, Illustration }) => (
+  <article className={css.card}>
     <div className={css.illustration}>
       <Illustration aria-hidden="true" />
     </div>
     <div className={css.body}>
-      <Title className={css.title}>{title}</Title>
+      <h3 className={css.title}>{title}</h3>
       <Link href={href} color="red" underline="always" size="3" aria-label={`${title} — подробнее`}>
         Подробнее
       </Link>
