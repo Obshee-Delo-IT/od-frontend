@@ -51,7 +51,7 @@ export const WpPage = async ({ page }: WpPageProps) => {
   const parsed = parsePost(html, { liftHeader: false, embeds: await resolveProfileEmbeds(html) });
 
   return (
-    <Box display="flex" flexDirection="column" gap={40} py={48}>
+    <Box display="flex" flexDirection="column" gap={40} pt={20} pb={48}>
       <PageHeader title={page.title} breadcrumbs={[{ label: 'Главная', href: '/' }, { label: page.title }]} />
 
       <ImagePreviewClient>

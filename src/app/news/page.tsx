@@ -99,7 +99,7 @@ const Page = async ({ searchParams }: NewsPageProps) => {
   const breadcrumbItems = [{ label: 'Главная', href: '/' }, { label: 'Новости' }];
 
   return (
-    <Box display="flex" flexDirection="column" gap={40} py={48}>
+    <Box display="flex" flexDirection="column" gap={40} pt={20} pb={48}>
       <PageHeader title="Новости" breadcrumbs={breadcrumbItems} />
 
       <NewsFilter

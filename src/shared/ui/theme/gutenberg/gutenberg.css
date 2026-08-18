@@ -9,9 +9,13 @@ h1,
   text-transform: uppercase;
 }
 
+/* `color` is set because nothing else sets it: a heading inside `.radix-themes`
+   inherits Radix's own `--gray-12` (`#211f26`), and the mock's `text/8/bold` is
+   `#202b37` — which is this project's `--gray-9`. Measured on `handbooks`. */
 h2,
 .wp-block-heading h2 {
   margin: 0 0 0.75em;
+  color: var(--gray-9);
   font-family: var(--default-font-family);
   font-size: var(--font-size-8);
   font-weight: 700;
