@@ -686,6 +686,10 @@ $plakati = od_pages_plakati(file_get_contents(__DIR__ . '/fixtures/plakati.befor
 od_test_asset_downloads($plakati, 15, OD_ASSET_DOWNLOAD);
 // Fifteen cards two-up: seven full rows and one holding the odd poster out.
 od_test('two per row', substr_count($plakati, '<div class="wp-block-columns od-assets">') === 8);
+// Three pictures in a card go on one row, as the mock draws them — four cards
+// carry a poster and two photos of it in use.
+od_test('a card of three pictures is one row of three', substr_count($plakati, 'flex-basis:33.33%') === 12);
+od_test('and a card of two, one row of two', substr_count($plakati, 'flex-basis:50.00%') === 20);
 od_test('the fifteen buttons keep their own hrefs', substr_count($plakati, 'href="https://yadi.sk/') === 15);
 od_test('the first poster keeps its own link', str_contains($plakati, 'https://yadi.sk/i/8ShaiNDuQab81Q'));
 od_test('and the last', str_contains($plakati, 'https://yadi.sk/i/IW3PrSmgzfXkn'));
@@ -728,7 +732,12 @@ od_test('no second h1 on the page', !str_contains($leds, '<h1'));
 od_test('the clip names survive as h3', str_contains($leds, '<h3 class="wp-block-heading">Аристотель</h3>'));
 od_test('and the last of them', str_contains($leds, '<h3 class="wp-block-heading">Углов</h3>'));
 od_test('the label over the buttons is a label, not a heading', str_contains($leds, '<p>Скачать в формате mp4</p>'));
-od_test('every video survives as an embed', substr_count($leds, '<!-- wp:embed ') === 10);
+// Kinescope, not YouTube — the same player the film pages use, and every one
+// of the twelve clips across this page and `/materials/books/` was matched by
+// an exact title match between the two services.
+od_test('every clip plays from Kinescope', substr_count($leds, 'https://kinescope.io/embed/') === 10);
+od_test('and none from YouTube', !str_contains($leds, 'youtu'));
+od_test('in core\'s own embed markup, so the 16:9 rule reaches it', substr_count($leds, 'wp-embed-aspect-16-9') === 10);
 od_test('converted content is left alone', od_pages_led_board_roliki($leds, 0) === $leds);
 
 // -- /materials/audio-roliki-social-reklama/ — Figma `social-audio` ---------
@@ -821,7 +830,8 @@ od_test('converted content is left alone', od_pages_disk($disk, 0) === $disk);
 $books = od_pages_books(file_get_contents(__DIR__ . '/fixtures/books.before.html'), 0);
 
 od_test('two books', substr_count($books, 'od-asset">') === 2);
-od_test('each with its trailer', substr_count($books, '<!-- wp:embed ') === 2);
+od_test('each with its trailer, from Kinescope', substr_count($books, 'https://kinescope.io/embed/') === 2);
+od_test('not YouTube', !str_contains($books, 'youtu'));
 od_test('and its cover', substr_count($books, '<!-- wp:image ') === 2);
 // The migrator left the whole aside as one paragraph block holding raw `<h3>`s,
 // a bare `<img>` and three dash-and-`<br>` lists.

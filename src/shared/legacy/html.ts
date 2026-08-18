@@ -4,7 +4,7 @@ import { decodeEntities } from '@/shared/lib/decodeEntities';
  * The small HTML primitives the legacy transform is built from.
  *
  * A string rewriter rather than a DOM library, for the reasons in decision D5:
- * the repo already rewrites WordPress HTML this way (`resolveContentImages`),
+ * the repo already rewrites WordPress HTML this way (`resolveContentAssets`),
  * `jsdom` is a Vitest-only dependency and promoting it to runtime for one route
  * is a lot of dependency for a narrow job, and the input is a single known
  * theme's markup rather than the open web.

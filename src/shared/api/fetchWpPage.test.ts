@@ -61,10 +61,34 @@ describe('fetchWpPage', () => {
 
   it('stops the trail where a level fails rather than failing the page', async () => {
     wpFetch
-      .mockResolvedValueOnce(makeResponse([page({ link: 'https://wp.test/materials/plakati/', parent: 20225 })]))
+      .mockResolvedValueOnce(makeResponse([page({ link: 'https://wp.test/materials/books/', parent: 20225 })]))
       .mockResolvedValueOnce(makeResponse({ code: 'boom' }, 500));
 
-    await expect(fetchWpPage('/materials/plakati/')).resolves.toMatchObject({ ancestors: [] });
+    // The configured hub still shows: it is not a request, so a dead level
+    // above it cannot take it out.
+    await expect(fetchWpPage('/materials/books/')).resolves.toMatchObject({
+      ancestors: [{ title: 'Печатная продукция', href: '/materials/printed-products/' }],
+    });
+  });
+
+  /**
+   * The ten asset pages are children of `/materials/` in WordPress and of a hub
+   * in the site — the tree stays flat because a page's permalink is built from
+   * it, and `/materials/plakati/` is the #6 entry page. See `sectionParents.ts`.
+   */
+  it('adds the hub a materials page belongs to, which WordPress does not know', async () => {
+    wpFetch
+      .mockResolvedValueOnce(makeResponse([page({ link: 'https://wp.test/materials/plakati/', parent: 20225 })]))
+      .mockResolvedValueOnce(
+        makeResponse({ link: 'https://wp.test/materials/', parent: 0, title: { rendered: 'Материалы' } })
+      );
+
+    const result = await fetchWpPage('/materials/plakati/');
+
+    expect(result?.ancestors).toEqual([
+      { title: 'Материалы', href: '/materials/' },
+      { title: 'Социальная реклама', href: '/materials/social-reklama/' },
+    ]);
   });
 
   /** Depth is capped: each level is a request on a route that must stay static. */

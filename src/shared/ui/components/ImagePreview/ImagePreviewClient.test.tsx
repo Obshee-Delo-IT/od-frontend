@@ -48,13 +48,16 @@ const dialog = () => screen.queryByRole('dialog');
 
 describe('ImagePreviewClient', () => {
   it('opens the lightbox on an image linked to its own upload', async () => {
-    render(linked('/wp-content/uploads/2021/02/poster.jpg'));
+    render(linked('https://cdn.test/wp-content/uploads/2021/02/poster.jpg'));
     const img = asLoaded();
 
     await userEvent.click(img);
 
     expect(dialog()).not.toBeNull();
-    expect(screen.getByAltText('')).toHaveAttribute('src', 'https://cdn.test/poster.jpg');
+    // The upload behind the thumbnail, not the thumbnail: on the materials
+    // pages the two are different files, and `resolveContentAssets` has made
+    // the href a real address.
+    expect(screen.getByAltText('')).toHaveAttribute('src', 'https://cdn.test/wp-content/uploads/2021/02/poster.jpg');
   });
 
   /**
@@ -114,13 +117,39 @@ describe('ImagePreviewClient', () => {
     expect(event.defaultPrevented).toBe(false);
   });
 
-  it('sizes the dialog from the thumbnail, so the overlay reaches the edge of the picture', async () => {
+  /**
+   * The upload has not been fetched, so its size is unknown — the ratio comes
+   * off the thumbnail and is scaled to a 1600px long side. Passing the
+   * thumbnail's own pixels would have `next/image` serve a copy that small.
+   */
+  it("asks for the upload at full size, in the thumbnail's ratio", async () => {
     render(linked('/wp-content/uploads/2021/02/poster.jpg'));
-    const img = asLoaded('https://cdn.test/poster.jpg', [1200, 800]);
+    const img = asLoaded('https://cdn.test/poster.jpg', [300, 200]);
 
     await userEvent.click(img);
 
     const preview = screen.getByAltText('');
+    expect(preview).toHaveAttribute('width', '1600');
+    expect(preview).toHaveAttribute('height', '1067');
+  });
+
+  /**
+   * Nothing to scale up to: the thumbnail *is* the picture, and its own size is
+   * what keeps the dialog exactly as big as it — every pixel around it is
+   * overlay and dismisses.
+   */
+  it('sizes an unlinked image from the thumbnail itself', async () => {
+    render(
+      <ImagePreviewClient>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="https://cdn.test/plain.jpg" alt="" />
+      </ImagePreviewClient>
+    );
+    const img = asLoaded('https://cdn.test/plain.jpg', [1200, 800]);
+
+    await userEvent.click(img);
+
+    const preview = screen.getAllByAltText('')[1];
     expect(preview).toHaveAttribute('width', '1200');
     expect(preview).toHaveAttribute('height', '800');
   });

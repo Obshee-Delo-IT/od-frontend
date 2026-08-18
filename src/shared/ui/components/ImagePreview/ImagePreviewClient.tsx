@@ -29,15 +29,25 @@ interface ImagePreviewClientProps {
  * link; hijacking that would break navigation to hide the destination behind a
  * picture of it.
  *
- * The modal shows `img.currentSrc`, not the anchor's href: `resolveContentImages`
- * has already pointed the `src` at the CDN or the WP origin, while the href is
- * whatever the editor typed.
+ * **The modal shows the anchor's href, falling back to `img.currentSrc`.** Both
+ * are real addresses now — `resolveContentAssets` resolves the media href the
+ * same way it resolves the `src` — and on the materials pages they are
+ * different files rather than two sizes of one: `/materials/plakati/` shows a
+ * 270px-tall preview and links the print-quality poster behind it. Opening the
+ * preview in a lightbox is opening the small picture bigger, which is what it
+ * did before.
  */
 
 /** WordPress uploads live under this path on any host it serves them from. */
 const MEDIA_PATH = '/wp-content/uploads/';
 
-const previewSource = (target: EventTarget | null): HTMLImageElement | null => {
+interface PreviewSource {
+  img: HTMLImageElement;
+  /** The full-size upload behind the thumbnail, when the editor linked one. */
+  href: string | null;
+}
+
+const previewSource = (target: EventTarget | null): PreviewSource | null => {
   if (!(target instanceof Element)) {
     return null;
   }
@@ -45,10 +55,32 @@ const previewSource = (target: EventTarget | null): HTMLImageElement | null => {
   if (!(img instanceof HTMLImageElement) || !img.currentSrc) {
     return null;
   }
-  const href = img.closest('a')?.getAttribute('href');
+  const href = img.closest('a')?.getAttribute('href') ?? null;
   // No anchor at all is still a preview; an anchor to anything but the upload
   // is a link the reader asked for.
-  return href === undefined || href === null || href.includes(MEDIA_PATH) ? img : null;
+  if (href !== null && !href.includes(MEDIA_PATH)) {
+    return null;
+  }
+
+  return { img, href };
+};
+
+/**
+ * How big to ask `next/image` for the full-size file.
+ *
+ * The dialog is capped at 90vw × 90vh, and the ratio has to come off the
+ * thumbnail — it is the only thing on screen to measure, and the upload behind
+ * it has not been fetched. Scaling that ratio up to a 1600px long side is what
+ * makes the request a full-size one: passing the thumbnail's own 187 × 207
+ * would have `next/image` serve a 187px-wide copy of the poster, which is the
+ * bug this replaces.
+ */
+const PREVIEW_LONG_SIDE = 1600;
+
+const previewSize = (width: number, height: number, scaleUp: boolean): { width: number; height: number } => {
+  const scale = scaleUp ? PREVIEW_LONG_SIDE / Math.max(width, height) : 1;
+
+  return scale > 1 ? { width: Math.round(width * scale), height: Math.round(height * scale) } : { width, height };
 };
 
 /**
@@ -78,10 +110,11 @@ export const ImagePreviewClient = ({ children }: ImagePreviewClientProps) => {
   const [openedFrom, setOpenedFrom] = useState<HTMLElement | null>(null);
 
   const open = (event: React.SyntheticEvent) => {
-    const img = previewSource(event.target);
-    if (!img) {
+    const source = previewSource(event.target);
+    if (!source) {
       return;
     }
+    const { img, href } = source;
     const width = img.naturalWidth || img.width;
     const height = img.naturalHeight || img.height;
     if (!width || !height) {
@@ -91,7 +124,7 @@ export const ImagePreviewClient = ({ children }: ImagePreviewClientProps) => {
     }
     event.preventDefault();
     setOpenedFrom(img.closest('a') ?? img);
-    setPreview({ src: img.currentSrc, width, height });
+    setPreview({ src: href ?? img.currentSrc, ...previewSize(width, height, href !== null) });
   };
 
   const handleClose = () => {
