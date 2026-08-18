@@ -43,13 +43,20 @@
  * Add their slugs here when they are published; the script will pick them up on
  * the next run and leave the six already tagged alone.
  *
- * @return array<string, array{name: string, posts: array<int, string>}>
+ * `alt_from_title` covers the other half of what a query block needs: the films'
+ * featured images were uploaded with **no alt text at all**, and
+ * `core/post-featured-image` renders them as a link — a link with no accessible
+ * name. The post's own title is the right name for it, and setting it helps
+ * every other place those covers render too.
+ *
+ * @return array<string, array{name: string, alt_from_title: bool, posts: array<int, string>}>
  */
 function od_terms_registry(): array
 {
     return [
         'programma-zdorovaya-rossiya' => [
             'name' => 'Программа «Здоровая Россия»',
+            'alt_from_title' => true,
             'posts' => [
                 'документальный-фильм-алкоголь-секр', // №1 «Алкоголь. Секреты манипуляции»
                 'никотин-секреты-манипуляции',        // №2 «Никотин. Секреты манипуляции»
@@ -102,6 +109,10 @@ foreach (od_terms_registry() as $slug => $tag) {
             continue;
         }
 
+        if (!empty($tag['alt_from_title'])) {
+            od_terms_alt_from_title($post, $apply);
+        }
+
         if ($term && has_term($term->term_id, 'post_tag', $post->ID)) {
             WP_CLI::log(sprintf('%s: %s (#%d) already tagged, skipped', $slug, $path, $post->ID));
             continue;
@@ -120,5 +131,31 @@ foreach (od_terms_registry() as $slug => $tag) {
         }
 
         WP_CLI::success(sprintf('%s: %s (#%d) tagged', $slug, $path, $post->ID));
+    }
+}
+
+/**
+ * Name a post's featured image after the post, when it has no alt text of its
+ * own. Never overwrites one — an editor's wording beats a title every time.
+ */
+function od_terms_alt_from_title(WP_Post $post, bool $apply): void
+{
+    $thumbnail = get_post_thumbnail_id($post->ID);
+    if (!$thumbnail) {
+        WP_CLI::warning(sprintf('%s (#%d): no featured image', $post->post_name, $post->ID));
+
+        return;
+    }
+
+    if (trim((string) get_post_meta($thumbnail, '_wp_attachment_image_alt', true)) !== '') {
+        return;
+    }
+
+    $alt = wp_strip_all_tags(get_the_title($post));
+    WP_CLI::log(sprintf('#%d: cover %d has no alt, to be «%s»', $post->ID, $thumbnail, $alt));
+
+    if ($apply) {
+        update_post_meta($thumbnail, '_wp_attachment_image_alt', $alt);
+        WP_CLI::success(sprintf('#%d: cover %d alt set', $post->ID, $thumbnail));
     }
 }

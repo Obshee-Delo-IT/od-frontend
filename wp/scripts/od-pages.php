@@ -54,12 +54,16 @@
  * once introduced are long gone. The fourth is a link, and it survives as the
  * methodology card's second button.
  *
- * @param string $content Stored `post_content`.
+ * @param string $content   Stored `post_content`.
+ * @param int    $filmTagId  Term id of `programma-zdorovaya-rossiya`, which
+ *                           «Проекты программы» queries. Ids are per-environment,
+ *                           so the runner resolves it from the slug and the tests
+ *                           pass one of their own.
  * @return string Rewritten content, or `$content` unchanged if it is already in
  *                the target shape.
  * @throws RuntimeException when the page does not look like the expected input.
  */
-function od_pages_healthy_russia(string $content): string
+function od_pages_healthy_russia(string $content, int $filmTagId): string
 {
     if (strpos($content, 'od-card') !== false) {
         return $content; // Already converted — leave the editor's copy alone.
@@ -111,7 +115,7 @@ function od_pages_healthy_russia(string $content): string
             . od_pages_paragraph(od_pages_inline_text($task[2]));
     }
     // No arrows: three cards fit the desktop row, and the mobile mock swipes.
-    $out .= od_pages_carousel($slides, 'od-cards', false);
+    $out .= od_pages_carousel(od_pages_slides($slides), 'od-cards', false);
 
     $out .= "<!-- wp:columns {\"className\":\"od-card od-card--flush\"} -->\n"
         . "<div class=\"wp-block-columns od-card od-card--flush\">"
@@ -131,17 +135,11 @@ function od_pages_healthy_russia(string $content): string
         . "</div>\n<!-- /wp:column -->"
         . "</div>\n<!-- /wp:columns -->\n\n";
 
+    // The four posters the migrator left are the page's fingerprint, checked
+    // above — but they are not what is rendered. The row is a query over the
+    // programme's tag, so tagging a film in the admin puts it on the page.
     $out .= od_pages_heading(2, 'Проекты программы');
-    $slides = [];
-    foreach ($posters as $poster) {
-        // «Подробнее» as the mock has it, not the film's title: the poster above
-        // is itself a link and carries the title as its alt text, so the card
-        // already reads out as the film to a screen reader.
-        $label = od_pages_inline_text($poster['label']);
-        $slides[] = od_pages_image_block($poster['id'], $poster['src'], $label, $poster['href'])
-            . od_pages_buttons([['href' => $poster['href'], 'label' => 'Подробнее']], '');
-    }
-    $out .= od_pages_carousel($slides, 'od-poster-cards', true);
+    $out .= od_pages_carousel(od_pages_film_query($filmTagId), 'od-poster-cards', true);
 
     return rtrim($out) . "\n";
 }
@@ -184,17 +182,18 @@ function od_pages_column_media(string $content): array
  * draw for these rows and the only carousel this site already runs: the frontend
  * mounts a Swiper on every `.cb-carousel-block` it renders
  * (`src/shared/ui/theme/gutenberg/Carousel/`), so a section written this way
- * needs no frontend code at all, and an editor adds a fourth task or a seventh
- * project by adding a slide.
+ * needs almost no frontend code at all.
  *
  * The `data-cb-*` attributes are what the frontend reads; the block comment is
  * what the editor reads. Both say the same thing, as the plugin's own `save`
  * does. Three slides per view above 900px — which is what both rows are on
  * desktop — and one-and-a-bit below it, from the slide width in CSS.
  *
- * @param array<int, string> $slides Inner markup of each slide.
+ * @param string $track The element Swiper scrolls: {@see od_pages_slides()} for
+ *                      hand-written slides, {@see od_pages_film_query()} for a
+ *                      query. Either way it is the block's `.swiper`.
  */
-function od_pages_carousel(array $slides, string $className, bool $navigation): string
+function od_pages_carousel(string $track, string $className, bool $navigation): string
 {
     $attrs = json_encode(
         [
@@ -206,29 +205,88 @@ function od_pages_carousel(array $slides, string $className, bool $navigation): 
         JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE
     );
 
-    $out = sprintf(
+    return sprintf(
         "<!-- wp:cb/carousel-v2 %s -->\n"
             . '<div class="wp-block-cb-carousel-v2 cb-carousel-block %s" data-cb-slides-per-view="3"'
             . ' data-cb-slides-per-group="1" data-cb-space-between="40" data-cb-speed="300"'
             . ' data-cb-navigation="%s" data-cb-pagination="true" data-cb-loop="false"'
             . ' data-cb-breakpoints="{&quot;900&quot;:{&quot;slidesPerView&quot;:3,&quot;slidesPerGroup&quot;:1}}">'
-            . '<div class="swiper"><div class="cb-wrapper swiper-wrapper">',
+            . '%s'
+            . '<div class="cb-pagination swiper-pagination"></div>'
+            . '<div class="cb-button-prev swiper-button-prev"></div>'
+            . '<div class="cb-button-next swiper-button-next"></div>'
+            . "</div>\n<!-- /wp:cb/carousel-v2 -->\n\n",
         $attrs,
         $className,
-        $navigation ? 'true' : 'false'
+        $navigation ? 'true' : 'false',
+        $track
     );
+}
 
+/**
+ * Hand-written slides, the plugin's own shape. An editor adds a fourth card by
+ * adding a slide, and nothing in this repo changes.
+ *
+ * @param array<int, string> $slides Inner markup of each slide.
+ */
+function od_pages_slides(array $slides): string
+{
+    $out = '<div class="swiper"><div class="cb-wrapper swiper-wrapper">';
     foreach ($slides as $slide) {
         $out .= "<!-- wp:cb/slide-v2 -->\n<div class=\"wp-block-cb-slide-v2 cb-slide swiper-slide\">"
             . $slide
             . "</div>\n<!-- /wp:cb/slide-v2 -->\n";
     }
 
-    return $out
-        . '</div></div><div class="cb-pagination swiper-pagination"></div>'
-        . '<div class="cb-button-prev swiper-button-prev"></div>'
-        . '<div class="cb-button-next swiper-button-next"></div>'
-        . "</div>\n<!-- /wp:cb/carousel-v2 -->\n\n";
+    return $out . '</div></div>';
+}
+
+/**
+ * The films of a programme, as a `core/query` — so the row follows the tag and
+ * tagging a film in the admin is the whole job of adding one.
+ *
+ * Two attributes carry the trick that lets a dynamic list drive a Swiper: the
+ * query renders as `.wp-block-query`, so `className: swiper` makes it the
+ * element the adapter mounts on, and `core/post-template` renders the `<ul>`
+ * Swiper needs as its track, so it takes `swiper-wrapper`. The `<li>`s come out
+ * as `.wp-block-post` rather than `.swiper-slide`, which the adapter passes to
+ * Swiper as `slideClass`.
+ *
+ * The permalink structure on this site is `/%post_id%/`, so every link a query
+ * block emits is already the URL the frontend serves a film at — no rewriting,
+ * beyond `resolveContentLinks` making it root-relative.
+ */
+function od_pages_film_query(int $tagId): string
+{
+    $query = json_encode(
+        [
+            'queryId' => 0,
+            'query' => [
+                'perPage' => 12,
+                'pages' => 0,
+                'offset' => 0,
+                'postType' => 'post',
+                'order' => 'desc',
+                'orderBy' => 'date',
+                'author' => '',
+                'search' => '',
+                'exclude' => [],
+                'sticky' => '',
+                'inherit' => false,
+                'tagIds' => [$tagId],
+            ],
+            'className' => 'swiper',
+        ],
+        JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE
+    );
+
+    return sprintf("<!-- wp:query %s -->\n", $query)
+        . '<div class="wp-block-query swiper">'
+        . "<!-- wp:post-template {\"className\":\"swiper-wrapper\"} -->\n"
+        . "<!-- wp:post-featured-image {\"isLink\":true,\"scale\":\"contain\"} /-->\n\n"
+        . "<!-- wp:read-more {\"content\":\"Подробнее\"} /-->\n"
+        . "<!-- /wp:post-template -->"
+        . "</div>\n<!-- /wp:query -->\n\n";
 }
 
 /** A `core/image` block, optionally wrapped in a link and optionally classed. */
@@ -269,21 +327,18 @@ function od_pages_paragraph(string $text): string
 }
 
 /**
- * A `core/buttons` block. `project-1` draws two kinds: the outline button that
- * is the default here, and the solid one the poster cards lay over the artwork —
- * which carries no block style, because its colours come from
- * `.od-poster-cards` in `gutenberg.css` rather than from a core style.
+ * A `core/buttons` block of outline buttons — the only button style left in the
+ * hand-written markup, now that the poster cards draw their own from
+ * `core/read-more`.
  *
  * @param array<int, array{href: string, label: string}> $buttons
  */
-function od_pages_buttons(array $buttons, string $style = 'is-style-outline'): string
+function od_pages_buttons(array $buttons): string
 {
-    $attrs = $style === '' ? '' : sprintf(' {"className":"%s"}', $style);
-    $class = 'wp-block-button' . ($style === '' ? '' : ' ' . $style);
-
     $out = "<!-- wp:buttons -->\n<div class=\"wp-block-buttons\">";
     foreach ($buttons as $button) {
-        $out .= sprintf("<!-- wp:button%s -->\n<div class=\"%s\">", $attrs, $class)
+        $out .= "<!-- wp:button {\"className\":\"is-style-outline\"} -->\n"
+            . '<div class="wp-block-button is-style-outline">'
             . sprintf('<a class="wp-block-button__link wp-element-button" href="%s">%s</a>', $button['href'], $button['label'])
             . "</div>\n<!-- /wp:button -->\n";
     }
@@ -324,6 +379,13 @@ global $wpdb; // `eval-file` runs the script in a function scope, where it is no
 $apply = in_array('apply', $args ?? [], true);
 WP_CLI::log($apply ? 'Applying changes.' : 'Dry run — pass `apply` to write.');
 
+// Resolved here rather than written into a transform: term ids are
+// per-environment. `wp/scripts/od-terms.php` is what creates it.
+$filmTag = get_term_by('slug', 'programma-zdorovaya-rossiya', 'post_tag');
+if (!$filmTag) {
+    WP_CLI::error('tag `programma-zdorovaya-rossiya` is missing — run `od-terms.php apply` first.');
+}
+
 foreach (od_pages_registry() as $path => $transform) {
     $page = get_page_by_path($path);
     if (!$page) {
@@ -332,7 +394,7 @@ foreach (od_pages_registry() as $path => $transform) {
     }
 
     try {
-        $new = $transform($page->post_content);
+        $new = $transform($page->post_content, (int) $filmTag->term_id);
     } catch (Throwable $e) {
         WP_CLI::warning(sprintf('%s (#%d): %s', $path, $page->ID, $e->getMessage()));
         continue;
