@@ -192,7 +192,7 @@ ssh od-root 'cd ~/public_html && wp --skip-plugins --skip-themes eval "
 
 ⚠️ **Two known gaps, both about legacy pages, both live only once A6 ships.** The plugin reports post type `post` only, so **editing a legacy page purges nothing** — the fallback route would serve its cached render for up to an hour. And prod caches its own HTML with **WP Rocket** (§2 of `wp-backend.md`), which the fallback fetches: purging Next before WP Rocket just re-caches the stale copy. When A6 lands, the order is WP Rocket first, then the frontend, and the plugin needs to start sending `paths` for pages — the endpoint already accepts them.
 
-**2.6 Two dead links — ~~to remove~~ done 2026-08-15, on prod and od-dev both.** The `sidebar_bottom` links widget's `/sp/` (leyka form, no money taken since 2022-01-05) and menu item 27971 «Заказать материалы» (CF7 order form, mail lands in spam). Deleted at the source, so the frontend filters neither any more. What was removed, how to restore it, and what has to be decided before either comes back: [`next-steps.md`](./next-steps.md). Both pages still answer 200 on the A6 fallback — the links went, not the pages.
+**Two dead links — ~~to remove~~ done 2026-08-15, on prod and od-dev both.** (A note, not a step — B8a took the number 2.6.) The `sidebar_bottom` links widget's `/sp/` (leyka form, no money taken since 2022-01-05) and menu item 27971 «Заказать материалы» (CF7 order form, mail lands in spam). Deleted at the source, so the frontend filters neither any more. What was removed, how to restore it, and what has to be decided before either comes back: [`next-steps.md`](./next-steps.md). Both pages still answer 200 on the A6 fallback — the links went, not the pages.
 
 **2.7 Upgrade WordPress core (B10), then convert the content.** Prod is held at **5.5.5** by an active `wp-downgrade`, and everything downstream assumes modern core: the migrator writes `wp:query` / `wp:details` / `wp:group`, and `gutenberg.css` keys on the `is-layout-flex` layout classes core only emits from **5.9**. od-dev — which is what the frontend has been built and measured against — is on **6.8.8 / PHP 8.2** (read 2026-08-17).
 
@@ -208,13 +208,24 @@ ssh od-root 'cd ~/public_html && wp --skip-plugins --skip-themes core version'
 
 Then run the content conversion — [`wp-page-passthrough.md` §6](./wp-page-passthrough.md#6-running-the-migrator) — `wp cmsms backup` first, since it is what makes the rest reversible, and only then `wp cmsms migrate`.
 
-**2.8 Apply the page fixes.** Workstream D's WordPress-side changes are a script in this repo, not admin edits, precisely so this step is one command. Procedure and guarantees: [`wp-page-redesign.md`](./wp-page-redesign.md).
+**2.8 Apply the page fixes.** Workstream D's WordPress-side changes are scripts in this repo, not admin edits, precisely so this step is a handful of commands. Procedure and guarantees: [`wp-page-redesign.md`](./wp-page-redesign.md).
+
+**Order matters.** The mu-plugin has to be in place before a page that binds to it renders, and the tag has to exist before `od-pages.php` can write a query over it — that script errors out rather than guess.
 
 ```bash
+scp wp/mu-plugins/od-film-meta.php od-root:public_html/wp-content/mu-plugins/od-film-meta.php
+ssh od-root 'php -l ~/public_html/wp-content/mu-plugins/od-film-meta.php'
+
+scp wp/scripts/od-terms.php od-root:public_html/
+ssh od-root 'cd ~/public_html && wp --skip-plugins --skip-themes eval-file od-terms.php'         # dry run
+ssh od-root 'cd ~/public_html && wp --skip-plugins --skip-themes eval-file od-terms.php apply'
+
 scp wp/scripts/od-pages.php od-root:public_html/
 ssh od-root 'cd ~/public_html && wp --skip-plugins --skip-themes eval-file od-pages.php'         # dry run
 ssh od-root 'cd ~/public_html && wp --skip-plugins --skip-themes eval-file od-pages.php apply'
 ```
+
+`od-terms.php` addresses posts by slug, so it reports which of the programme's films production is missing rather than tagging the wrong ones. Read that output before running `od-pages.php`.
 
 `apply` is a positional argument, not a `--flag`: `wp eval-file` hands positionals to the script in `$args` and rejects unknown flags outright.
 

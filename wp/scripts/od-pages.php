@@ -1,57 +1,612 @@
 <?php
 /**
- * One-shot content fixes for the pages workstream D, expressed as code so they
- * can be re-applied to any environment.
+ * od-pages.php — one-shot content fixes for the pages redesigned in workstream D.
  *
- * **Why a script and not the admin.** od-dev's database does not travel to
- * production: prod is authoritative for content and is converted from its own
- * CMSMasters shortcodes by `cmsms-gutenberg-upgrade` as part of the cutover. A
- * page fixed by hand in od-dev's admin is therefore fixed nowhere — the cutover
- * re-converts prod and the hand work is gone. Running this file is how the whole
- * of workstream D reaches production. Full procedure in
- * `docs/wp-page-redesign.md`.
+ * Run it with WP-CLI, from the WordPress root:
  *
- * **This repo holds the canonical copy** — edit here, upload, run, on the same
- * terms as `wp/mu-plugins/od-revalidate.php`:
+ *     wp --url=https://od-dev.tmweb.ru eval-file od-pages.php            # dry run
+ *     wp --url=https://od-dev.tmweb.ru eval-file od-pages.php apply      # write
  *
- *   scp wp/scripts/od-pages.php timeweb:od-dev/public_html/
- *   ssh timeweb 'cd ~/od-dev/public_html && \
- *     wp --skip-plugins=clearfy-pro eval-file od-pages.php --url=https://od-dev.tmweb.ru'
- *   #                                                       ^ dry run, writes nothing
- *   ssh timeweb 'cd ~/od-dev/public_html && \
- *     wp --skip-plugins=clearfy-pro eval-file od-pages.php apply --url=https://od-dev.tmweb.ru'
+ * Why a script and not the admin: od-dev's database never travels to
+ * production. Production is converted from its own CMSMasters shortcodes by
+ * `cmsms-gutenberg-upgrade` during the cutover, so a page fixed by hand here is
+ * fixed nowhere. Applying workstream D to production means running this file.
+ * The full reasoning, and the ladder that decides what belongs here rather than
+ * in CSS, is in `docs/wp-page-redesign.md`.
  *
- * `apply` is **positional**, not a flag: `wp eval-file` hands positionals to the
- * script in `$args` and rejects `--flags` it does not know itself. `--url=` is
- * required on od-dev — clearfy-pro redirects to HTTPS at `init` and without a
- * host WP-CLI dies before WordPress finishes loading.
+ * House rules, all of which the tests in `wp/tests/od-pages.test.php` check:
  *
- * **PHP floor: CLI PHP**, which is 8.2 on both prod and od-dev, so modern syntax
- * is fine here. This is the opposite of `wp/mu-plugins/od-revalidate.php`, which
- * loads on every *site* request where prod is still `mod_php7` — do not copy
- * syntax from one to the other.
+ * - **Idempotent by detection.** Every transform recognises its own output and
+ *   returns the content untouched. A page is converted once; an editor's later
+ *   work is never clobbered by a re-run.
+ * - **Dry run by default.** Writing takes the positional argument `apply`,
+ *   because `wp eval-file` hands positionals to the script in `$args` and
+ *   rejects unknown `--flags`.
+ * - **Volatile values are read out of the page, not hardcoded.** Attachment ids,
+ *   upload paths and film post ids differ per environment; only prose and
+ *   structure are written here.
+ * - **Writes go through `$wpdb->update`.** `wp_update_post` fires
+ *   `cmsms-gutenberg-upgrade`'s `save_post` hook, which deletes the
+ *   `nvp_content_copy` meta that both a re-run of the migrator and
+ *   `wp cmsms restore` depend on.
+ * - **Records are addressed by path**, never by id — ids differ per environment.
+ *   A `profile` whose slug names someone else is addressed by exact title
+ *   instead; see `OD_METODICHKI_COORDINATOR_HREF`.
  *
- * Four rules everything below follows:
- *
- * 1. **Idempotent by detection, not by rewriting.** Every transform checks
- *    whether the content is already in its target shape and returns it
- *    untouched. This file gets run again, on every environment, possibly after
- *    an editor has worked on the same page.
- * 2. **Dry run by default.** As in the `film:*` tooling and the migrator's CLI.
- * 3. **Writes go through `$wpdb->update`, after `wp_save_post_revision`.**
- *    `wp_update_post` fires `cmsms-gutenberg-upgrade`'s `save_post` hook, which
- *    deletes the `nvp_content_copy` meta — the backup that both a re-run of the
- *    migrator and `wp cmsms restore` depend on. The migrator's own CLI writes
- *    this way for exactly this reason.
- * 4. **Records are addressed by slug, path or title — never by id.** Ids differ
- *    per environment (runbook blocker B4).
- *
- * The transforms are plain string→string functions with no WordPress in them, so
- * `php wp/tests/od-pages.test.php` can assert them — including `f(f(x)) === f(x)`
- * for each — with no install at all.
- *
- * @package od-frontend
+ * PHP: this file only ever runs under WP-CLI (8.2 on production), so modern
+ * syntax is fine here. The runtime half of the design system, if one is ever
+ * needed, goes in `wp/mu-plugins/od-design.php` and is pinned to PHP 7.0.
  */
+
+/**
+ * `/healthy-russia/` — the «Здоровая Россия» programme page, rebuilt against the
+ * Figma `project-1` template (`759:845`).
+ *
+ * The migrator leaves the page as six full-width `wp:group`s of `wp:columns`,
+ * with the headings and the body text collapsed into a single `wp:paragraph`
+ * block of raw HTML. The template wants cards: a goal card, three task cards, a
+ * methodology card and a row of film posters. That is a structural rewrite, so
+ * this transform reads the page's own images, links and prose back out and
+ * re-emits them as proper blocks, tagged with the classes
+ * `src/shared/ui/theme/gutenberg/gutenberg.css` styles.
+ *
+ * Dropped on purpose: the four trailing `<h3>`s. Three of them
+ * («Документальные фильмы», «Полиграфические материалы», «Социальная реклама»)
+ * are headings with nothing under them on the live site either — the lists they
+ * once introduced are long gone. The fourth is a link, and it survives as the
+ * methodology card's second button.
+ *
+ * @param string $content   Stored `post_content`.
+ * @param int    $filmTagId  Term id of `programma-zdorovaya-rossiya`, which
+ *                           «Проекты программы» queries. Ids are per-environment,
+ *                           so the runner resolves it from the slug and the tests
+ *                           pass one of their own.
+ * @return string Rewritten content, or `$content` unchanged if it is already in
+ *                the target shape.
+ * @throws RuntimeException when the page does not look like the expected input.
+ */
+function od_pages_healthy_russia(string $content, int $filmTagId): string
+{
+    if (strpos($content, 'od-card') !== false) {
+        return $content; // Already converted — leave the editor's copy alone.
+    }
+
+    $cards = od_pages_column_media($content);
+
+    $logo = null;
+    $booklet = null;
+    $posters = [];
+    foreach ($cards as $card) {
+        if ($card['href'] === '') {
+            $logo = $logo ?? $card;
+        } elseif (strpos($card['href'], 'metodic.') !== false) {
+            $booklet = $booklet ?? $card;
+        } else {
+            $posters[] = $card;
+        }
+    }
+
+    preg_match('#Цель программы</h2>\s*<p>(.*?)</p>#s', $content, $goal);
+    preg_match_all('#<p><strong>([^<:]+):</strong>\s*(.*?)</p>#s', $content, $tasks, PREG_SET_ORDER);
+    preg_match('#<p><span class="fontstyle0">(.*?)</span></p>#s', $content, $prose);
+    preg_match('#<h3><a href="([^"]+)">([^<]+)</a></h3>#', $content, $downloads);
+
+    if ($logo === null || $booklet === null || count($posters) !== 4) {
+        throw new RuntimeException(
+            sprintf('unexpected media: logo=%d booklet=%d posters=%d', $logo !== null, $booklet !== null, count($posters))
+        );
+    }
+    if (count($tasks) !== 3 || empty($goal[1]) || empty($prose[1]) || empty($downloads[1])) {
+        throw new RuntimeException(
+            sprintf('unexpected prose: tasks=%d goal=%d note=%d downloads=%d', count($tasks), !empty($goal[1]), !empty($prose[1]), !empty($downloads[1]))
+        );
+    }
+
+    $out = od_pages_image_block($logo['id'], $logo['src'], 'Здоровая Россия', '', 'od-programme-logo');
+
+    $out .= od_pages_goal_card(od_pages_inline_text($goal[1]));
+
+    $out .= od_pages_heading(2, 'Задачи программы');
+    $slides = [];
+    foreach ($tasks as $task) {
+        $slides[] = od_pages_heading(3, od_pages_inline_text($task[1]))
+            . od_pages_paragraph(od_pages_inline_text($task[2]));
+    }
+    // No arrows: three cards fit the desktop row, and the mobile mock swipes.
+    $out .= od_pages_carousel(od_pages_slides($slides), 'od-cards', false);
+
+    $out .= "<!-- wp:columns {\"className\":\"od-card od-card--flush\"} -->\n"
+        . "<div class=\"wp-block-columns od-card od-card--flush\">"
+        // No `width` on either column: the mock's 386/774 split is a proportion of
+        // this card, not of the page, and an inline `flex-basis` would beat the
+        // stylesheet that knows the difference.
+        . "<!-- wp:column -->\n<div class=\"wp-block-column\">"
+        . od_pages_image_block($booklet['id'], $booklet['src'], 'Обложка методички «Здоровая Россия — ОБЩЕЕ ДЕЛО!»')
+        . "</div>\n<!-- /wp:column -->\n"
+        . "<!-- wp:column -->\n<div class=\"wp-block-column\">"
+        . od_pages_heading(2, 'Здоровая Россия — ОБЩЕЕ ДЕЛО!')
+        . od_pages_paragraph(od_pages_inline_text($prose[1]))
+        . od_pages_buttons([
+            ['href' => $booklet['href'], 'label' => od_pages_inline_text($booklet['label'])],
+            ['href' => $downloads[1], 'label' => od_pages_inline_text($downloads[2])],
+        ])
+        . "</div>\n<!-- /wp:column -->"
+        . "</div>\n<!-- /wp:columns -->\n\n";
+
+    // The four posters the migrator left are the page's fingerprint, checked
+    // above — but they are not what is rendered. The row is a query over the
+    // programme's tag, so tagging a film in the admin puts it on the page.
+    $out .= od_pages_heading(2, 'Проекты программы');
+    $out .= od_pages_carousel(od_pages_film_query($filmTagId), 'od-poster-cards', true);
+
+    return rtrim($out) . "\n";
+}
+
+/**
+ * `/healthy-youth/` — «Здоровая молодежь», Figma `project-2` (`759:1379`).
+ *
+ * The same template as `/healthy-russia/`, with three differences the mock
+ * draws and this transform follows:
+ *
+ * - **The task cards are numbered, not titled.** `project-1` gives each card an
+ *   `<h3>`; `project-2` and `project-3` give it «01», «02», … in the same red
+ *   32px. That ordinal is not content — it is the position of the card in the
+ *   row — so it is a CSS counter in `gutenberg.css` and nothing is written here.
+ * - **Two tasks, so two cards, not three.** The mock widens them to 600px
+ *   rather than leaving a hole, which is what the carousel's fourth argument
+ *   buys: `slidesPerView` follows the number of slides.
+ * - **The approval note stands alone.** On `/healthy-russia/` it is the body of
+ *   the methodology card; here there is no such card and it is a 24px paragraph
+ *   between the tasks and the projects.
+ *
+ * Dropped: the booklet cover, which the mock has no slot for — its download
+ * link survives as the page's one trailing button, and so the trailing
+ * «Методические материалы» heading, which pointed at that same file, goes with
+ * it. The six poster images are the page's fingerprint and nothing more: the
+ * row itself is a query over the programme's tag, exactly as on
+ * `/healthy-russia/`.
+ *
+ * @param string $content   Stored `post_content`.
+ * @param int    $filmTagId Term id of `programma-zdorovaya-molodezh`.
+ * @return string Rewritten content, or `$content` unchanged if it is already in
+ *                the target shape.
+ * @throws RuntimeException when the page does not look like the expected input.
+ */
+function od_pages_healthy_youth(string $content, int $filmTagId): string
+{
+    if (strpos($content, 'od-card') !== false) {
+        return $content; // Already converted — leave the editor's copy alone.
+    }
+
+    $logo = null;
+    $booklet = null;
+    $posters = [];
+    foreach (od_pages_column_media($content) as $card) {
+        if ($card['href'] === '') {
+            $logo = $logo ?? $card;
+        } elseif (strpos($card['href'], 'disk.yandex.ru') !== false) {
+            $booklet = $booklet ?? $card;
+        } else {
+            $posters[] = $card;
+        }
+    }
+
+    preg_match('#Цель программы</h2>\s*<p>(.*?)</p>#s', $content, $goal);
+    preg_match('#<p><span class="fontstyle0">(.*?)</span></p>#s', $content, $note);
+    $tasks = od_pages_task_paragraphs($content);
+
+    if ($logo === null || $booklet === null || count($posters) !== 6) {
+        throw new RuntimeException(
+            sprintf('unexpected media: logo=%d booklet=%d posters=%d', $logo !== null, $booklet !== null, count($posters))
+        );
+    }
+    if (count($tasks) !== 2 || empty($goal[1]) || empty($note[1])) {
+        throw new RuntimeException(
+            sprintf('unexpected prose: tasks=%d goal=%d note=%d', count($tasks), !empty($goal[1]), !empty($note[1]))
+        );
+    }
+
+    $out = od_pages_image_block($logo['id'], $logo['src'], 'Здоровая молодежь', '', 'od-programme-logo');
+    $out .= od_pages_goal_card(od_pages_inline_text($goal[1]));
+    $out .= od_pages_heading(2, 'Задачи программы');
+    $out .= od_pages_numbered_tasks($tasks);
+    $out .= od_pages_note(od_pages_inline_text($note[1]));
+    $out .= od_pages_heading(2, 'Проекты программы');
+    $out .= od_pages_carousel(od_pages_film_query($filmTagId), 'od-poster-cards', true);
+    $out .= od_pages_buttons(
+        [['href' => $booklet['href'], 'label' => od_pages_inline_text($booklet['label'])]],
+        'od-materials'
+    );
+
+    return rtrim($out) . "\n";
+}
+
+/**
+ * `/healthy-kids/` — «Здоровые дети», Figma `project-3` (`759:1117`).
+ *
+ * The shortest of the three: a logo, a goal card, three numbered task cards and
+ * the approval note. The programme has no «Проекты программы» row in the mock
+ * and no films tagged for one, so there is no query block here and the
+ * transform takes no term id.
+ *
+ * Dropped: the portrait beside the goal text, which linked to the same YouTube
+ * playlist as the «Фильмы программы» heading below it and which the mock
+ * replaces with the template's own drawing. Both trailing headings are links
+ * and both survive as the page's buttons.
+ *
+ * @param string $content Stored `post_content`.
+ * @param int    $_filmTagId Unused — this page has no film row. The registry
+ *                           calls every transform the same way.
+ * @return string Rewritten content, or `$content` unchanged if it is already in
+ *                the target shape.
+ * @throws RuntimeException when the page does not look like the expected input.
+ */
+function od_pages_healthy_kids(string $content, int $_filmTagId = 0): string
+{
+    if (strpos($content, 'od-card') !== false) {
+        return $content; // Already converted — leave the editor's copy alone.
+    }
+
+    $media = od_pages_column_media($content);
+    $logo = $media[0] ?? null;
+
+    preg_match('#Цель программы</h2>\s*<p>(.*?)</p>#s', $content, $goal);
+    preg_match('#<p><span class="fontstyle0">(.*?)</span></p>#s', $content, $note);
+    preg_match_all('#<li>(.*?)</li>#s', $content, $found, PREG_SET_ORDER);
+    preg_match_all('#<h3><a href="([^"]+)">([^<]+)</a></h3>#', $content, $links, PREG_SET_ORDER);
+
+    $tasks = array_map(static fn(array $task): string => od_pages_inline_text($task[1]), $found);
+
+    if ($logo === null || count($tasks) !== 3 || count($links) !== 2) {
+        throw new RuntimeException(
+            sprintf('unexpected input: logo=%d tasks=%d links=%d', $logo !== null, count($tasks), count($links))
+        );
+    }
+    if (empty($goal[1]) || empty($note[1])) {
+        throw new RuntimeException(
+            sprintf('unexpected prose: goal=%d note=%d', !empty($goal[1]), !empty($note[1]))
+        );
+    }
+
+    $out = od_pages_image_block($logo['id'], $logo['src'], 'Здоровые дети', '', 'od-programme-logo');
+    $out .= od_pages_goal_card(od_pages_inline_text($goal[1]));
+    $out .= od_pages_heading(2, 'Задачи программы');
+    $out .= od_pages_numbered_tasks($tasks);
+    $out .= od_pages_note(od_pages_inline_text($note[1]));
+    $out .= od_pages_buttons(
+        array_map(
+            static fn(array $link): array => [
+                'href' => od_pages_site_link($link[1]),
+                'label' => od_pages_inline_text($link[2]),
+            ],
+            $links
+        ),
+        'od-materials'
+    );
+
+    return rtrim($out) . "\n";
+}
+
+/**
+ * Every `wp:column` of the page that holds an image, paired with the button that
+ * sits under it in the same column — which is how the migrator lays out both the
+ * methodology block and the film posters. Reading them out this way keeps the
+ * attachment ids, the upload paths and the film post ids the page already has,
+ * all three of which differ between od-dev and production.
+ *
+ * @return array<int, array{id: string, src: string, href: string, label: string}>
+ */
+function od_pages_column_media(string $content): array
+{
+    $cards = [];
+
+    foreach (explode('<!-- /wp:column -->', $content) as $column) {
+        if (!preg_match('#<!-- wp:image \{"id":(\d+)#', $column, $id)) {
+            continue;
+        }
+        if (!preg_match('#<img src="([^"]+)"#', $column, $src)) {
+            continue;
+        }
+
+        $card = ['id' => $id[1], 'src' => $src[1], 'href' => '', 'label' => ''];
+        if (preg_match('#wp-block-button__link[^>]*href="([^"]*)"[^>]*>(.*?)</a>#s', $column, $button)) {
+            $card['href'] = $button[1];
+            $card['label'] = $button[2];
+        }
+
+        $cards[] = $card;
+    }
+
+    return $cards;
+}
+
+/**
+ * A `cb/carousel-v2` block — the Carousel Block plugin, which is what both mocks
+ * draw for these rows and the only carousel this site already runs: the frontend
+ * mounts a Swiper on every `.cb-carousel-block` it renders
+ * (`src/shared/ui/theme/gutenberg/Carousel/`), so a section written this way
+ * needs almost no frontend code at all.
+ *
+ * The `data-cb-*` attributes are what the frontend reads; the block comment is
+ * what the editor reads. Both say the same thing, as the plugin's own `save`
+ * does. Three slides per view above 900px — which is what both rows are on
+ * desktop — and one-and-a-bit below it, from the slide width in CSS.
+ *
+ * @param string $track The element Swiper scrolls: {@see od_pages_slides()} for
+ *                      hand-written slides, {@see od_pages_film_query()} for a
+ *                      query. Either way it is the block's `.swiper`.
+ */
+function od_pages_carousel(string $track, string $className, bool $navigation, int $slidesPerView = 3): string
+{
+    $attrs = json_encode(
+        [
+            'className' => $className,
+            'spaceBetween' => 40,
+            'navigation' => $navigation,
+            'breakpoints' => [['width' => 900, 'slidesPerView' => $slidesPerView, 'slidesPerGroup' => 1]],
+        ],
+        JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE
+    );
+
+    return sprintf(
+        "<!-- wp:cb/carousel-v2 %s -->\n"
+            . '<div class="wp-block-cb-carousel-v2 cb-carousel-block %s" data-cb-slides-per-view="%d"'
+            . ' data-cb-slides-per-group="1" data-cb-space-between="40" data-cb-speed="300"'
+            . ' data-cb-navigation="%s" data-cb-pagination="true" data-cb-loop="false"'
+            . ' data-cb-breakpoints="{&quot;900&quot;:{&quot;slidesPerView&quot;:%d,&quot;slidesPerGroup&quot;:1}}">'
+            . '%s'
+            . '<div class="cb-pagination swiper-pagination"></div>'
+            . '<div class="cb-button-prev swiper-button-prev"></div>'
+            . '<div class="cb-button-next swiper-button-next"></div>'
+            . "</div>\n<!-- /wp:cb/carousel-v2 -->\n\n",
+        $attrs,
+        $className,
+        $slidesPerView,
+        $navigation ? 'true' : 'false',
+        $slidesPerView,
+        $track
+    );
+}
+
+/**
+ * Hand-written slides, the plugin's own shape. An editor adds a fourth card by
+ * adding a slide, and nothing in this repo changes.
+ *
+ * @param array<int, string> $slides Inner markup of each slide.
+ */
+function od_pages_slides(array $slides): string
+{
+    $out = '<div class="swiper"><div class="cb-wrapper swiper-wrapper">';
+    foreach ($slides as $slide) {
+        $out .= "<!-- wp:cb/slide-v2 -->\n<div class=\"wp-block-cb-slide-v2 cb-slide swiper-slide\">"
+            . $slide
+            . "</div>\n<!-- /wp:cb/slide-v2 -->\n";
+    }
+
+    return $out . '</div></div>';
+}
+
+/**
+ * The films of a programme, as a `core/query` — so the row follows the tag and
+ * tagging a film in the admin is the whole job of adding one.
+ *
+ * Three attributes carry the trick that lets a dynamic list drive a Swiper: the
+ * query renders as `.wp-block-query`, so `className: swiper` makes it the
+ * element the adapter mounts on, and `core/post-template` renders the `<ul>`
+ * Swiper needs as its track, so it takes `swiper-wrapper`. The `<li>`s come out
+ * as `.wp-block-post` rather than `.swiper-slide`, which the adapter passes to
+ * Swiper as `slideClass`.
+ *
+ * The cover is **not** `core/post-featured-image`: that is the 16∶9 still
+ * `/video/` wants, and this card is 3∶4. It is a `core/image` bound to
+ * `od_card_cover` — the film's printable плакат, falling back to the still —
+ * through the Block Bindings API, which `wp/mu-plugins/od-film-meta.php`
+ * registers. A binding cannot produce a permalink, so the cover is not a link
+ * and the film's own title is, which is the better accessible name anyway.
+ *
+ * The permalink structure on this site is `/%post_id%/`, so every link a query
+ * block emits is already the URL the frontend serves a film at — no rewriting,
+ * beyond `resolveContentLinks` making it root-relative.
+ */
+function od_pages_film_query(int $tagId): string
+{
+    $query = json_encode(
+        [
+            'queryId' => 0,
+            'query' => [
+                'perPage' => 12,
+                'pages' => 0,
+                'offset' => 0,
+                'postType' => 'post',
+                'order' => 'desc',
+                'orderBy' => 'date',
+                'author' => '',
+                'search' => '',
+                'exclude' => [],
+                'sticky' => '',
+                'inherit' => false,
+                'tagIds' => [$tagId],
+            ],
+            'className' => 'swiper',
+        ],
+        JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE
+    );
+
+    $cover = json_encode(
+        [
+            'metadata' => [
+                'bindings' => [
+                    'url' => ['source' => 'core/post-meta', 'args' => ['key' => 'od_card_cover']],
+                ],
+            ],
+        ],
+        JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE
+    );
+
+    return sprintf("<!-- wp:query %s -->\n", $query)
+        . '<div class="wp-block-query swiper">'
+        . "<!-- wp:post-template {\"className\":\"swiper-wrapper\"} -->\n"
+        // `alt=""` on purpose: the title below is the card's accessible name, and
+        // the cover repeats it. `loading="lazy"` because WordPress does not add
+        // it here and a printable плакат is heavy — the row is the last thing on
+        // the page, and six of them at ~800 KB each is a megabyte-scale download
+        // nobody has scrolled to yet.
+        . sprintf("<!-- wp:image %s -->\n", $cover)
+        . '<figure class="wp-block-image"><img src="" alt="" loading="lazy" decoding="async"/></figure>'
+        . "\n<!-- /wp:image -->\n\n"
+        . "<!-- wp:post-title {\"level\":3,\"isLink\":true} /-->\n"
+        . "<!-- /wp:post-template -->"
+        . "</div>\n<!-- /wp:query -->\n\n";
+}
+
+/**
+ * The goal card — the same `core/group` on all three programme pages: a heading,
+ * one paragraph, and the template's drawing, which `gutenberg.css` supplies as a
+ * background so there is nothing decorative for an editor to lose.
+ */
+function od_pages_goal_card(string $text): string
+{
+    return "<!-- wp:group {\"className\":\"od-card od-card--goal\",\"layout\":{\"type\":\"constrained\"}} -->\n"
+        . '<div class="wp-block-group od-card od-card--goal">'
+        . od_pages_heading(2, 'Цель программы')
+        . od_pages_paragraph($text)
+        . "</div>\n<!-- /wp:group -->\n\n";
+}
+
+/**
+ * The «Задачи программы» row of `project-2`/`project-3`: one paragraph per card
+ * and nothing else. The «01», «02», … the mock draws above each is a counter in
+ * `gutenberg.css`, so an editor who adds, removes or reorders a slide never has
+ * to renumber anything.
+ *
+ * `slidesPerView` follows the number of cards rather than the template's three,
+ * because the mock widens two cards to fill the row instead of leaving a hole.
+ * No arrows either way: the whole row is on screen above 900px, and below it the
+ * cards are a swipe.
+ *
+ * @param array<int, string> $tasks Plain text of each card.
+ */
+function od_pages_numbered_tasks(array $tasks): string
+{
+    $slides = array_map('od_pages_paragraph', $tasks);
+
+    return od_pages_carousel(od_pages_slides($slides), 'od-cards od-cards--numbered', false, count($slides));
+}
+
+/**
+ * The approval note. On `/healthy-russia/` the same sentence is the methodology
+ * card's body; the other two pages have no such card and the mock sets it as a
+ * standalone 24px paragraph of its own.
+ */
+function od_pages_note(string $text): string
+{
+    return sprintf("<!-- wp:paragraph {\"className\":\"od-note\"} -->\n<p class=\"od-note\">%s</p>\n<!-- /wp:paragraph -->\n\n", $text);
+}
+
+/**
+ * A link the old content wrote against the live site's own domain, made
+ * root-relative — `resolveContentLinks` only rewrites the WordPress origin, so
+ * without this the reader is sent to the site this one replaces.
+ *
+ * Exact hosts, and only the bare and `www.` forms: `metodic.obshee-delo.ru` is a
+ * different site that has to keep its origin. The Punycode form is what a
+ * browser sends and what some of the content already carries.
+ */
+function od_pages_site_link(string $href): string
+{
+    $hosts = 'общее-дело\.рф|xn----9sbkcac6brh7h\.xn--p1ai|obshee-delo\.ru';
+
+    return preg_replace(sprintf('#^https?://(?:www\.)?(?:%s)(?=/)#ui', $hosts), '', $href);
+}
+
+/**
+ * The «Задачи программы» paragraphs of `/healthy-youth/`, where the migrator
+ * left the tasks as ordinary `<p>`s between that heading and the approval note
+ * rather than as the `<strong>`-labelled pairs `/healthy-russia/` carries or the
+ * `<ul>` `/healthy-kids/` does.
+ *
+ * @return array<int, string>
+ */
+function od_pages_task_paragraphs(string $content): array
+{
+    if (!preg_match('#Задачи программы</h2>(.*?)<p><span#s', $content, $block)) {
+        return [];
+    }
+
+    preg_match_all('#<p>(.*?)</p>#s', $block[1], $found, PREG_SET_ORDER);
+
+    return array_map(static fn(array $task): string => od_pages_inline_text($task[1]), $found);
+}
+
+/** A `core/image` block, optionally wrapped in a link and optionally classed. */
+function od_pages_image_block(string $id, string $src, string $alt, string $href = '', string $className = ''): string
+{
+    $attrs = ['id' => (int) $id, 'sizeSlug' => 'full'];
+    if ($href !== '') {
+        $attrs['linkDestination'] = 'custom';
+    }
+    if ($className !== '') {
+        $attrs['className'] = $className;
+    }
+
+    $figureClass = 'wp-block-image size-full' . ($className === '' ? '' : ' ' . $className);
+    $img = sprintf('<img src="%s" alt="%s"/>', $src, $alt);
+    $inner = $href === '' ? $img : sprintf('<a href="%s">%s</a>', $href, $img);
+
+    return sprintf(
+        "<!-- wp:image %s -->\n<figure class=\"%s\">%s</figure>\n<!-- /wp:image -->\n\n",
+        json_encode($attrs, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE),
+        $figureClass,
+        $inner
+    );
+}
+
+/** A `core/heading` block. */
+function od_pages_heading(int $level, string $text): string
+{
+    $attrs = $level === 2 ? '' : sprintf(' {"level":%d}', $level);
+
+    return sprintf("<!-- wp:heading%s -->\n<h%d class=\"wp-block-heading\">%s</h%d>\n<!-- /wp:heading -->\n\n", $attrs, $level, $text, $level);
+}
+
+/** A `core/paragraph` block. */
+function od_pages_paragraph(string $text): string
+{
+    return sprintf("<!-- wp:paragraph -->\n<p>%s</p>\n<!-- /wp:paragraph -->\n\n", $text);
+}
+
+/**
+ * A `core/buttons` block of outline buttons — the only button style left in the
+ * hand-written markup, now that the poster cards draw their own from
+ * `core/read-more`.
+ *
+ * @param array<int, array{href: string, label: string}> $buttons
+ */
+function od_pages_buttons(array $buttons, string $className = ''): string
+{
+    $attrs = $className === '' ? '' : sprintf(' {"className":"%s"}', $className);
+    $out = sprintf("<!-- wp:buttons%s -->\n<div class=\"wp-block-buttons%s\">", $attrs, $className === '' ? '' : ' ' . $className);
+    foreach ($buttons as $button) {
+        $out .= "<!-- wp:button {\"className\":\"is-style-outline\"} -->\n"
+            . '<div class="wp-block-button is-style-outline">'
+            . sprintf('<a class="wp-block-button__link wp-element-button" href="%s">%s</a>', $button['href'], $button['label'])
+            . "</div>\n<!-- /wp:button -->\n";
+    }
+
+    return $out . "</div>\n<!-- /wp:buttons -->\n\n";
+}
+
+/**
+ * Prose lifted out of the old markup: the migrator's line breaks and the old
+ * theme's `<span class="fontstyle0">` carry no meaning in the new layout.
+ */
+function od_pages_inline_text(string $html): string
+{
+    $text = preg_replace('#<br\s*/?>#i', ' ', $html);
+    $text = preg_replace('#</?span[^>]*>#i', '', $text);
+
+    return trim(preg_replace('#\s+#u', ' ', $text));
+}
 
 /* -------------------------------------------------------------------------
  * Pure transforms
@@ -61,8 +616,9 @@
  * Escape a value for an HTML attribute without double-escaping entities the
  * content already carries (`&laquo;` must not become `&amp;laquo;`).
  */
-function od_attr( string $value ): string {
-	return htmlspecialchars( $value, ENT_QUOTES, 'UTF-8', false );
+function od_attr(string $value): string
+{
+    return htmlspecialchars($value, ENT_QUOTES, 'UTF-8', false);
 }
 
 /**
@@ -76,14 +632,15 @@ function od_attr( string $value ): string {
  *
  * Idempotent: after one pass there are none left to match.
  */
-function od_drop_empty_layout_groups( string $content ): string {
-	$pattern = '~<!--\s*wp:group\b[^>]*-->\s*<div class="wp-block-group">'
-		. '\s*<!--\s*wp:columns\b[^>]*-->\s*<div class="wp-block-columns">'
-		. '\s*<!--\s*wp:column\b[^>]*-->\s*<div class="wp-block-column"[^>]*>\s*</div>\s*<!--\s*/wp:column\s*-->'
-		. '\s*</div>\s*<!--\s*/wp:columns\s*-->'
-		. '\s*</div>\s*<!--\s*/wp:group\s*-->~s';
+function od_drop_empty_layout_groups(string $content): string
+{
+    $pattern = '~<!--\s*wp:group\b[^>]*-->\s*<div class="wp-block-group">'
+        . '\s*<!--\s*wp:columns\b[^>]*-->\s*<div class="wp-block-columns">'
+        . '\s*<!--\s*wp:column\b[^>]*-->\s*<div class="wp-block-column"[^>]*>\s*</div>\s*<!--\s*/wp:column\s*-->'
+        . '\s*</div>\s*<!--\s*/wp:columns\s*-->'
+        . '\s*</div>\s*<!--\s*/wp:group\s*-->~s';
 
-	return preg_replace( $pattern, '', $content );
+    return preg_replace($pattern, '', $content);
 }
 
 /**
@@ -93,18 +650,19 @@ function od_drop_empty_layout_groups( string $content ): string {
  * a substring: `str_contains( $content, 'b' )` is true of every body ever
  * written, because `wp-block-columns` contains a «b».
  */
-function od_has_block_class( string $content, string $class ): bool {
-	if ( ! preg_match_all( '~"className"\s*:\s*"([^"]*)"~', $content, $matches ) ) {
-		return false;
-	}
+function od_has_block_class(string $content, string $class): bool
+{
+    if (!preg_match_all('~"className"\s*:\s*"([^"]*)"~', $content, $matches)) {
+        return false;
+    }
 
-	foreach ( $matches[1] as $value ) {
-		if ( in_array( $class, preg_split( '~\s+~', trim( $value ) ), true ) ) {
-			return true;
-		}
-	}
+    foreach ($matches[1] as $value) {
+        if (in_array($class, preg_split('~\s+~', trim($value)), true)) {
+            return true;
+        }
+    }
 
-	return false;
+    return false;
 }
 
 /**
@@ -118,24 +676,25 @@ function od_has_block_class( string $content, string $class ): bool {
  *
  * Idempotent by detection — {@see od_has_block_class()}.
  */
-function od_class_on_first_columns( string $content, string $class ): string {
-	if ( od_has_block_class( $content, $class ) ) {
-		return $content;
-	}
+function od_class_on_first_columns(string $content, string $class): string
+{
+    if (od_has_block_class($content, $class)) {
+        return $content;
+    }
 
-	return preg_replace_callback(
-		'~<!--\s*wp:columns\s*(\{.*?\})?\s*-->(\s*)<div class="wp-block-columns~s',
-		static function ( array $m ) use ( $class ): string {
-			$attrs              = isset( $m[1] ) && '' !== $m[1] ? json_decode( $m[1], true ) : array();
-			$attrs              = is_array( $attrs ) ? $attrs : array();
-			$attrs['className'] = trim( ( $attrs['className'] ?? '' ) . ' ' . $class );
-			$json               = json_encode( $attrs, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE );
+    return preg_replace_callback(
+        '~<!--\s*wp:columns\s*(\{.*?\})?\s*-->(\s*)<div class="wp-block-columns~s',
+        static function (array $m) use ($class): string {
+            $attrs = isset($m[1]) && '' !== $m[1] ? json_decode($m[1], true) : [];
+            $attrs = is_array($attrs) ? $attrs : [];
+            $attrs['className'] = trim(($attrs['className'] ?? '') . ' ' . $class);
+            $json               = json_encode($attrs, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
 
-			return "<!-- wp:columns {$json} -->{$m[2]}<div class=\"wp-block-columns {$class}";
-		},
-		$content,
-		1
-	);
+            return "<!-- wp:columns {$json} -->{$m[2]}<div class=\"wp-block-columns {$class}";
+        },
+        $content,
+        1
+    );
 }
 
 /**
@@ -154,25 +713,26 @@ function od_class_on_first_columns( string $content, string $class ): string {
  *
  * Idempotent: the heading it feeds on is gone afterwards.
  */
-function od_headings_into_image_alt( string $content ): string {
-	$pattern = '~<!--\s*wp:heading\b[^>]*-->\s*<h2\b[^>]*>(.*?)</h2>\s*<!--\s*/wp:heading\s*-->'
-		. '(\s*<!--\s*wp:paragraph\s*-->\s*<p\b[^>]*>(?:(?!</p>).)*?<img\b)([^>]*?)(\s*/?>)~s';
+function od_headings_into_image_alt(string $content): string
+{
+    $pattern = '~<!--\s*wp:heading\b[^>]*-->\s*<h2\b[^>]*>(.*?)</h2>\s*<!--\s*/wp:heading\s*-->'
+        . '(\s*<!--\s*wp:paragraph\s*-->\s*<p\b[^>]*>(?:(?!</p>).)*?<img\b)([^>]*?)(\s*/?>)~s';
 
-	return preg_replace_callback(
-		$pattern,
-		static function ( array $m ): string {
-			$alt   = od_attr( trim( strip_tags( $m[1] ) ) );
-			$attrs = $m[3];
-			// Replace the alt the migrator left («metodichka-mult» on two of the
-			// three) rather than adding a second one.
-			$attrs = preg_match( '~\salt=(["\']).*?\1~s', $attrs )
-				? preg_replace( '~\salt=(["\']).*?\1~s', " alt=\"{$alt}\"", $attrs, 1 )
-				: $attrs . " alt=\"{$alt}\"";
+    return preg_replace_callback(
+        $pattern,
+        static function (array $m): string {
+            $alt   = od_attr(trim(strip_tags($m[1])));
+            $attrs = $m[3];
+            // Replace the alt the migrator left («metodichka-mult» on two of the
+            // three) rather than adding a second one.
+            $attrs = preg_match('~\salt=(["\']).*?\1~s', $attrs)
+                ? preg_replace('~\salt=(["\']).*?\1~s', " alt=\"{$alt}\"", $attrs, 1)
+                : $attrs . " alt=\"{$alt}\"";
 
-			return $m[2] . $attrs . $m[4];
-		},
-		$content
-	);
+            return $m[2] . $attrs . $m[4];
+        },
+        $content
+    );
 }
 
 /**
@@ -192,31 +752,32 @@ function od_headings_into_image_alt( string $content ): string {
  * set survive, and a `style` attribute left empty is removed rather than kept as
  * `style=""`.
  */
-function od_strip_paragraph_spacing( string $content ): string {
-	return preg_replace_callback(
-		'~(<p\b[^>]*?\sstyle=")([^"]*)(")~i',
-		static function ( array $m ): string {
-			$kept = array_filter(
-				array_map( 'trim', explode( ';', $m[2] ) ),
-				static function ( string $declaration ): bool {
-					if ( '' === $declaration ) {
-						return false;
-					}
-					$property = strtolower( trim( strtok( $declaration, ':' ) ) );
+function od_strip_paragraph_spacing(string $content): string
+{
+    return preg_replace_callback(
+        '~(<p\b[^>]*?\sstyle=")([^"]*)(")~i',
+        static function (array $m): string {
+            $kept = array_filter(
+                array_map('trim', explode(';', $m[2])),
+                static function (string $declaration): bool {
+                    if ('' === $declaration) {
+                        return false;
+                    }
+                    $property = strtolower(trim(strtok($declaration, ':')));
 
-					return 0 !== strpos( $property, 'margin' ) && 0 !== strpos( $property, 'padding' );
-				}
-			);
+                    return 0 !== strpos($property, 'margin') && 0 !== strpos($property, 'padding');
+                }
+            );
 
-			if ( ! $kept ) {
-				// Drop the whole attribute, including the space before it.
-				return rtrim( substr( $m[1], 0, -strlen( ' style="' ) ) );
-			}
+            if (!$kept) {
+                // Drop the whole attribute, including the space before it.
+                return rtrim(substr($m[1], 0, -strlen(' style="')));
+            }
 
-			return $m[1] . implode( ';', $kept ) . $m[3];
-		},
-		$content
-	);
+            return $m[1] . implode(';', $kept) . $m[3];
+        },
+        $content
+    );
 }
 
 /**
@@ -236,39 +797,40 @@ function od_strip_paragraph_spacing( string $content ): string {
  * image, or an image with an empty `alt`, is left alone — the empty layout
  * columns and the coordinator's are exactly that.
  */
-function od_cover_link_names( string $content ): string {
-	return preg_replace_callback(
-		'~<!--\s*wp:column\b.*?<!--\s*/wp:column\s*-->~s',
-		static function ( array $m ): string {
-			$column = $m[0];
+function od_cover_link_names(string $content): string
+{
+    return preg_replace_callback(
+        '~<!--\s*wp:column\b.*?<!--\s*/wp:column\s*-->~s',
+        static function (array $m): string {
+            $column = $m[0];
 
-			if ( ! preg_match( '~<img\b[^>]*\salt="([^"]+)"~', $column, $alt ) ) {
-				return $column;
-			}
+            if (!preg_match('~<img\b[^>]*\salt="([^"]+)"~', $column, $alt)) {
+                return $column;
+            }
 
-			// Verbatim, not decoded and re-encoded: the value already survived one
-			// `"`-quoted attribute, so it is safe in the next one, entities and all.
-			$name = trim( $alt[1] );
-			if ( '' === $name ) {
-				return $column;
-			}
+            // Verbatim, not decoded and re-encoded: the value already survived one
+            // `"`-quoted attribute, so it is safe in the next one, entities and all.
+            $name = trim($alt[1]);
+            if ('' === $name) {
+                return $column;
+            }
 
-			$column = preg_replace(
-				'~<a\b(?![^>]*\stabindex=)([^>]*)(>\s*<img\b)~',
-				'<a tabindex="-1" aria-hidden="true"$1$2',
-				$column,
-				1
-			);
+            $column = preg_replace(
+                '~<a\b(?![^>]*\stabindex=)([^>]*)(>\s*<img\b)~',
+                '<a tabindex="-1" aria-hidden="true"$1$2',
+                $column,
+                1
+            );
 
-			return preg_replace(
-				'~(<a\b(?![^>]*\saria-label=)[^>]*\sclass="[^"]*wp-block-button__link[^"]*"[^>]*)>~',
-				'$1 aria-label="' . od_attr( 'Подробнее: ' . $name ) . '">',
-				$column,
-				1
-			);
-		},
-		$content
-	);
+            return preg_replace(
+                '~(<a\b(?![^>]*\saria-label=)[^>]*\sclass="[^"]*wp-block-button__link[^"]*"[^>]*)>~',
+                '$1 aria-label="' . od_attr('Подробнее: ' . $name) . '">',
+                $column,
+                1
+            );
+        },
+        $content
+    );
 }
 
 /**
@@ -282,10 +844,11 @@ function od_cover_link_names( string $content ): string {
  *
  * Idempotent: there is no `http://` left to match.
  */
-function od_https_own_links( string $content ): string {
-	// The lookahead is the point: without it `obshee-delo.ru.evil.tld` matches as a
-	// prefix and gets its scheme upgraded too.
-	return preg_replace( '~\bhref="http://((?:[a-z0-9-]+\.)*obshee-delo\.ru)(?=[/"?#])~i', 'href="https://$1', $content );
+function od_https_own_links(string $content): string
+{
+    // The lookahead is the point: without it `obshee-delo.ru.evil.tld` matches as a
+    // prefix and gets its scheme upgraded too.
+    return preg_replace('~\bhref="http://((?:[a-z0-9-]+\.)*obshee-delo\.ru)(?=[/"?#])~i', 'href="https://$1', $content);
 }
 
 /**
@@ -306,20 +869,21 @@ function od_https_own_links( string $content ): string {
  *
  * Idempotent: there is no `wp:details` left to match.
  */
-function od_details_to_profile_link( string $content, string $href, string $label ): string {
-	return preg_replace_callback(
-		'~<!--\s*wp:details\b.*?<summary>(.*?)</summary>.*?<!--\s*/wp:details\s*-->~s',
-		static function ( array $m ) use ( $href, $label ): string {
-			$heading = trim( strip_tags( $m[1] ) );
+function od_details_to_profile_link(string $content, string $href, string $label): string
+{
+    return preg_replace_callback(
+        '~<!--\s*wp:details\b.*?<summary>(.*?)</summary>.*?<!--\s*/wp:details\s*-->~s',
+        static function (array $m) use ($href, $label): string {
+            $heading = trim(strip_tags($m[1]));
 
-			return '<!-- wp:heading {"level":2} --><h2 class="wp-block-heading">' . od_attr( $heading )
-				. '</h2><!-- /wp:heading -->'
-				. '<!-- wp:paragraph --><p><a href="' . od_attr( $href ) . '">' . od_attr( $label )
-				. '</a></p><!-- /wp:paragraph -->';
-		},
-		$content,
-		1
-	);
+            return '<!-- wp:heading {"level":2} --><h2 class="wp-block-heading">' . od_attr($heading)
+                . '</h2><!-- /wp:heading -->'
+                . '<!-- wp:paragraph --><p><a href="' . od_attr($href) . '">' . od_attr($label)
+                . '</a></p><!-- /wp:paragraph -->';
+        },
+        $content,
+        1
+    );
 }
 
 /**
@@ -336,25 +900,22 @@ function od_details_to_profile_link( string $content, string $href, string $labe
  * anywhere in the body is skipped, so a re-run adds nothing and an editor's own
  * later edit to the label survives.
  */
-function od_append_contact_links( string $content, array $links ): string {
-	foreach ( $links as list( $href, $label ) ) {
-		if ( str_contains( $content, $href ) ) {
-			continue;
-		}
+function od_append_contact_links(string $content, array $links): string
+{
+    foreach ($links as list($href, $label)) {
+        if (str_contains($content, $href)) {
+            continue;
+        }
 
-		$paragraph = '<p><a href="' . od_attr( $href ) . '">' . od_attr( $label ) . '</a></p>';
-		$closing   = strrpos( $content, '<!-- /wp:paragraph -->' );
-		$content   = false === $closing
-			? rtrim( $content ) . "\n" . $paragraph
-			: substr_replace( $content, $paragraph . "\n", $closing, 0 );
-	}
+        $paragraph = '<p><a href="' . od_attr($href) . '">' . od_attr($label) . '</a></p>';
+        $closing   = strrpos($content, '<!-- /wp:paragraph -->');
+        $content   = false === $closing
+            ? rtrim($content) . "\n" . $paragraph
+            : substr_replace($content, $paragraph . "\n", $closing, 0);
+    }
 
-	return $content;
+    return $content;
 }
-
-/* -------------------------------------------------------------------------
- * The fixes — one entry per record, newest last
- * ---------------------------------------------------------------------- */
 
 /**
  * The coordinator «Заказать методические пособия» names. The slug is the record's
@@ -365,147 +926,174 @@ function od_append_contact_links( string $content, array $links ): string {
  * that still serves `/profile/*`. Reported as a content bug instead.
  */
 const OD_METODICHKI_COORDINATOR_HREF =
-	'/profile/%d0%b3%d0%be%d1%80%d0%b4%d0%b8%d0%ba%d0%be%d0%b2%d0%b0-%d0%b5%d0%ba%d0%b0%d1%82%d0%b5%d1%80%d0%b8%d0%bd%d0%b0/';
+    '/profile/%d0%b3%d0%be%d1%80%d0%b4%d0%b8%d0%ba%d0%be%d0%b2%d0%b0-%d0%b5%d0%ba%d0%b0%d1%82%d0%b5%d1%80%d0%b8%d0%bd%d0%b0/';
 const OD_METODICHKI_COORDINATOR_NAME = 'Андрей Алексеевич Рязанов';
 
 /**
- * @return array<int, array{label: string, post_type: string, path?: string, title?: string, fix: callable}>
- */
-function od_pages_fixes(): array {
-	return array(
-		array(
-			'label'     => 'D8 · /materials/metodichki/ — Figma `handbooks` (779:4133)',
-			'post_type' => 'page',
-			'path'      => 'materials/metodichki',
-			'fix'       => static function ( string $content ): string {
-				$content = od_drop_empty_layout_groups( $content );
-				$content = od_class_on_first_columns( $content, 'od-covers' );
-				$content = od_headings_into_image_alt( $content );
-				$content = od_cover_link_names( $content );
-				$content = od_https_own_links( $content );
-				$content = od_strip_paragraph_spacing( $content );
-
-				return od_details_to_profile_link(
-					$content,
-					OD_METODICHKI_COORDINATOR_HREF,
-					OD_METODICHKI_COORDINATOR_NAME
-				);
-			},
-		),
-		array(
-			'label'     => 'D8 · profile «Андрей Алексеевич Рязанов» — the two contacts only the page had',
-			'post_type' => 'profile',
-			'title'     => OD_METODICHKI_COORDINATOR_NAME,
-			'fix'       => static function ( string $content ): string {
-				return od_append_contact_links(
-					$content,
-					array(
-						array( 'https://t.me/paramon1302', '@paramon1302' ),
-						array( 'https://vk.com/id39335667', 'https://vk.com/id39335667' ),
-					)
-				);
-			},
-		),
-	);
-}
-
-/* -------------------------------------------------------------------------
- * Runner — only under WP-CLI, so the tests can require this file
- * ---------------------------------------------------------------------- */
-
-if ( ! defined( 'WP_CLI' ) || ! WP_CLI ) {
-	return;
-}
-
-/**
- * The record a fix targets, or null. By path for pages (`get_page_by_path` is
- * exact and hierarchy-aware), by exact title otherwise — `profile` slugs are
- * unreliable on this install, see the constant above.
+ * `/materials/metodichki/` — Figma `handbooks` (`779:4133`).
  *
- * @param array $fix One entry of {@see od_pages_fixes()}.
+ * Seven transforms in a fixed order, and the order is load-bearing twice: the
+ * class has to be on the row before anything keys on it, and
+ * `od_cover_link_names()` names each button from the `alt` that
+ * `od_headings_into_image_alt()` has just written.
+ *
+ * @param string $content    Stored `post_content`.
+ * @param int    $_filmTagId Unused — this page has no film row, but the runner
+ *                           calls every transform the same way.
  */
-function od_pages_resolve( array $fix ): ?WP_Post {
-	if ( isset( $fix['path'] ) ) {
-		return get_page_by_path( $fix['path'], OBJECT, $fix['post_type'] );
-	}
+function od_pages_metodichki(string $content, int $_filmTagId = 0): string
+{
+    $content = od_drop_empty_layout_groups($content);
+    $content = od_class_on_first_columns($content, 'od-covers');
+    $content = od_headings_into_image_alt($content);
+    $content = od_cover_link_names($content);
+    $content = od_https_own_links($content);
+    $content = od_strip_paragraph_spacing($content);
 
-	$found = get_posts(
-		array(
-			'post_type'        => $fix['post_type'],
-			'title'            => $fix['title'],
-			'post_status'      => 'publish',
-			'numberposts'      => 2,
-			'suppress_filters' => false,
-		)
-	);
-
-	if ( count( $found ) !== 1 ) {
-		WP_CLI::warning( sprintf( '%d records titled «%s» — expected exactly 1', count( $found ), $fix['title'] ) );
-
-		return null;
-	}
-
-	return $found[0];
+    return od_details_to_profile_link($content, OD_METODICHKI_COORDINATOR_HREF, OD_METODICHKI_COORDINATOR_NAME);
 }
 
 /**
- * Save a revision, then write the body straight to the table. Never
- * `wp_update_post` — see rule 3 in the file header.
+ * The coordinator's own `profile` record — the Telegram handle and the VK page
+ * that the page carried and the record did not.
+ *
+ * The card on `/materials/metodichki/` is built from this record, so a contact
+ * only the page held would have disappeared when the accordion did. Neither copy
+ * was a superset of the other; this is the merge, in the record's own shape.
+ *
+ * @param string $content    Stored `post_content`.
+ * @param int    $_filmTagId Unused — see {@see od_pages_metodichki()}.
  */
-function od_pages_write( int $id, string $content ): void {
-	global $wpdb;
-
-	wp_save_post_revision( $id );
-	$wpdb->update( $wpdb->posts, array( 'post_content' => $content ), array( 'ID' => $id ), array( '%s' ), array( '%d' ) );
-	clean_post_cache( $id );
+function od_pages_profile_ryazanov(string $content, int $_filmTagId = 0): string
+{
+    return od_append_contact_links(
+        $content,
+        [
+            ['https://t.me/paramon1302', '@paramon1302'],
+            ['https://vk.com/id39335667', 'https://vk.com/id39335667'],
+        ]
+    );
 }
 
-$apply  = in_array( 'apply', $args, true );
-$prefix = $apply ? '' : '[dry-run] ';
-$changed = 0;
-$same    = 0;
-
-foreach ( od_pages_fixes() as $fix ) {
-	$post = od_pages_resolve( $fix );
-	if ( ! $post ) {
-		WP_CLI::warning( sprintf( 'not found: %s', $fix['label'] ) );
-		continue;
-	}
-
-	$before = $post->post_content;
-	$after  = ( $fix['fix'] )( $before );
-
-	if ( $after === $before ) {
-		++$same;
-		WP_CLI::log( sprintf( 'unchanged  %d  %s', $post->ID, $fix['label'] ) );
-		continue;
-	}
-
-	++$changed;
-	WP_CLI::log(
-		sprintf(
-			'%schange     %d  %s  (%d → %d bytes, %+d)',
-			$prefix,
-			$post->ID,
-			$fix['label'],
-			strlen( $before ),
-			strlen( $after ),
-			strlen( $after ) - strlen( $before )
-		)
-	);
-
-	if ( $apply ) {
-		od_pages_write( $post->ID, $after );
-	}
+/**
+ * Every record workstream D rewrites, newest last.
+ *
+ * `path` is resolved with `get_page_by_path()` — exact and hierarchy-aware.
+ * `title` is the fallback for a record whose slug names somebody else (see the
+ * constant above), and `post_type` defaults to `page`. `tag` is the `post_tag`
+ * slug a transform's film row queries: term ids are per-environment, so the
+ * runner resolves the slug and hands the transform the id.
+ *
+ * @return array<int, array{label: string, fix: callable-string, path?: string, title?: string, post_type?: string, tag?: string}>
+ */
+function od_pages_registry(): array
+{
+    return [
+        [
+            'label' => 'D6e · /healthy-russia/ — Figma `project-1` (759:845)',
+            'path' => 'healthy-russia',
+            'tag' => 'programma-zdorovaya-rossiya',
+            'fix' => 'od_pages_healthy_russia',
+        ],
+        [
+            'label' => 'D6f · /healthy-youth/ — the same template',
+            'path' => 'healthy-youth',
+            'tag' => 'programma-zdorovaya-molodezh',
+            'fix' => 'od_pages_healthy_youth',
+        ],
+        [
+            'label' => 'D6f · /healthy-kids/ — the same template, no film row',
+            'path' => 'healthy-kids',
+            'fix' => 'od_pages_healthy_kids',
+        ],
+        [
+            'label' => 'D8 · /materials/metodichki/ — Figma `handbooks` (779:4133)',
+            'path' => 'materials/metodichki',
+            'fix' => 'od_pages_metodichki',
+        ],
+        [
+            'label' => 'D8 · profile «Андрей Алексеевич Рязанов» — the two contacts only the page had',
+            'post_type' => 'profile',
+            'title' => OD_METODICHKI_COORDINATOR_NAME,
+            'fix' => 'od_pages_profile_ryazanov',
+        ],
+    ];
 }
 
-WP_CLI::success(
-	sprintf(
-		'%s%d changed, %d already in shape, %d checked.%s',
-		$prefix,
-		$changed,
-		$same,
-		$changed + $same,
-		$apply ? '' : ' Re-run with `apply` to write.'
-	)
-);
+// ---------------------------------------------------------------------------
+// Runner. Everything above is a pure function and is what the tests exercise.
+// ---------------------------------------------------------------------------
+
+if (!defined('WP_CLI') || !WP_CLI) {
+    return;
+}
+
+global $wpdb; // `eval-file` runs the script in a function scope, where it is not in view.
+
+$apply = in_array('apply', $args ?? [], true);
+WP_CLI::log($apply ? 'Applying changes.' : 'Dry run — pass `apply` to write.');
+
+foreach (od_pages_registry() as $entry) {
+    $postType = $entry['post_type'] ?? 'page';
+
+    if (isset($entry['path'])) {
+        $post = get_page_by_path($entry['path'], OBJECT, $postType);
+    } else {
+        $found = get_posts([
+            'post_type' => $postType,
+            'title' => $entry['title'],
+            'post_status' => 'publish',
+            'numberposts' => 2,
+            'suppress_filters' => false,
+        ]);
+
+        if (count($found) !== 1) {
+            WP_CLI::warning(sprintf('%s: %d records titled «%s» — expected exactly 1', $entry['label'], count($found), $entry['title']));
+            continue;
+        }
+
+        $post = $found[0];
+    }
+
+    if (!$post) {
+        WP_CLI::warning(sprintf('%s: no such %s', $entry['label'], $postType));
+        continue;
+    }
+
+    // Resolved here rather than written into a transform: term ids are
+    // per-environment. `wp/scripts/od-terms.php` is what creates them.
+    $tagSlug = $entry['tag'] ?? '';
+    $filmTag = $tagSlug === '' ? null : get_term_by('slug', $tagSlug, 'post_tag');
+    if ($tagSlug !== '' && !$filmTag) {
+        WP_CLI::warning(sprintf('%s: tag `%s` is missing — run `od-terms.php apply` first.', $entry['label'], $tagSlug));
+        continue;
+    }
+
+    try {
+        $new = $entry['fix']($post->post_content, $filmTag ? (int) $filmTag->term_id : 0);
+    } catch (Throwable $e) {
+        WP_CLI::warning(sprintf('%s (#%d): %s', $entry['label'], $post->ID, $e->getMessage()));
+        continue;
+    }
+
+    if ($new === $post->post_content) {
+        WP_CLI::log(sprintf('%s (#%d): already in shape, skipped', $entry['label'], $post->ID));
+        continue;
+    }
+
+    WP_CLI::log(sprintf('%s (#%d): %d bytes -> %d bytes', $entry['label'], $post->ID, strlen($post->post_content), strlen($new)));
+
+    if (!$apply) {
+        continue;
+    }
+
+    wp_save_post_revision($post->ID);
+    $written = $wpdb->update($wpdb->posts, ['post_content' => $new], ['ID' => $post->ID], ['%s'], ['%d']);
+    if ($written === false) {
+        WP_CLI::warning(sprintf('%s (#%d): write failed', $entry['label'], $post->ID));
+        continue;
+    }
+
+    clean_post_cache($post->ID);
+    WP_CLI::success(sprintf('%s (#%d): written', $entry['label'], $post->ID));
+}

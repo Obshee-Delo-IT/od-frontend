@@ -197,6 +197,13 @@ What still holds published shortcodes, and why none of it matters to this fronte
 
 Standard WP taxonomies (`category`, `post_tag`, `nav_menu`, `post_format`) are also present and carry most of the model this repo actually consumes.
 
+**Tags this project created**, as opposed to inherited — all of them from `wp/scripts/od-terms.php`, which is where they are re-created on any other environment:
+
+| Tag | od-dev id | On | Why |
+| --- | --- | --- | --- |
+| `programma-zdorovaya-rossiya` «Программа «Здоровая Россия»» | 665 | 6 films | The «Здоровая Россия» methodology is nine lessons, each built on one film, and nothing in the inherited model said which films those are. **`/healthy-russia/`'s «Проекты программы» is a `core/query` over this tag**, so it is load-bearing: tagging a film puts it on the page. Three of the nine have no post on the site at all; the tag's docblock names them. Do not confuse it with the inherited tag **72** «Здоровая Россия - Общее дело», which is on ten news posts from 2015–16 and on no film.
+| `programma-zdorovaya-molodezh` «Программа «Здоровая молодежь»» | 666 | 6 films | The same idea for `/healthy-youth/`, whose «Проекты программы» is a `core/query` over it (D6f). The six are the films that page linked by hand. `/healthy-kids/` has no such row and no tag. |
+
 **None of the cmsms taxonomies were registered with `show_in_rest`** (verified 2026-08-13), so a headless frontend could not read them at all — `/wp/v2/types/profile` reported its taxonomies as `["post_tag"]` and nothing else, and `/wp/v2/pl-categs` 404'd. **Fixed for `pl-categs` on 2026-08-18**: the mu-plugin that took the registration over from cmsms adds `'show_in_rest' => true`, so a coordinator-by-region filter is now available to D3. The two `project` taxonomies were not re-registered — that CPT is dead (0 published, 21 drafts). See §3.5 for what the profile data offers.
 
 ### 3.3 Category ids the frontend hardcodes
@@ -236,6 +243,7 @@ Three things to know:
 
 - **ACF is canonical; body-parsing is a fallback.** Films' legacy bodies contain the same links as free-form HTML, and the frontend still mines them (`extractFilmPoster`, in-body Яндекс.Диск anchors) — but only to fill what data entry hasn't covered yet, deduped by URL with the ACF value winning. That precedence was a deliberate decision («parsing is not stable»), so don't invert it.
 - **Five generic download slots, not a full/short pair.** The label carries the whole pill text (e.g. «Полн. версия • 35 мин • 1,5 Гб») because 11 films ship 2–5 same-duration size/format variants.
+- **`poster_image_url` has a second job.** It is the printable плакат on the film page, and it is also the **portrait card cover** the programme pages need — a post has one featured image, and that one is the 16∶9 still `/video/` wants. `wp/mu-plugins/od-film-meta.php` exposes it to the block editor's Block Bindings API under a computed key, **`od_card_cover`**, which falls back to the featured image so a card never breaks on a film without a плакат. 11 of 99 films carry one.
 - **Population is incomplete and editorial.** 70 of 99 films have a `kinescope_id`, 0 have a `watch_url`. Current numbers and what editors must supply are in [`implementation-plan.md` → B-VIDEO2](./implementation-plan.md#workstream-b--wordpress--data-layer); the CSV round-trip tooling is `pnpm film:export` / `film:import` (see the README).
 
 **Consequence for §4:** ACF is no longer an optional nicety on this install — `/video` does not work without it.

@@ -210,7 +210,7 @@ th {
 .wp-element-button.is-style-outline:hover {
   background-color: var(--red-1);
   box-shadow: inset 0 0 0 1px var(--red-10);
-  color: var(--white);
+  color: var(--red-10);
 }
 
 :where(.is-layout-flex) {
@@ -370,3 +370,382 @@ th {
   color: var(--red-10);
 }
 /* stylelint-enable no-descending-specificity */
+
+/* ------------------------------------------------------------------------- *
+ * The programme-page template — Figma `project-1` (`759:845`), D6e.
+ *
+ * Four classes, all of them written into `post_content` by
+ * `wp/scripts/od-pages.php`: an editor can move a card or add one from the
+ * admin, and the design follows. Nothing here is page-specific — the other two
+ * programme pages (`/healthy-kids/`, `/healthy-youth/`) get the same treatment
+ * from the same script when their turn comes.
+ * ------------------------------------------------------------------------- */
+
+/* Every measurement below is read off the mock, not guessed: the content column
+   is 1240px wide, the blocks sit 120px apart, and a section heading sits 45px
+   above the row it introduces. */
+
+/* The programme's own logo, in a card of its own at the top right — the mock
+   uses it in place of a second title, so it is deliberately not full width. */
+/* Two classes, not one: `.wp-block-image` sets a margin of its own, and core's
+   stylesheet is imported after this file — a single class ties and loses. */
+.wp-block-image.od-programme-logo {
+  max-width: 470px;
+  padding: 18px 11px;
+  border-radius: 12px;
+  margin: 0 0 36px auto;
+  background-color: var(--white);
+}
+
+.od-card {
+  padding: 24px 20px;
+  border-radius: 12px;
+  margin-bottom: 120px;
+  background-color: var(--white);
+}
+
+/* `text-transform` beats the lowercasing rule above: «Здоровая Россия — ОБЩЕЕ
+   ДЕЛО!» is a name, and the mock sets it as written. */
+.od-card h2 {
+  margin-bottom: 20px;
+  text-transform: none;
+}
+
+.od-card :is(p, .wp-block-buttons):last-child {
+  margin-bottom: 0;
+}
+
+/* A heading that introduces a row of cards, rather than sitting inside one.
+   `:has` because the two are siblings: an ordinary `margin-top` on the row
+   would collapse into the heading's own bottom margin and lose. */
+h2:has(+ .od-cards, + .od-poster-cards) {
+  margin-bottom: 45px;
+}
+
+/* The goal card. Its drawing is decoration rather than content, so it is a
+   background here and not an image block — nothing for an editor to lose.
+   The mock centres a 314×340 drawing in the card's left half and gives the text
+   the rest, which is what the 640px basis buys: 640 + 572 + 28 = 1240. */
+.od-card--goal {
+  display: flex;
+  align-items: center;
+  padding: 32px 28px 32px 0;
+  gap: 0;
+}
+
+.od-card--goal::before {
+  height: 340px;
+  flex: 0 1 640px;
+  background: url('/figma/programme-goal.svg') center / contain no-repeat;
+  content: '';
+}
+
+.od-card--goal > .wp-block-group__inner-container {
+  flex: 1;
+}
+
+.od-card--goal p {
+  font-size: var(--font-size-6);
+  line-height: 140%;
+}
+
+/* Both rows are `cb/carousel-v2` blocks, so more than three tasks or projects
+   need no new markup — see `od_pages_carousel()`. The base carousel styling is
+   already the mock's (32px round arrows, 8px bullets) and lives in
+   `Carousel/custom-carousel.css`, which is `@nested-import`ed *after* this
+   file: every rule below that touches a slide, an arrow or the bullets carries
+   `.wp-block-cb-carousel-v2` as well, or it ties on specificity and loses. */
+
+/* The task cards: three slots on desktop, a swipe on a phone. */
+.od-cards {
+  margin-bottom: 120px;
+}
+
+/* `project-2` and `project-3` number their task cards «01», «02», … where
+   `project-1` titles them. That ordinal is the card's position in the row and
+   nothing else, so it is a counter here rather than text in `post_content`:
+   an editor who adds, removes or reorders a slide never renumbers anything. */
+.od-cards--numbered {
+  counter-reset: od-task;
+}
+
+.wp-block-cb-carousel-v2.od-cards .cb-wrapper {
+  align-items: stretch;
+}
+
+.wp-block-cb-carousel-v2.od-cards .swiper-slide {
+  height: auto;
+  max-height: none;
+  padding: 24px 20px;
+  border-radius: 16px;
+  background-color: var(--white);
+}
+
+/* One rule for both, because the mock draws them identically — 32px red above
+   24px of space, whether the card leads with a title or with its number. */
+.od-cards h3,
+.od-cards--numbered .cb-slide::before {
+  margin-bottom: 24px;
+  color: var(--red-8);
+  font-size: var(--font-size-8);
+  line-height: 130%;
+}
+
+/* A pseudo-element is not a heading, so the weight an `<h3>` gets for free is
+   set here. */
+.od-cards--numbered .cb-slide::before {
+  display: block;
+  content: counter(od-task, decimal-leading-zero);
+  counter-increment: od-task;
+  font-weight: 700;
+}
+
+.od-cards p {
+  font-size: var(--font-size-4);
+  line-height: 140%;
+}
+
+.od-cards p:where(:last-child) {
+  margin-bottom: 0;
+}
+
+/* Above 900px all three cards are on screen at once and the mock draws no
+   controls at all; the bullets, and the room the block reserves for them,
+   come back on a phone. */
+.wp-block-cb-carousel-v2.od-cards .cb-pagination.swiper-pagination {
+  display: none;
+}
+
+.wp-block-cb-carousel-v2.od-cards[data-cb-pagination='true'] .swiper-horizontal {
+  margin-bottom: 0;
+}
+
+/* The approval note. On `/healthy-russia/` the same sentence is the methodology
+   card's body; `project-2` and `project-3` have no such card and set it as a
+   paragraph of its own, 24px and bold, across the whole column. */
+.od-note {
+  margin-bottom: 120px;
+  font-size: var(--font-size-6);
+  font-weight: 700;
+  line-height: 130%;
+}
+
+/* 65px under the task row rather than the 120 every other block gets. `:has`
+   because the gap belongs to the row above: a `margin-top` on the note would
+   collapse into the row's own bottom margin and lose. */
+.od-cards:has(+ .od-note) {
+  margin-bottom: 65px;
+}
+
+/* The programme's own materials — a download or a playlist the mock leaves no
+   room for. Rather than invent a section for them they go last, after
+   everything the mock does draw. */
+.od-materials {
+  margin-bottom: 80px;
+}
+
+/* The film posters. The row is a `core/query` over the programme's tag, so a
+   card is a `<li class="wp-block-post">` rather than a `cb/slide-v2`, and the
+   base carousel's slide rules — including its 360px clamp — never match it.
+   Swiper is told about the class in `Carousel/CarouselAdapter.ts`.
+
+   The pill sits over the artwork by **grid**, not by positioning it: both
+   children take the same cell, and the one later in the document paints on top.
+   That leaves the card the only positioned box in the subtree, which is what
+   lets the title's link stretch across the whole of it — see the `::after`
+   below. Position the pill instead and that overlay resolves against the pill.
+
+   The bullets hang 20px below the row, so the margin is what keeps them off the
+   footer — the mock leaves ~70px between the two. */
+.od-poster-cards {
+  margin-bottom: 60px;
+}
+
+.od-poster-cards .wp-block-post {
+  position: relative;
+  display: grid;
+  flex-shrink: 0;
+  margin: 0;
+}
+
+.od-poster-cards .wp-block-image,
+.od-poster-cards .wp-block-post-title {
+  margin: 0;
+  grid-area: 1 / 1;
+}
+
+/* One shape for every cover, whatever the film was given. `contain` rather than
+   `cover` because cropping a poster to fit cuts the film's title off it, and
+   these are a mix: a film with a printable плакат shows it, a film without one
+   falls back to its 16∶9 still — see `wp/mu-plugins/od-film-meta.php`.
+
+   The backdrop behind a letterboxed still is dark, not white: every poster the
+   mock draws is dark artwork edge to edge, and the pill below is white — on a
+   white backdrop it vanished into the card. A плакат covers the box, so this is
+   only ever seen on the fallback. */
+.od-poster-cards .wp-block-image img {
+  width: 100%;
+  border-radius: 12px;
+  aspect-ratio: 387 / 546;
+  background-color: var(--gray-9);
+  object-fit: contain;
+}
+
+/* The card's link is its title, drawn as the mock's pill 12px inside the bottom
+   of the artwork. A binding cannot produce a permalink, so the cover is not a
+   link — which leaves the title as the one accessible name the card needs. */
+.od-poster-cards .wp-block-post-title {
+  align-self: end;
+  padding: 12px;
+}
+
+.od-poster-cards .wp-block-post-title a {
+  display: block;
+  padding: 12px 24px;
+  border-radius: var(--radius-full);
+  background-color: var(--white);
+  color: var(--red-8);
+  font-size: var(--font-size-4);
+  font-weight: 400;
+  line-height: 1.4;
+  text-align: center;
+  transition: background-color 0.2s ease;
+}
+
+/* The pill is what a reader sees; the whole card is what they can click. A
+   pseudo-element's hit area belongs to the element that owns it, so this makes
+   the cover open the film *and* lights the pill on hovering anywhere on the
+   card — while leaving the card one link with one accessible name, which a
+   second anchor around the cover would not. */
+.od-poster-cards .wp-block-post-title a::after {
+  position: absolute;
+  content: '';
+  inset: 0;
+}
+
+.od-poster-cards .wp-block-post-title a:hover {
+  background-color: var(--gray-2);
+  color: var(--red-10);
+  text-decoration: none;
+}
+
+/* The methodology card — a columns block that *is* the card, with the cover
+   flush against its left edge and the text centred beside it. */
+.od-card--flush {
+  padding: 0 40px 0 0;
+  gap: 40px;
+}
+
+/* `.wp-block-columns` as well as the modifier, because core sizes every column
+   with `.wp-block-columns:not(.is-not-stacked-on-mobile) > .wp-block-column` —
+   four classes, same as this rule without it, and core is imported last. */
+.wp-block-columns.od-card--flush > .wp-block-column:first-child {
+  flex: 0 1 386px;
+}
+
+.wp-block-columns.od-card--flush > .wp-block-column:last-child {
+  align-self: center;
+  padding: 24px 0;
+}
+
+.od-card--flush p {
+  margin-bottom: 45px;
+  font-size: var(--font-size-5);
+  line-height: 130%;
+}
+
+.od-card--flush .wp-block-image {
+  margin: 0;
+}
+
+.wp-block-columns.od-card--flush .wp-block-image img {
+  width: 100%;
+  border-radius: 12px;
+}
+
+@media (--mobile) {
+  .od-programme-logo {
+    max-width: none;
+    margin-bottom: 24px;
+    margin-left: 0;
+  }
+
+  .od-card,
+  .od-cards,
+  .od-note {
+    margin-bottom: 80px;
+  }
+
+  .od-note {
+    font-size: var(--font-size-5);
+  }
+
+  .od-cards:has(+ .od-note) {
+    margin-bottom: 40px;
+  }
+
+  h2:has(+ .od-cards, + .od-poster-cards) {
+    margin-bottom: 24px;
+  }
+
+  /* Below 900px the adapter switches to `slidesPerView: 'auto'` and takes the
+     slide width from here — 280px, so the next card peeks and the row reads as
+     something to swipe. */
+  .wp-block-cb-carousel-v2.od-cards .swiper-slide,
+  .od-poster-cards .wp-block-post {
+    width: 280px;
+    max-width: 280px;
+  }
+
+  .wp-block-cb-carousel-v2.od-cards .cb-pagination.swiper-pagination {
+    display: flex;
+  }
+
+  .wp-block-cb-carousel-v2.od-cards[data-cb-pagination='true'] .swiper-horizontal {
+    margin-bottom: 32px;
+  }
+
+  /* Bullets only: a phone swipes, and the mock draws no arrows here. */
+  .wp-block-cb-carousel-v2.od-poster-cards :is(.cb-button-prev, .cb-button-next) {
+    display: none;
+  }
+
+  .od-card--goal {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 24px 20px;
+    gap: 24px;
+  }
+
+  .od-card--goal::before {
+    width: 100%;
+    max-width: 240px;
+    height: 260px;
+    flex: 0 0 auto;
+  }
+
+  .od-card--goal p {
+    font-size: var(--font-size-4);
+  }
+
+  .od-card--flush {
+    padding: 0 0 24px;
+  }
+
+  .wp-block-columns.od-card--flush > .wp-block-column:first-child {
+    flex: 0 1 auto;
+  }
+
+  .wp-block-columns.od-card--flush > .wp-block-column:last-child {
+    padding: 0 20px;
+  }
+
+  .od-card--flush p {
+    margin-bottom: 24px;
+    font-size: var(--font-size-4);
+  }
+
+  .wp-block-columns.od-card--flush .wp-block-image img {
+    border-radius: 12px 12px 0 0;
+  }
+}

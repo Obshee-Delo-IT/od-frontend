@@ -10,18 +10,29 @@ Production still holds CMSMasters shortcodes and is converted by `cmsms-gutenber
 
 Therefore every content change is expressed as code, and applying the whole of workstream D to production is **running one script**.
 
-Two files, split by lifetime:
+Three files, split by lifetime:
 
 | file | what | when it runs | PHP floor |
 | --- | --- | --- | --- |
 | `wp/scripts/od-pages.php` ✅ | one-shot content fixes — strip a page's `<style>`, rewrite blocks, set a `className` | by hand, `wp eval-file` | CLI PHP (8.2 on prod) — modern syntax fine |
+| `wp/scripts/od-terms.php` ✅ | taxonomy the content model needs — create a term, tag the posts that belong to it | by hand, `wp eval-file` | same |
+| `wp/mu-plugins/od-film-meta.php` ✅ | runtime registration — the one meta key a query loop's cover binding reads | every request, forever | **PHP 7.0 syntax only** |
+| `wp/mu-plugins/od-profile.php` ✅ | runtime registration — the `profile` post type, its taxonomy and its one meta key (B8a) | every request, forever | **PHP 7.0 syntax only** |
 | `wp/mu-plugins/od-design.php` | runtime registration — block styles, patterns, editor palette | every request, forever | **PHP 7.0 syntax only** |
 
-**`od-pages.php` exists** since 2026-08-17, written for the first page through this flow (`/materials/metodichki/`, [`implementation-notes.md`](./implementation-notes.md)). Its five transforms are the ones the next pages are most likely to need again — drop the migrator's empty spacer groups, put a `className` on a block, move a redundant heading into an image's `alt`, replace a `wp:details` accordion, append a link to a body — so read it before writing a sixth.
+**`od-pages.php` exists** since 2026-08-17 and now holds two kinds of function. **Small reusable transforms**, written for `/materials/metodichki/` and the ones a next page is most likely to need again: drop the migrator's empty spacer groups, put a `className` on a block, move a redundant heading into an image's `alt`, strip inline spacing, name a cover's button from its `alt`, upgrade our own `http://` links, replace a `wp:details` accordion, append a link to a body. And **one whole-page transform per redesigned page** (`od_pages_healthy_russia`, `…_youth`, `…_kids`, `od_pages_metodichki`), because a card layout is a structural rewrite and there is no smaller unit to reuse. Read both before writing a third kind.
+
+**One registry, one runner.** `od_pages_registry()` lists every record: a `path` (or a `title`, for a `profile` whose slug names somebody else), the transform, and optionally the `post_tag` slug whose id a film row queries. The runner resolves the record and the term — ids are per-environment — and writes through `$wpdb->update` after a revision.
 
 **The PHP floor on the second file is not a style preference.** Production's *site* PHP is 7.x (`mod_php7`) while its CLI is 8.2, and 7.4+ syntax in an mu-plugin is a parse error that takes the whole site down the moment it loads. `wp/mu-plugins/od-revalidate.php` is written to that floor for the same reason — read its header before editing either.
 
-**The second file does not exist yet, and should not be created speculatively.** It appears the first time a design variant repeats often enough to earn a dropdown (§2, rung 4). Until then one script is the whole WordPress side.
+**`od-design.php` does not exist yet, and should not be created speculatively.** It appears the first time a design variant repeats often enough to earn a dropdown (§2, rung 4).
+
+`od-pages.php` exists as of 2026-08-17 and holds the three programme pages (D6e, D6f in the notes) — read `od_pages_healthy_russia()` before writing the next transform: the helpers for heading, paragraph, image, button, note and carousel blocks are already there, and so is the pattern for reading a page's own ids and links back out. Its registry maps a page path to a transform **and** the tag its film row queries, so a page without such a row registers an empty slug and ignores the id it is handed.
+
+`od-terms.php` is the same shape — dry run by default, `apply` to write, idempotent — for the case where the *content model* is what a page needs rather than the page's own markup. It holds one tag per programme that has a film row — `programma-zdorovaya-rossiya`, `programma-zdorovaya-molodezh`. Keep the two apart: a page is rebuilt from its CMSMasters original whenever its design changes, a term is applied once and must not be, and a query block cannot be written until its term exists.
+
+**One thing that is not in the file and cannot be: `$wpdb`.** `wp eval-file` runs the script in a function scope, so the runner needs `global $wpdb;` — without it the write dies as a WordPress critical error *after* the dry-run line has already printed, which reads exactly like a successful run.
 
 ### What `od-pages.php` must guarantee
 
@@ -33,9 +44,11 @@ Two files, split by lifetime:
 
 ### Tests
 
-`wp/tests/od-pages.test.php`, no PHPUnit and no composer — run it with `php wp/tests/od-pages.test.php` (exit 0 / exit 1, 45 assertions today). It covers the pure transforms only, and **every transform gets the idempotency case**: `f(f(x)) === f(x)`. Fixtures are real `post_content` captured from od-dev into `wp/tests/__fixtures__/` — recapture them rather than editing them by hand.
+`wp/tests/od-pages.test.php`, no PHPUnit and no composer — run it with `php wp/tests/od-pages.test.php` (exit 0 / exit 1, 190 assertions today). It covers the pure transforms only, and **every transform gets the idempotency case**: `f(f(x)) === f(x)`. Fixtures are real `post_content` captured from od-dev into `wp/tests/fixtures/` — recapture them rather than editing them by hand.
 
 **Not PHP's `assert()`, despite what this section used to say.** `zend.assertions` is `-1` on the dev machine and on both servers, which compiles `assert()` out of the file entirely: the tests would have printed nothing and exited 0 no matter what the transforms did. A one-line `od_test()` helper — an `if` and an `exit(1)` — cannot be switched off by an ini setting.
+
+**And this is not hypothetical.** The D6e/D6f work was written on a branch that used `assert()` with `assert_options(ASSERT_ACTIVE, 1)`, which does nothing at `zend.assertions = -1`; its 114 checks had never executed. Porting them onto `od_test()` during the merge on 2026-08-18 turned up **six wrong assertions** hiding behind the silence: three counted `<!-- wp:image ` without allowing for the query template's own bound cover, two described the task numbers as `<p class="od-task-number">` markup when they are a CSS counter on `.od-cards--numbered .cb-slide::before`, and one put `/healthy-youth/`'s download link in the goal card as a `<p class="od-card-link">` when the transform emits it as an outline button in the trailing `.od-materials` row. A whole block asserting a projects row on `/healthy-kids/` was fiction too — that page has no programme tag, so there is no query block to find. All of them now assert what the transforms actually emit.
 
 ## 2. Where a fix goes — the ladder
 
@@ -53,14 +66,15 @@ Stop at the first rung that holds.
 
 ## 3. The per-page flow
 
-1. **Find the mock.** [`page-mocks.md`](./page-mocks.md) maps the Figma `design` page to routes and carries node ids. Read it with `figma-mcp-go` by **frame name**, navigating to a small sub-frame (`search_nodes` → `get_node` → `save_screenshots`); reading a whole page frame times out.
-2. **Look at what renders now.** `pnpm dev`, open the path. Confirm it is native and not the iframe — a native page has a `PageHeader`; check `src/shared/config/legacyEmbedPages.ts`. **If the page is on that list, removing it is part of the change.**
-3. **Read the page's `post_content`**, not just the rendered HTML: `ssh timeweb 'cd od-dev/public_html && wp --url=https://od-dev.tmweb.ru post get <id> --field=post_content'`, or `?slug=` over REST. Everything in §4 is visible there and invisible in the browser. Two things about that command line — see §5: the host may need to be `timeweb-through-vpn`, and `--url` is not optional.
-4. **Classify every difference** against the ladder in §2 before writing anything. A difference that is really a missing parity rule (something the old theme supplied and Gutenberg does not) belongs in `gutenberg.css` — the same content arrives on production through the same migrator, so a page-by-page rebuild leaves the next page to break identically.
-5. **Implement** — CSS in the repo, content in `od-pages.php`, tests for each new transform.
-6. **Apply to od-dev** — dry-run, read it, then `--apply`.
-7. **Check in a browser at 1440 and 375**, against the mock.
-8. **Commit the block** — CSS, script, tests and the doc change together, one commit, per `CLAUDE.md`.
+1. **Find the mock.** [`page-mocks.md`](./page-mocks.md) maps the Figma `design` page to routes and carries node ids. Read it with `figma-mcp-go` by **frame name**, navigating to a small sub-frame (`search_nodes` → `get_node` → `save_screenshots`); reading a whole page frame times out. **Search the frame's name, don't assume one hit** — the desktop and mobile mocks share a name (`project-1` is both `759:845` and `1261:7505`), and the mobile one is where a row turns out to be a carousel.
+2. **Take the numbers off the node tree, not off the screenshot.** `get_node` on the frame returns every child's `bounds`; the gaps between siblings are the spec, and they are what a screenshot is worst at. On `project-1` the 120px block rhythm and the 45px heading gap were both eyeballed at half their size, and the methodology card's 386 + 40 + 774 split was eyeballed as 50/50. `get_node` on a page frame overflows the tool result — read the saved file with `jq`/Python instead of re-fetching. Then verify the built page the same way, with `getBoundingClientRect` in a Playwright run, rather than by looking at it.
+3. **Look at what renders now.** `pnpm dev`, open the path. Confirm it is native and not the iframe — a native page has a `PageHeader`; check `src/shared/config/legacyEmbedPages.ts`. **If the page is on that list, removing it is part of the change.**
+4. **Read the page's `post_content`**, not just the rendered HTML: `ssh timeweb 'cd od-dev/public_html && wp --url=https://od-dev.tmweb.ru post get <id> --field=post_content'`, or `?slug=` over REST. Everything in §4 is visible there and invisible in the browser. Two things about that command line — see §5: the host may need to be `timeweb-through-vpn`, and `--url` is not optional.
+5. **Classify every difference** against the ladder in §2 before writing anything. A difference that is really a missing parity rule (something the old theme supplied and Gutenberg does not) belongs in `gutenberg.css` — the same content arrives on production through the same migrator, so a page-by-page rebuild leaves the next page to break identically.
+6. **Implement** — CSS in the repo, content in `od-pages.php`, tests for each new transform.
+7. **Apply to od-dev** — `scp` the script over, dry-run, read it, then re-run with the positional `apply`, then run it a third time to see it report `already in shape, skipped`.
+8. **Purge the page, then check in a browser at 1440 and 375**, against the mock. The dev server keeps serving the copy it fetched before the write — the fastest purge is the B4 endpoint against localhost (`POST /api/revalidate/` with `{"postId": <id>, "paths": ["/<slug>/"]}`; source `.env` for the secret rather than printing it). Deleting `.next/cache` does **not** do it.
+9. **Commit the block** — CSS, script, tests and the doc change together, one commit, per `CLAUDE.md`.
 
 ## 4. What to look for in a page's content
 
@@ -96,12 +110,22 @@ Known traps in the rendered output. The first four are **pipeline** problems, no
 - **Adding a native Next route for a path retires its WordPress passthrough**, with no other edit: App Router gives a real route precedence over `[...slug]`.
 - **After any routing or redirect change, run `pnpm url:check`.**
 - **The WordPress editor is not WYSIWYG here** — the admin shows default Gutenberg, not this site. Tracked in [`next-steps.md`](./next-steps.md).
+- **`@wordpress/block-library`'s stylesheet is imported *after* `gutenberg.css`** (see `gutenberg-provider.css`), so on equal specificity **core wins**. A rule of ours on a single core class — `.od-programme-logo` against core's `.wp-block-image` — silently loses whatever core also sets, `margin` most often. Write `.wp-block-image.od-programme-logo`. Core's `!important`s (`align-items`, `flex-wrap` on every columns block) cannot be beaten at all, only worked with.
+- **Core sizes columns with a four-class selector**, `.wp-block-columns:not(.is-not-stacked-on-mobile) > .wp-block-column` (`:not()` counts its argument), so `.od-card--flush > .wp-block-column:first-child` is a tie and loses — the card splits 50/50 and nothing in the devtools looks wrong. Prefix the modifier with `.wp-block-columns` for the fifth class.
+- **Turbopack does not track `@nested-import` dependencies, so the dev server serves stale CSS.** `gutenberg-provider.css` `@nested-import`s `gutenberg.css`; editing the latter alone never invalidates the chunk, and the page keeps rendering with the CSS from before your edit — for hours, across reloads. `touch` does not help (the graph is content-hashed); a real edit to `gutenberg-provider.css` does, as does restarting `pnpm dev`. **Before debugging a rule that "doesn't apply", check that it shipped**: `curl -s localhost:3000/<page>/ | grep -o '/_next/static/[^"]*\.css'`, then `curl` each of those and grep for your class.
+- **Reading a custom field inside a query loop needs the Block Bindings API and a registered meta key.** Bindings ignore anything `get_registered_meta_keys()` does not list, and ACF's fields are not registered — this site listed exactly one key, core's `footnotes`. `wp/mu-plugins/od-film-meta.php` shows the shape: `register_meta()` plus a `get_post_metadata` filter when the value is computed rather than stored. A binding cannot produce a permalink, so plan the card's link around something else.
+- **A `core/query` inside a page writes some of its CSS inline, and inline wins.** `core/post-featured-image` emits `style="object-fit:cover"` by default — a 16∶9 still cropped to a portrait card, with no selector able to say otherwise. Use the block's own `scale` attribute. Check the *computed* style before assuming a rule lost to specificity; `getAttribute('style')` on the element says which it was.
+- **A query block is only usable because permalinks here are `/%post_id%/`.** Every link it emits is then already the URL this frontend serves, and `resolveContentLinks` only has to make it root-relative. Verify with `wp option get permalink_structure` before building a page around one.
+- **Stylelint's `no-descending-specificity` decides where a new rule goes.** A block of card CSS appended mid-file will fail the lint against rules further down; ordering by ascending specificity, with the whole block after the existing single-class rules, is what passes. `pnpm lint:styles` reports the exact pair. Where reordering is impossible because the higher-specificity rule is core's `is-style-*` block far above, raise your own selector to match instead of disabling the rule.
+- **An ordinal in a design is a counter, not content.** «01», «02», … above a row of cards is the card's position and nothing else, so it belongs in CSS (`counter-reset` on the row, `counter-increment` + `content: counter(x, decimal-leading-zero)` on the card) rather than written into `post_content`. An editor then adds, removes or reorders a card without renumbering anything — and there is no `<h3>` whose whole text is a number for a screen reader to read out as a heading.
+- **Making a whole card clickable: stretch the link, and lay the card out with grid so you can.** One anchor, `a::after { position: absolute; inset: 0 }`, resolves against the *nearest positioned ancestor* — so the card must be the only positioned box in the subtree. Overlapping two children with `position: absolute` breaks that; giving both `grid-area: 1 / 1` overlaps them with nothing positioned at all, and the later one in the document paints on top. Two things fall out for free: hovering anywhere on the card triggers the anchor's `:hover`, and `ImagePreviewClient` stops treating the artwork as a lightbox target (it opens one for any `<img>` that is not inside a link).
+- **Take the mock's numbers from the node tree, not from its screenshot.** `mcp__figma-mcp-go__get_node` on the frame returns every child's `bounds`, and the gaps between siblings are the spec — `project-1`'s 120px block rhythm and 45px heading gap were both eyeballed as ~64px and ~24px from the image, and both were wrong. Verify the built page the same way, with `getBoundingClientRect` in a Playwright run rather than by looking at it.
 
 ## 6. Done means
 
 - The page matches the mock at 1440 and 375.
 - No `<style>` left on the page except a scoped, deliberate one.
-- Every WordPress-side change is in `wp/scripts/od-pages.php`, idempotent, with a test.
+- Every WordPress-side change is in `wp/scripts/od-pages.php` (markup) or `wp/scripts/od-terms.php` (taxonomy), idempotent, with a test.
 - `php wp/tests/od-pages.test.php` passes, and `pnpm lint · type-check · test` are green.
 - If the page was on the legacy-embed list, it is off it.
 - Committed as one block, with the doc updates in the same commit.

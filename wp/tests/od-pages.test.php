@@ -13,7 +13,7 @@
  * file would have printed nothing and exited 0 whatever the transforms did. An
  * `if` and an `exit(1)` cannot be switched off.
  *
- * Fixtures in `__fixtures__/` are **real `post_content`**, captured from od-dev
+ * Fixtures in `fixtures/` are **real `post_content`**, captured from od-dev
  * 2026-08-17 with `wp post get <id> --field=post_content`. Recapture them rather
  * than editing them by hand.
  *
@@ -50,8 +50,8 @@ function od_test_idempotent( string $what, callable $transform, string $input ):
 	od_test( "{$what}: f(f(x)) === f(x)", $transform( $once ) === $once );
 }
 
-$page    = file_get_contents( __DIR__ . '/__fixtures__/page-metodichki.html' );
-$profile = file_get_contents( __DIR__ . '/__fixtures__/profile-ryazanov.html' );
+$page    = file_get_contents( __DIR__ . '/fixtures/page-metodichki.html' );
+$profile = file_get_contents( __DIR__ . '/fixtures/profile-ryazanov.html' );
 
 /* ---------------------------------------------------------------- od_attr */
 
@@ -240,10 +240,9 @@ od_test_idempotent(
 
 /* ------------------------------------------- the whole page fix, in order */
 
-$fixes = od_pages_fixes();
-$whole = ( $fixes[0]['fix'] )( $page );
+$whole = od_pages_metodichki( $page );
 od_test( 'the page fix composes to the same result', $whole === $linked );
-od_test( 'the page fix is idempotent end to end', ( $fixes[0]['fix'] )( $whole ) === $whole );
+od_test( 'the page fix is idempotent end to end', od_pages_metodichki( $whole ) === $whole );
 // What the page should end up as: two groups, one three-up cover row carrying the
 // class, one heading (the order section's), three posters each still linked and
 // still buttoned, and one profile link.
@@ -274,5 +273,224 @@ od_test(
 	'a body with no paragraph block still gets the link',
 	str_contains( od_append_contact_links( '<!-- wp:image --><figure></figure><!-- /wp:image -->', array( array( 'https://t.me/x', '@x' ) ) ), 'https://t.me/x' )
 );
+
+$before = file_get_contents(__DIR__ . '/fixtures/healthy-russia.before.html');
+$after = od_pages_healthy_russia($before, 665);
+
+// -- structure --------------------------------------------------------------
+
+od_test('logo card', str_contains($after, 'wp-block-image size-full od-programme-logo'));
+od_test('goal card', str_contains($after, '<div class="wp-block-group od-card od-card--goal">'));
+od_test('task carousel', str_contains($after, 'cb-carousel-block od-cards"'));
+od_test('methodology card', str_contains($after, '<div class="wp-block-columns od-card od-card--flush">'));
+od_test('poster carousel', str_contains($after, 'cb-carousel-block od-poster-cards"'));
+
+od_test('one slide per task card', substr_count($after, '<!-- wp:cb/slide-v2 -->') === 3);
+od_test('only the methodology card is still a columns block', substr_count($after, '<!-- wp:column -->') === 2);
+od_test('two literal images — the logo and the booklet', substr_count($after, '"sizeSlug":"full"') === 2);
+od_test('the poster card\'s cover is bound, not pasted', substr_count($after, '<!-- wp:image {"metadata":{"bindings"') === 1);
+od_test('both carousels carry dots', substr_count($after, 'data-cb-pagination="true"') === 2);
+
+// -- the projects row is a query over the programme's tag ------------------
+
+od_test('the row queries the tag it was given', str_contains($after, '"tagIds":[665]'));
+od_test('and not the page\'s own query', str_contains($after, '"inherit":false'));
+od_test('the query block is what Swiper mounts on', str_contains($after, '"className":"swiper"'));
+od_test('the post template is the track', str_contains($after, '<!-- wp:post-template {"className":"swiper-wrapper"} -->'));
+// Not `core/post-featured-image`: that is the 16∶9 still `/video/` wants.
+od_test('the cover is bound to the portrait one', str_contains($after, '"key":"od_card_cover"'));
+od_test('through the block bindings API', str_contains($after, '"source":"core/post-meta"'));
+od_test('the 16∶9 still is not what this card shows', !str_contains($after, 'post-featured-image'));
+od_test('the title is the card\'s link', str_contains($after, '<!-- wp:post-title {"level":3,"isLink":true} /-->'));
+od_test('a плакат is heavy and the row is below the fold', str_contains($after, 'alt="" loading="lazy"'));
+od_test('the migrator\'s hand-picked posters are gone', !str_contains($after, 'drugs.jpg'));
+
+// Arrows on the projects row, which can outgrow its three slots; none on the
+// tasks, which are three cards on desktop and a swipe on a phone.
+od_test('tasks have no arrows', str_contains($after, '"className":"od-cards","spaceBetween":40,"navigation":false'));
+od_test('projects have arrows', str_contains($after, '"className":"od-poster-cards","spaceBetween":40,"navigation":true'));
+
+// -- prose ------------------------------------------------------------------
+
+od_test('goal heading', str_contains($after, '<h2 class="wp-block-heading">Цель программы</h2>'));
+od_test('tasks heading', str_contains($after, '<h2 class="wp-block-heading">Задачи программы</h2>'));
+od_test('methodology heading', str_contains($after, '<h2 class="wp-block-heading">Здоровая Россия — ОБЩЕЕ ДЕЛО!</h2>'));
+od_test('projects heading', str_contains($after, '<h2 class="wp-block-heading">Проекты программы</h2>'));
+
+foreach (['Обучающие', 'Развивающие', 'Воспитательные'] as $task) {
+    od_test($task . ' card', str_contains($after, sprintf('<h3 class="wp-block-heading">%s</h3>', $task)));
+}
+od_test('task body kept', str_contains($after, '<p>сформировать понимание важности здорового'));
+od_test('goal body kept', str_contains($after, 'Содействие воспитательным процессам по укреплению в молодежной среде'));
+od_test('methodology body kept', str_contains($after, 'Программа прошла экспертизу'));
+
+// -- values read out of the page, not hardcoded -----------------------------
+
+od_test('logo attachment id kept', str_contains($after, '"id":60061'));
+od_test('logo path kept', str_contains($after, '/wp-content/uploads/2021/02/healthy_russia.png'));
+od_test('methodology button kept', str_contains($after, 'href="https://metodic.obshee-delo.ru/">Сайт методички'));
+od_test('downloads link kept', str_contains($after, 'href="https://metodic.obshee-delo.ru/download.html">Методические материалы'));
+
+// -- buttons ----------------------------------------------------------------
+
+// Twice per button: once in the block attributes, once in the rendered class.
+od_test('the two methodology buttons, and no others', substr_count($after, 'is-style-outline') === 4);
+
+// -- what the template drops ------------------------------------------------
+
+od_test('migrator separators gone', !str_contains($after, '<hr'));
+od_test('migrator heading class gone', !str_contains($after, 'cmsms_heading'));
+od_test('old theme span gone', !str_contains($after, 'fontstyle0'));
+od_test('empty trailing heading gone', !str_contains($after, 'Документальные фильмы'));
+od_test('hard line break gone', !str_contains($after, '<br'));
+od_test('inline alignment gone', !str_contains($after, 'text-align: center'));
+od_test('column widths are left to the stylesheet', !str_contains($after, 'flex-basis'));
+
+// -- alt text ---------------------------------------------------------------
+
+od_test('logo alt', str_contains($after, 'alt="Здоровая Россия"'));
+od_test('only the bound cover, which the title beside it names', substr_count($after, 'alt=""') === 1);
+
+// -- idempotency ------------------------------------------------------------
+
+od_test('converted content is left alone', od_pages_healthy_russia($after, 665) === $after);
+
+// -- refuses input it does not recognise ------------------------------------
+
+$threw = false;
+try {
+    od_pages_healthy_russia('<!-- wp:paragraph --><p>что-то другое</p><!-- /wp:paragraph -->', 665);
+} catch (RuntimeException $e) {
+    $threw = true;
+}
+od_test('unexpected input is refused, not half-converted', $threw);
+
+// -- helpers ----------------------------------------------------------------
+
+od_test('line breaks become spaces', od_pages_inline_text("раз<br />\nдва") === 'раз два');
+od_test('old theme span stripped', od_pages_inline_text('<span class="fontstyle0">текст</span>') === 'текст');
+od_test('whitespace collapsed', od_pages_inline_text('  два   слова  ') === 'два слова');
+
+od_test('the live domain becomes a path', od_pages_site_link('https://общее-дело.рф/materials/x/') === '/materials/x/');
+od_test('and so does its Punycode form', od_pages_site_link('https://xn----9sbkcac6brh7h.xn--p1ai/x/') === '/x/');
+od_test('another site keeps its origin', od_pages_site_link('https://metodic.obshee-delo.ru/') === 'https://metodic.obshee-delo.ru/');
+od_test('and so does a download', od_pages_site_link('https://disk.yandex.ru/i/abc') === 'https://disk.yandex.ru/i/abc');
+
+// ===========================================================================
+// `/healthy-youth/` — Figma `project-2`.
+// ===========================================================================
+
+$youthBefore = file_get_contents(__DIR__ . '/fixtures/healthy-youth.before.html');
+$youth = od_pages_healthy_youth($youthBefore, 666);
+
+od_test('logo card', str_contains($youth, 'wp-block-image size-full od-programme-logo'));
+od_test('goal card', str_contains($youth, '<div class="wp-block-group od-card od-card--goal">'));
+od_test('numbered task carousel', str_contains($youth, 'cb-carousel-block od-cards od-cards--numbered"'));
+od_test('poster carousel', str_contains($youth, 'cb-carousel-block od-poster-cards"'));
+od_test('the note stands on its own', str_contains($youth, '<p class="od-note">Программа прошла экспертизу'));
+
+// Two tasks, so two cards — and the carousel is told, or the row keeps a
+// third slot the mock fills by widening the cards instead.
+od_test('one slide per task', substr_count($youth, '<!-- wp:cb/slide-v2 -->') === 2);
+od_test('two slots, not the template three', str_contains($youth, '"slidesPerView":2'));
+od_test('and the frontend is told the same', str_contains($youth, 'data-cb-slides-per-view="2"'));
+// The numbers are a CSS counter on `.od-cards--numbered .cb-slide::before`, not
+// markup: `decimal-leading-zero` is what pads them, and a pseudo-element cannot
+// be mistaken for a heading by a screen reader.
+od_test('the row is the numbered variant', str_contains($youth, 'od-cards od-cards--numbered'));
+od_test('and the number replaces the card heading rather than joining it', !str_contains($youth, '<h3'));
+
+od_test('the row queries the tag it was given', str_contains($youth, '"tagIds":[666]'));
+od_test('covers come from the bound meta key', str_contains($youth, '"key":"od_card_cover"'));
+od_test('the title is the card\'s link', str_contains($youth, '<!-- wp:post-title {"level":3,"isLink":true} /-->'));
+
+od_test('goal heading', str_contains($youth, '<h2 class="wp-block-heading">Цель программы</h2>'));
+od_test('tasks heading', str_contains($youth, '<h2 class="wp-block-heading">Задачи программы</h2>'));
+od_test('projects heading', str_contains($youth, '<h2 class="wp-block-heading">Проекты программы</h2>'));
+od_test('goal body kept', str_contains($youth, '<p>Развитие мотивационной сферы личности подростков'));
+od_test('first task kept', str_contains($youth, '<p>Создать условия для включения новых сведений'));
+od_test('second task kept', str_contains($youth, '<p>Сформировать у подростков мотивационную основу'));
+
+// The booklet cover has no slot in the mock; the file it linked to does — as the
+// materials row's outline button at the foot of the page.
+od_test('the download survives, as an outline button', str_contains($youth, '<a class="wp-block-button__link wp-element-button" href="https://disk.yandex.ru/i/V2VRI2tY04OC1Q">Скачать методичку PDF</a>'));
+od_test('in the materials row', str_contains($youth, '<!-- wp:buttons {"className":"od-materials"} -->'));
+od_test('once — the trailing heading pointed at the same file', substr_count($youth, 'disk.yandex.ru') === 1);
+od_test('which is the last block, after the projects row', strpos($youth, 'od-materials') > strpos($youth, 'Проекты программы'));
+od_test('the booklet cover is gone', !str_contains($youth, 'metodischka2.jpg'));
+od_test('and so are the hand-picked posters', !str_contains($youth, 'plakats_2office_man.jpg'));
+od_test('one literal image — the logo', substr_count($youth, '"sizeSlug":"full"') === 1);
+od_test('the covers come from the query, bound to post meta', substr_count($youth, '<!-- wp:image {"metadata":{"bindings"') === 1);
+
+od_test('migrator separators gone', !str_contains($youth, '<hr'));
+od_test('migrator heading class gone', !str_contains($youth, 'cmsms_heading'));
+od_test('old theme span gone', !str_contains($youth, 'fontstyle0'));
+od_test('empty trailing heading gone', !str_contains($youth, 'Документальные фильмы'));
+od_test('inline alignment gone', !str_contains($youth, 'text-align: center'));
+
+od_test('converted content is left alone', od_pages_healthy_youth($youth, 666) === $youth);
+
+// ===========================================================================
+// `/healthy-kids/` — Figma `project-3`.
+// ===========================================================================
+
+$kidsBefore = file_get_contents(__DIR__ . '/fixtures/healthy-kids.before.html');
+$kids = od_pages_healthy_kids($kidsBefore, 667);
+
+od_test('logo card', str_contains($kids, 'wp-block-image size-full od-programme-logo'));
+od_test('logo alt', str_contains($kids, 'alt="Здоровые дети"'));
+od_test('logo path kept', str_contains($kids, '/wp-content/uploads/2021/02/healthy_kids.png'));
+od_test('logo attachment id kept', str_contains($kids, '"id":60060'));
+od_test('goal card', str_contains($kids, '<div class="wp-block-group od-card od-card--goal">'));
+od_test('numbered task carousel', str_contains($kids, 'cb-carousel-block od-cards od-cards--numbered"'));
+od_test('the note stands on its own', str_contains($kids, '<p class="od-note">Программа прошла экспертизу'));
+
+od_test('one slide per task', substr_count($kids, '<!-- wp:cb/slide-v2 -->') === 3);
+od_test('three tasks, three slots', str_contains($kids, '"slidesPerView":3'));
+od_test('the row is the numbered variant', str_contains($kids, 'od-cards od-cards--numbered'));
+od_test('first task kept', str_contains($kids, '<p>Разработать учебно-методический комплекс'));
+od_test('last task kept', str_contains($kids, '<p>Обеспечить образовательные организации разработанными материалами.</p>'));
+od_test('goal body, line break collapsed', str_contains($kids, '<p>Содействие воспитательным процессам, направленным на формирование ценности здорового образа жизни среди детей.</p>'));
+
+// This programme has no tag of its own, so there is no projects row: the runner
+// passes 0 and the transform ignores the argument entirely.
+od_test('no projects row', !str_contains($kids, 'Проекты программы'));
+od_test('and no film query to drive one', !str_contains($kids, 'tagIds'));
+od_test('one literal image — the logo', substr_count($kids, '"sizeSlug":"full"') === 1);
+od_test('the portrait is gone', !str_contains($kids, 'poznovalov.jpg'));
+
+// Both trailing headings were links, and both survive as the materials row's
+// outline buttons at the foot of the page.
+od_test('one materials row', substr_count($kids, '<!-- wp:buttons {"className":"od-materials"} -->') === 1);
+od_test('holding two outline buttons', substr_count($kids, '<!-- wp:button ') === 2 && substr_count($kids, 'is-style-outline') === 4);
+od_test('the live-domain link became a path', str_contains($kids, '<a class="wp-block-button__link wp-element-button" href="/materials/pppuiv-ted-6/">Методические рекомендации</a>'));
+od_test('the playlist keeps its origin', str_contains($kids, '<a class="wp-block-button__link wp-element-button" href="https://www.youtube.com/playlist?list=PLlNywkCI4IKyNXLKzGyM43Orp41Qm1plo">Фильмы программы</a>'));
+od_test('and the row is last, after the tasks', strpos($kids, 'od-materials') > strpos($kids, 'Задачи программы'));
+
+od_test('migrator heading class gone', !str_contains($kids, 'cmsms_heading'));
+od_test('old theme span gone', !str_contains($kids, 'fontstyle0'));
+od_test('hard line break gone', !str_contains($kids, '<br'));
+od_test('the task list became cards', !str_contains($kids, '<ul>'));
+
+od_test('converted content is left alone', od_pages_healthy_kids($kids, 667) === $kids);
+
+// -- both refuse input they do not recognise --------------------------------
+
+foreach (['od_pages_healthy_youth', 'od_pages_healthy_kids'] as $transform) {
+    $threw = false;
+    try {
+        $transform('<!-- wp:paragraph --><p>что-то другое</p><!-- /wp:paragraph -->', 666);
+    } catch (RuntimeException $e) {
+        $threw = true;
+    }
+    od_test($transform . ': unexpected input is refused, not half-converted', $threw);
+}
+
+/* ------------------------------------------------------- the registry itself */
+
+foreach ( od_pages_registry() as $entry ) {
+	od_test( "{$entry['label']}: its transform exists", is_callable( $entry['fix'] ) );
+	od_test( "{$entry['label']}: the runner can find the record", isset( $entry['path'] ) || isset( $entry['title'] ) );
+}
 
 echo "\n{$passed} assertions passed.\n";
