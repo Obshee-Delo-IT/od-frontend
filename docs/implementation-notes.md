@@ -461,9 +461,41 @@ The registry itself now maps a path to **a transform and the tag its film row qu
 
 `php wp/tests/od-pages.test.php` covers both transforms against real captured `post_content`, and `php wp/tests/od-wp.test.php` checks the registry for the typo it can actually have — a film listed twice under one tag, or a плакат written as an absolute URL. Applied to od-dev and measured out of the DOM at 1440 and 375 against the frames' own bounding boxes: goal card 1240×404 (mock 402.83), tasks 387×240 ×3 and 600×189 ×2 (mock 387×239, 600×189), gaps 120 / 44 / 65 / 119 / 45, posters 387×546 at 40 apart, and two Swipers on the page with two mounted — no double init.
 
-### D6g. `общее-дело.рф` counted as one of our own origins — 2026-08-17
+### D6g. `/projects/` moved off the route and into WordPress — 2026-08-18
 
-*(The commit is `fix(D6e)` — it was written on a branch that had not seen the programme pages below, which took D6e and D6f. Renumbered here, not in the log.)*
+The index shipped in D6 as `app/projects/page.tsx` over `shared/config/programSections.ts`. It looked right and could not be edited: adding a card, renaming one or repointing a link took a deploy, on a page whose entire content is a list of six links. WordPress has had a page at that URL all along (**#59466**, «Программы и проекты»), which the native route shadowed. So the route was deleted and the page rebuilt in `post_content` by `od_pages_projects()` — the same flow the programme pages use, and the reason the flow exists.
+
+Deleting the route is the whole switch: App Router precedence works in both directions, so removing `app/projects/` hands `/projects/` back to `[...slug]`, which finds a published WP page there and renders it through `WpPage`. No redirect, no config entry, no change to `legacyEmbedPages.ts`.
+
+**The card is a column.** Each row is a `core/columns` classed `od-tiles`, and each card is one `core/column` classed `od-tile od-tile--<id>` holding an `<h3>` and a «Подробнее» paragraph. That is what the old page did too (`.program-box`), and it means adding a seventh card is adding a column in the editor. `gutenberg.css` makes the row a grid rather than the columns block's flex — three equal tracks to `--mobile`, then one — so a card added or removed re-flows without an inline `flex-basis` to fight.
+
+**The drawings stayed in the repo, as backgrounds.** They are Figma exports, not editorial images, and `.od-card--goal` had already set the precedent: a decoration in `post_content` is a thing an editor can delete by accident, and there is nothing to gain by it. Each card id has a file at `public/figma/projects/<id>.svg` and one `background-image` line. A card added in the admin matches no rule and draws an empty box, which keeps the row aligned and says what is missing. They are **copies** of the six `src/shared/ui/assets/illustrations/*.svg` the home page imports — CSS cannot reference those, because `next.config.ts` routes every `*.svg` through `@svgr/webpack` as a JS module.
+
+**The three directions were written into the page, not read out of it.** «Общее дело ПРО», «Видеоматериалы» and «Онлайн курсы» only ever existed in `programSections.ts`; the old WordPress page had the three programmes and nothing else. This is the one transform that reads nothing back out of its input — there is no attachment or post id in the old markup that survives the rewrite — so its fingerprint check is all the input is used for.
+
+**Two lists now, and they can drift.** `programSections.ts` stays, because the home page's carousel still reads it, so the same six cards exist here and in `post_content`. A card added in the admin appears on `/projects/` only, and one added to the config appears on the home page only. That is the cost of the page being editable without a deploy, and it is written at the top of the config file; the alternative — the home page parsing another page's blocks for its carousel — is worse. `PROJECTS_TITLE` was the one export only the deleted route used and is gone.
+
+**What changed for a reader.** The H1 is «ПРОГРАММЫ И ПРОЕКТЫ», the WordPress page's own title, where the route hardcoded the mock's «ПРОГРАММЫ» — the title is the editor's now, and the breadcrumbs row `WpPage` draws appears where the mock omits one. `NewsletterSignup` is gone from the page, since no WP page renders it. The cards themselves are unchanged: 387×361 at 1440 against the mock's 385×358, one per row at 375. The `/projects/` entry in `sitemap.ts` stays pinned at 0.8 rather than falling to the 0.7 the WP page enumeration would give it.
+
+`CardSection` and `IllustratedCard` survived this pass — `/materials/` still rendered the same rows, the home page the same card. They did not survive the next one: `/materials/` followed the same day and took `CardSection` with it (D6h).
+
+### D6h. `/materials/` followed it, and the card component shrank — 2026-08-18
+
+The same move as D6g, on the section hub: `app/materials/page.tsx` was four hard-coded links over WP page **#20225** («Наши материалы»), published at that URL the whole time. `od_pages_materials()` writes the four cards into it and the route is deleted. Read D6g for the mechanism; this records what is specific to this page.
+
+**The row is one `core/columns` of four**, not two of two — `.od-tiles--wide` is a two-track grid, so the cards flow 2 + 2 by themselves and a fifth opens a third row with no edit here. Inside the card, the wide shape (`ads` `778:2206`: 598×280, drawing right of the text, title top, «Подробнее» bottom) is a 2×2 grid rather than a flex row: the text takes the left column across both rows, the drawing spans the right. A flex row would need the title and link wrapped in a box of their own, which is markup an editor has to keep intact for the layout to survive. The drawing's column is fixed at the drawings' own ~200px rather than a 55 % share — a background has no intrinsic width for a track to follow, and a share took 300 of the 550 and wrapped every title.
+
+**Three things the old page carried that did not survive.** Its captions are longer than the mock's titles («Методические пособия Общего Дела»), its photos are not the mock's drawings, and its `<style>` block styled the old theme's hover-zoom. Also dropped: `[wysija_form id="2"]`, a MailPoet form whose plugin is gone — it renders as its own text. The redesigned page's `NewsletterSignup` goes with the route, which costs nothing today: it is behind `NEWSLETTER_SIGNUP_ENABLED`, currently off, and the `ads` frame never drew one. When the flag flips, the WP-page surface will be the one without it.
+
+**`CardSection` is deleted, and `IllustratedCard` lost two props.** Both existed for the two static-row pages; with `/projects/` and `/materials/` in WordPress, the only caller left is the home page's `Directions` carousel, which draws one shape. So `CardSection`, `toCardRows` and their tests are gone, and with them `IllustratedCard`'s `wide` variant and `headingAs` switch — 86 lines of CSS and a derivation that had no inputs left to vary. The wide card is not lost; it is `.od-tiles--wide` in `gutenberg.css` now, which is where the page that uses it lives.
+
+Geometry re-measured against the deleted route's own output: cards 600×280 at x=100/740, rows 40 apart, title 25 from the card top and the link 25 from its bottom — identical. On `--mobile` the card returns to the portrait shape, 343×361, the same as `/projects/`.
+
+**Both pages now take their H1 from WordPress**, which is a change of wording: «НАШИ МАТЕРИАЛЫ» where the route said «МАТЕРИАЛЫ», «ПРОГРАММЫ И ПРОЕКТЫ» where it said «ПРОГРАММЫ». That is closer to what search already holds — the WP title is what the live site renders today — and it is now the editors' to change. `/materials/articles/` is untouched: it is a real route and keeps precedence over the catch-all.
+
+### D6i. `общее-дело.рф` counted as one of our own origins — 2026-08-17
+
+*(The commit is `fix(D6e)`, and this note has been renumbered twice: the branch it was written on had not seen the programme pages or the two indexes above, which took D6e–D6h. The log keeps the original label.)*
 
 Found while reading `/materials/metodichki/` for its redesign: two of its three «Подробнее» buttons point at `https://xn----9sbkcac6brh7h.xn--p1ai/materials/…`, the Punycode form of **общее-дело.рф**. That is not another site — it is the organisation's second domain for *this* one, and the live site's own navigation mixes both hosts freely (see the `menu-item` hrefs in `src/shared/legacy/__fixtures__/team.html`). Editors paste whichever host their browser happened to show them. Left absolute, each of those buttons walks the visitor off the frontend, and after cutover onto the old WordPress.
 
@@ -499,6 +531,8 @@ Gate 12 moved 83.7 % → 84.2 %, exactly the 114 visits.
 
 `app/materials/page.tsx`, from Figma `ads` (`778:2206`). Four white cards in a 2×2 grid (598×280, radius 12, padding 25): a 24/700 title top-left, a red «Подробнее» stretched over the whole card, and a ~200px illustration on the right. Static — no `revalidate`, no fetch, no props.
 
+**Superseded on 2026-08-18 (D6h): the route is deleted and the page is WP #20225.** The layout below is what shipped and what the WordPress version reproduces; the rest of this section is the record of how it got there.
+
 **The route owns no CSS**: that card is `IllustratedCard`'s `wide` variant and the 2×2 is what `CardSection` gives four cards (`toCardRows`: 2 + 2), both from D6. The page shipped with its own copy first — the two landed on the same day from different branches — and the copy was deleted on merge, along with its 86 lines of card CSS. Only two pixel choices changed with it: the column gap follows `CardSection`'s 40 rather than the mock's 44 (D6 already normalised the mock's gaps to 40), and on `--mobile` the card collapses to the portrait shape — drawing above the title — instead of staying a row, which is what `/projects/` does and neither mock draws.
 
 **It is four hard-coded links, and that is the whole page.** The live index has carried the same four groups for years, and the CPT question ([`wp-backend.md` §8](./wp-backend.md#8-outstanding-questions-the-wp-state-doesnt-answer)) belongs to the sub-pages behind them, not here — inventing a taxonomy to render a fixed quartet would have put that decision on the critical path of the one D8 page that doesn't ask it. The hrefs are the live page's own: `/materials/metodichki/`, `/materials/printed-products/`, `/materials/articles/` (the shipped alias), `/materials/social-reklama/`. Three of the four still answer through the A6 fallback; `page.test.tsx` pins them, because this hub is the section's only navigation and a typo would be a dead end no other route catches.
@@ -509,7 +543,7 @@ Built ahead of its entry traffic on purpose: **107 entries against 939 views (8.
 
 **Second fix out of the same merge: wide cards broke titles mid-word around 1000px.** Two 598 cards become ~420 there, and `.wide .illustration`'s 55 % share left the body ~120px — narrower than «Методические» at 24/700, so the word wrapped inside itself. The body's `min-width` is now `min-content` (its longest word) instead of `0`, and the illustration `min-width: 0`, so the drawing yields first. No breakpoint involved, and desktop is unchanged.
 
-Deferred: the newsletter block is *not* in the Figma frame — kept anyway, since the live page has one and every other index route ends with it.
+Deferred: the newsletter block is *not* in the Figma frame — kept anyway, since the live page has one and every other index route ends with it. It went with the route in D6h, which costs nothing while `NEWSLETTER_SIGNUP_ENABLED` is off.
 
 ### `/materials/metodichki/` — the first page through the redesign flow (D8), 2026-08-17
 

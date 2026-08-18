@@ -487,9 +487,75 @@ od_test('the task list became cards', !str_contains($kids, '<ul>'));
 
 od_test('converted content is left alone', od_pages_healthy_kids($kids, 667) === $kids);
 
-// -- both refuse input they do not recognise --------------------------------
+// ===========================================================================
+// `/projects/` — Figma `projects`, the index of the three above.
+// ===========================================================================
 
-foreach (['od_pages_healthy_youth', 'od_pages_healthy_kids'] as $transform) {
+$projectsBefore = file_get_contents(__DIR__ . '/fixtures/projects.before.html');
+$projects = od_pages_projects($projectsBefore, 0);
+
+od_test('two rows of cards', substr_count($projects, '<div class="wp-block-columns od-tiles">') === 2);
+od_test('six cards, each its own column', substr_count($projects, 'class="wp-block-column od-tile od-tile--') === 6);
+od_test('each card links once — the heading is not a second link', substr_count($projects, '<p class="od-tile-link"><a href=') === 6);
+od_test('the second row is the only one with a heading', str_contains($projects, '<h2 class="wp-block-heading">Проекты</h2>'));
+od_test('the first is named by the page title', substr_count($projects, '<h2 ') === 1);
+
+// The card ids are what `gutenberg.css` hangs each drawing on, so they are as
+// much part of the contract as the markup — `public/figma/projects/<id>.svg`.
+foreach (['healthy-russia', 'healthy-kids', 'healthy-youth', 'od-pro', 'video', 'online-courses'] as $id) {
+    od_test($id . ': card class', str_contains($projects, 'od-tile od-tile--' . $id . '"'));
+    od_test($id . ': drawing', file_exists(__DIR__ . '/../../public/figma/projects/' . $id . '.svg'));
+}
+
+od_test('programme title, as the mock sets it', str_contains($projects, '<h3 class="wp-block-heading">Здоровая Россия</h3>'));
+od_test('and it points at the page WordPress serves', str_contains($projects, '<a href="/healthy-russia/">Подробнее</a>'));
+od_test('the catalogue is this site\'s own route', str_contains($projects, '<a href="/video/">Подробнее</a>'));
+od_test('the external directions keep their origin', str_contains($projects, '<a href="https://od-pro.ru">Подробнее</a>'));
+
+// The old page is gone whole: its H1 is drawn from the page title, its CSS
+// styled the theme this site replaces, and its covers are not these drawings.
+od_test('no second H1', !str_contains($projects, '<h1'));
+od_test('the old theme\'s CSS is gone', !str_contains($projects, '<style'));
+od_test('and so is the class it styled', !str_contains($projects, 'program-box'));
+od_test('booklet covers gone', !str_contains($projects, 'metodischka1.jpg'));
+od_test('no images at all — the drawings are backgrounds', !str_contains($projects, '<!-- wp:image '));
+od_test('the buttons became the card-wide link', !str_contains($projects, 'wp-block-button'));
+od_test('the shouted programme names are gone', !str_contains($projects, 'ОБЩЕЕ ДЕЛО</h2>'));
+
+od_test('converted content is left alone', od_pages_projects($projects, 0) === $projects);
+
+// ===========================================================================
+// `/materials/` — Figma `ads`, the same card at 598×280.
+// ===========================================================================
+
+$materialsBefore = file_get_contents(__DIR__ . '/fixtures/materials.before.html');
+$materials = od_pages_materials($materialsBefore, 0);
+
+// One row of four, not two of two: `.od-tiles--wide` is a two-track grid.
+od_test('one row block', substr_count($materials, '<div class="wp-block-columns od-tiles od-tiles--wide">') === 1);
+od_test('four cards', substr_count($materials, 'class="wp-block-column od-tile od-tile--') === 4);
+od_test('the page title names the only section', !str_contains($materials, '<h2 '));
+
+foreach (['metodichki', 'printed-products', 'articles', 'social-reklama'] as $id) {
+    od_test($id . ': card class', str_contains($materials, 'od-tile od-tile--' . $id . '"'));
+    od_test($id . ': drawing', file_exists(__DIR__ . '/../../public/figma/materials/' . $id . '.svg'));
+}
+
+od_test('the mock\'s title, not the page\'s longer caption', str_contains($materials, '<h3 class="wp-block-heading">Методические пособия</h3>'));
+od_test('the relative href became the real path', str_contains($materials, '<a href="/materials/printed-products/">Подробнее</a>'));
+od_test('and the rest keep theirs', str_contains($materials, '<a href="/materials/social-reklama/">Подробнее</a>'));
+
+od_test('the old theme\'s hover-zoom is gone', !str_contains($materials, '<style'));
+od_test('and the class it styled', !str_contains($materials, 'textcapt'));
+od_test('the dead MailPoet shortcode is gone', !str_contains($materials, 'wysija_form'));
+od_test('the photos are not the mock\'s drawings', !str_contains($materials, '<!-- wp:image '));
+od_test('the caption\'s tail went with it', !str_contains($materials, 'Общего Дела'));
+
+od_test('converted content is left alone', od_pages_materials($materials, 0) === $materials);
+
+// -- every transform refuses input it does not recognise --------------------------------
+
+foreach (['od_pages_healthy_youth', 'od_pages_healthy_kids', 'od_pages_projects', 'od_pages_materials'] as $transform) {
     $threw = false;
     try {
         $transform('<!-- wp:paragraph --><p>что-то другое</p><!-- /wp:paragraph -->', 666);

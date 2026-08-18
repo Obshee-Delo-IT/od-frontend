@@ -654,6 +654,171 @@ h2:has(+ .od-cards, + .od-poster-cards) {
   border-radius: 12px;
 }
 
+/* ------------------------------------------------------------------------- *
+ * `/projects/` — the «Программы и проекты» index, Figma `projects`
+ * (`706:1775`), D6g.
+ *
+ * Two rows of cards, written into `post_content` by `od_pages_projects()` as a
+ * `core/columns` per row and one `core/column` per card — so a card is added,
+ * moved or dropped in the admin, and only its drawing is a file here.
+ * ------------------------------------------------------------------------- */
+
+/* Grid rather than the columns block's own flex: the mock keeps three equal
+   cards down to `--mobile` and then stacks them, which a track does without the
+   `flex-basis` core writes. `.wp-block-columns` as well as the modifier, for the
+   same reason `.od-card--flush` carries it — core is imported after this file. */
+.wp-block-columns.od-tiles {
+  display: grid;
+  margin-bottom: 40px;
+  gap: 40px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+/* Figma `Frame 33824`: 385×358 = 25 + a 200-tall drawing + 45 + the body + 25.
+   The column is already `position: relative` (see the caption rule above),
+   which is what the stretched link below resolves against. */
+.od-tile {
+  padding: 25px;
+  border-radius: 12px;
+  background-color: var(--white);
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.od-tile:hover {
+  box-shadow: var(--shadow-sm);
+  transform: translateY(-2px);
+}
+
+/* The drawing is decoration, so it is a background and not an image block —
+   the same call the goal card makes, and for the same reason: there is nothing
+   in the content for an editor to lose. One file per card id under
+   `public/figma/projects/`; a card added in the admin matches no rule below and
+   draws an empty box, which keeps the row aligned and says what is missing. */
+.od-tile::before {
+  display: block;
+  max-width: 335px;
+  height: 200px;
+  margin: 0 auto 45px;
+  background: center / contain no-repeat;
+  content: '';
+}
+
+.od-tile--healthy-russia::before {
+  background-image: url('/figma/projects/healthy-russia.svg');
+}
+
+.od-tile--healthy-kids::before {
+  background-image: url('/figma/projects/healthy-kids.svg');
+}
+
+.od-tile--healthy-youth::before {
+  background-image: url('/figma/projects/healthy-youth.svg');
+}
+
+.od-tile--od-pro::before {
+  background-image: url('/figma/projects/od-pro.svg');
+}
+
+.od-tile--video::before {
+  background-image: url('/figma/projects/video.svg');
+}
+
+.od-tile--online-courses::before {
+  background-image: url('/figma/projects/online-courses.svg');
+}
+
+.od-tile h3 {
+  margin-bottom: 10px;
+  color: var(--gray-9);
+  font-size: var(--font-size-6);
+  line-height: 130%;
+}
+
+.od-tile .od-tile-link {
+  margin-bottom: 0;
+  font-size: var(--font-size-4);
+}
+
+/* «Подробнее» is what a reader sees; the whole card is what they can click —
+   the film posters do the same, and for the same reason: one link, one
+   accessible name, no second anchor around the title.
+
+   Written with three classes, like `.od-card--flush` above: nothing here
+   competes with the poster card's own link rules, but they end in `a` too and
+   are declared earlier, so a shorter selector reads to stylelint as descending
+   specificity. */
+.wp-block-columns.od-tiles .od-tile-link a {
+  text-decoration: underline;
+}
+
+.wp-block-columns.od-tiles .od-tile-link a::after {
+  position: absolute;
+  content: '';
+  inset: 0;
+}
+
+/* A heading above a row of cards, the same 45px the programme pages give one. */
+h2:has(+ .od-tiles) {
+  margin-bottom: 45px;
+}
+
+/* `/materials/` — Figma `ads` (`778:2206`) draws the same card at 598×280 with
+   the drawing beside the text, two to a row. One columns block of four flows
+   into 2 + 2 on its own, and a fifth card opens a third row with no edit here.
+
+   Two tracks and two rows inside the card: the text takes the left column, the
+   title against the top and «Подробнее» against the bottom, and the drawing
+   spans both rows on the right. A flex row would need the title and the link
+   wrapped in a box of their own — markup an editor would have to keep intact. */
+.wp-block-columns.od-tiles--wide {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.od-tile--metodichki::before {
+  background-image: url('/figma/materials/metodichki.svg');
+}
+
+.od-tile--printed-products::before {
+  background-image: url('/figma/materials/printed-products.svg');
+}
+
+.od-tile--articles::before {
+  background-image: url('/figma/materials/articles.svg');
+}
+
+.od-tile--social-reklama::before {
+  background-image: url('/figma/materials/social-reklama.svg');
+}
+
+.od-tiles--wide .od-tile {
+  display: grid;
+  min-height: 280px;
+  gap: 0 24px;
+  /* The drawings are ~200 wide, and a background has no intrinsic size for a
+     track to follow — so the column is fixed at theirs rather than at a share
+     of the card, which would take 300 of the 550 and wrap every title. */
+  grid-template-columns: minmax(min-content, 1fr) 200px;
+  grid-template-rows: 1fr 1fr;
+}
+
+.od-tiles--wide .od-tile::before {
+  height: 230px;
+  margin: 0;
+  grid-area: 1 / 2 / 3 / 3;
+}
+
+.od-tiles--wide .od-tile h3 {
+  margin-bottom: 0;
+  grid-area: 1 / 1;
+}
+
+.od-tiles--wide .od-tile .od-tile-link {
+  align-self: end;
+  grid-area: 2 / 1;
+}
+
 @media (--mobile) {
   .od-programme-logo {
     max-width: none;
@@ -677,6 +842,35 @@ h2:has(+ .od-cards, + .od-poster-cards) {
 
   h2:has(+ .od-cards, + .od-poster-cards) {
     margin-bottom: 24px;
+  }
+
+  /* One card per row below 900px, at the 16px rhythm the mock's phone layout
+     uses everywhere else. */
+  .wp-block-columns.od-tiles {
+    margin-bottom: 24px;
+    gap: 16px;
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  h2:has(+ .od-tiles) {
+    margin-bottom: 24px;
+  }
+
+  /* The wide card goes back to being the portrait one: below 900px the row is a
+     single column, where the drawing reads better above the text than beside
+     it — which is what the `ads` mock draws too. */
+  .od-tiles--wide .od-tile {
+    display: block;
+    min-height: 0;
+  }
+
+  .od-tiles--wide .od-tile::before {
+    height: 200px;
+    margin: 0 auto 45px;
+  }
+
+  .od-tiles--wide .od-tile h3 {
+    margin-bottom: 10px;
   }
 
   /* Below 900px the adapter switches to `slidesPerView: 'auto'` and takes the
