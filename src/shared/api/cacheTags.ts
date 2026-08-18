@@ -39,6 +39,7 @@ export const WP_TAGS = {
    * WP `page` content served natively (D6). Coarse on purpose: the pages are a
    * handful and nothing lists them, so there is no per-page tag to be worth the
    * vocabulary — a single page can still be purged by `paths` on the webhook.
+   * `od-revalidate.php` queues this tag on any `page` edit.
    */
   pages: 'wp:pages',
   /** The `format=video` slice: the catalogue, its categories, the film pages. */
@@ -51,10 +52,9 @@ export const WP_TAGS = {
    * The `profile` CPT — the regional coordinators embedded in page bodies (D8),
    * and later `/profile/[slug]` itself (D3).
    *
-   * **Nothing purges it yet.** `wp/mu-plugins/od-revalidate.php` only queues
-   * `post_type === 'post'`, so a coordinator edit — like a page edit — waits out
-   * the hour. The tag exists so the fetch is addressable the moment that
-   * changes; see `wp-backend.md` §6.5.
+   * Purged by editing a `profile` record: `wp/mu-plugins/od-revalidate.php`
+   * queues this tag for that post type, because the card is drawn inside a
+   * *page* and a post id would purge nothing that shows it.
    */
   profiles: 'wp:profiles',
   /** `/wp/v2/search` results (B7). */

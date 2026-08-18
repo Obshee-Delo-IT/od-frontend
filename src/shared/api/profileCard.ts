@@ -65,6 +65,10 @@ const fallbackLabel = (href: string, kind: PersonContactKind): string =>
  * `https://vk.com/id39335667` — and the scheme is the third of that string a
  * reader gets nothing from; Telegram's own `@handle` labels pass through
  * untouched, having no scheme to strip.
+ *
+ * **A deliberate departure from the mock**, confirmed 2026-08-18: Figma
+ * `handbooks` types the VK row out in full, `https://vk.com/id39335667`, because
+ * the designer copied what the old page showed. We keep the trim.
  */
 const readableLabel = (label: string): string => label.replace(/^https?:\/\/(?:www\.)?/i, '').replace(/\/+$/, '');
 

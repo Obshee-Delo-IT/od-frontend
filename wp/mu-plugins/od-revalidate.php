@@ -273,20 +273,40 @@ final class OD_Revalidate {
 	}
 
 	/**
-	 * Only `post` is addressable by tag today: it is the one type the frontend
-	 * fetches through `shared/api/`, and every film is a `post` with
-	 * `format=video`. Pages are served by the A6 legacy fallback, which holds
-	 * no WP fetch tag — when that route lands, queue its permalink path here
-	 * (`paths`, which the endpoint already accepts) rather than a tag.
+	 * Three post types reach the frontend, and each is addressed the way its
+	 * fetches are tagged (`src/shared/api/cacheTags.ts`):
+	 *
+	 *   - `post` by id, because `wp:post:<id>` narrows the purge to one detail
+	 *     page. Films are `post`s with `format=video`, so they come through here.
+	 *   - `page` by the coarse `wp:pages` tag. WP pages render natively at their
+	 *     own URLs since D6b, and there is no per-page tag to be worth the
+	 *     vocabulary — a handful of pages, and nothing lists them.
+	 *   - `profile` by `wp:profiles`. A coordinator's record is drawn as a card
+	 *     inside a *page*, so an edit there has to purge the page that embeds it,
+	 *     which the tag does and a post id would not.
+	 *
+	 * Anything else — `attachment`, the dead `project` drafts, WooCommerce
+	 * leftovers — is not fetched by the frontend and is dropped here.
 	 *
 	 * @param WP_Post $post Post.
 	 */
 	private static function queue_post( WP_Post $post ) {
-		if ( 'post' !== $post->post_type ) {
+		if ( 'post' === $post->post_type ) {
+			self::$post_ids[] = (int) $post->ID;
+			self::schedule();
+
 			return;
 		}
-		self::$post_ids[] = (int) $post->ID;
-		self::schedule();
+
+		if ( 'page' === $post->post_type ) {
+			self::queue_tag( 'wp:pages' );
+
+			return;
+		}
+
+		if ( 'profile' === $post->post_type ) {
+			self::queue_tag( 'wp:profiles' );
+		}
 	}
 
 	private static function queue_tag( string $tag ) {

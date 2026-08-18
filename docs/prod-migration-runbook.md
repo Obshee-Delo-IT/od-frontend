@@ -161,7 +161,25 @@ ssh od-root 'cd ~/public_html && wp --skip-plugins --skip-themes eval "
      }"'
    ```
    `page` and `post` must be **0** or the remaining paths must all be on the A6 iframe list. Post types with no route here (`product`, `leyka_campaign`, `campaign`, `tribe_*`, `content_template`) don't matter.
-2. **Then install the mu-plugin**, while cmsms is still active — it hooks `init` at priority 20 precisely so it takes over immediately and can be verified before anything is switched off:
+2. **First dump prod's own registration and diff it against the file.** The
+   arguments in `od-profile.php` were dumped from **od-dev**, where cmsms runs
+   under WP 6.8.8; prod is a different cmsms release under 5.5.5, and a
+   difference in `rewrite.slug` or `has_archive` would silently move 205 URLs the
+   moment our file wins. Read it before installing anything:
+   ```bash
+   ssh od-root 'cd ~/public_html && wp --skip-plugins=wp-downgrade --skip-themes eval "
+     \$p = get_post_type_object( \"profile\" );
+     var_export( array(
+       \"rewrite\"     => \$p->rewrite,
+       \"has_archive\" => \$p->has_archive,
+       \"supports\"    => array_keys( get_all_post_type_supports( \"profile\" ) ),
+       \"taxonomies\"  => get_object_taxonomies( \"profile\" ),
+     ) );"'
+   ```
+   Expect `slug => profile`, `with_front => true`, `has_archive => true`, the ten
+   supports and `post_tag` + `pl-categs`. **Anything else is a stop** — edit the
+   mu-plugin to match prod before continuing, and note why in its header.
+3. **Then install the mu-plugin**, while cmsms is still active — it hooks `init` at priority 20 precisely so it takes over immediately and can be verified before anything is switched off:
    ```bash
    scp wp/mu-plugins/od-profile.php od-root:public_html/wp-content/mu-plugins/od-profile.php
    ssh od-root 'chmod 600 ~/public_html/wp-content/mu-plugins/od-profile.php && php -l ~/public_html/wp-content/mu-plugins/od-profile.php'
@@ -172,7 +190,7 @@ ssh od-root 'cd ~/public_html && wp --skip-plugins --skip-themes eval "
        var_export( get_registered_meta_keys( \"post\", \"profile\" )[\"cmsms_profile_subtitle\"][\"show_in_rest\"] ?? null, true ) );"'
    ```
    Expect `Профили | Регионы | tax_rest=true | meta_rest=true`. Russian labels are the tell that our file, not cmsms, is the live registration.
-3. **Then deactivate, delete, and flush.** `wp plugin deactivate cmsms-content-composer`, then `wp plugin delete cmsms-content-composer`, then `wp rewrite flush` — same slugs, so the rules come back identical, but the flush costs nothing and a stale rule set is a 404 on every `/profile/…`.
+4. **Then deactivate, delete, and flush.** `wp plugin deactivate cmsms-content-composer`, then `wp plugin delete cmsms-content-composer`, then `wp rewrite flush` — same slugs, so the rules come back identical, but the flush costs nothing and a stale rule set is a 404 on every `/profile/…`.
 
    ⚠️ **Deleting is not optional tidying.** The plugin ships three PHP files that bootstrap WordPress from `$_SERVER['SCRIPT_FILENAME']` instead of `admin-ajax.php` and read `$_POST` with no nonce and no capability check: `framework/inc/cmsms-composer-templates-operator.php`, `inc/project/projects-loader.php`, `inc/post/posts-loader.php`. **A deactivated plugin's files still answer HTTP** — with the plugin off on od-dev all three returned 200 to an unauthenticated GET *and* POST, and **all three answer 200 on prod today**. Verify they 404 afterwards:
    ```bash
@@ -190,7 +208,7 @@ ssh od-root 'cd ~/public_html && wp --skip-plugins --skip-themes eval "
 
 ⚠️ **Prod is WordPress 5.5.5 on PHP 7.x.** Everything `od-profile.php` calls predates 5.5 (`register_post_meta` is 4.9.8, `show_in_rest` on meta and taxonomies is 4.7), and the file is written to the same 7.0 floor as `od-revalidate.php` for the same reason — a parse error in an mu-plugin takes the whole site down. **Rollback is `rm`** plus reactivating the plugin.
 
-⚠️ **Two known gaps, both about legacy pages, both live only once A6 ships.** The plugin reports post type `post` only, so **editing a legacy page purges nothing** — the fallback route would serve its cached render for up to an hour. And prod caches its own HTML with **WP Rocket** (§2 of `wp-backend.md`), which the fallback fetches: purging Next before WP Rocket just re-caches the stale copy. When A6 lands, the order is WP Rocket first, then the frontend, and the plugin needs to start sending `paths` for pages — the endpoint already accepts them.
+⚠️ **One known gap, about legacy pages, live only once A6 ships.** Prod caches its own HTML with **WP Rocket** (§2 of `wp-backend.md`), which the A6 fallback fetches: purging Next before WP Rocket just re-caches the stale copy. When A6 lands, the order is WP Rocket first, then the frontend. (The other gap is closed: since 2026-08-18 the plugin queues `page` as `wp:pages` and `profile` as `wp:profiles`, not `post` alone, so an edit to a natively-rendered page or to a coordinator's record purges the pages built from it. A page still on the A6 iframe holds no WP fetch tag of its own — that one wants `paths`, which the endpoint already accepts.)
 
 **Two dead links — ~~to remove~~ done 2026-08-15, on prod and od-dev both.** (A note, not a step — B8a took the number 2.6.) The `sidebar_bottom` links widget's `/sp/` (leyka form, no money taken since 2022-01-05) and menu item 27971 «Заказать материалы» (CF7 order form, mail lands in spam). Deleted at the source, so the frontend filters neither any more. What was removed, how to restore it, and what has to be decided before either comes back: [`next-steps.md`](./next-steps.md). Both pages still answer 200 on the A6 fallback — the links went, not the pages.
 

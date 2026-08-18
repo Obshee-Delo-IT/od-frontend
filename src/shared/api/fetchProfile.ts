@@ -9,8 +9,9 @@ import { parseProfileBody } from './profileCard';
 /**
  * One `profile` record, reduced to what a {@link PersonCard} draws.
  *
- * The CPT is registered by `cmsms-content-composer` and holds the 139 published
- * regional coordinators and team members ([`wp-backend.md`
+ * The CPT is registered by `wp/mu-plugins/od-profile.php` (ours since B8a — the
+ * plugin that used to own it is gone) and holds the 139 published regional
+ * coordinators and team members ([`wp-backend.md`
  * §3.5](../../../docs/wp-backend.md)). Its bodies are already clean Gutenberg,
  * so this is a read, not a migration — the only work is that the contact fields
  * are prose, which {@link parseProfileBody} narrows to "the anchors, by scheme".
