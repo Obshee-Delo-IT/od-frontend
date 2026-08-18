@@ -547,6 +547,37 @@ Three things the mock asks for and the content cannot give:
 - **The contact rows' type lived on the anchor**, so a row that ever held text beside its link would have rendered it at `.gutenberg li`'s 16px next to the link's 18. Moved one level up, onto the row.
 - **The decorative icons were anonymous `img` nodes** in the a11y tree — `aria-hidden` at the call site. The general gap (no icon in this repo sets it) is in [`next-steps.md`](./next-steps.md).
 
+**Third review round, 2026-08-18** — the page measured against the Figma node
+tree rather than the render, so every number below is the frame's own. The cover
+grid held exactly: covers 386.67×545.53 against 387.04×545.67, radius 16, gap 40
+against 39.44, the pill inset 12/12/14 and 120 between the row and the next
+heading. The card held too: 1240 wide, radius 12, padding 20, the identity row 50
+tall on a 24+12 indent, 15 to the contact list, 6 between rows, 18/140% in
+`#ae0a04` with the subtitle in `#414e62`. What came out of it was mostly *shared*
+code, and is written up where it belongs — `C12` for the page header's own text
+style and the 20 above it, `B4` for the purge, and the covers' `alt` and files in
+the D8 commit. Three things are decisions rather than fixes:
+
+- **The mock's 35 between a section heading and the block under it is not a
+  system value.** `handbooks` draws 35; `project-1`, built the same week, draws 45;
+  our `h2` rhythm is `0.75em` = 24. Two mocks disagreeing by 10px is a designer's
+  hand, not a rule, so the system's 24 stays and the 11px difference on this page
+  is deliberate.
+- **The «Подробнее» pill is drawn on one of the three covers in Figma** — one
+  `Button` instance in the frame, over card 1. We render three, because the row is
+  three identical cards and a pill on one of them reads as a mistake. Worth a word
+  with Design, and the only place this page adds something the mock does not show.
+- **The VK row keeps its trimmed label** (`vk.com/id39335667` where the mock types
+  the scheme out). Confirmed 2026-08-18; the reason is beside the code in
+  `profileCard.ts`.
+
+Also verified rather than changed: the `Folder` glyph in Figma's
+`_Breadcrumbs Base` is hidden in every `page header` instance — its bounds sit
+exactly under the label's, which is how Figma reports an invisible auto-layout
+child — so the repo is right not to draw one. The crumb *colours* were wrong and
+are fixed (`--gray-8` for the page's own crumb, the parent's colour for the
+chevron).
+
 Two smaller things went with them: a `profile` record with an empty title now falls back to staying a link rather than heading a card with nothing, and a contact label that is a bare URL drops its scheme — `https://vk.com/id39335667` reads as `vk.com/id39335667`, while Telegram's `@paramon1302` has no scheme to lose.
 
 ---
