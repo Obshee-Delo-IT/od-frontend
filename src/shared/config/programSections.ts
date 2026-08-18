@@ -27,9 +27,11 @@ import type { FC, SVGProps } from 'react';
  * not by position: «Общее дело ПРО» is the charts illustration wherever it
  * appears, even though it is the 4th card here and the 1st of its section on
  * `/projects/`. The five `direction-*.svg` names are positional leftovers; the
- * file each constant below points at is what matters. `/projects/` keeps its own
- * copies of the same six under `public/figma/projects/`, named by card id —
- * CSS cannot import an SVG that `@svgr/webpack` turns into a component.
+ * file each constant below points at is what matters. `/projects/` reads the
+ * same drawings from `public/figma/cards/`, a flat mirror of the folder these
+ * imports come from — CSS cannot import an SVG that `@svgr/webpack` turns into
+ * a component, and a card's drawing is reused across pages, so the copies are
+ * named after the file rather than after the card.
  *
  * **Programme hrefs address the pages WordPress already serves.** The real
  * programmes are three top-level pages (`/healthy-kids/`, not
