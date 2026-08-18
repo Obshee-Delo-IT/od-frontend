@@ -713,7 +713,7 @@ od_test('the photos of them in use get their own heading', str_contains($sticker
 // A `columns` grid, not a `core/gallery`: block-library stretches a gallery's
 // last lone picture to full width, and overriding it is a fight with a selector
 // carrying an id inside a `:not()`.
-od_test('and are a picture grid, not four more cards', substr_count($sticker, '"className":"od-figures od-figures--2"') === 2);
+od_test('and are a picture grid, not four more cards', substr_count($sticker, '"className":"od-figures od-figures--4"') === 1);
 od_test('all four of them', substr_count($sticker, 'wp-block-image size-full') === 10);
 od_test('the old theme\'s border class is gone', !str_contains($sticker, 'marginbottom'));
 od_test('converted content is left alone', od_pages_sticker($sticker, 0) === $sticker);

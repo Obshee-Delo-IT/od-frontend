@@ -1003,13 +1003,23 @@ h2:has(+ .od-tiles) {
   grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
-/* A fixed box with `contain` rather than a `max-height`: the bookmarks are
-   1:7 strips and the example photos are landscape, and only a box both can sit
-   inside keeps a row of either from setting the card's height on its own. */
+/* A fixed box, so one tall picture cannot set the row's height on its own.
+   Standing on its own the grid is `/materials/sticker/`'s photographs of the
+   material in use — four across, each 267 × 215 in the library, so the box is
+   the size they are and `cover` fills it rather than leaving bars where the
+   rounded corner should be. */
 /* stylelint-disable-next-line no-descending-specificity -- `.od-card--flush` is
    `/materials/metodichki/`'s card; no body carries both classes. */
 .od-figures .wp-block-image img {
   width: 100%;
+  height: 220px;
+  border-radius: 8px;
+  object-fit: cover;
+}
+
+/* Inside a card it is `/materials/zakladki/`'s nine bookmarks instead: 1:7
+   strips, which need a tall box and the whole strip inside it. */
+.od-asset .od-figures .wp-block-image img {
   height: 420px;
   object-fit: contain;
 }
@@ -1020,11 +1030,28 @@ h2:has(+ .od-tiles) {
 }
 
 /* At the foot of the card, `margin-top: auto` keeps it on the bottom edge when
-   the card beside it is taller. Direct child only: inside a column it is one of
-   two things being centred together, and pushing it down would strand the label
-   above it at the top — which is what `/materials/led-board-roliki/` draws. */
+   the card beside it is taller. Direct child only: inside a column the row is
+   part of a block being placed as a whole. */
 .od-asset > .od-asset-actions {
   margin-top: auto;
+}
+
+/* The column beside a clip — only `/materials/led-board-roliki/` puts an embed
+   inside a card, so this is that page. The mock hangs the label and its two
+   buttons off the bottom edge, level with the video, and the pair fills the
+   column: two 203px buttons in a 425px column. */
+.od-asset .wp-block-column:has(> .wp-block-embed) + .wp-block-column {
+  justify-content: flex-end;
+}
+
+.od-asset .wp-block-column:has(> .wp-block-embed) + .wp-block-column .wp-block-button {
+  flex: 1;
+}
+
+.od-asset .wp-block-column:has(> .wp-block-embed) + .wp-block-column .wp-block-button__link {
+  display: block;
+  width: 100%;
+  text-align: center;
 }
 
 @media (--mobile) {
@@ -1090,6 +1117,10 @@ h2:has(+ .od-tiles) {
   }
 
   .od-figures .wp-block-image img {
+    height: 140px;
+  }
+
+  .od-asset .od-figures .wp-block-image img {
     height: 260px;
   }
 
