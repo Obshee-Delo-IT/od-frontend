@@ -166,13 +166,24 @@ ssh od-root 'cd ~/public_html && wp --skip-plugins --skip-themes core version'
 
 Then run the content conversion — [`wp-page-passthrough.md` §6](./wp-page-passthrough.md#6-running-the-migrator) — `wp cmsms backup` first, since it is what makes the rest reversible, and only then `wp cmsms migrate`.
 
-**2.8 Apply the page fixes.** Workstream D's WordPress-side changes are a script in this repo, not admin edits, precisely so this step is one command. Procedure and guarantees: [`wp-page-redesign.md`](./wp-page-redesign.md).
+**2.8 Apply the page fixes.** Workstream D's WordPress-side changes are scripts in this repo, not admin edits, precisely so this step is a handful of commands. Procedure and guarantees: [`wp-page-redesign.md`](./wp-page-redesign.md).
+
+**Order matters.** The mu-plugin has to be in place before a page that binds to it renders, and the tag has to exist before `od-pages.php` can write a query over it — that script errors out rather than guess.
 
 ```bash
+scp wp/mu-plugins/od-film-meta.php od-root:public_html/wp-content/mu-plugins/od-film-meta.php
+ssh od-root 'php -l ~/public_html/wp-content/mu-plugins/od-film-meta.php'
+
+scp wp/scripts/od-terms.php od-root:public_html/
+ssh od-root 'cd ~/public_html && wp --skip-plugins --skip-themes eval-file od-terms.php'         # dry run
+ssh od-root 'cd ~/public_html && wp --skip-plugins --skip-themes eval-file od-terms.php apply'
+
 scp wp/scripts/od-pages.php od-root:public_html/
 ssh od-root 'cd ~/public_html && wp --skip-plugins --skip-themes eval-file od-pages.php'         # dry run
 ssh od-root 'cd ~/public_html && wp --skip-plugins --skip-themes eval-file od-pages.php apply'
 ```
+
+`od-terms.php` addresses posts by slug, so it reports which of the programme's films production is missing rather than tagging the wrong ones. Read that output before running `od-pages.php`.
 
 `apply` is a positional argument, not a `--flag`: `wp eval-file` hands positionals to the script in `$args` and rejects unknown flags outright.
 

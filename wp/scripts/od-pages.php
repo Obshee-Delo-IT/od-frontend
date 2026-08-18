@@ -245,12 +245,19 @@ function od_pages_slides(array $slides): string
  * The films of a programme, as a `core/query` — so the row follows the tag and
  * tagging a film in the admin is the whole job of adding one.
  *
- * Two attributes carry the trick that lets a dynamic list drive a Swiper: the
+ * Three attributes carry the trick that lets a dynamic list drive a Swiper: the
  * query renders as `.wp-block-query`, so `className: swiper` makes it the
  * element the adapter mounts on, and `core/post-template` renders the `<ul>`
  * Swiper needs as its track, so it takes `swiper-wrapper`. The `<li>`s come out
  * as `.wp-block-post` rather than `.swiper-slide`, which the adapter passes to
  * Swiper as `slideClass`.
+ *
+ * The cover is **not** `core/post-featured-image`: that is the 16∶9 still
+ * `/video/` wants, and this card is 3∶4. It is a `core/image` bound to
+ * `od_card_cover` — the film's printable плакат, falling back to the still —
+ * through the Block Bindings API, which `wp/mu-plugins/od-film-meta.php`
+ * registers. A binding cannot produce a permalink, so the cover is not a link
+ * and the film's own title is, which is the better accessible name anyway.
  *
  * The permalink structure on this site is `/%post_id%/`, so every link a query
  * block emits is already the URL the frontend serves a film at — no rewriting,
@@ -280,11 +287,26 @@ function od_pages_film_query(int $tagId): string
         JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE
     );
 
+    $cover = json_encode(
+        [
+            'metadata' => [
+                'bindings' => [
+                    'url' => ['source' => 'core/post-meta', 'args' => ['key' => 'od_card_cover']],
+                ],
+            ],
+        ],
+        JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE
+    );
+
     return sprintf("<!-- wp:query %s -->\n", $query)
         . '<div class="wp-block-query swiper">'
         . "<!-- wp:post-template {\"className\":\"swiper-wrapper\"} -->\n"
-        . "<!-- wp:post-featured-image {\"isLink\":true,\"scale\":\"contain\"} /-->\n\n"
-        . "<!-- wp:read-more {\"content\":\"Подробнее\"} /-->\n"
+        // `alt=""` on purpose: the title below is the card's accessible name, and
+        // the cover repeats it.
+        . sprintf("<!-- wp:image %s -->\n", $cover)
+        . '<figure class="wp-block-image"><img src="" alt=""/></figure>'
+        . "\n<!-- /wp:image -->\n\n"
+        . "<!-- wp:post-title {\"level\":3,\"isLink\":true} /-->\n"
         . "<!-- /wp:post-template -->"
         . "</div>\n<!-- /wp:query -->\n\n";
 }

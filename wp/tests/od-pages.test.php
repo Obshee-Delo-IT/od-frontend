@@ -39,13 +39,11 @@ assert(str_contains($after, '"tagIds":[665]'), 'the row queries the tag it was g
 assert(str_contains($after, '"inherit":false'), 'and not the page\'s own query');
 assert(str_contains($after, '"className":"swiper"'), 'the query block is what Swiper mounts on');
 assert(str_contains($after, '<!-- wp:post-template {"className":"swiper-wrapper"} -->'), 'the post template is the track');
-// `scale` matters: core writes `object-fit` inline, which no stylesheet can beat,
-// and its default crops a 16∶9 still to a 3∶4 card.
-assert(
-    str_contains($after, '<!-- wp:post-featured-image {"isLink":true,"scale":"contain"} /-->'),
-    'each film shows its cover whole, linked'
-);
-assert(str_contains($after, '<!-- wp:read-more {"content":"Подробнее"} /-->'), 'and the mock\'s pill');
+// Not `core/post-featured-image`: that is the 16∶9 still `/video/` wants.
+assert(str_contains($after, '"key":"od_card_cover"'), 'the cover is bound to the portrait one');
+assert(str_contains($after, '"source":"core/post-meta"'), 'through the block bindings API');
+assert(!str_contains($after, 'post-featured-image'), 'the 16∶9 still is not what this card shows');
+assert(str_contains($after, '<!-- wp:post-title {"level":3,"isLink":true} /-->'), 'the title is the card\'s link');
 assert(!str_contains($after, 'drugs.jpg'), 'the migrator\'s hand-picked posters are gone');
 
 // Arrows on the projects row, which can outgrow its three slots; none on the
@@ -92,7 +90,7 @@ assert(!str_contains($after, 'flex-basis'), 'column widths are left to the style
 // -- alt text ---------------------------------------------------------------
 
 assert(str_contains($after, 'alt="Здоровая Россия"'), 'logo alt');
-assert(!str_contains($after, 'alt=""'), 'no hand-written image is left without alt');
+assert(substr_count($after, 'alt=""') === 1, 'only the bound cover, which the title beside it names');
 
 // -- idempotency ------------------------------------------------------------
 

@@ -161,6 +161,7 @@ Three things to know:
 
 - **ACF is canonical; body-parsing is a fallback.** Films' legacy bodies contain the same links as free-form HTML, and the frontend still mines them (`extractFilmPoster`, in-body Яндекс.Диск anchors) — but only to fill what data entry hasn't covered yet, deduped by URL with the ACF value winning. That precedence was a deliberate decision («parsing is not stable»), so don't invert it.
 - **Five generic download slots, not a full/short pair.** The label carries the whole pill text (e.g. «Полн. версия • 35 мин • 1,5 Гб») because 11 films ship 2–5 same-duration size/format variants.
+- **`poster_image_url` has a second job.** It is the printable плакат on the film page, and it is also the **portrait card cover** the programme pages need — a post has one featured image, and that one is the 16∶9 still `/video/` wants. `wp/mu-plugins/od-film-meta.php` exposes it to the block editor's Block Bindings API under a computed key, **`od_card_cover`**, which falls back to the featured image so a card never breaks on a film without a плакат. 11 of 99 films carry one.
 - **Population is incomplete and editorial.** 70 of 99 films have a `kinescope_id`, 0 have a `watch_url`. Current numbers and what editors must supply are in [`implementation-plan.md` → B-VIDEO2](./implementation-plan.md#workstream-b--wordpress--data-layer); the CSV round-trip tooling is `pnpm film:export` / `film:import` (see the README).
 
 **Consequence for §4:** ACF is no longer an optional nicety on this install — `/video` does not work without it.
