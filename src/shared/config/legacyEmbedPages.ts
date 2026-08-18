@@ -15,6 +15,20 @@
  * `CLAUDE.md`), so the only surviving shortcodes were WooCommerce's four, and 23
  * pages still carry bare `cmsms_*` class names.
  *
+ * That shortcode count was low, and the reason is worth knowing: it was taken
+ * from `content.rendered`, where WordPress has already **expanded** every
+ * shortcode whose plugin is still active — so a surviving `[cmsms_*]` reads as
+ * ordinary markup rather than as a shortcode. Re-measured 2026-08-18 against raw
+ * `post_content`: **11 published pages** still hold one (`[cmsms_sidebar]` on
+ * seven, plus `[cmsms_contact_form]`, `[cmsms_selected_products]`,
+ * `[cmsms_audios]`), and all 11 are already covered — ten by the list below and
+ * `/news/` by its native route. Four published *posts* hold one too
+ * (`[cmsms_slider]`, `[cmsms_audios]`, `[cmsms_table]`, `[cmsms_tabs]`, ids
+ * 41045 / 56178 / 62556 / 64555), and those are cosmetic: each expands to under
+ * 450 bytes, so the body around them renders. The reason to care at all is the
+ * cutover — the frozen copy keeps the plugin, this install eventually will not,
+ * and a shortcode with no plugin renders as its own source text.
+ *
  * The WooCommerce group is gone: `/shop/`, `/cart/`, `/checkout/` and
  * `/my-account/` were **deleted in WordPress on 2026-08-17**, on prod and
  * od-dev both — the shop had been switched off in copy for years and drew 16

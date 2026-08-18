@@ -1,7 +1,10 @@
 import { describe, expect, it, vi } from 'vitest';
 
 vi.mock('@/shared/api/httpClient', () => ({ wpBaseUrl: 'https://wp.test' }));
-vi.mock('@/shared/config/site', () => ({ siteUrl: 'https://obshee-delo.ru' }));
+const ALIAS = 'https://xn----9sbkcac6brh7h.xn--p1ai';
+vi.mock('@/shared/config/site', () => ({
+  internalOrigins: (wp: string) => [wp, 'https://obshee-delo.ru', 'https://xn----9sbkcac6brh7h.xn--p1ai'],
+}));
 
 import { resolveContentLinks } from './resolveContentLinks';
 
@@ -28,6 +31,19 @@ describe('resolveContentLinks', () => {
     expect(resolveContentLinks('<a href="https://obshee-delo.ru/news/?category=articles#top">н</a>')).toBe(
       '<a href="/news/?category=articles#top">н</a>'
     );
+  });
+
+  it('strips the общее-дело.рф alias domain — two of three cards on /materials/metodichki/', () => {
+    expect(resolveContentLinks(`<a href="${ALIAS}/materials/ppiz-zdorov-molodez/">Подробнее</a>`)).toBe(
+      '<a href="/materials/ppiz-zdorov-molodez/">Подробнее</a>'
+    );
+  });
+
+  it('keeps the alias domain subdomains — those are other services, not this site', () => {
+    const donate = '<a href="https://xn--d1aadek5agm.xn----9sbkcac6brh7h.xn--p1ai/">Оказать помощь</a>';
+    const stats = '<a href="http://xn--80a7adb.xn----9sbkcac6brh7h.xn--p1ai/">Наша статистика</a>';
+    expect(resolveContentLinks(donate)).toBe(donate);
+    expect(resolveContentLinks(stats)).toBe(stats);
   });
 
   it('keeps external destinations', () => {

@@ -15,6 +15,32 @@ const DEFAULT_SITE_URL = 'https://obshee-delo.ru';
 export const siteUrl = (process.env.SITE_URL || DEFAULT_SITE_URL).replace(/\/$/, '');
 
 /**
+ * The organisation's *other* domain for the same site — `общее-дело.рф`, stored
+ * everywhere in Punycode.
+ *
+ * It is not a redirect and not a second site: the live site's own navigation
+ * mixes both hosts freely (see `src/shared/legacy/__fixtures__/team.html`), and
+ * editors paste whichever one their browser showed them. So a body link to
+ * `https://xn----9sbkcac6brh7h.xn--p1ai/materials/ppiz-zdorov-molodez/` names a
+ * page *this* site serves, and left absolute it walks the visitor onto the old
+ * WordPress. Two of the three cards on `/materials/metodichki/` are exactly
+ * that.
+ *
+ * Only the bare origin counts. The sibling subdomains are genuinely different
+ * services and must stay external — `помощь.общее-дело.рф`
+ * (`xn--d1aadek5agm.…`) is the donation host the header CTA points at, and
+ * `xn--80a7adb.…` is the statistics site.
+ */
+export const SITE_ALIAS_ORIGINS = ['https://xn----9sbkcac6brh7h.xn--p1ai'];
+
+/**
+ * Every origin whose absolute URLs are really paths on this site — the
+ * WordPress origin content is fetched from, our own public origin, and the
+ * alias domain above. What {@link toInternalHref} strips.
+ */
+export const internalOrigins = (wpOrigin: string): string[] => [wpOrigin, siteUrl, ...SITE_ALIAS_ORIGINS];
+
+/**
  * Absolute URL for a path, in the site's canonical form.
  *
  * **Always trailing-slashed** (bar the query), because `trailingSlash: true`

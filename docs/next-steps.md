@@ -188,3 +188,237 @@ thing. The cost only lands when editors start authoring pages themselves.
 
 **Trigger to do it:** the first page an editor is expected to lay out without
 us. Until then, the frontend is the preview.
+
+---
+
+## `WpPage` breadcrumbs start at «Главная», the mocks start at the parent
+
+**Found 2026-08-17**, redesigning `/materials/metodichki/`. Figma `handbooks`
+draws «Материалы › Методические пособия»; `WpPage` renders «Главная ›
+Методические пособия», because it builds the trail from two literals — the root
+and the page's own title. Every one of the ~150 native WP pages is the same, and
+every mock in a section shows its parent.
+
+**Why it wasn't done with that page.** The data is there — page 27642's
+`post_parent` is 20225 (`materials`) — but `fetchWpPage` doesn't request `parent`,
+and a trail needs each ancestor's *title*, so a deep page is one extra request
+per level (or one `?include=` request once the ids are known, which needs the
+chain first). That is a `WpPage` change affecting every native page, and it does
+not belong to one page's commit.
+
+**What it would take:** add `parent` to `fetchWpPage`'s `_fields`, walk it with a
+`cache()`d `fetchWpPage`-by-id, cap the depth (nothing on od-dev is deeper than
+two), and fall back to today's «Главная» when a parent is missing or unpublished.
+The crumb should link the parent's own path, which for `materials` is a native
+route already.
+
+---
+
+## `.wp-block-group h2` lowercases «Россия»
+
+**Found 2026-08-17.** `gutenberg.css` has
+`.wp-block-group h2 { text-transform: lowercase }` with a `::first-letter`
+override, which sentence-cases the all-caps headings WordPress content is full
+of. It also lowercases every *proper noun* after the first word:
+`/materials/metodichki/` rendered «Здоровая россия — общее дело» until those
+three headings were removed for the mock, and any page that keeps a heading with
+a place or a name in it will do the same.
+
+**The real fix is content, not CSS** — sentence-case the headings in WordPress
+(an `od-pages.php` transform can do a page at a time) and delete the rule. Until
+then, check every heading a redesigned page keeps.
+
+**Scale unmeasured.** Worth counting the headings that hold a capitalised word
+past the first before deciding whether this is a sweep or a handful.
+
+---
+
+## Profile 46651's slug names a different person
+
+**Found 2026-08-17.** The record titled «Андрей Алексеевич Рязанов» has
+`post_name` `гордикова-екатерина` (percent-encoded) and `_wp_old_slug`
+`екатерина-гордикова`: it was Екатерина Гордикова and was retitled in place
+without re-slugging. `/materials/metodichki/` now links it, so the wrong name is
+visible in the href.
+
+**Not fixable from here, and that is the interesting part.** After cutover
+`/profile/*` is still served by the A6 iframe against the frozen copy, which is
+keyed on the **live** path — so re-slugging od-dev's record would make the page
+404 in the iframe. The slug can only change once `/profile/[slug]` is a native
+route (D3, Tier 2), and even then it wants a `_wp_old_slug` redirect.
+
+**Also: 46651 is unlikely to be the only one.** Worth a pass comparing each
+`profile`'s title against its slug once D3 starts — 139 records, and the
+mismatches are the ones whose URLs are wrong for search too.
+
+---
+
+## The three `metodichki` covers are the wrong image files
+
+**Found 2026-08-17.** Figma `handbooks` shows flat poster artwork; WordPress
+holds photographs of the printed booklets on white grounds, which is what the
+live site has always shown. `.od-covers img` crops to the mock's 387×546 with
+`object-fit: cover`, so the row is even either way and the layout already fits
+the designer's renders — but each card carries a band of the photo's own white
+background, where the mock has artwork to its edges.
+
+**What to do:** ask Design for the three cover files, upload them to the media
+library and repoint the three `<img src>`s. No code change; an `od-pages.php`
+transform or three admin edits. The same question will come up for
+`/materials/plakati/` and `/materials/zakladki/`, so ask once.
+
+**They were also too small** — all three rendered at 386.67px wide from naturals
+of 500 / 220 / 297 px (**1.29× / 1.76× / 1.30×** upscale), because the page
+referenced deliberately small uploads while the library held the originals.
+**Two thirds of that is fixed** (2026-08-18): `od_cover_full_size()` in
+`od-pages.php` repointed «Здоровая молодежь» at `обложка_ЗдорМолодежьNew.jpg`,
+930×1315 — a 0.42× downscale, and at 0.7072 it is the row's own ratio, so its crop
+went from 0.3% to **-0.2%**, i.e. none.
+
+**What is left is one file and one offload gap.** «Здоровые дети» still renders
+its 220×300 upload at 1.76×, and it cannot be repointed: WordPress says
+attachment 27636's full-size file is `metodichka-mult.jpg` at **844×1092**, but
+that file is **not on the media bucket** — the bucket 301s it to
+`общее-дело.рф`, which 301s again, and neither origin serves it. So either
+re-upload that original (it is the same artwork, just the large copy), or ask
+Design for the file with the other two. «Здоровая Россия» is at its own ceiling:
+`metodichka.jpg` 500×647 is the largest copy in the library, and it still crops
+8.3% because its 0.773 ratio is not the row's.
+
+That third cover is worth checking against the bucket generally: if one
+attachment's full-size file is missing while its sized variants are there, others
+may be too, and `resolveMediaUrl`'s origin fallback cannot help when the origin
+answers 301.
+
+## ~~The covers' `alt` carried the site's own name~~ — done 2026-08-18
+
+`od_strip_site_suffix()` / `od_strip_attr_site_suffix()` in `od-pages.php`. The
+old theme's headings ended in « - ОБЩЕЕ ДЕЛО» because they doubled as the link's
+`title`, and `od_headings_into_image_alt()` copied that into three `alt`s, from
+where `od_cover_link_names()` copied it into three `aria-label`s — a screen reader
+read the site's name out three times between the covers. The attribute-level
+strip exists because the heading-level one cannot reach a page that was already
+converted: it is idempotent by «the heading is gone afterwards».
+
+## ~~The first cover was lazy-loaded~~ — done 2026-08-18
+
+WordPress marks every image in a body `loading="lazy"` at render time, the LCP
+element included. `resolveContentHtml(html, true)` — passed by `WpPage`,
+`NewsArticle` and `FilmPage`, not by the footer — makes a main body's first image
+`loading="eager" fetchpriority="high"` and leaves the rest lazy.
+
+## Three unauthenticated PHP entry points are live on production
+
+**Found 2026-08-18** while removing `cmsms-content-composer` from od-dev. The
+plugin ships three files that bootstrap WordPress themselves from
+`$_SERVER['SCRIPT_FILENAME']` instead of going through `admin-ajax.php`, and read
+`$_POST` with no nonce and no capability check:
+
+```
+wp-content/plugins/cmsms-content-composer/framework/inc/cmsms-composer-templates-operator.php
+wp-content/plugins/cmsms-content-composer/inc/project/projects-loader.php
+wp-content/plugins/cmsms-content-composer/inc/post/posts-loader.php
+```
+
+All three answer **200 on `https://obshee-delo.ru/` today** to an unauthenticated
+request. **Deactivating the plugin does not close them** — a deactivated plugin's
+files are still served; measured on od-dev, where all three kept returning 200
+until the directory was deleted, and 404 immediately after.
+
+**What to do:** delete the plugin directory on prod. That is already step 3 of
+[`prod-migration-runbook.md` §2.6](./prod-migration-runbook.md), so this needs no
+separate work — but it is worth doing on its own schedule rather than waiting for
+the cutover, since it is live exposure on the public site. It costs nothing: the
+theme keeps the plugin as a `.zip` for reference, and `cmsms-gutenberg-upgrade`
+never calls into it.
+
+While looking: `wp-content/plugins/wp-optimize/vendor/mrclay/minify/server-info.php`
+is a second self-bootstrapping file, from a different plugin. Unchecked — worth
+one `curl` when someone is in there.
+
+## 1 492 rows the cmsms deactivation orphaned
+
+**Measured 2026-08-18**, right after `cmsms-content-composer` was switched off on
+od-dev. Its other post types were not re-registered — deliberately, they are dead
+— so their rows are still in the database and no longer reachable from the admin:
+
+| post type | rows | referenced by anything published? |
+| --- | --- | --- |
+| `cmsms_like` | 1 430 drafts | no — engagement counters for a theme we don't render |
+| `content_template` | 41 published | no — checked every published page and post |
+| `project` | 21 drafts | no — 0 published, the recon found Lorem ipsum |
+
+**What to do:** nothing urgent. If the database is ever tidied, delete them with
+`wp post delete --force` per type, and take the dead `cmsms_*` postmeta with them
+— **except `cmsms_profile_subtitle`**, which `wp/mu-plugins/od-profile.php`
+re-registers and D3 reads. Worth doing before a prod dump/restore, not before
+launch.
+
+## Linkify the contacts inside `profile` bodies
+
+**Measured 2026-08-18.** Of 139 published records, **82 hold a phone number typed
+as plain text** outside any anchor and 5 an e-mail, against 24 that link the phone
+with `tel:`. `parseProfileBody` reads anchors only — by design, see
+`src/shared/api/profileCard.ts` — so those records render a card with no phone
+row. 30 records show no contact at all; 109 show at least one.
+
+**What to do:** one pure transform in the `wp/scripts/od-pages.php` mould over the
+`profile` post type — plain-text phones, e-mails and bare `vk.com`/`t.me` URLs
+into anchors, idempotent by detection (skip anything already inside an `<a>`).
+Formats seen in the data: `89185700050`, `тел.: +79062755758`, `+79030913733`,
+`тел. 8(987)839-53-53`, `e-mail: x@y.ru`. Expected effect: card contact coverage
+109/139 → ~137/139, **with no frontend change**. This is the alternative to
+backfilling ACF fields — see [`wp-backend.md` §3.1](./wp-backend.md), "Fields for
+`profile`: a pattern, not ACF".
+
+Note `od-pages.php` currently resolves a target by path or title, one record per
+entry; a sweep over a whole post type needs a third resolver kind (~10 lines).
+
+## `/contacts/samarskaya/` lists no coordinators, and the term exists
+
+**Found 2026-08-18.** Page 21557's `core/query` block still carries the old
+`taxQuery: {"post_tag": [-1]}` placeholder — the "match nothing" fallback from
+before [`wp-page-passthrough.md` §5a](./wp-page-passthrough.md) was fixed. It is
+**the one page of the 75 the re-migration could not touch**: its
+`nvp_content_copy` backup is empty, so `wp cmsms migrate` has no original
+shortcode to convert. Meanwhile the right term is there — `activity-samara`
+(`pl-categs` 532) with **8 profiles**.
+
+**What to do:** rewrite that one block's `taxQuery` to `{"pl-categs":[532]}`.
+Term ids are per-environment, so this belongs in `od-pages.php` resolving the term
+by slug at run time, not as a literal.
+
+## Four regional contact pages point at the wrong region, and always did
+
+**Found 2026-08-18.** `/contacts/murmanskaya/`, `smolenskaya/`, `mordoviya/` and
+`astrakhanskaya/` each carry `taxQuery: {"pl-categs":[-1]}`, correctly: their
+original shortcode read `categories="архангельская-область"` — a copy-paste on the
+legacy site, which rendered them empty too. And `pl-categs` has **no term at all**
+for Murmansk, Smolensk, Mordovia or Astrakhan, so there is nothing to repoint them
+at. 20 of the 72 terms have zero profiles.
+
+**What to do:** a content question for the coordinators, not a code fix — either
+those four regions have contacts to tag or the pages should stop implying they do.
+
+## Icons carry no `aria-hidden`, app-wide
+
+**Found 2026-08-18.** The `@svgr/webpack` wrappers in
+`src/shared/ui/components/Icons/index.tsx` pass no `aria-hidden`, so every
+decorative glyph is an anonymous `img` node in the accessibility tree. `PersonCard`
+now sets it at the call site, which is the local fix; the general one is
+`svgProps: { 'aria-hidden': 'true' }` in the loader config, one line — but it
+would also hide the icons that *are* the accessible name of their control, so each
+icon-only button needs an `aria-label` checked first. Worth doing as its own pass
+over the ~25 icons.
+
+## Two footer/heading semantics gaps outside D8
+
+**Found 2026-08-18** while auditing `/materials/metodichki/` in a production build:
+
+- The footer's social row is a `<h2 class="wp-block-heading">` **with no text**,
+  wrapping three icon links — an empty heading in the a11y tree. Global, comes
+  from the WordPress footer widget.
+- `/contacts/<region>/` pages go `h1` → **`h3`** (the coordinator teaser's title)
+  → `h2` «События». The coordinator query block has no section heading of its own.
+  A skipped level on ~75 pages; fixable with one heading block per page, or by
+  dropping the teaser title's level.

@@ -60,7 +60,7 @@ const Page = async () => {
   ];
 
   return (
-    <Box display="flex" flexDirection="column" gap={40} py={48}>
+    <Box display="flex" flexDirection="column" gap={40} pt={20} pb={48}>
       <PageHeader title={TITLE} breadcrumbs={breadcrumbItems} />
 
       <NewsGrid items={items} emptyMessage="Статей не найдено." />

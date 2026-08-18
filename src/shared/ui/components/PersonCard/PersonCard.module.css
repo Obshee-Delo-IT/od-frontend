@@ -1,0 +1,154 @@
+/* Figma `Frame 33928` (handbooks) and the `team-1` cards: white, radius 12
+   (`radius/4`), padding 20 (`spacing/4`), and — checked by pixel-sampling the
+   card's edge — no border and no shadow in any variant.
+
+   **Every selector that styles a `p`, `ul`, `li`, `a` or `img` here is doubled.**
+   This card renders *inside* `<GutenbergProvider>` — that is the whole point of
+   it, it replaces a link in a WordPress body — and `gutenberg.css` styles those
+   five elements by tag name, which inside `.gutenberg` becomes `.gutenberg p`
+   (0,1,1). A single module class is (0,1,0) and loses: the name came out at 16px
+   with a 1em bottom margin, the contact list carried `ul`'s 1.5em indent and
+   `li`'s 0.5em row margin, and the links took the body link colour. Doubling the
+   class is the same trick `modules/Header` uses against Radix's `:where()` rules
+   — see `implementation-notes.md` §C9. */
+.card {
+  display: flex;
+  padding: 20px;
+  border-radius: 12px;
+  background: var(--white);
+}
+
+.body {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  flex-direction: column;
+  /* Figma: 50-tall identity row, 15, then the contact list. */
+  gap: 15px;
+}
+
+/* 24 icon + 12 gap, the same indent the contact rows use. */
+.identity {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.names {
+  min-width: 0;
+}
+
+/* One 18/140% text node in Figma, two lines with different fills — so the two
+   paragraphs carry no gap between them and the line-height does the spacing. */
+.name.name,
+.subtitle.subtitle {
+  margin: 0;
+  font-size: var(--font-size-4);
+  line-height: var(--line-height-4);
+}
+
+.name.name {
+  color: var(--red-8);
+  font-weight: 700;
+}
+
+.subtitle.subtitle {
+  color: var(--gray-7);
+}
+
+.contacts.contacts {
+  display: flex;
+  /* Bottom of the text column. Figma draws `space-between` on the photo card and
+     an explicit bottom anchor on the wide one; with a column that can grow these
+     are the same rule, and on the photo-less card there is no free space to push
+     into so it changes nothing there. */
+  flex-direction: column;
+  padding: 0;
+  margin: 0;
+  margin-top: auto;
+  gap: 6px;
+  list-style: none;
+}
+
+/* The type is set on the row, not on the anchor: inside `<GutenbergProvider>` a
+   bare `li` inherits `.gutenberg li`'s 16px, so a row that ever holds text
+   beside its link — an unlinked number, a separator — would render 16 next to
+   the link's 18. Same two declarations, one level up. */
+.contact.contact {
+  display: flex;
+  align-items: center;
+  margin: 0;
+  font-size: var(--font-size-4);
+  gap: 12px;
+  line-height: var(--line-height-4);
+}
+
+.contact.contact a {
+  color: var(--red-8);
+  overflow-wrap: anywhere;
+  text-decoration: none;
+}
+
+.contact.contact a:hover {
+  color: var(--red-10);
+  text-decoration: underline;
+}
+
+/* 1.5px outline marks, stroked `#414e62` = `--gray-7`, drawn in a 24 box. */
+.contactIcon {
+  flex: none;
+  color: var(--gray-7);
+}
+
+/* `team-1`: 200 × 259.04 (≈3:4) at the card's inset, radius 12, the picture
+   cropped to cover. Fixed rather than aspect-driven because the row is
+   equal-height and the mock's cards all measure the same. */
+.photo {
+  position: relative;
+  overflow: hidden;
+  width: 200px;
+  height: 259px;
+  flex: none;
+  border-radius: 12px;
+}
+
+.photo.photo img {
+  object-fit: cover;
+}
+
+.withPhoto {
+  /* Figma: 20 between the photo and the text column. */
+  gap: 20px;
+}
+
+.withPhoto .name.name {
+  color: var(--gray-9);
+  font-size: var(--font-size-5);
+  line-height: 130%;
+}
+
+.withPhoto .names {
+  display: flex;
+  flex-direction: column;
+  /* 22 bold name, 10, 16 regular role — the photo card sets both apart from the
+     photo-less one, where the two lines are a single text node. */
+  gap: 10px;
+}
+
+.withPhoto .subtitle.subtitle {
+  font-size: var(--font-size-3);
+  line-height: var(--line-height-3);
+}
+
+/* `team-1-mob`: the photo drops to 80 × 104 and the text stacks under it. Kept
+   last so it overrides the two-column rules above without extra specificity. */
+@media (--mobile) {
+  .withPhoto {
+    flex-direction: column;
+  }
+
+  .withPhoto .photo {
+    width: 80px;
+    height: 104px;
+  }
+}

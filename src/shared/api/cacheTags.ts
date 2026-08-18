@@ -39,6 +39,7 @@ export const WP_TAGS = {
    * WP `page` content served natively (D6). Coarse on purpose: the pages are a
    * handful and nothing lists them, so there is no per-page tag to be worth the
    * vocabulary — a single page can still be purged by `paths` on the webhook.
+   * `od-revalidate.php` queues this tag on any `page` edit.
    */
   pages: 'wp:pages',
   /** The `format=video` slice: the catalogue, its categories, the film pages. */
@@ -47,6 +48,15 @@ export const WP_TAGS = {
   menus: 'wp:menus',
   /** Widget sidebars (`/wp/v2/widgets`) — the footer. */
   widgets: 'wp:widgets',
+  /**
+   * The `profile` CPT — the regional coordinators embedded in page bodies (D8),
+   * and later `/profile/[slug]` itself (D3).
+   *
+   * Purged by editing a `profile` record: `wp/mu-plugins/od-revalidate.php`
+   * queues this tag for that post type, because the card is drawn inside a
+   * *page* and a post id would purge nothing that shows it.
+   */
+  profiles: 'wp:profiles',
   /** `/wp/v2/search` results (B7). */
   search: 'wp:search',
 } as const;

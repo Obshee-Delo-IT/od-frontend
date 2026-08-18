@@ -4,3 +4,11 @@
   align-items: center;
   gap: 4px;
 }
+
+/* The page's own crumb is `#344051` = `--gray-8`, two steps darker than the links
+   beside it: Radix's `color="gray"` gives every crumb the parent colour, which is
+   right for a link and not for this one. Doubled, because Radix's own rule for the
+   `color` prop is a single class and would tie and win on source order. */
+.current.current {
+  color: var(--gray-8);
+}

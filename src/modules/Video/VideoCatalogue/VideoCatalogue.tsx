@@ -126,7 +126,7 @@ export const VideoCatalogue = async ({ segment, page }: VideoCatalogueProps) => 
   }));
 
   return (
-    <Box display="flex" flexDirection="column" gap={40} py={48}>
+    <Box display="flex" flexDirection="column" gap={40} pt={20} pb={48}>
       <PageHeader title={copy.heading} breadcrumbs={breadcrumbItems} />
 
       <VideoFilter options={filterOptions} active={segment ?? ALL} />

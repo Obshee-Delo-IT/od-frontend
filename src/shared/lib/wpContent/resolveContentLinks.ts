@@ -1,5 +1,5 @@
 import { wpBaseUrl } from '@/shared/api/httpClient';
-import { siteUrl } from '@/shared/config/site';
+import { internalOrigins } from '@/shared/config/site';
 import { toInternalHref } from './toInternalHref';
 
 const ANCHOR_TAG = /<a\b[^>]*>/gi;
@@ -36,7 +36,8 @@ const wpOrigin = wpBaseUrl.replace(/\/+$/, '');
  *
  * Only `<a>` is touched, and only when the origin is ours (see
  * {@link toInternalHref}); external destinations and other relative hrefs pass
- * through untouched.
+ * through untouched. "Ours" includes the alias domain `общее-дело.рф` — see
+ * {@link internalOrigins}.
  */
 export const resolveContentLinks = (html?: string | null): string => {
   if (!html) {
@@ -55,7 +56,7 @@ export const resolveContentLinks = (html?: string | null): string => {
       return tag.replace(HREF_ATTR, `href="${wpOrigin}${href}"`);
     }
 
-    const internal = toInternalHref(href, [wpBaseUrl, siteUrl]);
+    const internal = toInternalHref(href, internalOrigins(wpBaseUrl));
     if (internal === href || WP_ONLY_PATH.test(internal)) {
       return tag;
     }

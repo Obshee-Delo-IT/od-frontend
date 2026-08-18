@@ -828,13 +828,37 @@ function welfare_to_gutenberg($content) {
 
         $taxQuery = [];
 
-        if (!empty($tags)) {
+        //-- Регион берётся из pl-categs, а НЕ из post_tag. Именно так ищет и сам
+        //-- шорткод (inc/shortcodes.php: tax_query taxonomy 'pl-categs',
+        //-- field 'slug'), а post_tag на профилях почти не заполнен — 2 записи из
+        //-- 139 против 135. Пока здесь стоял post_tag, ни один slug вида
+        //-- activity-<регион> не находился, $taxQuery оставался пустым и падал в
+        //-- заглушку -1 «не совпадать ни с чем»: все 75 блоков на региональных
+        //-- страницах od-dev рендерили пустой список. Замер 2026-08-17: из 71
+        //-- упомянутого региона 50 реально держат профили, 128 записей.
+        //-- core/query принимает в taxQuery term_id, а не slug, — и это ещё одна
+        //-- причина решать соответствие здесь: id свои в каждой среде, так что
+        //-- конвертация на prod во время cutover подставит prod-овские.
+        $requested = '' !== trim($tags);
+
+        if ($requested) {
             $slugs = array_map('trim', explode(',', $tags));
 
             foreach ($slugs as $slug) {
-                $term = get_term_by('slug', $slug, 'post_tag');
+                $term = get_term_by('slug', $slug, 'pl-categs');
+
+                //-- Пара профилей продублировала регион обычной меткой, так что
+                //-- post_tag остаётся вторым шансом, а не первым.
+                if (!$term) {
+                    $term = get_term_by('slug', $slug, 'post_tag');
+                    if ($term) {
+                        $taxQuery['post_tag'][] = intval($term->term_id);
+                        continue;
+                    }
+                }
+
                 if ($term) {
-                    $taxQuery['post_tag'][] = intval($term->term_id);
+                    $taxQuery['pl-categs'][] = intval($term->term_id);
                 }
             }
         }
@@ -849,10 +873,17 @@ function welfare_to_gutenberg($content) {
             "inherit" => false
         ];
 
-        if (empty($taxQuery)) {
-            $taxQuery['post_tag'][] = -1;
+        //-- Шорткод назвал регион, но термина под него нет (1 slug из 71): лучше
+        //-- пустой список, чем все 139 координаторов страны на странице одной
+        //-- области. А вот шорткод вовсе без categories означает «все профили» —
+        //-- тогда taxQuery не пишем совсем, и раньше именно это ломалось тоже.
+        if (empty($taxQuery) && $requested) {
+            $taxQuery['pl-categs'][] = -1;
         }
-        $query["taxQuery"] = $taxQuery;
+
+        if (!empty($taxQuery)) {
+            $query["taxQuery"] = $taxQuery;
+        }
 
         $queryNumber++;
         $attrs = [
@@ -884,7 +915,75 @@ function welfare_to_gutenberg($content) {
         <?php
         return ob_get_clean();
     }, $content);
-    
+
+    //-- Таблицы (cmsms_table/tr/td → core/table) --
+    //-- Всё в tbody, без thead: cmsms тоже рисовал первую строку обычными
+    //-- ячейками, а угадывать, что она заголовок, значит на таблице без шапки
+    //-- увести первую строку данных в заголовок.
+    $content = preg_replace_callback('/\[cmsms_table[^\]]*\](.*?)\[\/cmsms_table\]/s', function ($m) {
+        preg_match_all('/\[cmsms_tr[^\]]*\](.*?)\[\/cmsms_tr\]/s', $m[1], $rows, PREG_SET_ORDER);
+
+        $body = '';
+        foreach ($rows as $row) {
+            preg_match_all('/\[cmsms_td([^\]]*)\](.*?)\[\/cmsms_td\]/s', $row[1], $cells, PREG_SET_ORDER);
+            if (!$cells) continue;
+
+            $tds = '';
+            foreach ($cells as $cell) {
+                //-- Выравнивание ячейки core/table держит классом и data-атрибутом.
+                $align = preg_match('/align="(left|center|right)"/i', $cell[1], $a) ? strtolower($a[1]) : '';
+                $attrs = $align ? ' class="has-text-align-' . $align . '" data-align="' . $align . '"' : '';
+                $tds .= '<td' . $attrs . '>' . trim($cell[2]) . '</td>';
+            }
+            $body .= '<tr>' . $tds . '</tr>';
+        }
+
+        if (!$body) return '';
+
+        return '<!-- wp:table -->
+<figure class="wp-block-table"><table><tbody>' . $body . '</tbody></table></figure>
+<!-- /wp:table -->';
+    }, $content);
+
+    //-- Аудио (cmsms_audios/cmsms_audio → core/audio), как и видео выше --
+    $content = preg_replace_callback('/\[cmsms_audios[^\]]*\](.*?)\[\/cmsms_audios\]/s', function ($m) {
+        preg_match_all('/\[cmsms_audio[^\]]*\](.*?)\[\/cmsms_audio\]/s', $m[1], $tracks, PREG_SET_ORDER);
+
+        $out = '';
+        foreach ($tracks as $track) {
+            $src = trim($track[1]);
+            if (!$src) continue;
+
+            $out .= '<!-- wp:audio -->
+<figure class="wp-block-audio"><audio controls src="' . esc_url($src) . '"></audio></figure>
+<!-- /wp:audio -->';
+        }
+
+        return $out;
+    }, $content);
+
+    //-- Табы (cmsms_tabs/cmsms_tab → wp:details, ровно как toggle выше) --
+    //-- Обёртку снимаем первой: [cmsms_tab...] иначе матчит и [cmsms_tabs...].
+    $content = preg_replace('/\[cmsms_tabs[^\]]*\]/', '', $content);
+    $content = str_replace('[/cmsms_tabs]', '', $content);
+    $content = preg_replace_callback('/\[cmsms_tab[^\]]*title="([^"]*)"[^\]]*\](.*?)\[\/cmsms_tab\]/s', function ($m) {
+        $title = esc_html($m[1]);
+        $body  = wpautop(trim($m[2]));
+
+        return '<!-- wp:details -->
+<details class="wp-block-details">
+  <summary>' . $title . '</summary>
+  <!-- wp:paragraph -->
+  ' . $body . '
+  <!-- /wp:paragraph -->
+</details>
+<!-- /wp:details -->';
+    }, $content);
+
+    //-- Слайдер (cmsms_slider) — это ссылка на сторонний плагин слайдов, своего
+    //-- содержимого у шорткода нет, так что переносить нечего.
+    $content = preg_replace('/\[cmsms_slider[^\]]*\](?:.*?\[\/cmsms_slider\])?/s', '', $content);
+
     return $content;
 }
 

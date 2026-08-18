@@ -1,17 +1,25 @@
+/* Figma `page header` (`1335:7682`) puts 20 between the breadcrumb row and the
+   title — measured on two instances, and it is the component, not a per-page
+   override. The 20 above the breadcrumbs is the page shell's `pt`. */
 .root {
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 20px;
 }
 
-/* Figma text/9/bold — PT Sans Narrow Bold 48, brand red, uppercase. */
+/* Figma text/9/bold — PT Sans Narrow Bold 48/120%, 2% tracking, `#be1710`,
+   uppercase. Through the tokens, which carry exactly those values: the hardcoded
+   48px/120% that used to be here said the same thing but let the tracking go
+   missing, and `--red-8` (`#ae0a04`) is the header bar's red, one step darker
+   than the heading's. `gutenberg.css`'s own `h1` rule already read all three. */
 .title {
   margin: 0;
-  color: var(--red-8);
+  color: var(--red-7);
   font-family: var(--font-pt-sans-narrow), 'PT Sans Narrow', sans-serif;
-  font-size: 48px;
+  font-size: var(--font-size-9);
   font-weight: 700;
-  line-height: 120%;
+  letter-spacing: var(--letter-spacing-9);
+  line-height: var(--line-height-9);
   text-transform: uppercase;
 
   @media (--mobile) {

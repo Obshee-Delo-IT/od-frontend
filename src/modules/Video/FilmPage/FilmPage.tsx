@@ -84,7 +84,7 @@ export const FilmPage = async ({ id }: FilmPageProps) => {
     ...film.downloads,
     ...extracted.downloads.filter((download) => !knownDownloadUrls.has(download.url)),
   ];
-  const parsed = parsePost(await resolveContentHtml(extracted.html));
+  const parsed = parsePost(await resolveContentHtml(extracted.html, true));
   const rawPosterImageUrl = film.posterImageUrl ?? extracted.posterImageUrl;
   const posterImageUrl = rawPosterImageUrl ? await resolveMediaUrl(rawPosterImageUrl) : null;
   const posterAspectRatio = film.posterImageUrl ? aspectRatioFromUrl(film.posterImageUrl) : extracted.posterAspectRatio;
@@ -92,7 +92,7 @@ export const FilmPage = async ({ id }: FilmPageProps) => {
   const hasPosterCard = Boolean(posterImageUrl || posterDownloadUrl);
 
   return (
-    <Box display="flex" flexDirection="column" gap={{ mobile: 32, smallDesktop: 40, desktop: 40 }} py={48}>
+    <Box display="flex" flexDirection="column" gap={{ mobile: 32, smallDesktop: 40, desktop: 40 }} pt={20} pb={48}>
       {/* Slash-terminated: `trailingSlash: true` makes the slashless twin a redirect. */}
       <Breadcrumbs items={[{ label: 'Видео', href: catalogueHref({ segment: null }) }, { label: film.title }]} />
 

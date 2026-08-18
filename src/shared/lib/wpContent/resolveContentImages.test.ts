@@ -19,6 +19,28 @@ describe('resolveContentImages', () => {
     expect(out).toContain('<p>x</p>');
   });
 
+  it('makes the first image eager and leaves the rest lazy', async () => {
+    const html =
+      '<img src="https://wp.test/cover.jpg" loading="lazy" alt="a"/><img src="https://wp.test/next.jpg" loading="lazy" alt="b"/>';
+    const out = await resolveContentImages(html, true);
+    const [first, second] = out.match(/<img\b[^>]*>/g) ?? [];
+
+    // WordPress lazy-loads every image in a body, including the one that is the
+    // page's LCP element.
+    expect(first).toContain('loading="eager"');
+    expect(first).toContain('fetchpriority="high"');
+    expect(first).not.toContain('loading="lazy"');
+    expect(second).toContain('loading="lazy"');
+    expect(second).not.toContain('fetchpriority');
+  });
+
+  it('leaves lazy loading alone by default — a footer widget is not a main body', async () => {
+    const html = '<img src="https://wp.test/logo.png" loading="lazy" alt=""/>';
+
+    expect(await resolveContentImages(html)).toContain('loading="lazy"');
+    expect(await resolveContentImages(html)).not.toContain('fetchpriority');
+  });
+
   it('rewrites multiple images', async () => {
     const html = '<img src="https://wp.test/one.jpg"><img src="https://wp.test/two.png">';
     const out = await resolveContentImages(html);

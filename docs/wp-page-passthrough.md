@@ -149,6 +149,25 @@ Not fixed, because it is not ours: profile 21157 carries `href="http://+7-903-72
 
 **Cyrillic slugs never match.** WordPress stores them percent-encoded and we compare paths decoded, so those pages fall through to the iframe. Deliberate: matching both forms costs two round trips on every miss, to serve pages with no measurable traffic.
 
+## 5a. The migrator emptied every regional coordinator list — fixed at the source, 2026-08-17
+
+**Symptom:** all **75** `wp:query` blocks over `postType: profile` — one on each regional `/contacts/<region>/` page — rendered nothing. Not "looked wrong": zero items, 113 bytes of wrapper. Found while answering "is there a WordPress-native way to embed a profile", and the answer turned out to be "yes, and it is already in the content, and it is broken".
+
+**Cause, in `cmsms-gutenberg-upgrade`:** its `cmsms_profiles` branch resolved the shortcode's `categories="activity-<region>"` slugs against **`post_tag`**, while both the original shortcode and the data use **`pl-categs`** (`cmsms-content-composer/inc/shortcodes.php`: `tax_query` with `'taxonomy' => 'pl-categs', 'field' => 'slug'`). On profiles `post_tag` is all but empty — **2 records of 139 carry one, against 135 with a `pl-categs` term** — so no slug ever resolved, `$taxQuery` stayed empty, and the code fell into a `post_tag => [-1]` placeholder, i.e. *match nothing*. Every list came out empty, including the ones whose shortcode named a region with coordinators in it.
+
+Measured over the backups before fixing: **71 distinct region slugs** referenced, **1** with no term at all, **20** whose term genuinely holds no published profile, and **50 holding 128 profile rows** — real content, lost in the conversion.
+
+**Fix**, in the converter rather than in 74 page bodies, because **prod converts through it at cutover** and would otherwise launch its regional contacts pages empty too:
+
+- resolve in `pl-categs`, falling back to `post_tag` for the two records that mirrored their region as a tag;
+- keep a `-1` placeholder **only** when the shortcode named a region nothing resolves to (1 of 71) — an empty list beats all 139 coordinators of the country on one oblast's page — and emit **no `taxQuery` at all** when the shortcode had no `categories`, which used to fall into the same dead placeholder.
+
+Note `core/query` takes **term ids** in `taxQuery`, not slugs, and ids differ per environment (runbook B4). That is a second reason the mapping belongs here: the converter resolves slug → id on whichever install it runs on, so prod's conversion writes prod's ids. A hand-written id in content could not.
+
+**Applied to od-dev** the same day, scoped to the 74 pages that carry the shortcode in their backup (`wp cmsms migrate --post=<74 ids>`) — deliberately *not* the bulk run, which reports 2 324 records because the gallery-stylesheet fix in §5 is still unapplied to existing bodies. Bodies grew 1–2 bytes each, which is `post_tag` → `pl-categs` and nothing else; a second dry-run reported 0 left. Verified after: **0 → 50 pages non-empty, 128 coordinator items**, and the frontend renders those teasers with no `PersonCard` among them — which is what the `<p>`-only embed marker is for (`implementation-notes.md`, D8): before that fix these very pages would have drawn the card twice per coordinator.
+
+Chukotka still lists nobody, and correctly — its term has no published profile.
+
 ## 6. Running the migrator
 
 `cmsms-gutenberg-upgrade` converts CMSMasters shortcodes to core Gutenberg blocks. It ran once on od-dev; **prod runs it as part of the cutover**, so a bug in it is a bug in prod's future content, which is why the fix above went here rather than into the two pages.

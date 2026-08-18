@@ -29,7 +29,9 @@
  *   `cmsms-gutenberg-upgrade`'s `save_post` hook, which deletes the
  *   `nvp_content_copy` meta that both a re-run of the migrator and
  *   `wp cmsms restore` depend on.
- * - **Pages are addressed by path**, never by id — ids differ per environment.
+ * - **Records are addressed by path**, never by id — ids differ per environment.
+ *   A `profile` whose slug names someone else is addressed by exact title
+ *   instead; see `OD_METODICHKI_COORDINATOR_HREF`.
  *
  * PHP: this file only ever runs under WP-CLI (8.2 on production), so modern
  * syntax is fine here. The runtime half of the design system, if one is ever
@@ -772,22 +774,527 @@ function od_pages_inline_text(string $html): string
     return trim(preg_replace('#\s+#u', ' ', $text));
 }
 
+/* -------------------------------------------------------------------------
+ * Pure transforms
+ * ---------------------------------------------------------------------- */
+
 /**
- * Page path => the transform that rebuilds it and the tag its «Проекты
- * программы» row queries. Every page workstream D has rebuilt. An empty tag slug
- * means the page has no such row — the transform is still called the same way,
- * with `0`. `wp/scripts/od-wp.php` is what creates the tags.
+ * Escape a value for an HTML attribute without double-escaping entities the
+ * content already carries (`&laquo;` must not become `&amp;laquo;`).
+ */
+function od_attr(string $value): string
+{
+    return htmlspecialchars($value, ENT_QUOTES, 'UTF-8', false);
+}
+
+/**
+ * Drop a trailing «— ОБЩЕЕ ДЕЛО» from a heading.
  *
- * @return array<string, array{0: callable-string, 1: string}>
+ * The old theme's headings carried the site name because they doubled as the
+ * link's `title`, and «Здоровая Россия - ОБЩЕЕ ДЕЛО» is what
+ * {@see od_headings_into_image_alt()} would otherwise put in three `alt`s and
+ * three `aria-label`s on one page — a screen reader reading the site's own name
+ * out three times between the covers.
+ *
+ * Any of the four dashes, either case, and only at the end.
+ */
+function od_strip_site_suffix(string $heading): string
+{
+    return trim(preg_replace('~\s*[-–—−]\s*ОБЩЕЕ\s+ДЕЛО[.!]?\s*$~ui', '', $heading));
+}
+
+/**
+ * Drop `group > columns > column{100%}` wrappers that contain nothing.
+ *
+ * CMSMasters rows were the old theme's vertical spacing, and an empty
+ * `[cmsms_row][cmsms_column data_width="1/1"][/cmsms_column][/cmsms_row]` pair
+ * came through the migrator as an empty group of an empty column. They render as
+ * empty divs — invisible, but they are what makes "the first `wp:columns` block"
+ * an unreliable thing to point at, so this runs first.
+ *
+ * Idempotent: after one pass there are none left to match.
+ */
+function od_drop_empty_layout_groups(string $content): string
+{
+    $pattern = '~<!--\s*wp:group\b[^>]*-->\s*<div class="wp-block-group">'
+        . '\s*<!--\s*wp:columns\b[^>]*-->\s*<div class="wp-block-columns">'
+        . '\s*<!--\s*wp:column\b[^>]*-->\s*<div class="wp-block-column"[^>]*>\s*</div>\s*<!--\s*/wp:column\s*-->'
+        . '\s*</div>\s*<!--\s*/wp:columns\s*-->'
+        . '\s*</div>\s*<!--\s*/wp:group\s*-->~s';
+
+    return preg_replace($pattern, '', $content);
+}
+
+/**
+ * Whether any block in `$content` already declares `$class`.
+ *
+ * The `className` values are split and compared whole rather than searched for as
+ * a substring: `str_contains( $content, 'b' )` is true of every body ever
+ * written, because `wp-block-columns` contains a «b».
+ */
+function od_has_block_class(string $content, string $class): bool
+{
+    if (!preg_match_all('~"className"\s*:\s*"([^"]*)"~', $content, $matches)) {
+        return false;
+    }
+
+    foreach ($matches[1] as $value) {
+        if (in_array($class, preg_split('~\s+~', trim($value)), true)) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+/**
+ * Put `$class` on the first `wp:columns` block — both in the block attributes
+ * and on the rendered `<div>`, which is what the editor itself writes for the
+ * «Дополнительные CSS-классы» field.
+ *
+ * A class is how a page-specific layout reaches CSS in this repo (ladder rung 2,
+ * `docs/wp-page-redesign.md` §2): nothing in Gutenberg's markup distinguishes a
+ * grid of poster covers from any other three-column row.
+ *
+ * Idempotent by detection — {@see od_has_block_class()}.
+ */
+function od_class_on_first_columns(string $content, string $class): string
+{
+    if (od_has_block_class($content, $class)) {
+        return $content;
+    }
+
+    return preg_replace_callback(
+        '~<!--\s*wp:columns\s*(\{.*?\})?\s*-->(\s*)<div class="wp-block-columns~s',
+        static function (array $m) use ($class): string {
+            $attrs = isset($m[1]) && '' !== $m[1] ? json_decode($m[1], true) : [];
+            $attrs = is_array($attrs) ? $attrs : [];
+            $attrs['className'] = trim(($attrs['className'] ?? '') . ' ' . $class);
+            $json               = json_encode($attrs, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+
+            return "<!-- wp:columns {$json} -->{$m[2]}<div class=\"wp-block-columns {$class}";
+        },
+        $content,
+        1
+    );
+}
+
+/**
+ * Move an `h2` that only labels the picture under it into that picture's `alt`,
+ * and drop the heading.
+ *
+ * The `handbooks` mock draws the three covers with no captions: each poster's
+ * title is printed on the artwork itself, so the heading above it was the same
+ * words twice. Deleting it outright would lose them for a screen reader and for
+ * search, hence the move rather than a delete.
+ *
+ * Only a heading whose **immediately** following block is a paragraph holding an
+ * `<img>` qualifies, and the image has to be inside that same paragraph — the
+ * `(?:(?!</p>).)*?` is what stops a heading with no picture of its own from
+ * claiming the next column's.
+ *
+ * Idempotent: the heading it feeds on is gone afterwards.
+ */
+function od_headings_into_image_alt(string $content): string
+{
+    $pattern = '~<!--\s*wp:heading\b[^>]*-->\s*<h2\b[^>]*>(.*?)</h2>\s*<!--\s*/wp:heading\s*-->'
+        . '(\s*<!--\s*wp:paragraph\s*-->\s*<p\b[^>]*>(?:(?!</p>).)*?<img\b)([^>]*?)(\s*/?>)~s';
+
+    return preg_replace_callback(
+        $pattern,
+        static function (array $m): string {
+            $alt   = od_attr(od_strip_site_suffix(trim(strip_tags($m[1]))));
+            $attrs = $m[3];
+            // Replace the alt the migrator left («metodichka-mult» on two of the
+            // three) rather than adding a second one.
+            $attrs = preg_match('~\salt=(["\']).*?\1~s', $attrs)
+                ? preg_replace('~\salt=(["\']).*?\1~s', " alt=\"{$alt}\"", $attrs, 1)
+                : $attrs . " alt=\"{$alt}\"";
+
+            return $m[2] . $attrs . $m[4];
+        },
+        $content
+    );
+}
+
+/**
+ * Strip `margin` and `padding` declarations from the inline `style` attribute of
+ * every paragraph, leaving the rest of the attribute alone.
+ *
+ * CMSMasters rows carried their spacing per element, and the migrator brought it
+ * across as inline style: the three cover paragraphs on `/materials/metodichki/`
+ * arrive with `padding: 0px`, `margin-bottom: 3px` and `margin-bottom: 0px`
+ * respectively. Inline style beats any stylesheet, so the odd `3px` in the middle
+ * made that column 3px taller than its poster — and because block-library forces
+ * `align-items` on a columns row, **all three** pills then sat 11px above their
+ * poster's edge instead of the 14 the mock draws, with the stacked layout showing
+ * 14/11/14. Spacing is the stylesheet's job; this hands it back.
+ *
+ * Idempotent: nothing is left to strip. `text-align` and anything else the author
+ * set survive, and a `style` attribute left empty is removed rather than kept as
+ * `style=""`.
+ */
+function od_strip_paragraph_spacing(string $content): string
+{
+    return preg_replace_callback(
+        '~(<p\b[^>]*?\sstyle=")([^"]*)(")~i',
+        static function (array $m): string {
+            $kept = array_filter(
+                array_map('trim', explode(';', $m[2])),
+                static function (string $declaration): bool {
+                    if ('' === $declaration) {
+                        return false;
+                    }
+                    $property = strtolower(trim(strtok($declaration, ':')));
+
+                    return 0 !== strpos($property, 'margin') && 0 !== strpos($property, 'padding');
+                }
+            );
+
+            if (!$kept) {
+                // Drop the whole attribute, including the space before it.
+                return rtrim(substr($m[1], 0, -strlen(' style="')));
+            }
+
+            return $m[1] . implode(';', $kept) . $m[3];
+        },
+        $content
+    );
+}
+
+/**
+ * Name each cover's button after the cover, and take the poster's own link out of
+ * the tab order.
+ *
+ * A cover column is a linked poster followed by a `wp:button` to the same place,
+ * so a keyboard reached every cover **twice** — six stops for three
+ * destinations — and a screen reader listing the page's links got «Подробнее»
+ * three times over, with nothing to tell them apart. The poster's link is the
+ * redundant one (`tabindex="-1"` plus `aria-hidden`, the pair that keeps an
+ * `aria-hidden` element from being focusable), and the button takes the cover's
+ * name from the image's `alt` — which {@see od_headings_into_image_alt} has just
+ * put there, so this has to run after it.
+ *
+ * Idempotent: both edits are guarded on the attribute they add. A column with no
+ * image, or an image with an empty `alt`, is left alone — the empty layout
+ * columns and the coordinator's are exactly that.
+ */
+function od_cover_link_names(string $content): string
+{
+    return preg_replace_callback(
+        '~<!--\s*wp:column\b.*?<!--\s*/wp:column\s*-->~s',
+        static function (array $m): string {
+            $column = $m[0];
+
+            if (!preg_match('~<img\b[^>]*\salt="([^"]+)"~', $column, $alt)) {
+                return $column;
+            }
+
+            // Verbatim, not decoded and re-encoded: the value already survived one
+            // `"`-quoted attribute, so it is safe in the next one, entities and all.
+            $name = trim($alt[1]);
+            if ('' === $name) {
+                return $column;
+            }
+
+            $column = preg_replace(
+                '~<a\b(?![^>]*\stabindex=)([^>]*)(>\s*<img\b)~',
+                '<a tabindex="-1" aria-hidden="true"$1$2',
+                $column,
+                1
+            );
+
+            return preg_replace(
+                '~(<a\b(?![^>]*\saria-label=)[^>]*\sclass="[^"]*wp-block-button__link[^"]*"[^>]*)>~',
+                '$1 aria-label="' . od_attr('Подробнее: ' . $name) . '">',
+                $column,
+                1
+            );
+        },
+        $content
+    );
+}
+
+/**
+ * Upgrade `http://` links to our own hosts to `https://`.
+ *
+ * The first cover points at `http://metodic.obshee-delo.ru/`, which answers 301
+ * to the `https` copy — so every visit paid for a redirect, and the page mixed
+ * schemes for no reason. Scoped to `obshee-delo.ru` and its subdomains: an
+ * off-site `http` link may genuinely have no `https` to go to, and this script
+ * has no way to find out.
+ *
+ * Idempotent: there is no `http://` left to match.
+ */
+function od_https_own_links(string $content): string
+{
+    // The lookahead is the point: without it `obshee-delo.ru.evil.tld` matches as a
+    // prefix and gets its scheme upgraded too.
+    return preg_replace('~\bhref="http://((?:[a-z0-9-]+\.)*obshee-delo\.ru)(?=[/"?#])~i', 'href="https://$1', $content);
+}
+
+/**
+ * Replace a `wp:details` accordion with its summary as an `h2` and a link to the
+ * `profile` record whose contact details the accordion held as prose.
+ *
+ * Two things happen here. The person **stops being duplicated**: the page had a
+ * name, a role and three contact lines pasted out of Telegram, while the same
+ * person's `profile` record held the same details again and neither copy was a
+ * superset. The frontend swaps a `/profile/…` link alone in its paragraph for a
+ * card built from the record (`src/modules/WpPage/profileEmbeds.tsx`), so the
+ * link is both the marker and the fallback — remove the frontend code and what
+ * is left is a working link to that person's page. And the block **stops being
+ * an accordion**, because the mock shows the card open: the accordion was the old
+ * theme's `[cmsms_toggle]`, not a decision anyone made about this content.
+ *
+ * The heading text is the summary's, verbatim.
+ *
+ * Idempotent: there is no `wp:details` left to match.
+ */
+function od_details_to_profile_link(string $content, string $href, string $label): string
+{
+    return preg_replace_callback(
+        '~<!--\s*wp:details\b.*?<summary>(.*?)</summary>.*?<!--\s*/wp:details\s*-->~s',
+        static function (array $m) use ($href, $label): string {
+            $heading = trim(strip_tags($m[1]));
+
+            return '<!-- wp:heading {"level":2} --><h2 class="wp-block-heading">' . od_attr($heading)
+                . '</h2><!-- /wp:heading -->'
+                . '<!-- wp:paragraph --><p><a href="' . od_attr($href) . '">' . od_attr($label)
+                . '</a></p><!-- /wp:paragraph -->';
+        },
+        $content,
+        1
+    );
+}
+
+/**
+ * Add contact links to a `profile` body, at the end of its last paragraph block.
+ *
+ * The counterpart of {@link od_details_to_profile_link}: the page held this
+ * person's Telegram handle and VK page and the record did not, so dropping the
+ * page's prose without this would lose them. `profile` bodies keep their contacts
+ * as `<p>`s inside one `wp:paragraph` block, which is where these go — appending
+ * to the end of `post_content` instead would put them outside the two-column
+ * group, below the photo.
+ *
+ * `$links` is a list of `[href, label]`. Idempotent per link: a href already
+ * anywhere in the body is skipped, so a re-run adds nothing and an editor's own
+ * later edit to the label survives.
+ */
+function od_append_contact_links(string $content, array $links): string
+{
+    foreach ($links as list($href, $label)) {
+        if (str_contains($content, $href)) {
+            continue;
+        }
+
+        $paragraph = '<p><a href="' . od_attr($href) . '">' . od_attr($label) . '</a></p>';
+        $closing   = strrpos($content, '<!-- /wp:paragraph -->');
+        $content   = false === $closing
+            ? rtrim($content) . "\n" . $paragraph
+            : substr_replace($content, $paragraph . "\n", $closing, 0);
+    }
+
+    return $content;
+}
+
+/**
+ * The coordinator «Заказать методические пособия» names. The slug is the record's
+ * own and it reads wrong on purpose: profile 46651 was Екатерина Гордикова and
+ * was retitled to Андрей Рязанов without re-slugging (`_wp_old_slug` is
+ * `екатерина-гордикова`). Re-slugging it is **not** safe from here — the A6
+ * frozen copy is keyed on the live path, so a new slug would 404 in the iframe
+ * that still serves `/profile/*`. Reported as a content bug instead.
+ */
+const OD_METODICHKI_COORDINATOR_HREF =
+    '/profile/%d0%b3%d0%be%d1%80%d0%b4%d0%b8%d0%ba%d0%be%d0%b2%d0%b0-%d0%b5%d0%ba%d0%b0%d1%82%d0%b5%d1%80%d0%b8%d0%bd%d0%b0/';
+const OD_METODICHKI_COORDINATOR_NAME = 'Андрей Алексеевич Рязанов';
+
+/**
+ * The covers whose file the page should not be using, and the one it should.
+ *
+ * «Здоровые дети» is **not** in this list although its file is the 220×300
+ * `metodic-mults-small220x300.jpg`: the library's full-size original for that
+ * attachment (`metodichka-mult.jpg`, 844×1092) is not on the media bucket, and
+ * both origins answer 301 for it — there is nothing to point at. Recorded in
+ * `docs/next-steps.md` as an offload gap rather than worked around here.
+ */
+const OD_METODICHKI_COVERS = [
+    'обложка_ЗдорМолодежьNew_small.jpg' => 'обложка_ЗдорМолодежьNew.jpg',
+];
+
+/**
+ * Strip the site name from every `alt` and `aria-label` already in the body.
+ *
+ * {@see od_headings_into_image_alt()} cleans the heading it moves, but it is
+ * idempotent by "the heading is gone afterwards" — on a page converted before
+ * this strip existed there is no heading left to clean, and the suffix sits in
+ * three `alt`s and three `aria-label`s. Cleaning the attributes themselves fixes
+ * both the converted and the fresh page, and is what makes the whole chain
+ * idempotent either way.
+ *
+ * The value is rewritten in place, never decoded and re-encoded: it already
+ * survived one `"`-quoted attribute.
+ */
+function od_strip_attr_site_suffix(string $content): string
+{
+    return preg_replace_callback(
+        '~\s(alt|aria-label)="([^"]*)"~u',
+        static function (array $m): string {
+            $cleaned = od_strip_site_suffix($m[2]);
+
+            return $cleaned === $m[2] ? $m[0] : ' ' . $m[1] . '="' . $cleaned . '"';
+        },
+        $content
+    );
+}
+
+/**
+ * Point a cover at the full-size file the media library already holds.
+ *
+ * `$basenames` maps the file a page references to the one it should — **basenames
+ * only**, so the upload directory the page carries is kept and the map stays true
+ * on any environment. Two of `/materials/metodichki/`'s three covers arrived
+ * pointing at deliberately small uploads: the row draws them 387 wide, and
+ * `обложка_ЗдорМолодежьNew_small.jpg` is 297×420, a 1.30× upscale, where the
+ * full-size original beside it in the library is 930×1315 — and at 930∶1315 =
+ * 0.707 it is also the row's own ratio, so `object-fit: cover` stops cropping it.
+ *
+ * `width`, `height` and `wp-image-<id>` are dropped from a swapped image on
+ * purpose: all three described the old file. The size the stylesheet gives the
+ * cover is fixed (`aspect-ratio` on `.od-covers img`), and an attachment id is
+ * per-environment, so writing the new one here would be exactly the hardcoding
+ * this file avoids — the editor re-attaches it on the next save.
+ *
+ * Idempotent: a swapped image no longer matches its own key.
+ *
+ * @param array<string, string> $basenames old file name => new file name.
+ */
+function od_cover_full_size(string $content, array $basenames): string
+{
+    foreach ($basenames as $from => $to) {
+        $pattern = '~<img\b[^>]*\bsrc="[^"]*/' . preg_quote(rawurlencode($from), '~') . '"[^>]*>'
+            . '|<img\b[^>]*\bsrc="[^"]*/' . preg_quote($from, '~') . '"[^>]*>~u';
+
+        $content = preg_replace_callback(
+            $pattern,
+            static function (array $m) use ($from, $to): string {
+                $img = str_replace([rawurlencode($from), $from], rawurlencode($to), $m[0]);
+                $img = preg_replace('~\s(?:width|height)="[^"]*"~', '', $img);
+                $img = preg_replace('~\s?\bwp-image-\d+~', '', $img);
+
+                return preg_replace('~\sclass="\s*"~', '', $img);
+            },
+            $content
+        );
+    }
+
+    return $content;
+}
+
+/**
+ * `/materials/metodichki/` — Figma `handbooks` (`779:4133`).
+ *
+ * Seven transforms in a fixed order, and the order is load-bearing twice: the
+ * class has to be on the row before anything keys on it, and
+ * `od_cover_link_names()` names each button from the `alt` that
+ * `od_headings_into_image_alt()` has just written.
+ *
+ * @param string $content    Stored `post_content`.
+ * @param int    $_filmTagId Unused — this page has no film row, but the runner
+ *                           calls every transform the same way.
+ */
+function od_pages_metodichki(string $content, int $_filmTagId = 0): string
+{
+    $content = od_drop_empty_layout_groups($content);
+    $content = od_class_on_first_columns($content, 'od-covers');
+    $content = od_headings_into_image_alt($content);
+    $content = od_cover_link_names($content);
+    $content = od_strip_attr_site_suffix($content);
+    $content = od_https_own_links($content);
+    $content = od_strip_paragraph_spacing($content);
+    $content = od_cover_full_size($content, OD_METODICHKI_COVERS);
+
+    return od_details_to_profile_link($content, OD_METODICHKI_COORDINATOR_HREF, OD_METODICHKI_COORDINATOR_NAME);
+}
+
+/**
+ * The coordinator's own `profile` record — the Telegram handle and the VK page
+ * that the page carried and the record did not.
+ *
+ * The card on `/materials/metodichki/` is built from this record, so a contact
+ * only the page held would have disappeared when the accordion did. Neither copy
+ * was a superset of the other; this is the merge, in the record's own shape.
+ *
+ * @param string $content    Stored `post_content`.
+ * @param int    $_filmTagId Unused — see {@see od_pages_metodichki()}.
+ */
+function od_pages_profile_ryazanov(string $content, int $_filmTagId = 0): string
+{
+    return od_append_contact_links(
+        $content,
+        [
+            ['https://t.me/paramon1302', '@paramon1302'],
+            ['https://vk.com/id39335667', 'https://vk.com/id39335667'],
+        ]
+    );
+}
+
+/**
+ * Every record workstream D rewrites, newest last.
+ *
+ * `path` is resolved with `get_page_by_path()` — exact and hierarchy-aware.
+ * `title` is the fallback for a record whose slug names somebody else (see the
+ * constant above), and `post_type` defaults to `page`. `tag` is the `post_tag`
+ * slug a transform's «Проекты программы» row queries — `wp/scripts/od-wp.php` is
+ * what creates those tags. Term ids are per-environment, so the
+ * runner resolves the slug and hands the transform the id.
+ *
+ * @return array<int, array{label: string, fix: callable-string, path?: string, title?: string, post_type?: string, tag?: string}>
  */
 function od_pages_registry(): array
 {
     return [
-        'healthy-russia' => ['od_pages_healthy_russia', 'programma-zdorovaya-rossiya'],
-        'healthy-youth' => ['od_pages_healthy_youth', 'programma-zdorovaya-molodezh'],
-        'healthy-kids' => ['od_pages_healthy_kids', 'programma-zdorovye-deti'],
-        'projects' => ['od_pages_projects', ''],
-        'materials' => ['od_pages_materials', ''],
+        [
+            'label' => 'D6e · /healthy-russia/ — Figma `project-1` (759:845)',
+            'path' => 'healthy-russia',
+            'tag' => 'programma-zdorovaya-rossiya',
+            'fix' => 'od_pages_healthy_russia',
+        ],
+        [
+            'label' => 'D6f · /healthy-youth/ — the same template',
+            'path' => 'healthy-youth',
+            'tag' => 'programma-zdorovaya-molodezh',
+            'fix' => 'od_pages_healthy_youth',
+        ],
+        [
+            'label' => 'D6f · /healthy-kids/ — the same template',
+            'path' => 'healthy-kids',
+            'tag' => 'programma-zdorovye-deti',
+            'fix' => 'od_pages_healthy_kids',
+        ],
+        [
+            'label' => 'D8 · /materials/metodichki/ — Figma `handbooks` (779:4133)',
+            'path' => 'materials/metodichki',
+            'fix' => 'od_pages_metodichki',
+        ],
+        [
+            'label' => 'D8 · profile «Андрей Алексеевич Рязанов» — the two contacts only the page had',
+            'post_type' => 'profile',
+            'title' => OD_METODICHKI_COORDINATOR_NAME,
+            'fix' => 'od_pages_profile_ryazanov',
+        ],
+        [
+            'label' => 'D6g · /projects/ — the index, as a WordPress page',
+            'path' => 'projects',
+            'fix' => 'od_pages_projects',
+        ],
+        [
+            'label' => 'D6h · /materials/ — the section index, as a WordPress page',
+            'path' => 'materials',
+            'fix' => 'od_pages_materials',
+        ],
     ];
 }
 
@@ -804,46 +1311,67 @@ global $wpdb; // `eval-file` runs the script in a function scope, where it is no
 $apply = in_array('apply', $args ?? [], true);
 WP_CLI::log($apply ? 'Applying changes.' : 'Dry run — pass `apply` to write.');
 
-foreach (od_pages_registry() as $path => [$transform, $tagSlug]) {
-    $page = get_page_by_path($path);
-    if (!$page) {
-        WP_CLI::warning(sprintf('%s: no such page', $path));
+foreach (od_pages_registry() as $entry) {
+    $postType = $entry['post_type'] ?? 'page';
+
+    if (isset($entry['path'])) {
+        $post = get_page_by_path($entry['path'], OBJECT, $postType);
+    } else {
+        $found = get_posts([
+            'post_type' => $postType,
+            'title' => $entry['title'],
+            'post_status' => 'publish',
+            'numberposts' => 2,
+            'suppress_filters' => false,
+        ]);
+
+        if (count($found) !== 1) {
+            WP_CLI::warning(sprintf('%s: %d records titled «%s» — expected exactly 1', $entry['label'], count($found), $entry['title']));
+            continue;
+        }
+
+        $post = $found[0];
+    }
+
+    if (!$post) {
+        WP_CLI::warning(sprintf('%s: no such %s', $entry['label'], $postType));
         continue;
     }
 
     // Resolved here rather than written into a transform: term ids are
     // per-environment. `wp/scripts/od-wp.php` is what creates them.
+    $tagSlug = $entry['tag'] ?? '';
     $filmTag = $tagSlug === '' ? null : get_term_by('slug', $tagSlug, 'post_tag');
     if ($tagSlug !== '' && !$filmTag) {
-        WP_CLI::warning(sprintf('%s: tag `%s` is missing — run `od-wp.php apply` first.', $path, $tagSlug));
+        WP_CLI::warning(sprintf('%s: tag `%s` is missing — run `od-wp.php apply` first.', $entry['label'], $tagSlug));
         continue;
     }
 
     try {
-        $new = $transform($page->post_content, $filmTag ? (int) $filmTag->term_id : 0);
+        $new = $entry['fix']($post->post_content, $filmTag ? (int) $filmTag->term_id : 0);
     } catch (Throwable $e) {
-        WP_CLI::warning(sprintf('%s (#%d): %s', $path, $page->ID, $e->getMessage()));
+        WP_CLI::warning(sprintf('%s (#%d): %s', $entry['label'], $post->ID, $e->getMessage()));
         continue;
     }
 
-    if ($new === $page->post_content) {
-        WP_CLI::log(sprintf('%s (#%d): already in shape, skipped', $path, $page->ID));
+    if ($new === $post->post_content) {
+        WP_CLI::log(sprintf('%s (#%d): already in shape, skipped', $entry['label'], $post->ID));
         continue;
     }
 
-    WP_CLI::log(sprintf('%s (#%d): %d bytes -> %d bytes', $path, $page->ID, strlen($page->post_content), strlen($new)));
+    WP_CLI::log(sprintf('%s (#%d): %d bytes -> %d bytes', $entry['label'], $post->ID, strlen($post->post_content), strlen($new)));
 
     if (!$apply) {
         continue;
     }
 
-    wp_save_post_revision($page->ID);
-    $written = $wpdb->update($wpdb->posts, ['post_content' => $new], ['ID' => $page->ID], ['%s'], ['%d']);
+    wp_save_post_revision($post->ID);
+    $written = $wpdb->update($wpdb->posts, ['post_content' => $new], ['ID' => $post->ID], ['%s'], ['%d']);
     if ($written === false) {
-        WP_CLI::warning(sprintf('%s (#%d): write failed', $path, $page->ID));
+        WP_CLI::warning(sprintf('%s (#%d): write failed', $entry['label'], $post->ID));
         continue;
     }
 
-    clean_post_cache($page->ID);
-    WP_CLI::success(sprintf('%s (#%d): written', $path, $page->ID));
+    clean_post_cache($post->ID);
+    WP_CLI::success(sprintf('%s (#%d): written', $entry['label'], $post->ID));
 }

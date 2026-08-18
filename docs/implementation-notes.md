@@ -242,6 +242,16 @@ Two things the swap had to restate: Radix's content panel is a padded white card
 
 **Every colour selector is doubled (`.link.primary`).** `theme-override.css` paints `.rt-Text:where([data-accent-color])` red-8 and every `.rt-Link:hover` red-10; `:where()` contributes nothing, so those are one class each — a lone `.primary` ties and loses on source order. It was measured rendering red-8 before the fix, which is the sort of thing only a browser tells you.
 
+### C12. The CSS modules lost to Radix in `next start` and only there — 2026-08-17
+
+**A production-only, site-wide bug, found redesigning `/materials/metodichki/` and present since long before it.** Every page's H1 rendered **24px in `next start` and 48px in `next dev`** — Radix's default heading size instead of the `page header` mock's `text/9/bold`, in PT Sans instead of PT Sans Narrow, in ink instead of red, and un-uppercased. `PageHeader`'s `.title`, `CardSection`'s `.heading`, `Dropdown`'s `.trigger` and two `Button` size modifiers: **8 elements across `/materials/`, `/projects/`, `/video/` and `/news/`.** Verified against `origin/main` before the fix, so it is not this branch's doing.
+
+**Cause: import order decides the cascade, and `import/order` was enforcing the wrong one.** A CSS-module class and the Radix rule it overrides are usually the same specificity — `.title` vs `.rt-Heading` — so source order is the tiebreak, and in a production build that order is the order modules first enter the graph. `@radix-ui/themes/styles.css` was imported inside `radix-provider.tsx`, i.e. behind `@/shared/ui/theme`; the alphabetiser puts `@/modules/Footer` and `@/modules/Header` above that in `layout.tsx`, and those two chain in **every** shared CSS module. So Radix's sheet landed *after* the modules and won every tie. `next dev` loads CSS per-module in a different order and looked correct, which is exactly what kept it hidden — and the repo has never been deployed, so nothing else would have caught it.
+
+**Fix: the two stylesheets move to the top of `app/layout.tsx`**, as side-effect imports ahead of everything (`import/order` ignores unassigned imports, which is why `global.css` already sat there). `radix-provider.tsx` keeps the `<Theme>` and a comment saying where its styles went; it has exactly one consumer, so there is nowhere for them to go missing.
+
+**How it was found and proved, because "looks right" would not have done it.** A script walks every element carrying a CSS-module class on four pages, snapshots 13 computed properties in `next dev` and in `next start`, and diffs them. It reported 8 elements before and **"NO DIFFERENCES"** after. That comparison is worth re-running after any change to the stylesheet import order — it is the only thing that distinguishes a real style from one that merely wins in dev.
+
 ---
 
 ## 3. Shipped — pages (D)
@@ -483,6 +493,16 @@ Geometry re-measured against the deleted route's own output: cards 600×280 at x
 
 **Both pages now take their H1 from WordPress**, which is a change of wording: «НАШИ МАТЕРИАЛЫ» where the route said «МАТЕРИАЛЫ», «ПРОГРАММЫ И ПРОЕКТЫ» where it said «ПРОГРАММЫ». That is closer to what search already holds — the WP title is what the live site renders today — and it is now the editors' to change. `/materials/articles/` is untouched: it is a real route and keeps precedence over the catch-all.
 
+### D6i. `общее-дело.рф` counted as one of our own origins — 2026-08-17
+
+*(The commit is `fix(D6e)`, and this note has been renumbered twice: the branch it was written on had not seen the programme pages or the two indexes above, which took D6e–D6h. The log keeps the original label.)*
+
+Found while reading `/materials/metodichki/` for its redesign: two of its three «Подробнее» buttons point at `https://xn----9sbkcac6brh7h.xn--p1ai/materials/…`, the Punycode form of **общее-дело.рф**. That is not another site — it is the organisation's second domain for *this* one, and the live site's own navigation mixes both hosts freely (see the `menu-item` hrefs in `src/shared/legacy/__fixtures__/team.html`). Editors paste whichever host their browser happened to show them. Left absolute, each of those buttons walks the visitor off the frontend, and after cutover onto the old WordPress.
+
+So the alias joins `WP_BASE` and `SITE_URL` in one list — `internalOrigins()` in `shared/config/site.ts` — read by **both** callers of `toInternalHref`, page/post bodies and the header menu. One line of data, no new code path, and it covers every page rather than the one page that surfaced it.
+
+**Only the bare origin.** The two sibling subdomains stay external on purpose, and are asserted so: `помощь.общее-дело.рф` (`xn--d1aadek5agm.…`) is the donation host the header CTA already hard-codes, and `xn--80a7adb.…` is the statistics site. `toInternalHref` compares whole origins, so neither can match by suffix. Links into the alias's own `/wp-content/` tree also stay absolute, through the same `WP_ONLY_PATH` guard as D6c — that host serves those files, ours does not.
+
 ### D7. Video — index 2026-06-04, player 2026-07-02
 
 Figma: index `video` (`706:3315`) + `video-filter` (`1554:17574`) + player `video-page` (`1566:10433`) + mobile `video-page-mob` (`1567:10735`, `1567:11844`) + download (`1581:10334`).
@@ -525,9 +545,96 @@ Built ahead of its entry traffic on purpose: **107 entries against 939 views (8.
 
 Deferred: the newsletter block is *not* in the Figma frame — kept anyway, since the live page has one and every other index route ends with it. It went with the route in D6h, which costs nothing while `NEWSLETTER_SIGNUP_ENABLED` is off.
 
+### `/materials/metodichki/` — the first page through the redesign flow (D8), 2026-08-17
+
+Figma `handbooks` (`779:4133`). 56 entries in 91 days, and the first exercise of the procedure in [`wp-page-redesign.md`](./wp-page-redesign.md): **no route was added.** The path already rendered natively through the catch-all, so the whole change is CSS in this repo plus a content script in `wp/scripts/od-pages.php` — which did not exist before this and is what the next two Tier-2 pages inherit.
+
+**What the page was:** four `wp:group`s, two of them empty spacers left by CMSMasters rows; three columns each with an `h2` repeating the title printed on the poster below it; and, at the bottom, a **collapsed `<details>`** holding the coordinator as five paragraphs pasted out of Telegram (`text-entity-link`, `data-entity-type="MessageEntity*"` — the Telegram anchor had no `href` at all, so «Телеграмм: @paramon1302» was dead text). Two of the three «Подробнее» buttons pointed at `общее-дело.рф`, i.e. off-site (fixed in the pipeline, D6e).
+
+Four content transforms, each idempotent by detection and each with its own test plus an `f(f(x)) === f(x)` case:
+
+- **the two empty spacer groups are dropped.** They rendered as empty divs and gave no spacing at all, so the mock's 120px between the covers and the next heading is now a real `margin-bottom` on the cover row. Dropping them first is also what makes "the first `wp:columns` block" a reliable thing to point at.
+- **`od-covers` goes on the cover row**, block attribute and class list both, exactly as the editor's «Дополнительные CSS-классы» field writes it. Nothing in Gutenberg's markup tells a grid of book covers from any other three-column row.
+- **each `h2` moves into its poster's `alt`.** The mock draws the covers captionless because the title is printed on the artwork; deleting the headings outright would have lost those words for a screen reader and for search. It also replaced the migrator's own alt text, which was «metodichka-mult» on two of the three.
+- **the `<details>` becomes an `h2` plus a link to the coordinator's `profile` record.** The accordion was `[cmsms_toggle]`, not anyone's decision about this content, and the mock shows the card open. The duplication goes with it — see B-CPT above for why the marker is a link.
+
+**The two contacts only the page had** — the Telegram handle and the VK page — were written into profile 46651 in the same run, since neither record was a superset of the other and the card can only show what the record holds.
+
+Three things the mock asks for and the content cannot give:
+
+- **The covers are the wrong files.** Figma shows flat poster artwork; WordPress holds 3D photos of the printed booklets on white grounds, which is what the live site has always shown. `object-fit: cover` at the mock's 387×546 makes the row even either way, and if the designer's renders are ever uploaded the CSS already fits them.
+- **The breadcrumb reads «Главная»**, the mock «Материалы». `WpPage` hard-codes the root crumb for all ~150 native pages; giving it the real parent chain needs `post_parent` and the parent titles, and belongs to D6b rather than to one page. Recorded in [`next-steps.md`](./next-steps.md).
+- **Profile 46651's slug names a different person** — `гордикова-екатерина`, because the record was retitled from Екатерина Гордикова to Андрей Рязанов without re-slugging (`_wp_old_slug` is `екатерина-гордикова`). The link therefore reads oddly. **Re-slugging is not safe from here:** the A6 frozen copy is keyed on the live path, so a new slug would 404 in the iframe that still serves `/profile/*`. Left as found and reported.
+
+**Three defects an adversarial review caught, all three real and all three now fixed** — worth recording because each was invisible in a browser:
+
+- **A `wp:query` teaser would have drawn the card twice.** The embed marker was "a link alone in *any* element", and WordPress hands you that shape for free: a post teaser renders the same link once inside the featured image's `<figure>` and once inside the title's `<h3>`, both sole-child anchors. Swept over all 169 published od-dev pages there are exactly five sole-child profile links — our own `<p>` on this page, plus a `<figure>`/`<h3>` pair on **`/contacts/kalmykiya/`** and another on **`/contacts/novosibirskaya/`**, each of which would have replaced a teaser with two identical `PersonCard`s. The marker is now a **`<p>` only**, which is what the convention always said; the sweep says that leaves exactly the one intended match.
+- **The white pill was invisible on the first cover.** Figma draws no shadow and needs none — its card-1 artwork has a near-black band exactly where the pill sits. The real media library holds a *photograph of the booklet on white*, and sampling the poster inside the pill's own rect returned mean `rgb(255,255,255)`: a white fill on pure white, boundary contrast 1:1, no edge at all, while its two neighbours read as buttons. `--shadow-sm` draws the edge and stays right when the designer's covers arrive.
+- **Inline style beats every stylesheet, and the migrator leaves plenty.** The three cover paragraphs arrived with `padding: 0px`, `margin-bottom: 3px` and `margin-bottom: 0px`. The stray 3px made the middle column 3px taller than its poster, and because block-library forces `align-items` on a columns row, **all three** pills then sat 11px above their poster instead of 14 — with the stacked layout showing 14/11/14. `od_strip_paragraph_spacing` hands spacing back to the stylesheet. Measured after: 14px on all three, columns exactly as tall as the posters.
+
+**`wp/scripts/od-pages.php`** is dry-run by default (`apply` is a *positional* argument — `wp eval-file` rejects `--flags` it does not own), addresses records by path or title rather than id, and writes through `$wpdb->update` after `wp_save_post_revision`, never `wp_update_post`, because the migrator's `save_post` hook deletes the `nvp_content_copy` backup on update. Applied to od-dev 2026-08-17: 2 records changed, and a second dry-run reported **0 left**, which is the convergence check. `wp/tests/od-pages.test.php` is hand-rolled `od_test()` over real captured bodies — **63 assertions**, `php wp/tests/od-pages.test.php`; not PHP's `assert()`, which `zend.assertions = -1` compiles out here and on both servers.
+
+**Second review round, 2026-08-18** — the page re-measured in a production build at 1440 and 375. The CSS itself measured right: no horizontal overflow at either width, the pill inset **12 / 12 / 14 exactly on all three cards at both widths**, and every doubled `PersonCard` selector beat `gutenberg.css` (both paragraphs at 18/25.2 with `margin: 0`, the list at `padding-left: 0`, the links red). Four things did come out of it, and all four are fixed:
+
+- **Every cover was reachable twice by keyboard** — the poster's link and the button below it carry the same href, so three destinations cost six tab stops — **and a screen reader listing the page's links heard «Подробнее» three times** with nothing to tell them apart. `od_cover_link_names` takes the poster's link out of the tab order (`tabindex="-1"` with `aria-hidden`, the pair that keeps an `aria-hidden` element unfocusable) and names each button from the image's `alt` — «Подробнее: Здоровая Россия — ОБЩЕЕ ДЕЛО». It has to run *after* `od_headings_into_image_alt`, which is what puts that text there.
+- **The first cover linked to `http://metodic.obshee-delo.ru/`**, which answers 301 to its `https` copy, so every visit paid for a redirect and the page mixed schemes. `od_https_own_links` upgrades `http://` for `obshee-delo.ru` and its subdomains only — with a lookahead on the host's end, because without it `obshee-delo.ru.evil.tld` matches as a prefix.
+- **The contact rows' type lived on the anchor**, so a row that ever held text beside its link would have rendered it at `.gutenberg li`'s 16px next to the link's 18. Moved one level up, onto the row.
+- **The decorative icons were anonymous `img` nodes** in the a11y tree — `aria-hidden` at the call site. The general gap (no icon in this repo sets it) is in [`next-steps.md`](./next-steps.md).
+
+**Third review round, 2026-08-18** — the page measured against the Figma node
+tree rather than the render, so every number below is the frame's own. The cover
+grid held exactly: covers 386.67×545.53 against 387.04×545.67, radius 16, gap 40
+against 39.44, the pill inset 12/12/14 and 120 between the row and the next
+heading. The card held too: 1240 wide, radius 12, padding 20, the identity row 50
+tall on a 24+12 indent, 15 to the contact list, 6 between rows, 18/140% in
+`#ae0a04` with the subtitle in `#414e62`. What came out of it was mostly *shared*
+code, and is written up where it belongs — `C12` for the page header's own text
+style and the 20 above it, `B4` for the purge, and the covers' `alt` and files in
+the D8 commit. Three things are decisions rather than fixes:
+
+- **The mock's 35 between a section heading and the block under it is not a
+  system value.** `handbooks` draws 35; `project-1`, built the same week, draws 45;
+  our `h2` rhythm is `0.75em` = 24. Two mocks disagreeing by 10px is a designer's
+  hand, not a rule, so the system's 24 stays and the 11px difference on this page
+  is deliberate.
+- **The «Подробнее» pill is drawn on one of the three covers in Figma** — one
+  `Button` instance in the frame, over card 1. We render three, because the row is
+  three identical cards and a pill on one of them reads as a mistake. Worth a word
+  with Design, and the only place this page adds something the mock does not show.
+- **The VK row keeps its trimmed label** (`vk.com/id39335667` where the mock types
+  the scheme out). Confirmed 2026-08-18; the reason is beside the code in
+  `profileCard.ts`.
+
+Also verified rather than changed: the `Folder` glyph in Figma's
+`_Breadcrumbs Base` is hidden in every `page header` instance — its bounds sit
+exactly under the label's, which is how Figma reports an invisible auto-layout
+child — so the repo is right not to draw one. The crumb *colours* were wrong and
+are fixed (`--gray-8` for the page's own crumb, the parent's colour for the
+chevron).
+
+Two smaller things went with them: a `profile` record with an empty title now falls back to staying a link rather than heading a card with nothing, and a contact label that is a bare URL drops its scheme — `https://vk.com/id39335667` reads as `vk.com/id39335667`, while Telegram's `@paramon1302` has no scheme to lose.
+
 ---
 
 ## 4. Shipped — data & media (B, E)
+
+### B8a. `cmsms-content-composer` off, `profile` ours — 2026-08-18 (od-dev)
+
+The whole point of migrating the content to Gutenberg was to be able to delete the page builder, and this is that. The plugin is **deactivated and deleted**; `wp/mu-plugins/od-profile.php` now registers the `profile` post type, the `pl-categs` taxonomy and the `cmsms_profile_subtitle` meta. Procedure, prod ordering and the full verification list: [`wp-backend.md` §3.1](./wp-backend.md) and [`prod-migration-runbook.md` §2.6](./prod-migration-runbook.md).
+
+Four things worth keeping:
+
+- **The arguments were dumped from the running site, not read out of the plugin.** `get_post_type_object('profile')` and `get_taxonomy('pl-categs')` include whatever a filter had changed; the source doesn't. That is how `has_archive => true`, `menu_position => 52` and the ten-entry `supports` list came across unchanged — and a difference in any of them would have moved a URL or dropped a panel out of the editor.
+- **`init` at priority 20, not 10.** mu-plugins load *before* ordinary plugins, so at a shared priority ours would have registered first and cmsms would have re-registered over it. Running later means the mu-plugin is the live registration **while cmsms is still active**, which is what makes the rollout verifiable rather than a leap: install, check the labels are Russian, then deactivate and watch nothing change.
+- **`/wp/v2/pl-categs` answers 200 now**, where cmsms 404'd it — the one deliberate addition, `'show_in_rest' => true`. `core/query` never needed it (it filters on `public` + `publicly_queryable`), but D3 does, and this was the only chance to add it.
+- **Re-registering a post type resets its taxonomy list**, which is how priority 20 quietly cost `profile` its `post_tag` attachment — made at priority 10 by `cmsms-gutenberg-upgrade`, not by cmsms. `/wp/v2/types/profile` went from `["post_tag","pl-categs"]` to `["pl-categs"]` and a regional page's rendered output shrank by 23 bytes, which is how it was caught. Fixed by declaring `'taxonomies' => array('post_tag')`. Same audit corrected the meta's owner: cmsms registered **no** post meta anywhere — `cmsms_profile_subtitle` reaches REST through the migrator (`:54`), so the mu-plugin's copy is a duplicate today and the only one after cutover.
+- **Four published posts had to be converted first.** A shortcode whose plugin is gone renders as its own source text, and 41045 / 56178 / 62556 / 64555 still held `[cmsms_slider]`, `[cmsms_audios]`, `[cmsms_table]` and `[cmsms_tabs]`. The fix went into **`cmsms-gutenberg-upgrade`**, not into a one-off script, because prod converts through that plugin at cutover and would otherwise hit the same four gaps: table → `core/table` (8 rows × 5 cells on 62556, alignment kept as `has-text-align-*`, everything in `tbody` — no `thead` guess, since cmsms drew the first row as ordinary cells too), audio → `core/audio` mirroring the video branch, each tab → `wp:details` exactly as `[cmsms_toggle]` already did, `[cmsms_slider]` dropped as a reference to a third-party slider with no content of its own. Applied, converged to 0, and the `post` type now holds **zero** published cmsms shortcodes.
+
+**Why the earlier count of surviving shortcodes was too low** — and this is the reusable lesson: it had been taken from `content.rendered`, where WordPress has already expanded every shortcode whose plugin is active, so a survivor reads as ordinary markup. Raw `post_content` is the only honest place to count. Re-measured: 11 pages (ten on the A6 iframe list, `/news/` a native route) and those four posts.
+
+**Deactivation would not have been enough, and this is the part to remember.** The plugin ships three PHP files that bootstrap WordPress from `$_SERVER['SCRIPT_FILENAME']` rather than going through `admin-ajax.php` — the composer templates operator, the projects loader, the posts loader — reading `$_POST` with no nonce and no capability check. **A deactivated plugin's files still answer HTTP:** measured with the plugin off, all three returned 200 to an unauthenticated GET and POST, and **all three still answer 200 on production**, which is a pre-existing exposure worth closing on its own. So the plugin was deleted; the three URLs 404 now and the admin, the WP home page and `/profile/<slug>/` are unaffected. The source stays readable — the theme bundles it as `framework/admin/inc/plugins/cmsms-content-composer.zip`, and a zip does not execute.
+
+⚠️ One latent fatal is left behind in the **theme**: `framework/function/theme-functions.php:1535` calls `new TwitterOAuth(...)`, a class that lived only in the deleted plugin, and the `defined('CMSMS_CONTENT_COMPOSER_PATH')` guard above it loads a file that does not define it. Unreachable today — the only live caller is the theme's Twitter widget, which sits in no sidebar — so it is a landmine, not a bug: adding that widget fatals the page. Everything else in all 221 theme PHP files is properly guarded, and no other active plugin references cmsms at all.
 
 ### B-VIDEO. Film data model — 2026-06-04 (od-dev), re-shaped 2026-07-03
 
@@ -636,6 +743,24 @@ Read-only pass over od-dev's two cmsms CPTs, to size D3 before building it. Full
 - **Cyrillic slugs look like a trap and aren't.** 67 of 139 are percent-encoded, up to 194 characters; WP's `?slug=` matches the stored, decoded, re-encoded and case-flipped forms alike, so the route can pass its param straight through.
 - **Contact details are prose**: phone on 92/139, email on 113/139, in mixed formats. That — not "region" — is what the "promote to ACF?" question is actually about.
 - **`project` re-verified dead**: 0 published, no REST taxonomies, nothing links to it. D6 «Программы» stays plain WP pages.
+
+### B-CPT. `profile` read for real — `PersonCard` and the page↔profile link, 2026-08-17
+
+The recon above sized D3; this is the first thing built on it, pulled forward because `/materials/metodichki/` needs a coordinator card and D8 shouldn't invent a second way to draw a person.
+
+**The relation is a link in the body, because WordPress can't express any other.** Checked every angle on od-dev: page 27642's 37 meta keys are all cmsms layout residue, the *only* ACF group on the install targets `post_format == video`, `get_object_taxonomies('page')` is **empty** — pages carry no taxonomy at all — and `[cmsms_profiles]` survives on no published page. There is nothing to join on. So the marker is what an editor can already make: **a link to the profile page, alone in its own paragraph**, which is also core WordPress's own "a URL on its own line is an embed" convention. `collectProfileHrefs` finds them, `parsePost`'s new `embeds` option swaps them for a rendered card.
+
+Three things that shaped it:
+
+- **The wrapper is replaced, not the anchor.** Putting the card where the `<a>` was leaves `<article>` inside the `<p>` WordPress wrote; the browser re-parses that into something else and hydration fails on the difference. So only an element whose *sole* non-whitespace child is the marked link qualifies — which is also what keeps a link written mid-sentence a link.
+- **`embeds` is a `Map`.** The keys are content, and `'__proto__' in {}` is `true`.
+- **A missing record leaves the link.** That is the argument for a link over a `className` marker: unpublish the profile, or delete this code, and the body still reads correctly. A class renders as nothing.
+
+**Contacts are read by URL scheme, not by parsing prose.** The plan's open question was parse / backfill into ACF / drop the row. The answer is narrower than parsing: `parseProfileBody` reads only the *anchors*, and only their `tel:` / `mailto:` / `t.me` / `vk.com` shape, so nothing depends on wording, punctuation or a «Телефон:» label. Free text is touched in one place — the role line, the body's first bold run — and that has `meta.cmsms_profile_subtitle` behind it. **The known limit, asserted in the test:** a record that *types* its number instead of linking it yields no rows (profile 72293 is one). Measuring how many of the 139 are in that state is D3's job, and the fix is a content pass, not a cleverer regex.
+
+**`PersonCard` is one component for all five Figma frames.** `Frame 33928` (the `handbooks` banner), the `team-1` grid cards, the `team-2` wide cards and the two contacts-page variants share ~85 % of their pixels: white, radius 12, padding 20, no border and no shadow anywhere (verified by pixel-sampling a card edge), a bold name, one gray secondary line, and contact rows of `[24px outline icon] 12 [red 18px link]` on a 6px gap. The only real difference is **whether there is a photo** — with one the card is `team-1` (photo beside the text, name in ink at 22), without one it is the banner (a `User` glyph in the contact-row indent, name in red at 18). That is a field being filled, not a variant, so there is no `variant` prop and no second component. The `team-2` full-bleed photo is the one genuine fork left, and it waits for `team-2`.
+
+Five 24px outline icons came with it — `user`, `phone-call`, `email`, `telegram`, `vk-outline` — exported from the Figma masters as real geometry and re-stroked to `currentColor`. `vk.svg` stays as it was: it is the filled circle the footer uses, a different mark.
 
 ### E3. File downloads — no build needed
 
