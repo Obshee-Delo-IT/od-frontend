@@ -419,21 +419,15 @@ h2:has(+ .od-cards, + .od-poster-cards) {
   margin: 0;
 }
 
-.od-poster-cards .wp-block-post-featured-image {
+.od-poster-cards .wp-block-image {
   margin: 0;
-}
-
-/* `isLink` wraps the cover in an inline `<a>`, and a percentage width on a
-   replaced element inside one resolves against the anchor, not the card. */
-.od-poster-cards .wp-block-post-featured-image a {
-  display: block;
 }
 
 /* One shape for every cover, whatever the film was given. `contain` rather than
    `cover` because cropping a poster to fit cuts the film's title off it, and
-   these are a mix — the older films have a portrait poster, the newer ones a
-   16∶9 still. */
-.od-poster-cards .wp-block-post-featured-image img {
+   these are a mix: a film with a printable плакат shows it, a film without one
+   falls back to its 16∶9 still — see `wp/mu-plugins/od-film-meta.php`. */
+.od-poster-cards .wp-block-image img {
   width: 100%;
   border-radius: 12px;
   aspect-ratio: 387 / 546;
@@ -441,29 +435,31 @@ h2:has(+ .od-cards, + .od-poster-cards) {
   object-fit: contain;
 }
 
-/* `core/read-more` is a bare `<a>`, so it carries the pill itself rather than
-   inheriting one from `.wp-block-button__link`. */
-.od-poster-cards .wp-block-read-more {
+/* The card's link is its title, floated over the bottom of the artwork as the
+   mock's pill. A binding cannot produce a permalink, so the cover is not a link
+   — which leaves the title as the one accessible name the card needs. */
+.od-poster-cards .wp-block-post-title {
   position: absolute;
   right: 12px;
   bottom: 12px;
   left: 12px;
-  display: flex;
-  /* Core ships `width: fit-content`, which would hold the pill to its text. */
-  width: auto;
-  align-items: center;
-  justify-content: center;
+  margin: 0;
+}
+
+.od-poster-cards .wp-block-post-title a {
+  display: block;
   padding: 12px 24px;
   border-radius: var(--radius-full);
   background-color: var(--white);
   color: var(--red-8);
   font-size: var(--font-size-4);
+  font-weight: 400;
   line-height: 1.4;
   text-align: center;
   transition: background-color 0.2s ease;
 }
 
-.od-poster-cards .wp-block-read-more:hover {
+.od-poster-cards .wp-block-post-title a:hover {
   background-color: var(--gray-2);
   color: var(--red-10);
   text-decoration: none;
