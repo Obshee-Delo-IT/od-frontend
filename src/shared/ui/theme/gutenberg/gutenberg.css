@@ -1081,6 +1081,18 @@ h2:has(+ .od-tiles) {
     gap: 16px;
   }
 
+  /* Four bookmarks across a phone is four 60px slivers. Two, at a box a phone
+     can show without scrolling past it. */
+  .wp-block-columns.od-figures {
+    margin-bottom: 16px;
+    gap: 16px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .od-figures .wp-block-image img {
+    height: 260px;
+  }
+
   /* The wide card goes back to being the portrait one: below 900px the row is a
      single column, where the drawing reads better above the text than beside
      it — which is what the `ads` mock draws too. */
