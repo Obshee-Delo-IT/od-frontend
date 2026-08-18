@@ -67,8 +67,13 @@ export const resolveContentImages = async (html?: string | null, eagerFirstImage
     }
     first = false;
 
-    return rewritten
-      .replace(/\s+loading=["'][^"']*["']/i, '')
-      .replace(/<img\b/i, '<img loading="eager" fetchpriority="high"');
+    return (
+      rewritten
+        .replace(/\s+loading=["'][^"']*["']/i, '')
+        // `fetchPriority`, not `fetchpriority`: this HTML is never injected raw —
+        // every consumer runs it through `html-react-parser`, and React 19 logs
+        // «Invalid DOM property» for the lowercase spelling before rendering it.
+        .replace(/<img\b/i, '<img loading="eager" fetchPriority="high"')
+    );
   });
 };
