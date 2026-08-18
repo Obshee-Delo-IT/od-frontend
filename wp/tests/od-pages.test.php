@@ -18,7 +18,7 @@ assert_options(ASSERT_BAIL, 1);
 require __DIR__ . '/../scripts/od-pages.php';
 
 $before = file_get_contents(__DIR__ . '/fixtures/healthy-russia.before.html');
-$after = od_pages_healthy_russia($before);
+$after = od_pages_healthy_russia($before, 665);
 
 // -- structure --------------------------------------------------------------
 
@@ -28,10 +28,25 @@ assert(str_contains($after, 'cb-carousel-block od-cards"'), 'task carousel');
 assert(str_contains($after, '<div class="wp-block-columns od-card od-card--flush">'), 'methodology card');
 assert(str_contains($after, 'cb-carousel-block od-poster-cards"'), 'poster carousel');
 
-assert(substr_count($after, '<!-- wp:cb/slide-v2 -->') === 7, 'three task cards and four posters');
+assert(substr_count($after, '<!-- wp:cb/slide-v2 -->') === 3, 'one slide per task card');
 assert(substr_count($after, '<!-- wp:column -->') === 2, 'only the methodology card is still a columns block');
-assert(substr_count($after, '<!-- wp:image ') === 6, 'logo, booklet and four posters');
+assert(substr_count($after, '<!-- wp:image ') === 2, 'the logo and the booklet — the posters come from the query');
 assert(substr_count($after, 'data-cb-pagination="true"') === 2, 'both carousels carry dots');
+
+// -- the projects row is a query over the programme's tag ------------------
+
+assert(str_contains($after, '"tagIds":[665]'), 'the row queries the tag it was given');
+assert(str_contains($after, '"inherit":false'), 'and not the page\'s own query');
+assert(str_contains($after, '"className":"swiper"'), 'the query block is what Swiper mounts on');
+assert(str_contains($after, '<!-- wp:post-template {"className":"swiper-wrapper"} -->'), 'the post template is the track');
+// `scale` matters: core writes `object-fit` inline, which no stylesheet can beat,
+// and its default crops a 16∶9 still to a 3∶4 card.
+assert(
+    str_contains($after, '<!-- wp:post-featured-image {"isLink":true,"scale":"contain"} /-->'),
+    'each film shows its cover whole, linked'
+);
+assert(str_contains($after, '<!-- wp:read-more {"content":"Подробнее"} /-->'), 'and the mock\'s pill');
+assert(!str_contains($after, 'drugs.jpg'), 'the migrator\'s hand-picked posters are gone');
 
 // Arrows on the projects row, which can outgrow its three slots; none on the
 // tasks, which are three cards on desktop and a swipe on a phone.
@@ -56,17 +71,13 @@ assert(str_contains($after, 'Программа прошла экспертиз�
 
 assert(str_contains($after, '"id":60061'), 'logo attachment id kept');
 assert(str_contains($after, '/wp-content/uploads/2021/02/healthy_russia.png'), 'logo path kept');
-foreach (['/19864/', '/19871/', '/58926/', '/22289/'] as $film) {
-    assert(substr_count($after, sprintf('href="%s"', $film)) === 2, $film . ' links poster and button');
-}
 assert(str_contains($after, 'href="https://metodic.obshee-delo.ru/">Сайт методички'), 'methodology button kept');
 assert(str_contains($after, 'href="https://metodic.obshee-delo.ru/download.html">Методические материалы'), 'downloads link kept');
 
 // -- buttons ----------------------------------------------------------------
 
-assert(substr_count($after, '>Подробнее</a>') === 4, 'the poster cards say what the mock says');
 // Twice per button: once in the block attributes, once in the rendered class.
-assert(substr_count($after, 'is-style-outline') === 4, 'only the two methodology buttons are outline buttons');
+assert(substr_count($after, 'is-style-outline') === 4, 'the two methodology buttons, and no others');
 
 // -- what the template drops ------------------------------------------------
 
@@ -81,18 +92,17 @@ assert(!str_contains($after, 'flex-basis'), 'column widths are left to the style
 // -- alt text ---------------------------------------------------------------
 
 assert(str_contains($after, 'alt="Здоровая Россия"'), 'logo alt');
-assert(str_contains($after, 'alt="История одного обмана"'), 'poster alt from its own button');
-assert(!str_contains($after, 'alt=""'), 'no image left without alt');
+assert(!str_contains($after, 'alt=""'), 'no hand-written image is left without alt');
 
 // -- idempotency ------------------------------------------------------------
 
-assert(od_pages_healthy_russia($after) === $after, 'converted content is left alone');
+assert(od_pages_healthy_russia($after, 665) === $after, 'converted content is left alone');
 
 // -- refuses input it does not recognise ------------------------------------
 
 $threw = false;
 try {
-    od_pages_healthy_russia('<!-- wp:paragraph --><p>что-то другое</p><!-- /wp:paragraph -->');
+    od_pages_healthy_russia('<!-- wp:paragraph --><p>что-то другое</p><!-- /wp:paragraph -->', 665);
 } catch (RuntimeException $e) {
     $threw = true;
 }

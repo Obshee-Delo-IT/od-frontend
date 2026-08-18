@@ -409,63 +409,65 @@ h2:has(+ .od-cards, + .od-poster-cards) {
   margin-bottom: 0;
 }
 
-/* The film posters. Each card *is* its poster, with the link floated over the
-   bottom of the artwork. */
-.wp-block-cb-carousel-v2.od-poster-cards .swiper-slide {
+/* The film posters. The row is a `core/query` over the programme's tag, so a
+   card is a `<li class="wp-block-post">` rather than a `cb/slide-v2`, and the
+   base carousel's slide rules — including its 360px clamp — never match it.
+   Swiper is told about the class in `Carousel/CarouselAdapter.ts`. */
+.od-poster-cards .wp-block-post {
   position: relative;
-  max-height: none;
+  flex-shrink: 0;
+  margin: 0;
 }
 
-/* `linkDestination: custom` wraps the poster in an inline `<a>`, and a
-   percentage width on a replaced element inside one resolves against the
-   anchor, not the slide — so the poster stopped short of the card the moment
-   the slide grew wider than the file. */
-.od-poster-cards .swiper-slide a {
+.od-poster-cards .wp-block-post-featured-image {
+  margin: 0;
+}
+
+/* `isLink` wraps the cover in an inline `<a>`, and a percentage width on a
+   replaced element inside one resolves against the anchor, not the card. */
+.od-poster-cards .wp-block-post-featured-image a {
   display: block;
 }
 
-/* One shape for every poster. The films' own covers are not a consistent ratio,
-   and left alone a landscape one is half the height of its neighbours.
-   `contain` rather than `cover` because cropping a poster to fit cuts the
-   film's title off it — `od_pages_wp_portrait_cover()` prefers a portrait cover
-   where the film has one, and this is what happens when it does not. */
-/* The base carousel clamps a slide, its figure and its image to 360px, which is
-   right for a gallery in a news body and half a poster here. */
-.wp-block-cb-carousel-v2.od-poster-cards .swiper-slide figure {
-  max-height: none;
-}
-
-.wp-block-cb-carousel-v2.od-poster-cards .swiper-slide img {
+/* One shape for every cover, whatever the film was given. `contain` rather than
+   `cover` because cropping a poster to fit cuts the film's title off it, and
+   these are a mix — the older films have a portrait poster, the newer ones a
+   16∶9 still. */
+.od-poster-cards .wp-block-post-featured-image img {
   width: 100%;
-  max-height: none;
   border-radius: 12px;
   aspect-ratio: 387 / 546;
   background-color: var(--white);
   object-fit: contain;
 }
 
-.od-poster-cards .wp-block-buttons {
+/* `core/read-more` is a bare `<a>`, so it carries the pill itself rather than
+   inheriting one from `.wp-block-button__link`. */
+.od-poster-cards .wp-block-read-more {
   position: absolute;
   right: 12px;
   bottom: 12px;
   left: 12px;
-}
-
-.od-poster-cards .wp-block-button {
-  width: 100%;
-}
-
-.od-poster-cards .wp-block-buttons .wp-block-button .wp-block-button__link {
-  width: 100%;
+  display: flex;
+  /* Core ships `width: fit-content`, which would hold the pill to its text. */
+  width: auto;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 24px;
+  border-radius: var(--radius-full);
   background-color: var(--white);
   color: var(--red-8);
+  font-size: var(--font-size-4);
+  line-height: 1.4;
+  text-align: center;
+  transition: background-color 0.2s ease;
 }
 
-.od-poster-cards .wp-block-buttons .wp-block-button .wp-block-button__link:hover {
+.od-poster-cards .wp-block-read-more:hover {
   background-color: var(--gray-2);
   color: var(--red-10);
+  text-decoration: none;
 }
-
 
 /* The methodology card — a columns block that *is* the card, with the cover
    flush against its left edge and the text centred beside it. */
@@ -521,7 +523,7 @@ h2:has(+ .od-cards, + .od-poster-cards) {
      slide width from here — 280px, so the next card peeks and the row reads as
      something to swipe. */
   .wp-block-cb-carousel-v2.od-cards .swiper-slide,
-  .wp-block-cb-carousel-v2.od-poster-cards .swiper-slide {
+  .od-poster-cards .wp-block-post {
     width: 280px;
     max-width: 280px;
   }

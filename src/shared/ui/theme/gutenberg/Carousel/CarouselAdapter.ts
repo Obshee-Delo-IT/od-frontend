@@ -45,6 +45,16 @@ const parseCarouselAttributes = (carouselBlock: Element): CarouselBlockAttribute
   };
 };
 
+/**
+ * A carousel whose slides come from a `core/query` instead of `cb/slide-v2`:
+ * WordPress renders the list as `<ul class="wp-block-post-template">` with
+ * `<li class="wp-block-post">` children, so Swiper has to be told those are the
+ * track and its slides. `od_pages_film_query()` in `wp/scripts/od-pages.php`
+ * gives the template the `swiper-wrapper` class, which is why only the slide
+ * needs naming here.
+ */
+const QUERY_SLIDE_CLASS = 'wp-block-post';
+
 const createSwiperConfig = (carouselBlock: Element, attributes: CarouselBlockAttributes): SwiperOptions => ({
   modules: [Navigation, Pagination, Autoplay],
   slidesPerView: 'auto',
@@ -89,8 +99,9 @@ export const GutenbergCarouselAdapter = () => {
         }
         const attributes = parseCarouselAttributes(carouselBlock);
         const config = createSwiperConfig(carouselBlock, attributes);
+        const queryTemplate = swiperElement.querySelector(`.${QUERY_SLIDE_CLASS}`);
 
-        new Swiper(swiperElement, config);
+        new Swiper(swiperElement, queryTemplate ? { ...config, slideClass: QUERY_SLIDE_CLASS } : config);
       });
     };
 
