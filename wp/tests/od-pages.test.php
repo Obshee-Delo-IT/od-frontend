@@ -136,7 +136,9 @@ assert(str_contains($youth, '<p class="od-note">Программа прошла 
 assert(substr_count($youth, '<!-- wp:cb/slide-v2 -->') === 2, 'one slide per task');
 assert(str_contains($youth, '"slidesPerView":2'), 'two slots, not the template three');
 assert(str_contains($youth, 'data-cb-slides-per-view="2"'), 'and the frontend is told the same');
-assert(!str_contains($youth, '<h3'), 'the number replaces the card heading, and it is a CSS counter');
+assert(substr_count($youth, '<p class="od-task-number">') === 2, 'each card leads with its number');
+assert(str_contains($youth, '<p class="od-task-number">01</p>'), 'padded to two digits, as the mock draws it');
+assert(!str_contains($youth, '<h3'), 'and the number replaces the card heading rather than joining it');
 
 assert(str_contains($youth, '"tagIds":[666]'), 'the row queries the tag it was given');
 assert(str_contains($youth, '"key":"od_card_cover"'), 'covers come from the bound meta key');
@@ -150,9 +152,9 @@ assert(str_contains($youth, '<p>Создать условия для включ�
 assert(str_contains($youth, '<p>Сформировать у подростков мотивационную основу'), 'second task kept');
 
 // The booklet cover has no slot in the mock; the file it linked to does.
-assert(str_contains($youth, 'href="https://disk.yandex.ru/i/V2VRI2tY04OC1Q">Скачать методичку PDF'), 'the download survives');
+assert(str_contains($youth, '<p class="od-card-link"><a href="https://disk.yandex.ru/i/V2VRI2tY04OC1Q">Скачать методичку PDF</a></p>'), 'the download survives, under the goal');
 assert(substr_count($youth, 'disk.yandex.ru') === 1, 'once — the trailing heading pointed at the same file');
-assert(str_contains($youth, '"className":"od-materials"'), 'and it is the page\'s trailing button');
+assert(strpos($youth, 'od-card-link') < strpos($youth, 'Задачи программы'), 'and it is inside the goal card, not after the page');
 assert(!str_contains($youth, 'metodischka2.jpg'), 'the booklet cover is gone');
 assert(!str_contains($youth, 'plakats_2office_man.jpg'), 'and so are the hand-picked posters');
 assert(substr_count($youth, '<!-- wp:image ') === 1, 'only the logo — the covers come from the query');
@@ -170,7 +172,7 @@ assert(od_pages_healthy_youth($youth, 666) === $youth, 'converted content is lef
 // ===========================================================================
 
 $kidsBefore = file_get_contents(__DIR__ . '/fixtures/healthy-kids.before.html');
-$kids = od_pages_healthy_kids($kidsBefore);
+$kids = od_pages_healthy_kids($kidsBefore, 667);
 
 assert(str_contains($kids, 'wp-block-image size-full od-programme-logo'), 'logo card');
 assert(str_contains($kids, 'alt="Здоровые дети"'), 'logo alt');
@@ -182,28 +184,33 @@ assert(str_contains($kids, '<p class="od-note">Программа прошла �
 
 assert(substr_count($kids, '<!-- wp:cb/slide-v2 -->') === 3, 'one slide per task');
 assert(str_contains($kids, '"slidesPerView":3'), 'three tasks, three slots');
+assert(substr_count($kids, '<p class="od-task-number">') === 3, 'each card leads with its number');
+assert(str_contains($kids, '<p class="od-task-number">03</p>'), 'numbered through to the last');
 assert(str_contains($kids, '<p>Разработать учебно-методический комплекс'), 'first task kept');
 assert(str_contains($kids, '<p>Обеспечить образовательные организации разработанными материалами.</p>'), 'last task kept');
 assert(str_contains($kids, '<p>Содействие воспитательным процессам, направленным на формирование ценности здорового образа жизни среди детей.</p>'), 'goal body, line break collapsed');
 
-// This page has no film row at all, so no query and no term id.
-assert(!str_contains($kids, 'wp:query'), 'no projects row on this programme');
-assert(!str_contains($kids, 'od-poster-cards'), 'and no poster carousel');
-assert(substr_count($kids, '<!-- wp:image ') === 1, 'only the logo — the portrait went with the mock');
+// `project-3` draws no projects row, but the programme has films and the row
+// is the same query block the other two pages carry.
+assert(str_contains($kids, '<h2 class="wp-block-heading">Проекты программы</h2>'), 'projects heading');
+assert(str_contains($kids, 'cb-carousel-block od-poster-cards"'), 'poster carousel');
+assert(str_contains($kids, '"tagIds":[667]'), 'over the tag it was given');
+assert(substr_count($kids, '<!-- wp:image ') === 2, 'the logo and the bound cover — the portrait went with the mock');
 assert(!str_contains($kids, 'poznovalov.jpg'), 'the portrait is gone; its playlist link is a button');
 
-// Both trailing headings were links, and both survive.
-assert(str_contains($kids, '"className":"od-materials"'), 'the buttons carry the class the stylesheet keys on');
-assert(str_contains($kids, 'href="/materials/pppuiv-ted-6/">Методические рекомендации'), 'and the live-domain link became a path');
-assert(str_contains($kids, 'href="https://www.youtube.com/playlist?list=PLlNywkCI4IKyNXLKzGyM43Orp41Qm1plo">Фильмы программы'), 'the playlist keeps its origin');
-assert(substr_count($kids, 'is-style-outline') === 4, 'the two buttons, and no others');
+// Both trailing headings were links, and both survive — under the goal.
+assert(substr_count($kids, 'class="od-card-link"') === 2, 'both, and as links rather than buttons');
+assert(str_contains($kids, '<a href="/materials/pppuiv-ted-6/">Методические рекомендации</a>'), 'the live-domain link became a path');
+assert(str_contains($kids, '<a href="https://www.youtube.com/playlist?list=PLlNywkCI4IKyNXLKzGyM43Orp41Qm1plo">Фильмы программы</a>'), 'the playlist keeps its origin');
+assert(strpos($kids, 'od-card-link') < strpos($kids, 'Задачи программы'), 'and both sit in the goal card');
+assert(!str_contains($kids, 'is-style-outline'), 'no buttons on this page at all');
 
 assert(!str_contains($kids, 'cmsms_heading'), 'migrator heading class gone');
 assert(!str_contains($kids, 'fontstyle0'), 'old theme span gone');
 assert(!str_contains($kids, '<br'), 'hard line break gone');
 assert(!str_contains($kids, '<ul>'), 'the task list became cards');
 
-assert(od_pages_healthy_kids($kids) === $kids, 'converted content is left alone');
+assert(od_pages_healthy_kids($kids, 667) === $kids, 'converted content is left alone');
 
 // -- both refuse input they do not recognise --------------------------------
 
