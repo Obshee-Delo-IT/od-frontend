@@ -925,9 +925,22 @@ h2:has(+ .od-tiles) {
 }
 
 /* The stacked form is its own block in the flow, so it carries the 40 the grid
-   above gets from `margin-bottom`. */
+   above gets from `margin-bottom` — unless it is the aside of a row, which
+   `/materials/disk/` and `/materials/books/` make it: there the row below is
+   what carries the spacing. */
 .wp-block-group.od-asset {
   margin-bottom: 40px;
+}
+
+.wp-block-column > .wp-block-group.od-asset {
+  margin-bottom: 0;
+}
+
+/* A card holding an aside is as tall as the prose beside it, and its contents
+   sit at the top rather than spreading down the empty space. */
+.wp-block-column > .od-asset {
+  height: 100%;
+  justify-content: flex-start;
 }
 
 /* Everything inside the card is spaced by the card's own `gap`; the margins
@@ -969,6 +982,37 @@ h2:has(+ .od-tiles) {
   margin-inline: auto;
 }
 /* stylelint-enable no-descending-specificity */
+
+/* A grid of pictures with nothing to download — `/materials/sticker/`'s photos
+   of them on a minibus window, `/materials/zakladki/`'s nine bookmarks. Written
+   as a `columns` block rather than a `core/gallery`: block-library gives a
+   gallery figure `width: calc(25% - …)` and `flex-grow: 1`, so a last row of
+   one stretches to full width, and every override is a specificity fight with a
+   selector carrying an id inside a `:not()`. */
+.wp-block-columns.od-figures {
+  display: grid;
+  margin-bottom: 24px;
+  gap: 24px;
+}
+
+.wp-block-columns.od-figures--2 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.wp-block-columns.od-figures--4 {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+/* A fixed box with `contain` rather than a `max-height`: the bookmarks are
+   1:7 strips and the example photos are landscape, and only a box both can sit
+   inside keeps a row of either from setting the card's height on its own. */
+/* stylelint-disable-next-line no-descending-specificity -- `.od-card--flush` is
+   `/materials/metodichki/`'s card; no body carries both classes. */
+.od-figures .wp-block-image img {
+  width: 100%;
+  height: 420px;
+  object-fit: contain;
+}
 
 /* The download row is centred wherever it sits. */
 .od-asset .od-asset-actions {
