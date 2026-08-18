@@ -276,6 +276,24 @@ second, smaller cost: the sources are 0.773 / 0.733 / 0.707 against the 387:546
 box (0.7088), so `cover` trims 8.3% / 3.2% / 0.3% of the width — enough that the
 third cover's «ПРОГРАММА» band sits partly under the pill.
 
+## 1 492 rows the cmsms deactivation orphaned
+
+**Measured 2026-08-18**, right after `cmsms-content-composer` was switched off on
+od-dev. Its other post types were not re-registered — deliberately, they are dead
+— so their rows are still in the database and no longer reachable from the admin:
+
+| post type | rows | referenced by anything published? |
+| --- | --- | --- |
+| `cmsms_like` | 1 430 drafts | no — engagement counters for a theme we don't render |
+| `content_template` | 41 published | no — checked every published page and post |
+| `project` | 21 drafts | no — 0 published, the recon found Lorem ipsum |
+
+**What to do:** nothing urgent. If the database is ever tidied, delete them with
+`wp post delete --force` per type, and take the dead `cmsms_*` postmeta with them
+— **except `cmsms_profile_subtitle`**, which `wp/mu-plugins/od-profile.php`
+re-registers and D3 reads. Worth doing before a prod dump/restore, not before
+launch.
+
 ## Linkify the contacts inside `profile` bodies
 
 **Measured 2026-08-18.** Of 139 published records, **82 hold a phone number typed

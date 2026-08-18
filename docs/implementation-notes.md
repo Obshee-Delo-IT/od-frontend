@@ -462,6 +462,21 @@ Two smaller things went with them: a `profile` record with an empty title now fa
 
 ## 4. Shipped — data & media (B, E)
 
+### B8a. `cmsms-content-composer` off, `profile` ours — 2026-08-18 (od-dev)
+
+The whole point of migrating the content to Gutenberg was to be able to delete the page builder, and this is that. The plugin is **deactivated**; `wp/mu-plugins/od-profile.php` now registers the `profile` post type, the `pl-categs` taxonomy and the `cmsms_profile_subtitle` meta. Procedure, prod ordering and the full verification list: [`wp-backend.md` §3.1](./wp-backend.md) and [`prod-migration-runbook.md` §2.6](./prod-migration-runbook.md).
+
+Four things worth keeping:
+
+- **The arguments were dumped from the running site, not read out of the plugin.** `get_post_type_object('profile')` and `get_taxonomy('pl-categs')` include whatever a filter had changed; the source doesn't. That is how `has_archive => true`, `menu_position => 52` and the ten-entry `supports` list came across unchanged — and a difference in any of them would have moved a URL or dropped a panel out of the editor.
+- **`init` at priority 20, not 10.** mu-plugins load *before* ordinary plugins, so at a shared priority ours would have registered first and cmsms would have re-registered over it. Running later means the mu-plugin is the live registration **while cmsms is still active**, which is what makes the rollout verifiable rather than a leap: install, check the labels are Russian, then deactivate and watch nothing change.
+- **`/wp/v2/pl-categs` answers 200 now**, where cmsms 404'd it — the one deliberate addition, `'show_in_rest' => true`. `core/query` never needed it (it filters on `public` + `publicly_queryable`), but D3 does, and this was the only chance to add it. Also gone, incidentally: cmsms attached `post_tag` to `profile`, and `/wp/v2/types/profile` now lists `["pl-categs"]` alone. Two records of 139 carry a tag, the relationships stay in the database, `WP_Tax_Query` still matches them.
+- **Four published posts had to be converted first.** A shortcode whose plugin is gone renders as its own source text, and 41045 / 56178 / 62556 / 64555 still held `[cmsms_slider]`, `[cmsms_audios]`, `[cmsms_table]` and `[cmsms_tabs]`. The fix went into **`cmsms-gutenberg-upgrade`**, not into a one-off script, because prod converts through that plugin at cutover and would otherwise hit the same four gaps: table → `core/table` (8 rows × 5 cells on 62556, alignment kept as `has-text-align-*`, everything in `tbody` — no `thead` guess, since cmsms drew the first row as ordinary cells too), audio → `core/audio` mirroring the video branch, each tab → `wp:details` exactly as `[cmsms_toggle]` already did, `[cmsms_slider]` dropped as a reference to a third-party slider with no content of its own. Applied, converged to 0, and the `post` type now holds **zero** published cmsms shortcodes.
+
+**Why the earlier count of surviving shortcodes was too low** — and this is the reusable lesson: it had been taken from `content.rendered`, where WordPress has already expanded every shortcode whose plugin is active, so a survivor reads as ordinary markup. Raw `post_content` is the only honest place to count. Re-measured: 11 pages (ten on the A6 iframe list, `/news/` a native route) and those four posts.
+
+**The plugin's files are still on disk**, deactivated. It is the only reference implementation of the shortcodes prod has yet to migrate, so `wp plugin delete` waits for the cutover.
+
 ### B-VIDEO. Film data model — 2026-06-04 (od-dev), re-shaped 2026-07-03
 
 Installed **ACF free 6.8.3** and created a flat field group **`group_film_meta`** on `post_format == video` posts, everything `show_in_rest`. **Current shape (verified over REST 2026-08-13, group post id `72999`, 18 keys):** `kinescope_id`, `watch_url`, `trailer_url`, `download_{1..5}_url` + `download_{1..5}_label`, `share_vk`, `share_youtube`, `share_rutube`, `poster_image_url`, `poster_download_url` — all url/text, flat, no repeater, so ACF free suffices.

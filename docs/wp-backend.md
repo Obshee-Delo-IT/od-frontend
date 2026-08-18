@@ -108,9 +108,9 @@ Worth pinning down exactly, because B8's ordering depends on it and "it's the cm
 
 | what | where |
 | --- | --- |
-| `register_post_type('profile', …)` | `plugins/cmsms-content-composer/inc/profile/profiles-posttype.php:69` |
-| `register_taxonomy('pl-categs', ['profile'], …)` | same file, `:92` |
-| both fire on | `add_action('init', 'cmsms_profiles_init')`, `:188` |
+| `register_post_type('profile', …)` | ~~`plugins/cmsms-content-composer/inc/profile/profiles-posttype.php:69`~~ → **`wp/mu-plugins/od-profile.php`** since 2026-08-18 |
+| `register_taxonomy('pl-categs', ['profile'], …)` | ~~same file, `:92`~~ → same mu-plugin |
+| both fired on | `add_action('init', 'cmsms_profiles_init')`, `:188`; ours is `init` at priority **20**, so it wins while both are installed |
 | `[cmsms_profiles]` shortcode | `plugins/cmsms-content-composer/inc/shortcodes.php:5717` (function), `:5822` (`add_shortcode`) |
 | the single-profile page template | `themes/welfare/single-profile.php` — **theme**, and irrelevant to us: D3 renders `/profile/[slug]` itself |
 
@@ -154,28 +154,42 @@ Second, **ACF here is the free tier** (6.8.3, one field group — `group_film_me
 2. **A block pattern for new records** — the shape editors insert: photo column, bolded role, one linked contact per line. `register_block_pattern()` needs a plugin to live in, but an *unsynced* pattern needs no PHP whatsoever: it is a `wp_block` post, so `wp/patterns/profile.html` plus one `wp post create` keeps it repo-tracked and code-free. The block editor is reachable — Classic Editor is active but with `classic-editor-replace = no-replace`, so both editors are available and patterns appear in the inserter.
 3. **Nothing else.** No fields, no custom block, no `single-profile.php`.
 
-#### When the mu-plugin is actually needed
+#### The mu-plugin — shipped, and cmsms deactivated on od-dev (2026-08-18)
 
-**Not yet.** Its only job is to let `cmsms-content-composer` be deactivated, and nothing on the roadmap requires that:
+`wp/mu-plugins/od-profile.php`, installed at `wp-content/mu-plugins/od-profile.php`. It registers the `profile` post type, the `pl-categs` taxonomy and the `cmsms_profile_subtitle` meta, and **`cmsms-content-composer` is deactivated** on od-dev.
 
-- `/wp/v2/profile` is already in REST (`show_in_rest` is `true` on the CPT), which is what `fetchProfile` reads.
-- The 75 regional lists need only the CPT and taxonomy *registered by someone* — cmsms registers them today.
-- D3's `/profile/[slug]` needs no region, so `pl-categs` in REST is not on the critical path either. If it ever is, that is a **3-line `register_taxonomy_args` filter**, not a re-registration.
+Three things about it are load-bearing:
 
-So it lands at the moment cmsms is removed, and the ordering is the only hard part: **the mu-plugin must exist before the plugin is deactivated**, or 205 records leave the admin and all 75 query blocks start asking for a post type that no longer exists.
+- **Its arguments are the ones cmsms had *at runtime***, dumped from `get_post_type_object()` / `get_taxonomy()` rather than transcribed from the plugin's source, so anything a filter changed is included. Same rewrite slug, same `has_archive`, same ten `supports`, same `menu_position` — a difference in any of those moves URLs or drops a panel from the editor.
+- **It hooks `init` at priority 20, not the default 10.** mu-plugins load *before* ordinary plugins, so at a shared priority this file's callback would run first and cmsms would re-register over it. Running later means it wins while both are installed, which is what makes the rollout verifiable: install, check, and only then deactivate — at which point nothing changes, because this was already the live registration.
+- **Not a theme's `functions.php`.** A post type registered by a theme disappears with the theme, taking all 205 records out of the admin and out of REST. Mind the **PHP 7.0 floor**: an mu-plugin loads on every request and prod's site PHP is still 7.x.
+
+Two deliberate departures from what cmsms registered: **`show_in_rest` on the taxonomy** (so `/wp/v2/pl-categs` answers 200 instead of 404 — `core/query` never needed it, only `public` + `publicly_queryable`), and Russian labels, since cmsms shipped «Profiles» into an otherwise Russian admin.
+
+**What was verified after deactivating** (od-dev, 2026-08-18): `/wp/v2/profile` 200 and `?slug=` still resolves the percent-encoded Cyrillic; `/wp/v2/pl-categs` **200**, previously 404; `meta.cmsms_profile_subtitle` still present («Магнитогорск» on 46651); `/wp/v2/types/profile` reports `pl-categs`; `wp-login.php`, the WP home page, `/contacts/kalmykiya/` and `/profile/vatrushkin/` all 200 over HTTP, so nothing in the `welfare` theme fataled without the plugin — `single-profile.php` included; the frontend's `/materials/metodichki/`, `/contacts/kalmykiya/` and `/contacts/novosibirskaya/` all 200 with the card and the teasers intact; and `wp cmsms migrate` still runs, which matters because the migrator is needed at prod cutover.
+
+One incidental change: cmsms also attached **`post_tag`** to `profile`, and that is gone — `/wp/v2/types/profile` used to list `["post_tag","pl-categs"]` and now lists `["pl-categs"]`. Two records of 139 carry a tag; the term relationships stay in the database and `WP_Tax_Query` still matches them, so nothing that filters on them breaks. Not re-registered on purpose: regions belong in `pl-categs`.
+
+**The files are still on disk, deactivated, and that is deliberate** — `cmsms-content-composer` is the only reference implementation of the shortcodes that *prod* still has to migrate, and the frozen copy's rendering is what `cmsms-gutenberg-upgrade` is written against. Delete after the prod cutover, not before.
+
+**Required before deactivating anywhere, and done on od-dev:** the four published posts that still held `[cmsms_*]` (41045 `[cmsms_slider]`, 56178 `[cmsms_audios]`, 62556 `[cmsms_table]`, 64555 `[cmsms_tabs]`) were converted — a shortcode whose plugin is gone renders as its own source text. Four new branches in `cmsms-gutenberg-upgrade` do it, so **prod's cutover conversion gets them too**: table → `core/table` (all rows in `tbody`, cell alignment kept as `has-text-align-*`; no `thead` guess, because cmsms drew the first row as ordinary cells too), audio → `core/audio` mirroring the existing video branch, each tab → `wp:details` exactly as `[cmsms_toggle]` already did, and `[cmsms_slider]` dropped — it references a third-party slider and carries no content of its own. Applied and converged: `post` type now holds **zero** published cmsms shortcodes.
+
+What still holds published shortcodes, and why none of it matters to this frontend: **11 pages** (ten on the A6 iframe list, whose bodies we never fetch; `/news/` is a native route), `content_template` 38 (unreferenced by anything), plus `product` 6, `leyka_campaign` 3, `campaign` 1, `tribe_organizer`/`tribe_venue` 2+2 — post types with no route here.
+
+**Left orphaned by the deactivation**, invisible in the admin but untouched in the database: **21 `project` drafts**, **41 `content_template`** records and **1 430 `cmsms_like`** rows. None is referenced by any published content. Deleting them is DB hygiene, not a blocker — see [`next-steps.md`](./next-steps.md).
 
 ### 3.2 Custom taxonomies
 
 | Taxonomy | Object type | Source | In REST? |
 | --- | --- | --- | --- |
-| `pj-categs` | project | cmsms-content-composer | ❌ `/wp/v2/pj-categs` → **404** |
-| `pj-tags` | project | cmsms-content-composer | ❌ |
-| `pl-categs` | profile | cmsms-content-composer | ❌ `/wp/v2/pl-categs` → **404** |
+| `pj-categs` | project | cmsms-content-composer — **gone with it** | ❌ `/wp/v2/pj-categs` → **404** |
+| `pj-tags` | project | cmsms-content-composer — **gone with it** | ❌ |
+| `pl-categs` | profile | **`wp/mu-plugins/od-profile.php`** (was cmsms) | ✅ since 2026-08-18 |
 | `Carousel` | (carousel slides) | owl-carousel | ❌ |
 
 Standard WP taxonomies (`category`, `post_tag`, `nav_menu`, `post_format`) are also present and carry most of the model this repo actually consumes.
 
-**None of the cmsms taxonomies are registered with `show_in_rest`** (verified 2026-08-13), so a headless frontend cannot read them at all — `/wp/v2/types/profile` reports its taxonomies as `["post_tag"]` and nothing else. That matters for D3: there is no coordinator-by-region filter to be had from `pl-categs` unless the re-registration in §4.5 adds `'show_in_rest' => true`. See §3.5 for what the data offers instead.
+**None of the cmsms taxonomies were registered with `show_in_rest`** (verified 2026-08-13), so a headless frontend could not read them at all — `/wp/v2/types/profile` reported its taxonomies as `["post_tag"]` and nothing else, and `/wp/v2/pl-categs` 404'd. **Fixed for `pl-categs` on 2026-08-18**: the mu-plugin that took the registration over from cmsms adds `'show_in_rest' => true`, so a coordinator-by-region filter is now available to D3. The two `project` taxonomies were not re-registered — that CPT is dead (0 published, 21 drafts). See §3.5 for what the profile data offers.
 
 ### 3.3 Category ids the frontend hardcodes
 

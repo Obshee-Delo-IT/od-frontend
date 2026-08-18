@@ -915,7 +915,75 @@ function welfare_to_gutenberg($content) {
         <?php
         return ob_get_clean();
     }, $content);
-    
+
+    //-- Таблицы (cmsms_table/tr/td → core/table) --
+    //-- Всё в tbody, без thead: cmsms тоже рисовал первую строку обычными
+    //-- ячейками, а угадывать, что она заголовок, значит на таблице без шапки
+    //-- увести первую строку данных в заголовок.
+    $content = preg_replace_callback('/\[cmsms_table[^\]]*\](.*?)\[\/cmsms_table\]/s', function ($m) {
+        preg_match_all('/\[cmsms_tr[^\]]*\](.*?)\[\/cmsms_tr\]/s', $m[1], $rows, PREG_SET_ORDER);
+
+        $body = '';
+        foreach ($rows as $row) {
+            preg_match_all('/\[cmsms_td([^\]]*)\](.*?)\[\/cmsms_td\]/s', $row[1], $cells, PREG_SET_ORDER);
+            if (!$cells) continue;
+
+            $tds = '';
+            foreach ($cells as $cell) {
+                //-- Выравнивание ячейки core/table держит классом и data-атрибутом.
+                $align = preg_match('/align="(left|center|right)"/i', $cell[1], $a) ? strtolower($a[1]) : '';
+                $attrs = $align ? ' class="has-text-align-' . $align . '" data-align="' . $align . '"' : '';
+                $tds .= '<td' . $attrs . '>' . trim($cell[2]) . '</td>';
+            }
+            $body .= '<tr>' . $tds . '</tr>';
+        }
+
+        if (!$body) return '';
+
+        return '<!-- wp:table -->
+<figure class="wp-block-table"><table><tbody>' . $body . '</tbody></table></figure>
+<!-- /wp:table -->';
+    }, $content);
+
+    //-- Аудио (cmsms_audios/cmsms_audio → core/audio), как и видео выше --
+    $content = preg_replace_callback('/\[cmsms_audios[^\]]*\](.*?)\[\/cmsms_audios\]/s', function ($m) {
+        preg_match_all('/\[cmsms_audio[^\]]*\](.*?)\[\/cmsms_audio\]/s', $m[1], $tracks, PREG_SET_ORDER);
+
+        $out = '';
+        foreach ($tracks as $track) {
+            $src = trim($track[1]);
+            if (!$src) continue;
+
+            $out .= '<!-- wp:audio -->
+<figure class="wp-block-audio"><audio controls src="' . esc_url($src) . '"></audio></figure>
+<!-- /wp:audio -->';
+        }
+
+        return $out;
+    }, $content);
+
+    //-- Табы (cmsms_tabs/cmsms_tab → wp:details, ровно как toggle выше) --
+    //-- Обёртку снимаем первой: [cmsms_tab...] иначе матчит и [cmsms_tabs...].
+    $content = preg_replace('/\[cmsms_tabs[^\]]*\]/', '', $content);
+    $content = str_replace('[/cmsms_tabs]', '', $content);
+    $content = preg_replace_callback('/\[cmsms_tab[^\]]*title="([^"]*)"[^\]]*\](.*?)\[\/cmsms_tab\]/s', function ($m) {
+        $title = esc_html($m[1]);
+        $body  = wpautop(trim($m[2]));
+
+        return '<!-- wp:details -->
+<details class="wp-block-details">
+  <summary>' . $title . '</summary>
+  <!-- wp:paragraph -->
+  ' . $body . '
+  <!-- /wp:paragraph -->
+</details>
+<!-- /wp:details -->';
+    }, $content);
+
+    //-- Слайдер (cmsms_slider) — это ссылка на сторонний плагин слайдов, своего
+    //-- содержимого у шорткода нет, так что переносить нечего.
+    $content = preg_replace('/\[cmsms_slider[^\]]*\](?:.*?\[\/cmsms_slider\])?/s', '', $content);
+
     return $content;
 }
 
