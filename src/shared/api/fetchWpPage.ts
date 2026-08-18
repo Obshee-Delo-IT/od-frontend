@@ -1,5 +1,4 @@
 import { cache } from 'react';
-import { sectionParent } from '@/shared/config/sectionParents';
 import { WP_TAGS, wpCache } from './cacheTags';
 import { wpFetch } from './httpClient';
 import { buildNewsPreview, stripHtml } from './newsPreview';
@@ -132,18 +131,12 @@ export const fetchWpPage = async (path: string): Promise<WpPageContent | null> =
     return null;
   }
 
-  const ancestors = await fetchAncestors(page.parent ?? 0);
-  /* The ten asset pages under `/materials/` are children of the section in
-     WordPress and of a hub in the site — see `sectionParents.ts` for why the
-     tree stays flat. */
-  const hub = sectionParent(path);
-
   return {
     id: page.id,
     title: stripHtml(page.title?.rendered),
     contentHtml: page.content?.rendered ?? '',
     description: buildNewsPreview(page.excerpt?.rendered, page.content?.rendered),
-    ancestors: hub ? [...ancestors, hub] : ancestors,
+    ancestors: await fetchAncestors(page.parent ?? 0),
   };
 };
 

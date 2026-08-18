@@ -557,7 +557,7 @@ Figma `books` (`966:6650`), `flyers` (`966:7747`), `disks` (`966:8062`), `car st
 
 ### D6n. Follow-ups on the ten asset pages — 2026-08-18
 
-Five things, all from reading the shipped pages rather than the mocks.
+Five things, all from reading the shipped pages rather than the mocks. One of the five ended as a decision not to build.
 
 **`resolveContentImages` is `resolveContentAssets`.** It has not been about images since it started rewriting `<audio src>`, and this pass added media `<a href>` to it too.
 
@@ -565,7 +565,7 @@ Five things, all from reading the shipped pages rather than the mocks.
 
 **Three pictures in a card go on one row.** The mock puts the artwork and both photos of it in use side by side; the first cut nested the photos in the artwork's other half. One column per picture, width from the count — four of the fifteen cards carry three.
 
-**The breadcrumb names the hub.** «Материалы → Социальная реклама → Плакаты», where it read «Материалы → Плакаты». All ten asset pages are children of `/materials/` in WordPress and of a hub in the site, and **reparenting them is not available**: a page's permalink is its ancestors' slugs plus its own, so moving `plakati` under `social-reklama` turns `/materials/plakati/` — the #6 entry page on the site — into `/materials/social-reklama/plakati/`. The relation is ten lines in `src/shared/config/sectionParents.ts` instead, spliced into `ancestors` by `fetchWpPage`. A postmeta field and an mu-plugin to expose it were the alternative, for a set that has not changed since 2017.
+**The breadcrumb reads «Материалы → Плакаты», and stays that way.** The mocks draw «Материалы → Социальная реклама → Плакаты», but all ten asset pages are children of `/materials/` in WordPress, not of a hub, and there are only two ways to make the trail say otherwise. Reparenting them changes their URLs — a page's permalink is its ancestors' slugs plus its own, so `plakati` under `social-reklama` becomes `/materials/social-reklama/plakati/`, and `/materials/plakati/` is the **#6 entry page on the site**; redirecting the old address there gives one page two addresses, which is the thing A8 exists to prevent. Teaching the frontend the relation instead was tried (a ten-line path map spliced into `ancestors`) and **reverted as not worth its weight**: config that has to be kept in step with the hub cards by hand, to add one crumb. The WordPress tree is the trail; where a mock disagrees, the mock is drawing a menu, not a URL.
 
 **The clips play from Kinescope.** All ten on `/materials/led-board-roliki/` and both trailers on `/materials/books/` were YouTube embeds; they are `kinescope.io/embed/…` now, the same player the film pages use. **The mapping is verified, not guessed** — each clip's YouTube oEmbed title and its Kinescope title are the same string, all twelve. It lives in `OD_KINESCOPE_EMBEDS` in `od-pages.php` rather than being read out of the page, which is the one exception to that rule the file makes and can afford: a Kinescope id is not environment-specific, and WordPress records no relation between these clips and anything (`kinescope_id` is an ACF field on *films*, and these are advertising spots). `core/embed` cannot carry it — WordPress has no oEmbed provider for kinescope.io, so the block would render the url as its own text — so it is a `core/html` inside core's own embed `<figure>`, which is what the `wp-embed-aspect-16-9` rule reads.
 
