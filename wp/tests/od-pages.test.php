@@ -89,9 +89,9 @@ od_test(
 
 $alted = od_headings_into_image_alt( $classed );
 od_test( 'all three cover headings are gone', 0 === substr_count( $alted, '<!-- wp:heading' ) );
-od_test( 'the first poster carries its heading as alt', str_contains( $alted, 'alt="Здоровая Россия - ОБЩЕЕ ДЕЛО"' ) );
-od_test( 'the second too', str_contains( $alted, 'alt="Здоровые дети - ОБЩЕЕ ДЕЛО"' ) );
-od_test( 'the third too', str_contains( $alted, 'alt="Здоровая молодежь - ОБЩЕЕ ДЕЛО"' ) );
+od_test( 'the first poster carries its heading as alt, site name stripped', str_contains( $alted, 'alt="Здоровая Россия"' ) );
+od_test( 'the second too', str_contains( $alted, 'alt="Здоровые дети"' ) );
+od_test( 'the third too', str_contains( $alted, 'alt="Здоровая молодежь"' ) );
 od_test( 'the migrator alt is replaced, not joined', ! str_contains( $alted, 'metodichka-mult' ) );
 od_test( 'one alt per image, still three images', 3 === substr_count( $alted, '<img' ) && 3 === substr_count( $alted, ' alt=' ) );
 od_test( 'the pictures and their links survive', 3 === substr_count( $alted, 'wp-block-button__link' ) );
@@ -135,9 +135,9 @@ $named = od_cover_link_names( $alted );
 od_test( 'each poster link leaves the tab order', 3 === substr_count( $named, '<a tabindex="-1" aria-hidden="true"' ) );
 od_test(
 	'each button is named after its cover',
-	str_contains( $named, 'aria-label="Подробнее: Здоровая Россия - ОБЩЕЕ ДЕЛО"' )
-	&& str_contains( $named, 'aria-label="Подробнее: Здоровые дети - ОБЩЕЕ ДЕЛО"' )
-	&& str_contains( $named, 'aria-label="Подробнее: Здоровая молодежь - ОБЩЕЕ ДЕЛО"' )
+	str_contains( $named, 'aria-label="Подробнее: Здоровая Россия"' )
+	&& str_contains( $named, 'aria-label="Подробнее: Здоровые дети"' )
+	&& str_contains( $named, 'aria-label="Подробнее: Здоровая молодежь"' )
 );
 od_test( 'and no other link is touched', 3 === substr_count( $named, 'aria-label=' ) && 3 === substr_count( $named, 'tabindex=' ) );
 od_test( 'the posters still link where they linked', substr_count( $named, 'metodic.obshee-delo.ru' ) === substr_count( $alted, 'metodic.obshee-delo.ru' ) );
@@ -167,9 +167,10 @@ od_test(
 
 /* ------------------------------------------- od_https_own_links */
 
-$https = od_https_own_links( $named );
+$stripped = od_strip_attr_site_suffix( $named );
+$https = od_https_own_links( $stripped );
 od_test( 'the first cover stops hopping through http', ! str_contains( $https, 'http://metodic' ) && 2 === substr_count( $https, 'https://metodic.obshee-delo.ru' ) );
-od_test_idempotent( 'od_https_own_links', 'od_https_own_links', $named );
+od_test_idempotent( 'od_https_own_links', 'od_https_own_links', $stripped );
 od_test(
 	'an off-site http link is left alone — it may have no https to go to',
 	od_https_own_links( '<a href="http://example.org/">т</a>' ) === '<a href="http://example.org/">т</a>'
@@ -199,9 +200,48 @@ od_test(
 	od_strip_paragraph_spacing( '<div style="margin: 10px">т</div>' ) === '<div style="margin: 10px">т</div>'
 );
 
+/* --------------------------------------------- od_strip_attr_site_suffix */
+
+// The page on od-dev was converted before the strip existed, so the suffix has to
+// come off attributes that are already written — there is no heading left to clean.
+od_test( 'an already-written alt is cleaned', str_contains( od_strip_attr_site_suffix( '<img alt="Здоровая Россия - ОБЩЕЕ ДЕЛО" />' ), 'alt="Здоровая Россия"' ) );
+od_test( 'an already-written aria-label too', str_contains( od_strip_attr_site_suffix( '<a aria-label="Подробнее: Здоровые дети — Общее дело">x</a>' ), 'aria-label="Подробнее: Здоровые дети"' ) );
+od_test( 'other attributes are left alone', od_strip_attr_site_suffix( '<a title="Здоровая Россия - ОБЩЕЕ ДЕЛО">x</a>' ) === '<a title="Здоровая Россия - ОБЩЕЕ ДЕЛО">x</a>' );
+od_test( 'and an entity in the value is not re-encoded', od_strip_attr_site_suffix( '<img alt="&laquo;Общее дело&raquo; в школе" />' ) === '<img alt="&laquo;Общее дело&raquo; в школе" />' );
+od_test_idempotent( 'od_strip_attr_site_suffix', 'od_strip_attr_site_suffix', $named );
+
+/* -------------------------------------------------- od_strip_site_suffix */
+
+od_test( 'the site name goes', od_strip_site_suffix( 'Здоровая Россия - ОБЩЕЕ ДЕЛО' ) === 'Здоровая Россия' );
+od_test( 'an em dash too', od_strip_site_suffix( 'Здоровые дети — Общее Дело' ) === 'Здоровые дети' );
+od_test( 'and a trailing full stop after it', od_strip_site_suffix( 'Здоровая молодежь – ОБЩЕЕ ДЕЛО.' ) === 'Здоровая молодежь' );
+od_test( 'a heading without one is untouched', od_strip_site_suffix( 'Заказать методические пособия' ) === 'Заказать методические пособия' );
+// Only at the end: «Общее дело» is the organisation's name and appears mid-heading
+// all over the site.
+od_test( 'not in the middle', od_strip_site_suffix( 'ОБЩЕЕ ДЕЛО в Магнитогорске' ) === 'ОБЩЕЕ ДЕЛО в Магнитогорске' );
+od_test( 'the alt carries no site name', str_contains( $alted, 'alt="Здоровая Россия"' ) );
+
+/* ------------------------------------------------------ od_cover_full_size */
+
+$swapped = od_cover_full_size( $spaced, OD_METODICHKI_COVERS );
+od_test( 'the small file is gone', ! str_contains( $swapped, 'New_small.jpg' ) );
+od_test( 'the full-size original took its place', str_contains( $swapped, rawurlencode( 'обложка_ЗдорМолодежьNew.jpg' ) ) );
+od_test( 'the upload path is the page\'s own, not ours', str_contains( $swapped, '/wp-content/uploads/2020/04/' ) );
+// All three described the file that was there: 226×300, and an attachment id that
+// is per-environment.
+od_test( 'the stale dimensions are dropped', 2 === substr_count( $swapped, 'width="' ) );
+od_test( 'and the stale attachment class with them', 2 === substr_count( $swapped, 'wp-image-' ) );
+od_test( 'the other two covers are untouched', str_contains( $swapped, 'metodichka-232x300.jpg' ) && str_contains( $swapped, 'metodic-mults-small220x300.jpg' ) );
+od_test( 'a page with none of the mapped files is returned as it is', od_cover_full_size( '<img src="/x/other.jpg" width="1" />', OD_METODICHKI_COVERS ) === '<img src="/x/other.jpg" width="1" />' );
+od_test_idempotent(
+	'od_cover_full_size',
+	static fn( string $c ): string => od_cover_full_size( $c, OD_METODICHKI_COVERS ),
+	$spaced
+);
+
 /* --------------------------------------- od_details_to_profile_link */
 
-$linked = od_details_to_profile_link( $spaced, OD_METODICHKI_COORDINATOR_HREF, OD_METODICHKI_COORDINATOR_NAME );
+$linked = od_details_to_profile_link( $swapped, OD_METODICHKI_COORDINATOR_HREF, OD_METODICHKI_COORDINATOR_NAME );
 od_test( 'the accordion is gone', ! str_contains( $linked, 'wp:details' ) );
 od_test( 'its summary becomes an h2', str_contains( $linked, '<h2 class="wp-block-heading">Заказать методические пособия</h2>' ) );
 od_test( 'the coordinator is one link, alone in its paragraph', str_contains( $linked, '<!-- wp:paragraph --><p><a href="' . OD_METODICHKI_COORDINATOR_HREF . '">' . OD_METODICHKI_COORDINATOR_NAME . '</a></p><!-- /wp:paragraph -->' ) );
@@ -210,7 +250,7 @@ od_test( 'and so is the duplicated phone number', ! str_contains( $linked, '8904
 od_test_idempotent(
 	'od_details_to_profile_link',
 	static fn( string $c ): string => od_details_to_profile_link( $c, OD_METODICHKI_COORDINATOR_HREF, OD_METODICHKI_COORDINATOR_NAME ),
-	$spaced
+	$swapped
 );
 
 /* ------------------------------------------- the whole page fix, in order */

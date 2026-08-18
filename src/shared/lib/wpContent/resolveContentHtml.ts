@@ -9,6 +9,9 @@ import { resolveContentLinks } from './resolveContentLinks';
  * either half, so a body can't reach the page with only its images fixed. The
  * order matters only in that images resolve asynchronously (a HEAD probe per
  * source) while links are pure string work.
+ *
+ * Pass `eagerFirstImage` for a body that is the page's main content — it is the
+ * one whose first image is the LCP candidate. See {@link resolveContentImages}.
  */
-export const resolveContentHtml = async (html?: string | null): Promise<string> =>
-  resolveContentLinks(await resolveContentImages(html));
+export const resolveContentHtml = async (html?: string | null, eagerFirstImage = false): Promise<string> =>
+  resolveContentLinks(await resolveContentImages(html, eagerFirstImage));

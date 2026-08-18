@@ -644,6 +644,22 @@ function od_attr(string $value): string
 }
 
 /**
+ * Drop a trailing «— ОБЩЕЕ ДЕЛО» from a heading.
+ *
+ * The old theme's headings carried the site name because they doubled as the
+ * link's `title`, and «Здоровая Россия - ОБЩЕЕ ДЕЛО» is what
+ * {@see od_headings_into_image_alt()} would otherwise put in three `alt`s and
+ * three `aria-label`s on one page — a screen reader reading the site's own name
+ * out three times between the covers.
+ *
+ * Any of the four dashes, either case, and only at the end.
+ */
+function od_strip_site_suffix(string $heading): string
+{
+    return trim(preg_replace('~\s*[-–—−]\s*ОБЩЕЕ\s+ДЕЛО[.!]?\s*$~ui', '', $heading));
+}
+
+/**
  * Drop `group > columns > column{100%}` wrappers that contain nothing.
  *
  * CMSMasters rows were the old theme's vertical spacing, and an empty
@@ -743,7 +759,7 @@ function od_headings_into_image_alt(string $content): string
     return preg_replace_callback(
         $pattern,
         static function (array $m): string {
-            $alt   = od_attr(trim(strip_tags($m[1])));
+            $alt   = od_attr(od_strip_site_suffix(trim(strip_tags($m[1]))));
             $attrs = $m[3];
             // Replace the alt the migrator left («metodichka-mult» on two of the
             // three) rather than adding a second one.
@@ -952,6 +968,88 @@ const OD_METODICHKI_COORDINATOR_HREF =
 const OD_METODICHKI_COORDINATOR_NAME = 'Андрей Алексеевич Рязанов';
 
 /**
+ * The covers whose file the page should not be using, and the one it should.
+ *
+ * «Здоровые дети» is **not** in this list although its file is the 220×300
+ * `metodic-mults-small220x300.jpg`: the library's full-size original for that
+ * attachment (`metodichka-mult.jpg`, 844×1092) is not on the media bucket, and
+ * both origins answer 301 for it — there is nothing to point at. Recorded in
+ * `docs/next-steps.md` as an offload gap rather than worked around here.
+ */
+const OD_METODICHKI_COVERS = [
+    'обложка_ЗдорМолодежьNew_small.jpg' => 'обложка_ЗдорМолодежьNew.jpg',
+];
+
+/**
+ * Strip the site name from every `alt` and `aria-label` already in the body.
+ *
+ * {@see od_headings_into_image_alt()} cleans the heading it moves, but it is
+ * idempotent by "the heading is gone afterwards" — on a page converted before
+ * this strip existed there is no heading left to clean, and the suffix sits in
+ * three `alt`s and three `aria-label`s. Cleaning the attributes themselves fixes
+ * both the converted and the fresh page, and is what makes the whole chain
+ * idempotent either way.
+ *
+ * The value is rewritten in place, never decoded and re-encoded: it already
+ * survived one `"`-quoted attribute.
+ */
+function od_strip_attr_site_suffix(string $content): string
+{
+    return preg_replace_callback(
+        '~\s(alt|aria-label)="([^"]*)"~u',
+        static function (array $m): string {
+            $cleaned = od_strip_site_suffix($m[2]);
+
+            return $cleaned === $m[2] ? $m[0] : ' ' . $m[1] . '="' . $cleaned . '"';
+        },
+        $content
+    );
+}
+
+/**
+ * Point a cover at the full-size file the media library already holds.
+ *
+ * `$basenames` maps the file a page references to the one it should — **basenames
+ * only**, so the upload directory the page carries is kept and the map stays true
+ * on any environment. Two of `/materials/metodichki/`'s three covers arrived
+ * pointing at deliberately small uploads: the row draws them 387 wide, and
+ * `обложка_ЗдорМолодежьNew_small.jpg` is 297×420, a 1.30× upscale, where the
+ * full-size original beside it in the library is 930×1315 — and at 930∶1315 =
+ * 0.707 it is also the row's own ratio, so `object-fit: cover` stops cropping it.
+ *
+ * `width`, `height` and `wp-image-<id>` are dropped from a swapped image on
+ * purpose: all three described the old file. The size the stylesheet gives the
+ * cover is fixed (`aspect-ratio` on `.od-covers img`), and an attachment id is
+ * per-environment, so writing the new one here would be exactly the hardcoding
+ * this file avoids — the editor re-attaches it on the next save.
+ *
+ * Idempotent: a swapped image no longer matches its own key.
+ *
+ * @param array<string, string> $basenames old file name => new file name.
+ */
+function od_cover_full_size(string $content, array $basenames): string
+{
+    foreach ($basenames as $from => $to) {
+        $pattern = '~<img\b[^>]*\bsrc="[^"]*/' . preg_quote(rawurlencode($from), '~') . '"[^>]*>'
+            . '|<img\b[^>]*\bsrc="[^"]*/' . preg_quote($from, '~') . '"[^>]*>~u';
+
+        $content = preg_replace_callback(
+            $pattern,
+            static function (array $m) use ($from, $to): string {
+                $img = str_replace([rawurlencode($from), $from], rawurlencode($to), $m[0]);
+                $img = preg_replace('~\s(?:width|height)="[^"]*"~', '', $img);
+                $img = preg_replace('~\s?\bwp-image-\d+~', '', $img);
+
+                return preg_replace('~\sclass="\s*"~', '', $img);
+            },
+            $content
+        );
+    }
+
+    return $content;
+}
+
+/**
  * `/materials/metodichki/` — Figma `handbooks` (`779:4133`).
  *
  * Seven transforms in a fixed order, and the order is load-bearing twice: the
@@ -969,8 +1067,10 @@ function od_pages_metodichki(string $content, int $_filmTagId = 0): string
     $content = od_class_on_first_columns($content, 'od-covers');
     $content = od_headings_into_image_alt($content);
     $content = od_cover_link_names($content);
+    $content = od_strip_attr_site_suffix($content);
     $content = od_https_own_links($content);
     $content = od_strip_paragraph_spacing($content);
+    $content = od_cover_full_size($content, OD_METODICHKI_COVERS);
 
     return od_details_to_profile_link($content, OD_METODICHKI_COORDINATOR_HREF, OD_METODICHKI_COORDINATOR_NAME);
 }

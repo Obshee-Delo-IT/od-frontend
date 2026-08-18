@@ -267,14 +267,45 @@ library and repoint the three `<img src>`s. No code change; an `od-pages.php`
 transform or three admin edits. The same question will come up for
 `/materials/plakati/` and `/materials/zakladki/`, so ask once.
 
-**They are also too small** (measured in a production build 2026-08-18, 1440px):
-all three render at 386.67px wide from naturals of 500 / 220 / 297 px — **1.29× /
-1.76× / 1.30×** upscale, and the middle one is visibly soft. `resolveContentImages`
-strips `srcset`, so there is no larger candidate to fall back to. Ask for files at
-774px wide (2× the 387 the mock draws) while asking for the artwork. Cropping is a
-second, smaller cost: the sources are 0.773 / 0.733 / 0.707 against the 387:546
-box (0.7088), so `cover` trims 8.3% / 3.2% / 0.3% of the width — enough that the
-third cover's «ПРОГРАММА» band sits partly under the pill.
+**They were also too small** — all three rendered at 386.67px wide from naturals
+of 500 / 220 / 297 px (**1.29× / 1.76× / 1.30×** upscale), because the page
+referenced deliberately small uploads while the library held the originals.
+**Two thirds of that is fixed** (2026-08-18): `od_cover_full_size()` in
+`od-pages.php` repointed «Здоровая молодежь» at `обложка_ЗдорМолодежьNew.jpg`,
+930×1315 — a 0.42× downscale, and at 0.7072 it is the row's own ratio, so its crop
+went from 0.3% to **-0.2%**, i.e. none.
+
+**What is left is one file and one offload gap.** «Здоровые дети» still renders
+its 220×300 upload at 1.76×, and it cannot be repointed: WordPress says
+attachment 27636's full-size file is `metodichka-mult.jpg` at **844×1092**, but
+that file is **not on the media bucket** — the bucket 301s it to
+`общее-дело.рф`, which 301s again, and neither origin serves it. So either
+re-upload that original (it is the same artwork, just the large copy), or ask
+Design for the file with the other two. «Здоровая Россия» is at its own ceiling:
+`metodichka.jpg` 500×647 is the largest copy in the library, and it still crops
+8.3% because its 0.773 ratio is not the row's.
+
+That third cover is worth checking against the bucket generally: if one
+attachment's full-size file is missing while its sized variants are there, others
+may be too, and `resolveMediaUrl`'s origin fallback cannot help when the origin
+answers 301.
+
+## ~~The covers' `alt` carried the site's own name~~ — done 2026-08-18
+
+`od_strip_site_suffix()` / `od_strip_attr_site_suffix()` in `od-pages.php`. The
+old theme's headings ended in « - ОБЩЕЕ ДЕЛО» because they doubled as the link's
+`title`, and `od_headings_into_image_alt()` copied that into three `alt`s, from
+where `od_cover_link_names()` copied it into three `aria-label`s — a screen reader
+read the site's name out three times between the covers. The attribute-level
+strip exists because the heading-level one cannot reach a page that was already
+converted: it is idempotent by «the heading is gone afterwards».
+
+## ~~The first cover was lazy-loaded~~ — done 2026-08-18
+
+WordPress marks every image in a body `loading="lazy"` at render time, the LCP
+element included. `resolveContentHtml(html, true)` — passed by `WpPage`,
+`NewsArticle` and `FilmPage`, not by the footer — makes a main body's first image
+`loading="eager" fetchpriority="high"` and leaves the rest lazy.
 
 ## Three unauthenticated PHP entry points are live on production
 

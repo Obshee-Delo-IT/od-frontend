@@ -20,7 +20,7 @@ Five files, split by lifetime:
 | `wp/mu-plugins/od-profile.php` ✅ | runtime registration — the `profile` post type, its taxonomy and its one meta key (B8a) | every request, forever | **PHP 7.0 syntax only** |
 | `wp/mu-plugins/od-design.php` | runtime registration — block styles, patterns, editor palette | every request, forever | **PHP 7.0 syntax only** |
 
-**`od-pages.php` exists** since 2026-08-17 and now holds two kinds of function. **Small reusable transforms**, written for `/materials/metodichki/` and the ones a next page is most likely to need again: drop the migrator's empty spacer groups, put a `className` on a block, move a redundant heading into an image's `alt`, strip inline spacing, name a cover's button from its `alt`, upgrade our own `http://` links, replace a `wp:details` accordion, append a link to a body. And **one whole-page transform per redesigned page** (`od_pages_healthy_russia`, `…_youth`, `…_kids`, `od_pages_metodichki`), because a card layout is a structural rewrite and there is no smaller unit to reuse. Read both before writing a third kind.
+**`od-pages.php` exists** since 2026-08-17 and now holds two kinds of function. **Small reusable transforms**, written for `/materials/metodichki/` and the ones a next page is most likely to need again: drop the migrator's empty spacer groups, put a `className` on a block, move a redundant heading into an image's `alt`, strip the site's own name off an `alt` or an `aria-label`, strip inline spacing, name a cover's button from its `alt`, point an image at the full-size file the library holds, upgrade our own `http://` links, replace a `wp:details` accordion, append a link to a body. And **one whole-page transform per redesigned page** (`od_pages_healthy_russia`, `…_youth`, `…_kids`, `od_pages_metodichki`), because a card layout is a structural rewrite and there is no smaller unit to reuse. Read both before writing a third kind.
 
 **One registry, one runner.** `od_pages_registry()` lists every record: a `path` (or a `title`, for a `profile` whose slug names somebody else), the transform, and optionally the `post_tag` slug whose id a film row queries. The runner resolves the record and the term — ids are per-environment — and writes through `$wpdb->update` after a revision.
 
@@ -44,7 +44,7 @@ Five files, split by lifetime:
 
 ### Tests
 
-`wp/tests/od-pages.test.php`, no PHPUnit and no composer — run it with `php wp/tests/od-pages.test.php` (exit 0 / exit 1, 190 assertions today). It covers the pure transforms only, and **every transform gets the idempotency case**: `f(f(x)) === f(x)`. Fixtures are real `post_content` captured from od-dev into `wp/tests/fixtures/` — recapture them rather than editing them by hand.
+`wp/tests/od-pages.test.php`, no PHPUnit and no composer — run it with `php wp/tests/od-pages.test.php` (exit 0 / exit 1, 212 assertions today; `od-wp.test.php` adds 83). It covers the pure transforms only, and **every transform gets the idempotency case**: `f(f(x)) === f(x)`. Fixtures are real `post_content` captured from od-dev into `wp/tests/fixtures/` — recapture them rather than editing them by hand.
 
 **Not PHP's `assert()`, despite what this section used to say.** `zend.assertions` is `-1` on the dev machine and on both servers, which compiles `assert()` out of the file entirely: the tests would have printed nothing and exited 0 no matter what the transforms did. A one-line `od_test()` helper — an `if` and an `exit(1)` — cannot be switched off by an ini setting.
 

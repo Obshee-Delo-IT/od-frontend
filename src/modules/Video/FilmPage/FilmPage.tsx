@@ -84,7 +84,7 @@ export const FilmPage = async ({ id }: FilmPageProps) => {
     ...film.downloads,
     ...extracted.downloads.filter((download) => !knownDownloadUrls.has(download.url)),
   ];
-  const parsed = parsePost(await resolveContentHtml(extracted.html));
+  const parsed = parsePost(await resolveContentHtml(extracted.html, true));
   const rawPosterImageUrl = film.posterImageUrl ?? extracted.posterImageUrl;
   const posterImageUrl = rawPosterImageUrl ? await resolveMediaUrl(rawPosterImageUrl) : null;
   const posterAspectRatio = film.posterImageUrl ? aspectRatioFromUrl(film.posterImageUrl) : extracted.posterAspectRatio;

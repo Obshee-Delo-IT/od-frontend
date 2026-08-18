@@ -43,7 +43,7 @@ export const WpPage = async ({ page }: WpPageProps) => {
      parent, which on a page is the column an editor dropped the gallery into.
      Both od-dev pages that carry one would lose a sibling, and neither has it
      as a leading block, so there is nothing to lift and everything to lose. */
-  const html = await resolveContentHtml(page.contentHtml);
+  const html = await resolveContentHtml(page.contentHtml, true);
   /* A `/profile/…` link alone in its paragraph is the marker for "draw this
      person here" — the only page↔profile relation WordPress can express, since
      it has neither a meta field nor a shared taxonomy for one. See

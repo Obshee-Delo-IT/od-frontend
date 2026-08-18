@@ -65,7 +65,7 @@ export const NewsArticle = async ({ id }: NewsArticleProps) => {
     { label: stripHtml(data?.title?.rendered) },
   ];
 
-  const parsed = parsePost(await resolveContentHtml(data?.content?.rendered));
+  const parsed = parsePost(await resolveContentHtml(data?.content?.rendered, true));
   const date = formatDate(data?.date);
 
   return (
