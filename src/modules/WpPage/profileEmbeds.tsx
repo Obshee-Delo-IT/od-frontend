@@ -31,7 +31,9 @@ export const resolveProfileEmbeds = async (html: string): Promise<Map<string, Re
 
   const entries: Array<[string, ReactNode]> = [];
   for (const { href, profile } of resolved) {
-    if (profile) {
+    // A record with no title has nothing to head the card with, so it takes the
+    // same route as a missing one: the link stays a link.
+    if (profile?.name) {
       entries.push([
         href,
         /* The mock draws the banner without a portrait even where the record has

@@ -154,9 +154,59 @@ od_test(
 	)
 );
 
+/* ------------------------------------------- od_cover_link_names */
+
+$named = od_cover_link_names( $alted );
+od_test( 'each poster link leaves the tab order', 3 === substr_count( $named, '<a tabindex="-1" aria-hidden="true"' ) );
+od_test(
+	'each button is named after its cover',
+	str_contains( $named, 'aria-label="Подробнее: Здоровая Россия - ОБЩЕЕ ДЕЛО"' )
+	&& str_contains( $named, 'aria-label="Подробнее: Здоровые дети - ОБЩЕЕ ДЕЛО"' )
+	&& str_contains( $named, 'aria-label="Подробнее: Здоровая молодежь - ОБЩЕЕ ДЕЛО"' )
+);
+od_test( 'and no other link is touched', 3 === substr_count( $named, 'aria-label=' ) && 3 === substr_count( $named, 'tabindex=' ) );
+od_test( 'the posters still link where they linked', substr_count( $named, 'metodic.obshee-delo.ru' ) === substr_count( $alted, 'metodic.obshee-delo.ru' ) );
+od_test_idempotent( 'od_cover_link_names', 'od_cover_link_names', $alted );
+od_test(
+	'a column with no image is left alone — the coordinator\'s is one',
+	od_cover_link_names( '<!-- wp:column --><div><a href="/a/">т</a></div><!-- /wp:column -->' )
+	=== '<!-- wp:column --><div><a href="/a/">т</a></div><!-- /wp:column -->'
+);
+od_test(
+	'an empty alt is not a name',
+	! str_contains(
+		od_cover_link_names( '<!-- wp:column --><a href="/a/"><img src="/a.jpg" alt="" /></a><!-- /wp:column -->' ),
+		'tabindex'
+	)
+);
+od_test(
+	'quotes in a heading cannot break out of the attribute',
+	str_contains(
+		od_cover_link_names(
+			'<!-- wp:column --><a href="/a/"><img src="/a.jpg" alt="&laquo;Общее дело&raquo;" /></a>'
+			. '<div><a class="wp-block-button__link" href="/a/">Подробнее</a></div><!-- /wp:column -->'
+		),
+		'aria-label="Подробнее: &laquo;Общее дело&raquo;"'
+	)
+);
+
+/* ------------------------------------------- od_https_own_links */
+
+$https = od_https_own_links( $named );
+od_test( 'the first cover stops hopping through http', ! str_contains( $https, 'http://metodic' ) && 2 === substr_count( $https, 'https://metodic.obshee-delo.ru' ) );
+od_test_idempotent( 'od_https_own_links', 'od_https_own_links', $named );
+od_test(
+	'an off-site http link is left alone — it may have no https to go to',
+	od_https_own_links( '<a href="http://example.org/">т</a>' ) === '<a href="http://example.org/">т</a>'
+);
+od_test(
+	'a lookalike host is not ours',
+	od_https_own_links( '<a href="http://obshee-delo.ru.evil.tld/">т</a>' ) === '<a href="http://obshee-delo.ru.evil.tld/">т</a>'
+);
+
 /* ------------------------------------- od_strip_paragraph_spacing */
 
-$spaced = od_strip_paragraph_spacing( $alted );
+$spaced = od_strip_paragraph_spacing( $https );
 od_test( 'the migrator\'s inline spacing is gone from all three covers', ! preg_match( '~<p[^>]*(margin|padding)~', $spaced ) );
 od_test( 'text-align survives, and the attribute with it', 3 === substr_count( $spaced, 'style="text-align: center"' ) );
 od_test_idempotent( 'od_strip_paragraph_spacing', 'od_strip_paragraph_spacing', $alted );

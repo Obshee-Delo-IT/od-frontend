@@ -60,6 +60,14 @@ const contactKind = (href: string): PersonContactKind | null => {
 const fallbackLabel = (href: string, kind: PersonContactKind): string =>
   kind === 'phone' || kind === 'email' ? href.replace(/^[a-z]+:/i, '') : href;
 
+/**
+ * What the row shows. Records link their socials with the URL as the link text —
+ * `https://vk.com/id39335667` — and the scheme is the third of that string a
+ * reader gets nothing from; Telegram's own `@handle` labels pass through
+ * untouched, having no scheme to strip.
+ */
+const readableLabel = (label: string): string => label.replace(/^https?:\/\/(?:www\.)?/i, '').replace(/\/+$/, '');
+
 export interface ProfileBodyFields {
   /** The bolded first line — the role, e.g. «Координатор по городу Магнитогорску». */
   role: string | null;
@@ -90,7 +98,7 @@ export const parseProfileBody = (html?: string | null): ProfileBodyFields => {
       continue;
     }
     seen.add(href);
-    contacts.push({ kind, href, label: stripHtml(inner).trim() || fallbackLabel(href, kind) });
+    contacts.push({ kind, href, label: readableLabel(stripHtml(inner).trim() || fallbackLabel(href, kind)) });
   }
 
   const role = stripHtml(html.match(FIRST_BOLD)?.[2]).trim();

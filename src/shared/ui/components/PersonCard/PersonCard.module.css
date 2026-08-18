@@ -70,17 +70,21 @@
   list-style: none;
 }
 
+/* The type is set on the row, not on the anchor: inside `<GutenbergProvider>` a
+   bare `li` inherits `.gutenberg li`'s 16px, so a row that ever holds text
+   beside its link — an unlinked number, a separator — would render 16 next to
+   the link's 18. Same two declarations, one level up. */
 .contact.contact {
   display: flex;
   align-items: center;
   margin: 0;
+  font-size: var(--font-size-4);
   gap: 12px;
+  line-height: var(--line-height-4);
 }
 
 .contact.contact a {
   color: var(--red-8);
-  font-size: var(--font-size-4);
-  line-height: var(--line-height-4);
   overflow-wrap: anywhere;
   text-decoration: none;
 }

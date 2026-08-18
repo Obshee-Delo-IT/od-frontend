@@ -266,3 +266,81 @@ background, where the mock has artwork to its edges.
 library and repoint the three `<img src>`s. No code change; an `od-pages.php`
 transform or three admin edits. The same question will come up for
 `/materials/plakati/` and `/materials/zakladki/`, so ask once.
+
+**They are also too small** (measured in a production build 2026-08-18, 1440px):
+all three render at 386.67px wide from naturals of 500 / 220 / 297 px — **1.29× /
+1.76× / 1.30×** upscale, and the middle one is visibly soft. `resolveContentImages`
+strips `srcset`, so there is no larger candidate to fall back to. Ask for files at
+774px wide (2× the 387 the mock draws) while asking for the artwork. Cropping is a
+second, smaller cost: the sources are 0.773 / 0.733 / 0.707 against the 387:546
+box (0.7088), so `cover` trims 8.3% / 3.2% / 0.3% of the width — enough that the
+third cover's «ПРОГРАММА» band sits partly under the pill.
+
+## Linkify the contacts inside `profile` bodies
+
+**Measured 2026-08-18.** Of 139 published records, **82 hold a phone number typed
+as plain text** outside any anchor and 5 an e-mail, against 24 that link the phone
+with `tel:`. `parseProfileBody` reads anchors only — by design, see
+`src/shared/api/profileCard.ts` — so those records render a card with no phone
+row. 30 records show no contact at all; 109 show at least one.
+
+**What to do:** one pure transform in the `wp/scripts/od-pages.php` mould over the
+`profile` post type — plain-text phones, e-mails and bare `vk.com`/`t.me` URLs
+into anchors, idempotent by detection (skip anything already inside an `<a>`).
+Formats seen in the data: `89185700050`, `тел.: +79062755758`, `+79030913733`,
+`тел. 8(987)839-53-53`, `e-mail: x@y.ru`. Expected effect: card contact coverage
+109/139 → ~137/139, **with no frontend change**. This is the alternative to
+backfilling ACF fields — see [`wp-backend.md` §3.1](./wp-backend.md), "Fields for
+`profile`: a pattern, not ACF".
+
+Note `od-pages.php` currently resolves a target by path or title, one record per
+entry; a sweep over a whole post type needs a third resolver kind (~10 lines).
+
+## `/contacts/samarskaya/` lists no coordinators, and the term exists
+
+**Found 2026-08-18.** Page 21557's `core/query` block still carries the old
+`taxQuery: {"post_tag": [-1]}` placeholder — the "match nothing" fallback from
+before [`wp-page-passthrough.md` §5a](./wp-page-passthrough.md) was fixed. It is
+**the one page of the 75 the re-migration could not touch**: its
+`nvp_content_copy` backup is empty, so `wp cmsms migrate` has no original
+shortcode to convert. Meanwhile the right term is there — `activity-samara`
+(`pl-categs` 532) with **8 profiles**.
+
+**What to do:** rewrite that one block's `taxQuery` to `{"pl-categs":[532]}`.
+Term ids are per-environment, so this belongs in `od-pages.php` resolving the term
+by slug at run time, not as a literal.
+
+## Four regional contact pages point at the wrong region, and always did
+
+**Found 2026-08-18.** `/contacts/murmanskaya/`, `smolenskaya/`, `mordoviya/` and
+`astrakhanskaya/` each carry `taxQuery: {"pl-categs":[-1]}`, correctly: their
+original shortcode read `categories="архангельская-область"` — a copy-paste on the
+legacy site, which rendered them empty too. And `pl-categs` has **no term at all**
+for Murmansk, Smolensk, Mordovia or Astrakhan, so there is nothing to repoint them
+at. 20 of the 72 terms have zero profiles.
+
+**What to do:** a content question for the coordinators, not a code fix — either
+those four regions have contacts to tag or the pages should stop implying they do.
+
+## Icons carry no `aria-hidden`, app-wide
+
+**Found 2026-08-18.** The `@svgr/webpack` wrappers in
+`src/shared/ui/components/Icons/index.tsx` pass no `aria-hidden`, so every
+decorative glyph is an anonymous `img` node in the accessibility tree. `PersonCard`
+now sets it at the call site, which is the local fix; the general one is
+`svgProps: { 'aria-hidden': 'true' }` in the loader config, one line — but it
+would also hide the icons that *are* the accessible name of their control, so each
+icon-only button needs an `aria-label` checked first. Worth doing as its own pass
+over the ~25 icons.
+
+## Two footer/heading semantics gaps outside D8
+
+**Found 2026-08-18** while auditing `/materials/metodichki/` in a production build:
+
+- The footer's social row is a `<h2 class="wp-block-heading">` **with no text**,
+  wrapping three icon links — an empty heading in the a11y tree. Global, comes
+  from the WordPress footer widget.
+- `/contacts/<region>/` pages go `h1` → **`h3`** (the coordinator teaser's title)
+  → `h2` «События». The coordinator query block has no section heading of its own.
+  A skipped level on ~75 pages; fixable with one heading block per page, or by
+  dropping the teaser title's level.

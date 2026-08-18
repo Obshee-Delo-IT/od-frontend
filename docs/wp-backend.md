@@ -124,9 +124,45 @@ Two consequences already in §4.4's ordering, restated here because this is wher
 - The registration is **~15 lines of `register_post_type` + `register_taxonomy`**, so owning it is cheap; the content needs nothing, being clean Gutenberg already.
 
 **Key takeaways:**
-- **`project` is dead** — drop along with cmsms. No migration, no replacement needed.
-- **`profile` is alive but already migrated** — `post_content` is Gutenberg blocks. The CPT registration is the only thing tied to cmsms; once we re-register the CPT (in a theme `functions.php` or ACF), the data renders cleanly via the same `html-react-parser` path as news bodies.
+- **`project` is dead** — drop along with cmsms. No migration, no replacement needed. So is `content_template`: 41 published records, and **not one published page or post references them**.
+- **`profile` is alive but already migrated** — `post_content` is Gutenberg blocks. The CPT registration is the only thing tied to cmsms, and re-registering it belongs in an mu-plugin (previous point), not in a theme and not in ACF's post-type UI, whose config lives in the database rather than in this repo.
 - **No data-migration script is required.** The hard work (cmsms → Gutenberg) was already done by `cmsms-gutenberg-upgrade`. The remaining work is plumbing — re-registering the CPT and optionally cleaning up dead `cmsms_*` / `nvp_content_copy` meta rows.
+
+#### Fields for `profile`: a pattern, not ACF (decided 2026-08-18)
+
+The question this settles is whether the card's fields should become real fields. **They should not.** Measured over all 139 published records:
+
+| | records |
+| --- | --- |
+| at least one contact **linked** (what `parseProfileBody` reads) | 109 |
+| linked `mailto:` / `vk.com` / `tel:` / `t.me` | 103 / 43 / 24 / 1 |
+| a phone number **typed as plain text**, outside any anchor | 82 |
+| an e-mail typed as plain text | 5 |
+| no contact of any kind | 30 |
+| no `<strong>`/`<b>`, so no role line in the body | 56 |
+| `cmsms_profile_subtitle` filled (a place name — «Магнитогорск» — not a role) | 130 |
+| neither a bolded role nor a subtitle | 6 |
+| no featured image | 3 |
+
+Two things follow. First, **the gap is not "the data has no shape", it is "24 of 106 phone numbers are links"** — and that is fixable in the body, where a `tel:` anchor also makes the number tappable for every other consumer, including the WP admin's own preview. A field would hold a *second* copy of a number the body already shows, and with 139 legacy records the two copies diverge the first time an editor updates one of them.
+
+Second, **ACF here is the free tier** (6.8.3, one field group — `group_film_meta`): no repeater, so contacts become flat `phone_1..3` slots, the same shape the film group already regrets. Plus a backfill for 139 records, an editor UI that disagrees with the body beside it, and `show_in_rest` plumbing for meta the frontend can already read from the content.
+
+**What to do instead**, in the order it pays off:
+
+1. **Linkify the bodies once** — plain-text phones, e-mails and bare `vk.com`/`t.me` URLs into anchors. A pure transform in the `wp/scripts/od-pages.php` mould, idempotent by detection (skip anything already inside an `<a>`), ~30 lines with the existing test harness. Raises card coverage from 109/139 to ~137/139 **with no frontend change at all**.
+2. **A block pattern for new records** — the shape editors insert: photo column, bolded role, one linked contact per line. `register_block_pattern()` needs a plugin to live in, but an *unsynced* pattern needs no PHP whatsoever: it is a `wp_block` post, so `wp/patterns/profile.html` plus one `wp post create` keeps it repo-tracked and code-free. The block editor is reachable — Classic Editor is active but with `classic-editor-replace = no-replace`, so both editors are available and patterns appear in the inserter.
+3. **Nothing else.** No fields, no custom block, no `single-profile.php`.
+
+#### When the mu-plugin is actually needed
+
+**Not yet.** Its only job is to let `cmsms-content-composer` be deactivated, and nothing on the roadmap requires that:
+
+- `/wp/v2/profile` is already in REST (`show_in_rest` is `true` on the CPT), which is what `fetchProfile` reads.
+- The 75 regional lists need only the CPT and taxonomy *registered by someone* — cmsms registers them today.
+- D3's `/profile/[slug]` needs no region, so `pl-categs` in REST is not on the critical path either. If it ever is, that is a **3-line `register_taxonomy_args` filter**, not a re-registration.
+
+So it lands at the moment cmsms is removed, and the ordering is the only hard part: **the mu-plugin must exist before the plugin is deactivated**, or 205 records leave the admin and all 75 query blocks start asking for a post type that no longer exists.
 
 ### 3.2 Custom taxonomies
 

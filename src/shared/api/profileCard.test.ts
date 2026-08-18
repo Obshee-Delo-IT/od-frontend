@@ -64,7 +64,19 @@ describe('parseProfileBody', () => {
     const html = '<a href="mailto:a@b.ru"></a><a href="https://t.me/x"><span></span></a>';
     expect(parseProfileBody(html).contacts).toEqual([
       { kind: 'email', href: 'mailto:a@b.ru', label: 'a@b.ru' },
-      { kind: 'telegram', href: 'https://t.me/x', label: 'https://t.me/x' },
+      { kind: 'telegram', href: 'https://t.me/x', label: 't.me/x' },
+    ]);
+  });
+
+  it('shows a URL label without its scheme, and leaves a handle alone', () => {
+    const html =
+      '<a href="https://vk.com/id39335667">https://vk.com/id39335667</a>' +
+      '<a href="https://t.me/paramon1302">@paramon1302</a>' +
+      '<a href="https://vk.com/od">https://www.vk.com/od/</a>';
+    expect(parseProfileBody(html).contacts.map(({ label }) => label)).toEqual([
+      'vk.com/id39335667',
+      '@paramon1302',
+      'vk.com/od',
     ]);
   });
 

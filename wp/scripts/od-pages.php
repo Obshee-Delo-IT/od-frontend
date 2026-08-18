@@ -220,6 +220,75 @@ function od_strip_paragraph_spacing( string $content ): string {
 }
 
 /**
+ * Name each cover's button after the cover, and take the poster's own link out of
+ * the tab order.
+ *
+ * A cover column is a linked poster followed by a `wp:button` to the same place,
+ * so a keyboard reached every cover **twice** — six stops for three
+ * destinations — and a screen reader listing the page's links got «Подробнее»
+ * three times over, with nothing to tell them apart. The poster's link is the
+ * redundant one (`tabindex="-1"` plus `aria-hidden`, the pair that keeps an
+ * `aria-hidden` element from being focusable), and the button takes the cover's
+ * name from the image's `alt` — which {@see od_headings_into_image_alt} has just
+ * put there, so this has to run after it.
+ *
+ * Idempotent: both edits are guarded on the attribute they add. A column with no
+ * image, or an image with an empty `alt`, is left alone — the empty layout
+ * columns and the coordinator's are exactly that.
+ */
+function od_cover_link_names( string $content ): string {
+	return preg_replace_callback(
+		'~<!--\s*wp:column\b.*?<!--\s*/wp:column\s*-->~s',
+		static function ( array $m ): string {
+			$column = $m[0];
+
+			if ( ! preg_match( '~<img\b[^>]*\salt="([^"]+)"~', $column, $alt ) ) {
+				return $column;
+			}
+
+			// Verbatim, not decoded and re-encoded: the value already survived one
+			// `"`-quoted attribute, so it is safe in the next one, entities and all.
+			$name = trim( $alt[1] );
+			if ( '' === $name ) {
+				return $column;
+			}
+
+			$column = preg_replace(
+				'~<a\b(?![^>]*\stabindex=)([^>]*)(>\s*<img\b)~',
+				'<a tabindex="-1" aria-hidden="true"$1$2',
+				$column,
+				1
+			);
+
+			return preg_replace(
+				'~(<a\b(?![^>]*\saria-label=)[^>]*\sclass="[^"]*wp-block-button__link[^"]*"[^>]*)>~',
+				'$1 aria-label="' . od_attr( 'Подробнее: ' . $name ) . '">',
+				$column,
+				1
+			);
+		},
+		$content
+	);
+}
+
+/**
+ * Upgrade `http://` links to our own hosts to `https://`.
+ *
+ * The first cover points at `http://metodic.obshee-delo.ru/`, which answers 301
+ * to the `https` copy — so every visit paid for a redirect, and the page mixed
+ * schemes for no reason. Scoped to `obshee-delo.ru` and its subdomains: an
+ * off-site `http` link may genuinely have no `https` to go to, and this script
+ * has no way to find out.
+ *
+ * Idempotent: there is no `http://` left to match.
+ */
+function od_https_own_links( string $content ): string {
+	// The lookahead is the point: without it `obshee-delo.ru.evil.tld` matches as a
+	// prefix and gets its scheme upgraded too.
+	return preg_replace( '~\bhref="http://((?:[a-z0-9-]+\.)*obshee-delo\.ru)(?=[/"?#])~i', 'href="https://$1', $content );
+}
+
+/**
  * Replace a `wp:details` accordion with its summary as an `h2` and a link to the
  * `profile` record whose contact details the accordion held as prose.
  *
@@ -312,6 +381,8 @@ function od_pages_fixes(): array {
 				$content = od_drop_empty_layout_groups( $content );
 				$content = od_class_on_first_columns( $content, 'od-covers' );
 				$content = od_headings_into_image_alt( $content );
+				$content = od_cover_link_names( $content );
+				$content = od_https_own_links( $content );
 				$content = od_strip_paragraph_spacing( $content );
 
 				return od_details_to_profile_link(

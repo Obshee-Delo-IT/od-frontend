@@ -76,7 +76,7 @@ export const PersonCard: React.FC<PersonCardProps> = ({ name, subtitle, photo, c
         {/* The glyph stands in for the photo *in the contact row*, not in the
             photo's place: it shares the 24 + 12 indent the contact rows below
             use, which is what lines the whole block up in Figma. */}
-        {photo ? null : <UserIcon size={24} className={css.contactIcon} />}
+        {photo ? null : <UserIcon size={24} className={css.contactIcon} aria-hidden />}
         <div className={css.names}>
           <p className={css.name}>{name}</p>
           {subtitle ? <p className={css.subtitle}>{subtitle}</p> : null}
@@ -88,7 +88,10 @@ export const PersonCard: React.FC<PersonCardProps> = ({ name, subtitle, photo, c
             const Icon = CONTACT_ICONS[kind];
             return (
               <li key={href} className={css.contact}>
-                <Icon size={24} className={css.contactIcon} />
+                {/* Decorative: the link beside it already says what the row is,
+                    so a screen reader announcing «изображение» first would only
+                    add noise. */}
+                <Icon size={24} className={css.contactIcon} aria-hidden />
                 <a href={href}>{label}</a>
               </li>
             );
