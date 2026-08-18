@@ -747,23 +747,73 @@ function od_pages_downloads(array $buttons): string
     return $out . "</div>\n<!-- /wp:buttons -->\n";
 }
 
-/** A `core/embed` of a YouTube video, in the shape core's own `save` writes. */
-function od_pages_embed(string $url): string
-{
-    $attrs = [
-        'url' => $url,
-        'type' => 'video',
-        'providerNameSlug' => 'youtube',
-        'responsive' => true,
-        'className' => 'wp-embed-aspect-16-9 wp-has-aspect-ratio',
-    ];
+/**
+ * YouTube video id → Kinescope video id, for every clip a materials page
+ * embeds.
+ *
+ * **Matched by title, and every one of the twelve is an exact match** — the
+ * YouTube oEmbed title and the Kinescope title are the same string, so this is
+ * a verified mapping rather than an order-of-appearance guess.
+ *
+ * A Kinescope id is not environment-specific: the same asset answers for
+ * od-dev and production, which is why these are written here rather than read
+ * out of the page. Nothing in WordPress records the relation — the film posts
+ * carry a `kinescope_id` ACF field, but these are advertising clips, not films.
+ */
+const OD_KINESCOPE_EMBEDS = [
+    // `/materials/led-board-roliki/`
+    'Jd5gnZ7FzxA' => ['306f45e7-be28-4612-bc26-68768b5a399e', 'Аристотель. Ролик «Общего дела» для светодиодного щита'],
+    'rUr6OjmfP-4' => ['e9525d33-56de-4231-8c3b-4ac8874cd97c', 'Бехтерев. Ролик «Общего дела» для светодиодного щита'],
+    'YJAqTTzixnA' => ['c3d7c71d-1f96-4db5-8eca-cf752bc074e8', 'Дарвин. Ролик «Общего дела» для светодиодного щита'],
+    'qYjUQmFiwS0' => ['b3fc5641-ece5-43c4-be0a-c2e02175aa9d', 'Достоевский. Ролик «Общего дела» для светодиодного щита'],
+    '39L_-8-pXVg' => ['c1382dc5-63f6-4355-a115-f09b8623b41e', 'Иоганн Гёте. Ролик «Общего дела» для светодиодного щита'],
+    's2pNzBkJVJQ' => ['31702700-24b4-4166-9510-70b0c62c9dd2', 'Лев Толстой, вариант 1. Ролик «Общего дела» для светодиодного щита'],
+    'mXw3gcMVa4U' => ['4a8c3a4a-853c-4d29-9672-bd22e4862f49', 'Лев Толстой, вариант 2. Ролик «Общего дела» для светодиодного щита'],
+    'WgOM91U9mpg' => ['4dbaac4a-439d-405a-be11-39f0ee68a69f', 'Лев Толстой, вариант 3. Ролик «Общего дела» для светодиодного щита'],
+    '8EGyJvNIheg' => ['af2aa816-c295-4c19-b3b1-ed58a0bfaa64', 'Семашко Н.А. Ролик «Общего дела» для светодиодного щита'],
+    'ww534o1NIPY' => ['a38a9b91-7c66-4677-8f7e-819b54317c99', 'Углов. Ролик «Общего дела» для светодиодного щита'],
+    // `/materials/books/`
+    'rCORvPx9cR4' => ['939be838-34ec-4e95-88bf-7f31244c3be2', 'Правда про алкоголь. История одного обмана'],
+    'ZOqohiNifK0' => ['7bd4b8cb-6107-46a7-a7cc-d715d5c51bf1', 'Тайна природы женщины — фильм организации «Общее дело»'],
+];
 
-    return sprintf(
-        "<!-- wp:embed %s -->\n<figure class=\"wp-block-embed is-type-video is-provider-youtube wp-block-embed-youtube wp-embed-aspect-16-9 wp-has-aspect-ratio\">"
-        . "<div class=\"wp-block-embed__wrapper\">\n%s\n</div></figure>\n<!-- /wp:embed -->\n",
-        json_encode($attrs, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE),
-        $url
-    );
+/**
+ * The Kinescope player, as a `core/html` block.
+ *
+ * `core/embed` cannot carry it: WordPress has no oEmbed provider for
+ * kinescope.io, so the block would store the url and render it as its own text.
+ * The `<figure>` around the frame is core's embed markup, which is what the
+ * `wp-embed-aspect-16-9` rule in `gutenberg.css` reads — the iframe is 16:9
+ * whatever column it lands in, and `FilmPlayer` already iframes the same host,
+ * so nothing new is allowed through.
+ *
+ * No `allowfullscreen` beside the `allow` list: the browser logs «Allow
+ * attribute will take precedence over 'allowfullscreen'» when both are set, and
+ * `fullscreen` is already in the list.
+ *
+ * @throws RuntimeException when the page embeds a clip nothing has been matched
+ *                          for — better than silently leaving a YouTube frame.
+ */
+function od_pages_kinescope(string $youtubeUrl): string
+{
+    if (!preg_match('~(?:youtu\.be/|v=)([A-Za-z0-9_-]{6,})~', $youtubeUrl, $found)) {
+        throw new RuntimeException(sprintf('unexpected input: «%s» is not a YouTube url', $youtubeUrl));
+    }
+    if (!isset(OD_KINESCOPE_EMBEDS[$found[1]])) {
+        throw new RuntimeException(sprintf('no Kinescope video matched for YouTube id «%s»', $found[1]));
+    }
+
+    [$id, $title] = OD_KINESCOPE_EMBEDS[$found[1]];
+
+    return "<!-- wp:html -->\n"
+        . '<figure class="wp-block-embed is-type-video wp-block-embed-kinescope wp-embed-aspect-16-9 wp-has-aspect-ratio">'
+        . '<div class="wp-block-embed__wrapper">'
+        . sprintf(
+            '<iframe src="https://kinescope.io/embed/%s" title="%s" frameborder="0" allow="autoplay; fullscreen; picture-in-picture; encrypted-media; gyroscope; accelerometer; clipboard-write; screen-wake-lock;" loading="lazy"></iframe>',
+            $id,
+            od_attr($title)
+        )
+        . "</div></figure>\n<!-- /wp:html -->\n";
 }
 
 /** A `core/audio` block. */
@@ -1802,19 +1852,27 @@ function od_pages_plakati(string $content, int $filmTagId): string
     $cards = [];
     foreach ($posters as $index => $poster) {
         $card = $poster['title'] === '' ? '' : od_pages_heading(3, $poster['title']);
-        $card .= $poster['examples'] === []
-            ? od_pages_asset_image($poster['artwork'], 'Макет')
-            : od_pages_columns([
-                ['width' => '50%', 'blocks' => od_pages_asset_image($poster['artwork'], 'Макет')],
-                [
-                    'width' => '50%',
-                    'blocks' => implode('', array_map(
-                        static fn(array $image, int $n): string => od_pages_asset_image($image, $n === 0 ? 'Примеры использования' : ''),
-                        $poster['examples'],
-                        array_keys($poster['examples'])
-                    )),
+
+        if ($poster['examples'] === []) {
+            $card .= od_pages_asset_image($poster['artwork'], 'Макет');
+        } else {
+            // One column per picture, not one for the artwork and one holding
+            // the photos stacked: the mock puts everything in a card on a single
+            // row, and three of these carry two photos rather than one.
+            $columns = [['image' => $poster['artwork'], 'caption' => 'Макет']];
+            foreach ($poster['examples'] as $n => $example) {
+                $columns[] = ['image' => $example, 'caption' => $n === 0 ? 'Примеры использования' : ''];
+            }
+
+            $width = sprintf('%.2f%%', 100 / count($columns));
+            $card .= od_pages_columns(array_map(
+                static fn(array $column): array => [
+                    'width' => $width,
+                    'blocks' => od_pages_asset_image($column['image'], $column['caption']),
                 ],
-            ]);
+                $columns
+            ));
+        }
 
         $cards[] = $card . od_pages_downloads([['href' => $buttons[$index]['href'], 'label' => OD_ASSET_DOWNLOAD]]);
     }
@@ -1922,7 +1980,7 @@ function od_pages_led_board_roliki(string $content, int $filmTagId): string
             od_pages_columns([
                 [
                     'width' => '66.67%',
-                    'blocks' => od_pages_heading(3, $row[0]['headings'][0] ?? '') . od_pages_embed($row[0]['embeds'][0]),
+                    'blocks' => od_pages_heading(3, $row[0]['headings'][0] ?? '') . od_pages_kinescope($row[0]['embeds'][0]),
                 ],
                 [
                     'width' => '33.33%',
@@ -2313,7 +2371,7 @@ function od_pages_books(string $content, int $filmTagId): string
             $prose .= od_pages_paragraph($paragraph);
         }
         foreach ($book['embeds'] as $embed) {
-            $prose .= od_pages_embed($embed);
+            $prose .= od_pages_kinescope($embed);
         }
 
         $out .= od_pages_heading(2, $book['title'])

@@ -479,7 +479,7 @@ The resolution pipeline (all under `src/shared/api/`, applied at fetch/render ti
 | `imageUrl.ts` → `toFullSizeImageUrl` | strip the `-WxH` suffix to the full-size original (leaves `-scaled` alone) |
 | `mediaCdn.ts` → `getWpMediaCdn` / `DEFAULT_WP_MEDIA_CDN` | committed CDN base; `WP_MEDIA_CDN` env overrides it, `""` disables. Also feeds `next.config.ts` `images.remotePatterns` so the host is always allowlisted |
 | `mediaUrl.ts` → `resolveMediaUrl` | full-size **and** CDN-when-the-object-exists (cached HEAD, 200-only), else WP origin. Used by `fetchFilms` / `fetchLatestNews` |
-| `shared/lib/wpContent/resolveContentImages.ts` | runs every body `<img>` through `resolveMediaUrl` and strips `srcset` / `sizes` |
+| `shared/lib/wpContent/resolveContentAssets.ts` | runs every body `<img>`, `<audio>` and media `<a href>` through `resolveMediaUrl` and strips `srcset` / `sizes` |
 | `shared/lib/wpContent/resolveContentLinks.ts` | makes WordPress-origin `<a>` hrefs root-relative (D6c), leaving the `wp-content` / `wp-admin` / … trees absolute — those files exist only on the WordPress host |
 | `shared/lib/wpContent/resolveContentHtml.ts` | the two above, composed. **The pipeline's entry point**, ahead of `parsePost` — use it rather than either half |
 
@@ -571,7 +571,7 @@ How the install was tested, since the frontend has no deployment yet and the sha
 - **The `welfare-ver-1-0-9 /` theme directory has a trailing space in its name.** Tab-complete will trip on it — quote it explicitly.
 - **`debug.log.tar.gz`, `strace.log`, `1bcf68f1e3f797e17efd6e50a618ffcf.txt`, `u0137327_od_rf.sql`** — assorted debug / dump artefacts sit at the docroot of od-dev. Treat as secret-bearing; don't read.
 - **WP-OpenAPI maintenance:** the plugin is one-author and infrequently updated. If a future WP-core change breaks it, options are (a) hand-write types, (b) switch to wp-graphql + a code-gen GraphQL client, (c) fork the plugin.
-- **Media is offloaded to a Yandex bucket; the origin 301s to it, is slow + flaky, and resized image variants (`-WxH`) often 500.** Always resolve images to full-size + CDN via `resolveMediaUrl` / `resolveContentImages` — see §6.4. (This media 301 is the offload plugin, distinct from the clearfy-pro redirect above.)
+- **Media is offloaded to a Yandex bucket; the origin 301s to it, is slow + flaky, and resized image variants (`-WxH`) often 500.** Always resolve images to full-size + CDN via `resolveMediaUrl` / `resolveContentAssets` — see §6.4. (This media 301 is the offload plugin, distinct from the clearfy-pro redirect above.)
 
 ---
 

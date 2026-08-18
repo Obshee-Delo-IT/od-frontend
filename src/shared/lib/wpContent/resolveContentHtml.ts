@@ -1,4 +1,4 @@
-import { resolveContentImages } from './resolveContentImages';
+import { resolveContentAssets } from './resolveContentAssets';
 import { resolveContentLinks } from './resolveContentLinks';
 
 /**
@@ -11,7 +11,7 @@ import { resolveContentLinks } from './resolveContentLinks';
  * source) while links are pure string work.
  *
  * Pass `eagerFirstImage` for a body that is the page's main content — it is the
- * one whose first image is the LCP candidate. See {@link resolveContentImages}.
+ * one whose first image is the LCP candidate. See {@link resolveContentAssets}.
  */
 export const resolveContentHtml = async (html?: string | null, eagerFirstImage = false): Promise<string> =>
-  resolveContentLinks(await resolveContentImages(html, eagerFirstImage));
+  resolveContentLinks(await resolveContentAssets(html, eagerFirstImage));

@@ -9,8 +9,22 @@ const MEDIA_TAG = /<(?:img|audio)\b[^>]*>/gi;
 const SRC_ATTR = /\bsrc=["']([^"']+)["']/i;
 
 /**
- * Rewrite every `<img>` and `<audio>` in a WordPress post's rendered HTML to the
- * resolved full-size / CDN URL — the same logic the card thumbnails use (see
+ * The `<a>` WordPress wraps an image in when the editor picks "link to media
+ * file". Its href is the **full-size** upload — the thing the lightbox should
+ * open — while the `<img src>` beside it is a small preview the editor chose,
+ * and on the materials pages the two are different files, not two sizes of one.
+ *
+ * Left alone, that href is a 404: it is stored root-relative and resolves
+ * against *this* origin, and `resolveContentLinks` deliberately does not root
+ * the `wp-content` tree because it exists only on the WordPress host. Sending
+ * it through the same resolver as the `src` is what makes it a real address.
+ */
+const MEDIA_HREF = /<a\b[^>]*\bhref=["']([^"']*\/wp-content\/uploads\/[^"']*)["'][^>]*>/gi;
+const HREF_ATTR = /\bhref=["']([^"']+)["']/i;
+
+/**
+ * Rewrite every `<img>`, `<audio>` and media `<a href>` in a WordPress post's
+ * rendered HTML to the resolved full-size / CDN URL — the same logic the card thumbnails use (see
  * resolveMediaUrl) — and strip `srcset`/`sizes` so the browser can't fall back
  * to a small variant (which is blurry, and on this install missing from the
  * CDN). Returns the HTML unchanged when there is no such media.
@@ -27,7 +41,7 @@ const SRC_ATTR = /\bsrc=["']([^"']+)["']/i;
  * It is off by default because not every body is a main body — a footer widget
  * also runs through here, and its logo is the last thing on the page.
  */
-export const resolveContentImages = async (html?: string | null, eagerFirstImage = false): Promise<string> => {
+export const resolveContentAssets = async (html?: string | null, eagerFirstImage = false): Promise<string> => {
   if (!html) {
     return '';
   }
@@ -37,6 +51,12 @@ export const resolveContentImages = async (html?: string | null, eagerFirstImage
     const src = tag.match(SRC_ATTR)?.[1];
     if (src) {
       sources.add(src);
+    }
+  }
+  for (const tag of html.match(MEDIA_HREF) ?? []) {
+    const href = tag.match(HREF_ATTR)?.[1];
+    if (href) {
+      sources.add(href);
     }
   }
   if (sources.size === 0) {
@@ -50,9 +70,15 @@ export const resolveContentImages = async (html?: string | null, eagerFirstImage
     })
   );
 
+  const withHrefs = html.replace(MEDIA_HREF, (tag) => {
+    const href = tag.match(HREF_ATTR)?.[1];
+
+    return href ? tag.replace(HREF_ATTR, `href="${resolved.get(href) ?? href}"`) : tag;
+  });
+
   let first = true;
 
-  return html.replace(MEDIA_TAG, (tag) => {
+  return withHrefs.replace(MEDIA_TAG, (tag) => {
     const src = tag.match(SRC_ATTR)?.[1];
     if (!src) {
       return tag;

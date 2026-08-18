@@ -23,7 +23,7 @@ const wpOrigin = wpBaseUrl.replace(/\/+$/, '');
  * od-dev's 170 pages carry, ~80 of them the regional `/contacts/*` template)
  * emit `href="https://od-dev.tmweb.ru/<id>/"`, and editors paste the same shape
  * by hand. Left alone every one of them navigates the visitor off the frontend
- * and onto the CMS — on production, onto the old site. `resolveContentImages`
+ * and onto the CMS — on production, onto the old site. `resolveContentAssets`
  * already does the equivalent for `<img>`; this is its half for `<a>`.
  *
  * The `/wp-content/…` trees move the other way (**D6d**). Those files exist on

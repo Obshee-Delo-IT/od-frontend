@@ -5,13 +5,13 @@ vi.mock('@/shared/api', () => ({
   resolveMediaUrl: vi.fn(async (url: string) => `${url.replace(/-\d+x\d+(?=\.\w+$)/, '')}#resolved`),
 }));
 
-import { resolveContentImages } from './resolveContentImages';
+import { resolveContentAssets } from './resolveContentAssets';
 
-describe('resolveContentImages', () => {
+describe('resolveContentAssets', () => {
   it('rewrites each <img src> via the resolver and drops srcset/sizes', async () => {
     const html =
       '<p>x</p><img src="https://wp.test/a-150x150.jpg" srcset="https://wp.test/a-150x150.jpg 150w, https://wp.test/a-300x300.jpg 300w" sizes="(max-width: 600px) 100vw, 600px" alt="x"/>';
-    const out = await resolveContentImages(html);
+    const out = await resolveContentAssets(html);
 
     expect(out).toContain('src="https://wp.test/a.jpg#resolved"');
     expect(out).not.toContain('srcset');
@@ -19,15 +19,32 @@ describe('resolveContentImages', () => {
     expect(out).toContain('<p>x</p>');
   });
 
+  it('rewrites the media <a href> the lightbox opens', async () => {
+    const html =
+      '<figure><a href="/wp-content/uploads/2019/11/poster-scaled.jpg"><img src="/wp-content/uploads/2019/11/poster-270h.jpg" alt=""/></a></figure>';
+    const out = await resolveContentAssets(html);
+
+    // Both, and to different files: the href is the print-quality poster, the
+    // src is the preview the editor picked.
+    expect(out).toContain('href="/wp-content/uploads/2019/11/poster-scaled.jpg#resolved"');
+    expect(out).toContain('src="/wp-content/uploads/2019/11/poster-270h.jpg#resolved"');
+  });
+
+  it('leaves a link to a page alone', async () => {
+    const html = '<a href="/healthy-russia/"><img src="https://wp.test/a.jpg" alt=""/></a>';
+
+    expect(await resolveContentAssets(html)).toContain('href="/healthy-russia/"');
+  });
+
   it('rewrites <audio src> too — the materials mp3s live in the uploads tree', async () => {
     const html = '<figure class="wp-block-audio"><audio controls src="/wp-content/uploads/a.mp3"></audio></figure>';
 
-    expect(await resolveContentImages(html)).toContain('src="/wp-content/uploads/a.mp3#resolved"');
+    expect(await resolveContentAssets(html)).toContain('src="/wp-content/uploads/a.mp3#resolved"');
   });
 
   it('never makes an <audio> the eager LCP element', async () => {
     const html = '<audio controls src="/wp-content/uploads/a.mp3"></audio><img src="https://wp.test/c.jpg" alt=""/>';
-    const out = await resolveContentImages(html, true);
+    const out = await resolveContentAssets(html, true);
 
     expect(out).not.toContain('<audio loading="eager"');
     expect(out).toContain('<img loading="eager" fetchPriority="high"');
@@ -36,7 +53,7 @@ describe('resolveContentImages', () => {
   it('makes the first image eager and leaves the rest lazy', async () => {
     const html =
       '<img src="https://wp.test/cover.jpg" loading="lazy" alt="a"/><img src="https://wp.test/next.jpg" loading="lazy" alt="b"/>';
-    const out = await resolveContentImages(html, true);
+    const out = await resolveContentAssets(html, true);
     const [first, second] = out.match(/<img\b[^>]*>/g) ?? [];
 
     // WordPress lazy-loads every image in a body, including the one that is the
@@ -51,24 +68,24 @@ describe('resolveContentImages', () => {
   it('leaves lazy loading alone by default — a footer widget is not a main body', async () => {
     const html = '<img src="https://wp.test/logo.png" loading="lazy" alt=""/>';
 
-    expect(await resolveContentImages(html)).toContain('loading="lazy"');
-    expect(await resolveContentImages(html)).not.toContain('fetchPriority');
+    expect(await resolveContentAssets(html)).toContain('loading="lazy"');
+    expect(await resolveContentAssets(html)).not.toContain('fetchPriority');
   });
 
   it('rewrites multiple images', async () => {
     const html = '<img src="https://wp.test/one.jpg"><img src="https://wp.test/two.png">';
-    const out = await resolveContentImages(html);
+    const out = await resolveContentAssets(html);
 
     expect(out).toContain('src="https://wp.test/one.jpg#resolved"');
     expect(out).toContain('src="https://wp.test/two.png#resolved"');
   });
 
   it('returns html unchanged when there are no images', async () => {
-    expect(await resolveContentImages('<p>no images here</p>')).toBe('<p>no images here</p>');
+    expect(await resolveContentAssets('<p>no images here</p>')).toBe('<p>no images here</p>');
   });
 
   it('returns an empty string for nullish input', async () => {
-    expect(await resolveContentImages(undefined)).toBe('');
-    expect(await resolveContentImages('')).toBe('');
+    expect(await resolveContentAssets(undefined)).toBe('');
+    expect(await resolveContentAssets('')).toBe('');
   });
 });
