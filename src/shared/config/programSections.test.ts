@@ -6,12 +6,12 @@ const ALL = [...PROGRAMS, ...DIRECTIONS];
 describe('programme sections config', () => {
   it('omits the three directions that have no page', () => {
     // Adding one back needs its page to exist first — all three 404 upstream, so
-    // the A6 fallback has nothing to embed either. The omission is what hides
-    // «ОД ИТ» on the home page *and* on /projects/: both read this array.
+    // the A6 fallback has nothing to embed either. This hides «ОД ИТ» on the
+    // home page; /projects/ is a WordPress page since D6g and carries its own.
     expect(DIRECTIONS.map((card) => card.title)).toEqual(['Общее дело ПРО', 'Видеоматериалы', 'Онлайн курсы']);
   });
 
-  it('points every programme at the legacy page the fallback can embed', () => {
+  it('points every programme at the page WordPress serves', () => {
     expect(PROGRAMS.map((card) => card.href)).toEqual(['/healthy-russia/', '/healthy-kids/', '/healthy-youth/']);
   });
 
@@ -24,7 +24,7 @@ describe('programme sections config', () => {
 
   it('gives every card its own drawing', () => {
     // Figma pairs drawing to card by name, not position — «Общее дело ПРО» is
-    // the charts illustration on both pages. Two cards sharing one component
+    // the charts illustration wherever it appears. Two cards sharing one component
     // means a mis-paired import, and also duplicates the SVG's internal ids.
     expect(new Set(ALL.map((card) => card.Illustration)).size).toBe(ALL.length);
   });

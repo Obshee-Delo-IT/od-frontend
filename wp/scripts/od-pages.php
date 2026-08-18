@@ -286,6 +286,98 @@ function od_pages_healthy_kids(string $content, int $filmTagId): string
 }
 
 /**
+ * `/projects/` — the «Программы и проекты» index, Figma `projects` (`706:1775`).
+ *
+ * Not a programme page but the list of them: two rows of cards, the three
+ * programmes above the three directions that have somewhere to point. It
+ * shipped first as a native Next route reading an array in
+ * `src/shared/config/programSections.ts`, which meant adding a card took a
+ * deploy. The list is editorial, so it moved here (D6g) and the route was
+ * deleted — order, titles, links and the number of cards are now blocks in the
+ * admin, and the home page keeps the array it still needs for its carousel.
+ *
+ * The migrator leaves the page as an `<h1>`, a `<style>` block for the old
+ * theme's grey `.program-box`, and three columns of booklet cover + name +
+ * button. All of it goes: the H1 is drawn from the page title by `PageHeader`,
+ * the CSS styles a theme this site replaces, and the covers are not the
+ * drawings the mock puts on these cards.
+ *
+ * **The drawings are not content.** Each card carries a modifier class and
+ * `gutenberg.css` supplies the drawing as a background — Figma exports under
+ * `public/figma/projects/`, one per card id — the same arrangement the goal
+ * card uses, and for the same reason: there is nothing decorative for an editor
+ * to lose. A card added in the admin draws none, and reads as text.
+ *
+ * The three directions have no counterpart in the old content, so they are
+ * written here rather than read out of it; they were the deleted route's second
+ * array. This is the one transform that reads nothing back out of the page —
+ * the old markup carries no attachment or post id that survives the rewrite.
+ *
+ * @param string $content   Stored `post_content`.
+ * @param int    $filmTagId Unused: this page carries no «Проекты программы» row.
+ * @return string Rewritten content, or `$content` unchanged if it is already in
+ *                the target shape.
+ * @throws RuntimeException when the page does not look like the expected input.
+ */
+function od_pages_projects(string $content, int $filmTagId): string
+{
+    if (strpos($content, 'od-tile') !== false) {
+        return $content; // Already converted — leave the editor's copy alone.
+    }
+
+    // The fingerprint is the three programme columns. Nothing is read out of
+    // them, but an input that is not this page is refused rather than replaced.
+    $cards = od_pages_column_media($content);
+    if (count($cards) !== 3) {
+        throw new RuntimeException(sprintf('unexpected input: %d programme columns', count($cards)));
+    }
+
+    $out = od_pages_tiles([
+        ['id' => 'healthy-russia', 'title' => 'Здоровая Россия', 'href' => '/healthy-russia/'],
+        ['id' => 'healthy-kids', 'title' => 'Здоровые дети', 'href' => '/healthy-kids/'],
+        ['id' => 'healthy-youth', 'title' => 'Здоровая молодёжь', 'href' => '/healthy-youth/'],
+    ]);
+
+    $out .= od_pages_heading(2, 'Проекты');
+    $out .= od_pages_tiles([
+        ['id' => 'od-pro', 'title' => 'Общее дело ПРО', 'href' => 'https://od-pro.ru'],
+        ['id' => 'video', 'title' => 'Видеоматериалы', 'href' => '/video/'],
+        ['id' => 'online-courses', 'title' => 'Онлайн курсы', 'href' => 'https://edu.obshee-delo.ru/'],
+    ]);
+
+    return rtrim($out) . "\n";
+}
+
+/**
+ * A row of index cards: a `core/columns` where every column *is* a card, which
+ * is what the old page did as well (`.program-box`) and what lets an editor add
+ * a fourth without leaving the block they are already in.
+ *
+ * The card is one link, not two: `gutenberg.css` stretches the «Подробнее»
+ * anchor over the whole column, so the title stays a heading and the card still
+ * has a single accessible name — the same trick the film posters use.
+ *
+ * @param array<int, array{id: string, title: string, href: string}> $tiles
+ */
+function od_pages_tiles(array $tiles): string
+{
+    $out = "<!-- wp:columns {\"className\":\"od-tiles\"} -->\n<div class=\"wp-block-columns od-tiles\">";
+
+    foreach ($tiles as $tile) {
+        $class = 'od-tile od-tile--' . $tile['id'];
+        $out .= sprintf("<!-- wp:column {\"className\":\"%s\"} -->\n<div class=\"wp-block-column %s\">", $class, $class)
+            . od_pages_heading(3, $tile['title'])
+            . sprintf(
+                "<!-- wp:paragraph {\"className\":\"od-tile-link\"} -->\n<p class=\"od-tile-link\"><a href=\"%s\">Подробнее</a></p>\n<!-- /wp:paragraph -->\n",
+                $tile['href']
+            )
+            . "</div>\n<!-- /wp:column -->\n";
+    }
+
+    return $out . "</div>\n<!-- /wp:columns -->\n\n";
+}
+
+/**
  * Every `wp:column` of the page that holds an image, paired with the button that
  * sits under it in the same column — which is how the migrator lays out both the
  * methodology block and the film posters. Reading them out this way keeps the
@@ -642,6 +734,7 @@ function od_pages_registry(): array
         'healthy-russia' => ['od_pages_healthy_russia', 'programma-zdorovaya-rossiya'],
         'healthy-youth' => ['od_pages_healthy_youth', 'programma-zdorovaya-molodezh'],
         'healthy-kids' => ['od_pages_healthy_kids', 'programma-zdorovye-deti'],
+        'projects' => ['od_pages_projects', ''],
     ];
 }
 

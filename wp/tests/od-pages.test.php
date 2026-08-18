@@ -212,9 +212,46 @@ assert(!str_contains($kids, '<ul>'), 'the task list became cards');
 
 assert(od_pages_healthy_kids($kids, 667) === $kids, 'converted content is left alone');
 
-// -- both refuse input they do not recognise --------------------------------
+// ===========================================================================
+// `/projects/` — Figma `projects`, the index of the three above.
+// ===========================================================================
 
-foreach (['od_pages_healthy_youth', 'od_pages_healthy_kids'] as $transform) {
+$projectsBefore = file_get_contents(__DIR__ . '/fixtures/projects.before.html');
+$projects = od_pages_projects($projectsBefore, 0);
+
+assert(substr_count($projects, '<div class="wp-block-columns od-tiles">') === 2, 'two rows of cards');
+assert(substr_count($projects, 'class="wp-block-column od-tile od-tile--') === 6, 'six cards, each its own column');
+assert(substr_count($projects, '<p class="od-tile-link"><a href=') === 6, 'each card links once — the heading is not a second link');
+assert(str_contains($projects, '<h2 class="wp-block-heading">Проекты</h2>'), 'the second row is the only one with a heading');
+assert(substr_count($projects, '<h2 ') === 1, 'the first is named by the page title');
+
+// The card ids are what `gutenberg.css` hangs each drawing on, so they are as
+// much part of the contract as the markup — `public/figma/projects/<id>.svg`.
+foreach (['healthy-russia', 'healthy-kids', 'healthy-youth', 'od-pro', 'video', 'online-courses'] as $id) {
+    assert(str_contains($projects, 'od-tile od-tile--' . $id . '"'), $id . ': card class');
+    assert(file_exists(__DIR__ . '/../../public/figma/projects/' . $id . '.svg'), $id . ': drawing');
+}
+
+assert(str_contains($projects, '<h3 class="wp-block-heading">Здоровая Россия</h3>'), 'programme title, as the mock sets it');
+assert(str_contains($projects, '<a href="/healthy-russia/">Подробнее</a>'), 'and it points at the page WordPress serves');
+assert(str_contains($projects, '<a href="/video/">Подробнее</a>'), 'the catalogue is this site\'s own route');
+assert(str_contains($projects, '<a href="https://od-pro.ru">Подробнее</a>'), 'the external directions keep their origin');
+
+// The old page is gone whole: its H1 is drawn from the page title, its CSS
+// styled the theme this site replaces, and its covers are not these drawings.
+assert(!str_contains($projects, '<h1'), 'no second H1');
+assert(!str_contains($projects, '<style'), 'the old theme\'s CSS is gone');
+assert(!str_contains($projects, 'program-box'), 'and so is the class it styled');
+assert(!str_contains($projects, 'metodischka1.jpg'), 'booklet covers gone');
+assert(!str_contains($projects, '<!-- wp:image '), 'no images at all — the drawings are backgrounds');
+assert(!str_contains($projects, 'wp-block-button'), 'the buttons became the card-wide link');
+assert(!str_contains($projects, 'ОБЩЕЕ ДЕЛО</h2>'), 'the shouted programme names are gone');
+
+assert(od_pages_projects($projects, 0) === $projects, 'converted content is left alone');
+
+// -- all three refuse input they do not recognise --------------------------------
+
+foreach (['od_pages_healthy_youth', 'od_pages_healthy_kids', 'od_pages_projects'] as $transform) {
     $threw = false;
     try {
         $transform('<!-- wp:paragraph --><p>что-то другое</p><!-- /wp:paragraph -->', 666);

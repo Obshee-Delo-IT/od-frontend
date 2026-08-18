@@ -6,7 +6,7 @@ import css from './PageHeader.module.css';
 export interface PageHeaderProps {
   /** Page title — rendered as the red uppercase H1. */
   title: string;
-  /** Breadcrumb trail; omitted on pages without one (e.g. the projects index). */
+  /** Breadcrumb trail; omitted where a page draws none. */
   breadcrumbs?: BreadcrumbItem[];
   /** Optional tabs row, typically a `<Tabs />` element. */
   tabs?: React.ReactNode;

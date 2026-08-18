@@ -451,6 +451,24 @@ The registry itself now maps a path to **a transform and the tag its film row qu
 
 `php wp/tests/od-pages.test.php` covers both transforms against real captured `post_content`, and `php wp/tests/od-wp.test.php` checks the registry for the typo it can actually have — a film listed twice under one tag, or a плакат written as an absolute URL. Applied to od-dev and measured out of the DOM at 1440 and 375 against the frames' own bounding boxes: goal card 1240×404 (mock 402.83), tasks 387×240 ×3 and 600×189 ×2 (mock 387×239, 600×189), gaps 120 / 44 / 65 / 119 / 45, posters 387×546 at 40 apart, and two Swipers on the page with two mounted — no double init.
 
+### D6g. `/projects/` moved off the route and into WordPress — 2026-08-18
+
+The index shipped in D6 as `app/projects/page.tsx` over `shared/config/programSections.ts`. It looked right and could not be edited: adding a card, renaming one or repointing a link took a deploy, on a page whose entire content is a list of six links. WordPress has had a page at that URL all along (**#59466**, «Программы и проекты»), which the native route shadowed. So the route was deleted and the page rebuilt in `post_content` by `od_pages_projects()` — the same flow the programme pages use, and the reason the flow exists.
+
+Deleting the route is the whole switch: App Router precedence works in both directions, so removing `app/projects/` hands `/projects/` back to `[...slug]`, which finds a published WP page there and renders it through `WpPage`. No redirect, no config entry, no change to `legacyEmbedPages.ts`.
+
+**The card is a column.** Each row is a `core/columns` classed `od-tiles`, and each card is one `core/column` classed `od-tile od-tile--<id>` holding an `<h3>` and a «Подробнее» paragraph. That is what the old page did too (`.program-box`), and it means adding a seventh card is adding a column in the editor. `gutenberg.css` makes the row a grid rather than the columns block's flex — three equal tracks to `--mobile`, then one — so a card added or removed re-flows without an inline `flex-basis` to fight.
+
+**The drawings stayed in the repo, as backgrounds.** They are Figma exports, not editorial images, and `.od-card--goal` had already set the precedent: a decoration in `post_content` is a thing an editor can delete by accident, and there is nothing to gain by it. Each card id has a file at `public/figma/projects/<id>.svg` and one `background-image` line. A card added in the admin matches no rule and draws an empty box, which keeps the row aligned and says what is missing. They are **copies** of the six `src/shared/ui/assets/illustrations/*.svg` the home page imports — CSS cannot reference those, because `next.config.ts` routes every `*.svg` through `@svgr/webpack` as a JS module.
+
+**The three directions were written into the page, not read out of it.** «Общее дело ПРО», «Видеоматериалы» and «Онлайн курсы» only ever existed in `programSections.ts`; the old WordPress page had the three programmes and nothing else. This is the one transform that reads nothing back out of its input — there is no attachment or post id in the old markup that survives the rewrite — so its fingerprint check is all the input is used for.
+
+**Two lists now, and they can drift.** `programSections.ts` stays, because the home page's carousel still reads it, so the same six cards exist here and in `post_content`. A card added in the admin appears on `/projects/` only, and one added to the config appears on the home page only. That is the cost of the page being editable without a deploy, and it is written at the top of the config file; the alternative — the home page parsing another page's blocks for its carousel — is worse. `PROJECTS_TITLE` was the one export only the deleted route used and is gone.
+
+**What changed for a reader.** The H1 is «ПРОГРАММЫ И ПРОЕКТЫ», the WordPress page's own title, where the route hardcoded the mock's «ПРОГРАММЫ» — the title is the editor's now, and the breadcrumbs row `WpPage` draws appears where the mock omits one. `NewsletterSignup` is gone from the page, since no WP page renders it. The cards themselves are unchanged: 387×361 at 1440 against the mock's 385×358, one per row at 375. The `/projects/` entry in `sitemap.ts` stays pinned at 0.8 rather than falling to the 0.7 the WP page enumeration would give it.
+
+`CardSection` and `IllustratedCard` survive this — `/materials/` renders the same rows and the home page the same card. The wide 598×280 variant is still built and still used only by `/materials/`.
+
 ### D7. Video — index 2026-06-04, player 2026-07-02
 
 Figma: index `video` (`706:3315`) + `video-filter` (`1554:17574`) + player `video-page` (`1566:10433`) + mobile `video-page-mob` (`1567:10735`, `1567:11844`) + download (`1581:10334`).
