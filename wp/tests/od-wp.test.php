@@ -48,4 +48,19 @@ foreach (['programma-zdorovaya-rossiya', 'programma-zdorovaya-molodezh', 'progra
 od_test('six of the programme\'s nine lesson films exist as posts — see the registry docblock', count($registry['programma-zdorovaya-rossiya']['films']) === 6);
 od_test('all seven «Здоровая молодежь» lessons have one', count($registry['programma-zdorovaya-molodezh']['films']) === 7);
 
+// -- the two indexes renamed to the label the nav uses ----------------------
+
+$titles = od_wp_page_titles();
+od_test('at least one page is renamed', $titles !== []);
+
+foreach ($titles as $path => $title) {
+    od_test($path . ': a page path of one segment, no slashes', $path !== '' && !str_contains($path, '/'));
+    od_test($path . ': a trimmed, non-empty title', trim($title) === $title && $title !== '');
+}
+
+// The title is the H1, the `<title>` and the breadcrumb of a natively rendered
+// page (D6g/D6h), so these two are what the mocks and the nav say.
+od_test('/projects/ carries the nav\'s own label', ($titles['projects'] ?? null) === 'Программы');
+od_test('/materials/ likewise', ($titles['materials'] ?? null) === 'Материалы');
+
 od_test_summary();

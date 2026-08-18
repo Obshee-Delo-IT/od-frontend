@@ -19,9 +19,9 @@
  * **Adding a task.** One function, called from the runner at the bottom, taking
  * `$apply` and doing nothing but logging when it is false. Whatever it needs to
  * know goes in a registry function above it, so the data can be read and tested
- * without WordPress. There is one task today —
- * {@see od_wp_tag_programme_films()} — and no framework for a second, because
- * two calls in a row is not a thing that needs one.
+ * without WordPress. There are two today — {@see od_wp_tag_programme_films()}
+ * and {@see od_wp_rename_pages()} — and no framework between them, because two
+ * calls in a row is not a thing that needs one.
  *
  * House rules, same as `od-pages.php`: dry run by default, writing takes the
  * positional argument `apply`, everything is idempotent, and **posts are
@@ -218,6 +218,70 @@ function od_wp_poster(WP_Post $post, string $path, bool $apply): void
     }
 }
 
+/**
+ * Page path => the title it should carry.
+ *
+ * A WP page's title is its H1, its `<title>` and its breadcrumb once the page
+ * renders natively (D6g/D6h), so the two indexes were showing «Программы и
+ * проекты» and «Наши материалы» where the mocks — and the site's own nav — say
+ * «Программы» and «Материалы». That is a WordPress object rather than markup,
+ * which is why it is here and not in `od-pages.php`.
+ *
+ * The slug is untouched: `post_name` is what the URL is made of, and every one
+ * of these pages is a live address.
+ *
+ * @return array<string, string>
+ */
+function od_wp_page_titles(): array
+{
+    return [
+        'projects' => 'Программы',
+        'materials' => 'Материалы',
+    ];
+}
+
+/**
+ * Renames the pages in {@see od_wp_page_titles()} that do not already carry
+ * their title.
+ *
+ * Through `$wpdb->update`, not `wp_update_post`, for the reason `od-pages.php`
+ * gives: the latter fires `cmsms-gutenberg-upgrade`'s `save_post` hook, which
+ * deletes the `nvp_content_copy` the migrator and `wp cmsms restore` both need.
+ */
+function od_wp_rename_pages(bool $apply): void
+{
+    global $wpdb;
+
+    foreach (od_wp_page_titles() as $path => $title) {
+        $page = get_page_by_path($path);
+
+        if (!$page) {
+            WP_CLI::warning(sprintf('%s: no such page', $path));
+            continue;
+        }
+
+        if ($page->post_title === $title) {
+            WP_CLI::log(sprintf('%s (#%d): already «%s», skipped', $path, $page->ID, $title));
+            continue;
+        }
+
+        WP_CLI::log(sprintf('%s (#%d): «%s» -> «%s»', $path, $page->ID, $page->post_title, $title));
+
+        if (!$apply) {
+            continue;
+        }
+
+        $written = $wpdb->update($wpdb->posts, ['post_title' => $title], ['ID' => $page->ID], ['%s'], ['%d']);
+        if ($written === false) {
+            WP_CLI::warning(sprintf('%s (#%d): write failed', $path, $page->ID));
+            continue;
+        }
+
+        clean_post_cache($page->ID);
+        WP_CLI::success(sprintf('%s (#%d): renamed', $path, $page->ID));
+    }
+}
+
 // ---------------------------------------------------------------------------
 // Runner. Everything above is a function; this is the only thing that runs.
 // ---------------------------------------------------------------------------
@@ -230,3 +294,4 @@ $apply = in_array('apply', $args ?? [], true);
 WP_CLI::log($apply ? 'Applying changes.' : 'Dry run — pass `apply` to write.');
 
 od_wp_tag_programme_films($apply);
+od_wp_rename_pages($apply);

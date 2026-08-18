@@ -15,6 +15,17 @@ const DEFAULT_SITE_URL = 'https://obshee-delo.ru';
 export const siteUrl = (process.env.SITE_URL || DEFAULT_SITE_URL).replace(/\/$/, '');
 
 /**
+ * The organisation's name, as every page title ends with it.
+ *
+ * There is no `title.template` in the root layout — the native routes write the
+ * suffix into their own titles — so anything building a title from data has to
+ * append it here. `wpPageMetadata` is the one that does: a WP page's title is
+ * whatever an editor typed, and «Материалы» alone is not what the tab or the
+ * search result should read.
+ */
+export const SITE_NAME = 'ОБЩЕЕ ДЕЛО';
+
+/**
  * The organisation's *other* domain for the same site — `общее-дело.рф`, stored
  * everywhere in Punycode.
  *

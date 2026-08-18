@@ -491,7 +491,9 @@ The same move as D6g, on the section hub: `app/materials/page.tsx` was four hard
 
 Geometry re-measured against the deleted route's own output: cards 600×280 at x=100/740, rows 40 apart, title 25 from the card top and the link 25 from its bottom — identical. On `--mobile` the card returns to the portrait shape, 343×361, the same as `/projects/`.
 
-**Both pages now take their H1 from WordPress**, which is a change of wording: «НАШИ МАТЕРИАЛЫ» where the route said «МАТЕРИАЛЫ», «ПРОГРАММЫ И ПРОЕКТЫ» where it said «ПРОГРАММЫ». That is closer to what search already holds — the WP title is what the live site renders today — and it is now the editors' to change. `/materials/articles/` is untouched: it is a real route and keeps precedence over the catch-all.
+**Both pages now take their H1 from WordPress**, which first made them «ПРОГРАММЫ И ПРОЕКТЫ» and «НАШИ МАТЕРИАЛЫ» where the routes had said «ПРОГРАММЫ» and «МАТЕРИАЛЫ». The mocks and the site's own nav use the short forms, so the pages were **renamed in WordPress** the same day rather than the wording being argued about in two places — `od_wp_rename_pages()` in `od-wp.php`, a title being a WordPress object and not markup. `post_name` is untouched: the slug is the URL. `/materials/articles/` is untouched too, for a different reason — it is a real route and keeps precedence over the catch-all.
+
+**One thing that went out with the routes and had to come back: the title suffix.** Every native route writes « — ОБЩЕЕ ДЕЛО» into its own `<title>`, which is why the root layout has no `title.template`; `wpPageMetadata` emitted the editor's title bare, so `/materials/` went from «Материалы — ОБЩЕЕ ДЕЛО» to «Материалы». It now appends `SITE_NAME` (moved from `layout.tsx` into `shared/config/site.ts`), which fixes the same gap for all ~150 WP pages at once.
 
 ### D6i. `общее-дело.рф` counted as one of our own origins — 2026-08-17
 
