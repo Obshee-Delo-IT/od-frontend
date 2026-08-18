@@ -1,14 +1,19 @@
 import { resolveMediaUrl } from '@/shared/api';
 
-const IMG_TAG = /<img\b[^>]*>/gi;
+/**
+ * `<audio>` rides along with `<img>` because it is the same problem:
+ * `/materials/audio-roliki-social-reklama/` stores four mp3s in the uploads
+ * tree, and a root-relative `/wp-content/…` src is a 404 on this origin.
+ */
+const MEDIA_TAG = /<(?:img|audio)\b[^>]*>/gi;
 const SRC_ATTR = /\bsrc=["']([^"']+)["']/i;
 
 /**
- * Rewrite every `<img>` in a WordPress post's rendered HTML to the resolved
- * full-size / CDN URL — the same logic the card thumbnails use (see
+ * Rewrite every `<img>` and `<audio>` in a WordPress post's rendered HTML to the
+ * resolved full-size / CDN URL — the same logic the card thumbnails use (see
  * resolveMediaUrl) — and strip `srcset`/`sizes` so the browser can't fall back
  * to a small variant (which is blurry, and on this install missing from the
- * CDN). Returns the HTML unchanged when there are no images.
+ * CDN). Returns the HTML unchanged when there is no such media.
  *
  * **`eagerFirstImage` opts a body's first image out of lazy loading.** WordPress
  * marks every image in a body `loading="lazy"` (`wp_filter_content_tags`, at
@@ -28,7 +33,7 @@ export const resolveContentImages = async (html?: string | null, eagerFirstImage
   }
 
   const sources = new Set<string>();
-  for (const tag of html.match(IMG_TAG) ?? []) {
+  for (const tag of html.match(MEDIA_TAG) ?? []) {
     const src = tag.match(SRC_ATTR)?.[1];
     if (src) {
       sources.add(src);
@@ -47,7 +52,7 @@ export const resolveContentImages = async (html?: string | null, eagerFirstImage
 
   let first = true;
 
-  return html.replace(IMG_TAG, (tag) => {
+  return html.replace(MEDIA_TAG, (tag) => {
     const src = tag.match(SRC_ATTR)?.[1];
     if (!src) {
       return tag;
@@ -57,7 +62,7 @@ export const resolveContentImages = async (html?: string | null, eagerFirstImage
       .replace(/\s+srcset=["'][^"']*["']/i, '')
       .replace(/\s+sizes=["'][^"']*["']/i, '');
 
-    if (!eagerFirstImage || !first) {
+    if (!eagerFirstImage || !first || !/^<img\b/i.test(tag)) {
       return rewritten;
     }
     first = false;
