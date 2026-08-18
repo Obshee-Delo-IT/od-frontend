@@ -632,7 +632,7 @@ function od_pages_inline_text(string $html): string
  * Page path => the transform that rebuilds it and the tag its «Проекты
  * программы» row queries. Every page workstream D has rebuilt. An empty tag slug
  * means the page has no such row — the transform is still called the same way,
- * with `0`. `wp/scripts/od-films.php` is what creates the tags.
+ * with `0`. `wp/scripts/od-wp.php` is what creates the tags.
  *
  * @return array<string, array{0: callable-string, 1: string}>
  */
@@ -666,10 +666,10 @@ foreach (od_pages_registry() as $path => [$transform, $tagSlug]) {
     }
 
     // Resolved here rather than written into a transform: term ids are
-    // per-environment. `wp/scripts/od-films.php` is what creates them.
+    // per-environment. `wp/scripts/od-wp.php` is what creates them.
     $filmTag = $tagSlug === '' ? null : get_term_by('slug', $tagSlug, 'post_tag');
     if ($tagSlug !== '' && !$filmTag) {
-        WP_CLI::warning(sprintf('%s: tag `%s` is missing — run `od-films.php apply` first.', $path, $tagSlug));
+        WP_CLI::warning(sprintf('%s: tag `%s` is missing — run `od-wp.php apply` first.', $path, $tagSlug));
         continue;
     }
 

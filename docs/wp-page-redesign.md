@@ -15,7 +15,7 @@ Three files, split by lifetime:
 | file | what | when it runs | PHP floor |
 | --- | --- | --- | --- |
 | `wp/scripts/od-pages.php` | one-shot content fixes — strip a page's `<style>`, rewrite blocks, set a `className` | by hand, `wp eval-file` | CLI PHP (8.2 on prod) — modern syntax fine |
-| `wp/scripts/od-films.php` | film-side data a page's query row needs — create a term, tag the films, name their covers, fill their плакат | by hand, `wp eval-file` | same |
+| `wp/scripts/od-wp.php` | WordPress-side data that is not page markup — terms, postmeta, attachment metadata. One task today: the films a programme's query row lists, their covers' alt text and their плакат | by hand, `wp eval-file` | same |
 | `wp/mu-plugins/od-film-meta.php` | runtime registration — the one meta key a query loop's cover binding reads | every request, forever | **PHP 7.0 syntax only** |
 | `wp/mu-plugins/od-design.php` | runtime registration — block styles, patterns, editor palette | every request, forever | **PHP 7.0 syntax only** |
 
@@ -25,7 +25,7 @@ Three files, split by lifetime:
 
 `od-pages.php` exists as of 2026-08-17 and holds the three programme pages (D6e, D6f in the notes) — read `od_pages_healthy_russia()` before writing the next transform: the helpers for heading, paragraph, image, button, note and carousel blocks are already there, and so is the pattern for reading a page's own ids and links back out. Its registry maps a page path to a transform **and** the tag its film row queries, so a page without such a row registers an empty slug and ignores the id it is handed.
 
-`od-films.php` is the same shape — dry run by default, `apply` to write, idempotent — for the case where the *content model* is what a page needs rather than the page's own markup. It holds one tag per programme that has a film row (`programma-zdorovaya-rossiya`, `programma-zdorovaya-molodezh`, `programma-zdorovye-deti`) and, per film, the alt text and the портретный плакат its card wants. Keep the two apart: a page is rebuilt from its CMSMasters original whenever its design changes, a film's data is added to and must not be, and a query block cannot be written until its term exists.
+`od-wp.php` is the same shape — dry run by default, `apply` to write, idempotent — for everything a page needs WordPress itself to hold rather than its own markup. **The line between the two files is what a change is made of**, not which page it serves: `post_content` on one side, WordPress objects on the other. Keep them apart — a page is rebuilt from its CMSMasters original whenever its design changes, a WordPress object is only ever added to, and a query block cannot be written until its term exists. A new task there is one function called from the runner plus a registry above it; there is no framework for the second one and there should not be until there is a third.
 
 **One thing that is not in the file and cannot be: `$wpdb`.** `wp eval-file` runs the script in a function scope, so the runner needs `global $wpdb;` — without it the write dies as a WordPress critical error *after* the dry-run line has already printed, which reads exactly like a successful run.
 
@@ -111,7 +111,7 @@ Known traps in the rendered output. The first four are **pipeline** problems, no
 
 - The page matches the mock at 1440 and 375.
 - No `<style>` left on the page except a scoped, deliberate one.
-- Every WordPress-side change is in `wp/scripts/od-pages.php` (markup) or `wp/scripts/od-films.php` (the films a page queries and the fields its cards read), idempotent, with a test.
+- Every WordPress-side change is in `wp/scripts/od-pages.php` (a page's markup) or `wp/scripts/od-wp.php` (WordPress objects — terms, postmeta, attachment metadata), idempotent, with a test.
 - `php wp/tests/od-pages.test.php` passes, and `pnpm lint · type-check · test` are green.
 - If the page was on the legacy-embed list, it is off it.
 - Committed as one block, with the doc updates in the same commit.
