@@ -8,10 +8,8 @@
  * string out, so proving it needs neither WordPress nor a test framework.
  * Requiring the script is safe: its runner is behind a `WP_CLI` guard.
  *
- * `od_test()` rather than PHP's own `assert()`: `zend.assertions` is **`-1` on
- * this machine and on both servers**, which compiles `assert()` out entirely — the
- * file would have printed nothing and exited 0 whatever the transforms did. An
- * `if` and an `exit(1)` cannot be switched off.
+ * `od_test()` from `harness.php`, never PHP's own `assert()` — that one is
+ * compiled out here; the helper's header says why.
  *
  * Fixtures in `fixtures/` are **real `post_content`**, captured from od-dev
  * 2026-08-17 with `wp post get <id> --field=post_content`. Recapture them rather
@@ -24,31 +22,8 @@
  * @package od-frontend
  */
 
+require_once __DIR__ . '/harness.php';
 require_once __DIR__ . '/../scripts/od-pages.php';
-
-$passed = 0;
-
-/**
- * @param string $what Description, printed on failure.
- * @param bool   $ok   The assertion.
- */
-function od_test( string $what, bool $ok ): void {
-	global $passed;
-
-	if ( ! $ok ) {
-		fwrite( STDERR, "FAIL  {$what}\n" );
-		exit( 1 );
-	}
-
-	++$passed;
-	echo "ok    {$what}\n";
-}
-
-/** @param callable(string):string $transform */
-function od_test_idempotent( string $what, callable $transform, string $input ): void {
-	$once = $transform( $input );
-	od_test( "{$what}: f(f(x)) === f(x)", $transform( $once ) === $once );
-}
 
 $page    = file_get_contents( __DIR__ . '/fixtures/page-metodichki.html' );
 $profile = file_get_contents( __DIR__ . '/fixtures/profile-ryazanov.html' );
@@ -394,10 +369,8 @@ od_test('the note stands on its own', str_contains($youth, '<p class="od-note">�
 od_test('one slide per task', substr_count($youth, '<!-- wp:cb/slide-v2 -->') === 2);
 od_test('two slots, not the template three', str_contains($youth, '"slidesPerView":2'));
 od_test('and the frontend is told the same', str_contains($youth, 'data-cb-slides-per-view="2"'));
-// The numbers are a CSS counter on `.od-cards--numbered .cb-slide::before`, not
-// markup: `decimal-leading-zero` is what pads them, and a pseudo-element cannot
-// be mistaken for a heading by a screen reader.
-od_test('the row is the numbered variant', str_contains($youth, 'od-cards od-cards--numbered'));
+od_test('each card leads with its number', substr_count($youth, '<p class="od-task-number">') === 2);
+od_test('padded to two digits, as the mock draws it', str_contains($youth, '<p class="od-task-number">01</p>'));
 od_test('and the number replaces the card heading rather than joining it', !str_contains($youth, '<h3'));
 
 od_test('the row queries the tag it was given', str_contains($youth, '"tagIds":[666]'));
@@ -411,12 +384,10 @@ od_test('goal body kept', str_contains($youth, '<p>Развитие мотива
 od_test('first task kept', str_contains($youth, '<p>Создать условия для включения новых сведений'));
 od_test('second task kept', str_contains($youth, '<p>Сформировать у подростков мотивационную основу'));
 
-// The booklet cover has no slot in the mock; the file it linked to does — as the
-// materials row's outline button at the foot of the page.
-od_test('the download survives, as an outline button', str_contains($youth, '<a class="wp-block-button__link wp-element-button" href="https://disk.yandex.ru/i/V2VRI2tY04OC1Q">Скачать методичку PDF</a>'));
-od_test('in the materials row', str_contains($youth, '<!-- wp:buttons {"className":"od-materials"} -->'));
+// The booklet cover has no slot in the mock; the file it linked to does.
+od_test('the download survives, under the goal', str_contains($youth, '<p class="od-card-link"><a href="https://disk.yandex.ru/i/V2VRI2tY04OC1Q">Скачать методичку PDF</a></p>'));
 od_test('once — the trailing heading pointed at the same file', substr_count($youth, 'disk.yandex.ru') === 1);
-od_test('which is the last block, after the projects row', strpos($youth, 'od-materials') > strpos($youth, 'Проекты программы'));
+od_test('and it is inside the goal card, not after the page', strpos($youth, 'od-card-link') < strpos($youth, 'Задачи программы'));
 od_test('the booklet cover is gone', !str_contains($youth, 'metodischka2.jpg'));
 od_test('and so are the hand-picked posters', !str_contains($youth, 'plakats_2office_man.jpg'));
 od_test('one literal image — the logo', substr_count($youth, '"sizeSlug":"full"') === 1);
@@ -447,25 +418,27 @@ od_test('the note stands on its own', str_contains($kids, '<p class="od-note">П
 
 od_test('one slide per task', substr_count($kids, '<!-- wp:cb/slide-v2 -->') === 3);
 od_test('three tasks, three slots', str_contains($kids, '"slidesPerView":3'));
-od_test('the row is the numbered variant', str_contains($kids, 'od-cards od-cards--numbered'));
+od_test('each card leads with its number', substr_count($kids, '<p class="od-task-number">') === 3);
+od_test('numbered through to the last', str_contains($kids, '<p class="od-task-number">03</p>'));
 od_test('first task kept', str_contains($kids, '<p>Разработать учебно-методический комплекс'));
 od_test('last task kept', str_contains($kids, '<p>Обеспечить образовательные организации разработанными материалами.</p>'));
 od_test('goal body, line break collapsed', str_contains($kids, '<p>Содействие воспитательным процессам, направленным на формирование ценности здорового образа жизни среди детей.</p>'));
 
-// This programme has no tag of its own, so there is no projects row: the runner
-// passes 0 and the transform ignores the argument entirely.
-od_test('no projects row', !str_contains($kids, 'Проекты программы'));
-od_test('and no film query to drive one', !str_contains($kids, 'tagIds'));
-od_test('one literal image — the logo', substr_count($kids, '"sizeSlug":"full"') === 1);
-od_test('the portrait is gone', !str_contains($kids, 'poznovalov.jpg'));
+// `project-3` draws no projects row, but the programme has films and the row
+// is the same query block the other two pages carry.
+od_test('projects heading', str_contains($kids, '<h2 class="wp-block-heading">Проекты программы</h2>'));
+od_test('poster carousel', str_contains($kids, 'cb-carousel-block od-poster-cards"'));
+od_test('over the tag it was given', str_contains($kids, '"tagIds":[667]'));
+od_test('one literal image — the logo; the portrait went with the mock', substr_count($kids, '"sizeSlug":"full"') === 1);
+od_test('the covers come from the query, bound to post meta', substr_count($kids, '<!-- wp:image {"metadata":{"bindings"') === 1);
+od_test('the portrait is gone; its playlist link is a button', !str_contains($kids, 'poznovalov.jpg'));
 
-// Both trailing headings were links, and both survive as the materials row's
-// outline buttons at the foot of the page.
-od_test('one materials row', substr_count($kids, '<!-- wp:buttons {"className":"od-materials"} -->') === 1);
-od_test('holding two outline buttons', substr_count($kids, '<!-- wp:button ') === 2 && substr_count($kids, 'is-style-outline') === 4);
-od_test('the live-domain link became a path', str_contains($kids, '<a class="wp-block-button__link wp-element-button" href="/materials/pppuiv-ted-6/">Методические рекомендации</a>'));
-od_test('the playlist keeps its origin', str_contains($kids, '<a class="wp-block-button__link wp-element-button" href="https://www.youtube.com/playlist?list=PLlNywkCI4IKyNXLKzGyM43Orp41Qm1plo">Фильмы программы</a>'));
-od_test('and the row is last, after the tasks', strpos($kids, 'od-materials') > strpos($kids, 'Задачи программы'));
+// Both trailing headings were links, and both survive — under the goal.
+od_test('both, and as links rather than buttons', substr_count($kids, 'class="od-card-link"') === 2);
+od_test('the live-domain link became a path', str_contains($kids, '<a href="/materials/pppuiv-ted-6/">Методические рекомендации</a>'));
+od_test('the playlist keeps its origin', str_contains($kids, '<a href="https://www.youtube.com/playlist?list=PLlNywkCI4IKyNXLKzGyM43Orp41Qm1plo">Фильмы программы</a>'));
+od_test('and both sit in the goal card', strpos($kids, 'od-card-link') < strpos($kids, 'Задачи программы'));
+od_test('no buttons on this page at all', !str_contains($kids, 'is-style-outline'));
 
 od_test('migrator heading class gone', !str_contains($kids, 'cmsms_heading'));
 od_test('old theme span gone', !str_contains($kids, 'fontstyle0'));
@@ -493,4 +466,4 @@ foreach ( od_pages_registry() as $entry ) {
 	od_test( "{$entry['label']}: the runner can find the record", isset( $entry['path'] ) || isset( $entry['title'] ) );
 }
 
-echo "\n{$passed} assertions passed.\n";
+od_test_summary();

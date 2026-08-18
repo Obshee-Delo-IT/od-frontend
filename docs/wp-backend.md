@@ -197,12 +197,13 @@ What still holds published shortcodes, and why none of it matters to this fronte
 
 Standard WP taxonomies (`category`, `post_tag`, `nav_menu`, `post_format`) are also present and carry most of the model this repo actually consumes.
 
-**Tags this project created**, as opposed to inherited — all of them from `wp/scripts/od-terms.php`, which is where they are re-created on any other environment:
+**Tags this project created**, as opposed to inherited — all of them from `wp/scripts/od-wp.php`, which is where they are re-created on any other environment:
 
 | Tag | od-dev id | On | Why |
 | --- | --- | --- | --- |
 | `programma-zdorovaya-rossiya` «Программа «Здоровая Россия»» | 665 | 6 films | The «Здоровая Россия» methodology is nine lessons, each built on one film, and nothing in the inherited model said which films those are. **`/healthy-russia/`'s «Проекты программы» is a `core/query` over this tag**, so it is load-bearing: tagging a film puts it on the page. Three of the nine have no post on the site at all; the tag's docblock names them. Do not confuse it with the inherited tag **72** «Здоровая Россия - Общее дело», which is on ten news posts from 2015–16 and on no film.
-| `programma-zdorovaya-molodezh` «Программа «Здоровая молодежь»» | 666 | 6 films | The same idea for `/healthy-youth/`, whose «Проекты программы» is a `core/query` over it (D6f). The six are the films that page linked by hand. `/healthy-kids/` has no such row and no tag. |
+| `programma-zdorovaya-molodezh` «Программа «Здоровая молодежь»» | 666 | 7 films | The same idea for `/healthy-youth/`, whose «Проекты программы» is a `core/query` over it (D6f). The six are the films that page linked by hand. `/healthy-kids/` has no such row and no tag. |
+| `programma-zdorovye-deti` «Программа «Здоровые дети»» | 667 | 2 films | The «Команда Познавалова» cartoons, behind `/healthy-kids/`'s «Проекты программы» (D6f). A third cartoon, «Задача по зубам» (`70847`), is in the catalogue and may be a later lesson. |
 
 **None of the cmsms taxonomies were registered with `show_in_rest`** (verified 2026-08-13), so a headless frontend could not read them at all — `/wp/v2/types/profile` reported its taxonomies as `["post_tag"]` and nothing else, and `/wp/v2/pl-categs` 404'd. **Fixed for `pl-categs` on 2026-08-18**: the mu-plugin that took the registration over from cmsms adds `'show_in_rest' => true`, so a coordinator-by-region filter is now available to D3. The two `project` taxonomies were not re-registered — that CPT is dead (0 published, 21 drafts). See §3.5 for what the profile data offers.
 

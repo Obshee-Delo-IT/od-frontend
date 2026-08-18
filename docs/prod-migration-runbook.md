@@ -216,16 +216,16 @@ Then run the content conversion — [`wp-page-passthrough.md` §6](./wp-page-pas
 scp wp/mu-plugins/od-film-meta.php od-root:public_html/wp-content/mu-plugins/od-film-meta.php
 ssh od-root 'php -l ~/public_html/wp-content/mu-plugins/od-film-meta.php'
 
-scp wp/scripts/od-terms.php od-root:public_html/
-ssh od-root 'cd ~/public_html && wp --skip-plugins --skip-themes eval-file od-terms.php'         # dry run
-ssh od-root 'cd ~/public_html && wp --skip-plugins --skip-themes eval-file od-terms.php apply'
+scp wp/scripts/od-wp.php od-root:public_html/
+ssh od-root 'cd ~/public_html && wp --skip-plugins --skip-themes eval-file od-wp.php'         # dry run
+ssh od-root 'cd ~/public_html && wp --skip-plugins --skip-themes eval-file od-wp.php apply'
 
 scp wp/scripts/od-pages.php od-root:public_html/
 ssh od-root 'cd ~/public_html && wp --skip-plugins --skip-themes eval-file od-pages.php'         # dry run
 ssh od-root 'cd ~/public_html && wp --skip-plugins --skip-themes eval-file od-pages.php apply'
 ```
 
-`od-terms.php` addresses posts by slug, so it reports which of the programme's films production is missing rather than tagging the wrong ones. Read that output before running `od-pages.php`.
+`od-wp.php` addresses posts by slug, so it reports which of the programmes' films production is missing rather than tagging the wrong ones. It also fills each film's `poster_image_url` from an upload path — root-relative in the registry, with production's own origin put back by `home_url()` at write time — and never overwrites a value that is already there. Read that output before running `od-pages.php`.
 
 `apply` is a positional argument, not a `--flag`: `wp eval-file` hands positionals to the script in `$args` and rejects unknown flags outright.
 
