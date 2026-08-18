@@ -172,7 +172,7 @@ A media-asset catalog. Many sub-frames have dozens of children each — these ar
 | Disks (DVDs/CDs) | `disks` (`966:8062`) | small |
 | Printing | `printing` (`966:2949`) | small — ✅ shipped 2026-08-18 (D6j) as WP page #57271 |
 | Flyers | `flyers` (`966:7747`) | 11 children |
-| Social ads | `social-ads` (`966:8538`) | 1676 × 1440 |
+| Social ads | `social-ads` (`966:8538`) | 1676 × 1440 — ✅ shipped 2026-08-18 (D6k) as WP page #57269. Drawn with bare rectangles, not the card components: follow `printing` for the geometry |
 | Social posters | `social-posters` (`998:9524`) | 5643 × 1440 (largest — ~88 asset cells) |
 | Social stickers | `social-sticker` (`1013:11191`) | 2801 × 1440 |
 | Social banners | `social-banners` (`1009:10590`) | 3215 × 1440 |

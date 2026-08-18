@@ -825,6 +825,31 @@ h2:has(+ .od-tiles) {
   background-image: url('/figma/cards/materials-social.svg');
 }
 
+/* `/materials/social-reklama/` — Figma `social-ads` (`966:8538`), which reuses
+   `printing`'s five drawings in the same order. Note `--plakati` is this page's
+   «Плакаты» (the slug `/materials/plakati/`), one letter away from `--plakaty`
+   above, which is the printed-products card pointing at a Yandex Disk folder.
+   Both spellings are real: the id is always the last segment of the href. */
+.od-tile--plakati::before {
+  background-image: url('/figma/cards/direction-2.svg');
+}
+
+.od-tile--billboards::before {
+  background-image: url('/figma/cards/direction-4.svg');
+}
+
+.od-tile--audio-roliki-social-reklama::before {
+  background-image: url('/figma/cards/direction-5.svg');
+}
+
+.od-tile--led-board-roliki::before {
+  background-image: url('/figma/cards/direction-1.svg');
+}
+
+.od-tile--sticker::before {
+  background-image: url('/figma/cards/direction-3.svg');
+}
+
 .od-tiles--wide .od-tile {
   display: grid;
   min-height: 280px;

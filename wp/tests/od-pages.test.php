@@ -598,9 +598,47 @@ od_test('the photos are not the mock\'s drawings', !str_contains($printed, '<!--
 
 od_test('converted content is left alone', od_pages_printed_products($printed, 0) === $printed);
 
+// ===========================================================================
+// `/materials/social-reklama/` — Figma `social-ads`, the last hub on these cards.
+// ===========================================================================
+
+$socialBefore = file_get_contents(__DIR__ . '/fixtures/social-reklama.before.html');
+$social = od_pages_social_reklama($socialBefore, 0);
+
+// 3 + 2, exactly as the mock draws it: five links, no sixth to reflow around.
+od_test('a row of three', substr_count($social, '<div class="wp-block-columns od-tiles">') === 1);
+od_test('then a row of two wide', substr_count($social, '<div class="wp-block-columns od-tiles od-tiles--wide">') === 1);
+od_test('five cards', substr_count($social, 'class="wp-block-column od-tile od-tile--') === 5);
+od_test('the page title names the only section', !str_contains($social, '<h2 '));
+
+od_test_tile_drawings($social, ['plakati', 'billboards', 'audio-roliki-social-reklama', 'led-board-roliki', 'sticker']);
+
+od_test('the mock\'s caption', str_contains($social, '<h3 class="wp-block-heading">Плакаты</h3>'));
+od_test('shortened, on a page already named that', !str_contains($social, 'Плакаты социальной рекламы'));
+// The mock paraphrases these as «световых»; the page and the slug say what they
+// are, the same way «Диски Общего Дела» kept its capitals.
+od_test('the page wins on the LED boards', str_contains($social, '<h3 class="wp-block-heading">Ролики для светодиодных щитов</h3>'));
+od_test('every card points where its photo pointed', str_contains($social, '<a href="/materials/plakati/">Подробнее</a>'));
+od_test('down to the wide row', str_contains($social, '<a href="/materials/led-board-roliki/">Подробнее</a>'));
+
+od_test('the old theme\'s hover-zoom is gone', !str_contains($social, '<style'));
+od_test('and the caption class it styled', !str_contains($social, 'textcapt'));
+od_test('and the colour class on the column', !str_contains($social, 'redcapt'));
+od_test('the photos are not the mock\'s drawings', !str_contains($social, '<!-- wp:image '));
+od_test('the half-column the fifth photo left empty is gone', !str_contains($social, 'flex-basis:50%'));
+
+od_test('converted content is left alone', od_pages_social_reklama($social, 0) === $social);
+
 // -- every transform refuses input it does not recognise --------------------------------
 
-foreach (['od_pages_healthy_youth', 'od_pages_healthy_kids', 'od_pages_projects', 'od_pages_materials', 'od_pages_printed_products'] as $transform) {
+foreach ([
+    'od_pages_healthy_youth',
+    'od_pages_healthy_kids',
+    'od_pages_projects',
+    'od_pages_materials',
+    'od_pages_printed_products',
+    'od_pages_social_reklama',
+] as $transform) {
     $threw = false;
     try {
         $transform('<!-- wp:paragraph --><p>что-то другое</p><!-- /wp:paragraph -->', 666);
