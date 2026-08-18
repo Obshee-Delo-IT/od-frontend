@@ -224,14 +224,33 @@ od_test( 'the alt carries no site name', str_contains( $alted, 'alt="Здоро�
 /* ------------------------------------------------------ od_cover_full_size */
 
 $swapped = od_cover_full_size( $spaced, OD_METODICHKI_COVERS );
-od_test( 'the small file is gone', ! str_contains( $swapped, 'New_small.jpg' ) );
-od_test( 'the full-size original took its place', str_contains( $swapped, rawurlencode( 'обложка_ЗдорМолодежьNew.jpg' ) ) );
-od_test( 'the upload path is the page\'s own, not ours', str_contains( $swapped, '/wp-content/uploads/2020/04/' ) );
-// All three described the file that was there: 226×300, and an attachment id that
-// is per-environment.
-od_test( 'the stale dimensions are dropped', 2 === substr_count( $swapped, 'width="' ) );
-od_test( 'and the stale attachment class with them', 2 === substr_count( $swapped, 'wp-image-' ) );
-od_test( 'the other two covers are untouched', str_contains( $swapped, 'metodichka-232x300.jpg' ) && str_contains( $swapped, 'metodic-mults-small220x300.jpg' ) );
+// All three, not one: the flat covers replace the booklet photographs the library
+// held, so every cover in the row changes file.
+foreach ( array( 'metodichka-232x300.jpg', 'metodic-mults-small220x300.jpg', 'New_small.jpg' ) as $gone ) {
+	od_test( "the old file {$gone} is gone", ! str_contains( $swapped, $gone ) );
+}
+foreach ( array( 'metodichka-zdorovaya-rossiya.jpg', 'metodichka-zdorovye-deti.jpg', 'metodichka-zdorovaya-molodezh.jpg' ) as $cover ) {
+	od_test( "the flat cover {$cover} took its place", str_contains( $swapped, '/wp-content/uploads/2026/08/' . $cover ) );
+}
+od_test( 'and the covers the page carried its own paths for are not still referenced', ! str_contains( $swapped, '/2016/07/' ) && ! str_contains( $swapped, '/2020/04/' ) );
+// Each described the file that was there: 232×300, 220×300, 226×300, and two
+// `<img>`s claimed the same per-environment attachment id, 27636.
+od_test( 'the stale dimensions are dropped', ! str_contains( $swapped, 'width="' ) && ! str_contains( $swapped, 'height="' ) );
+od_test( 'and the stale attachment classes with them', ! str_contains( $swapped, 'wp-image-' ) );
+od_test( 'the classes that meant something survive', 3 === substr_count( $swapped, 'class="size-medium aligncenter"' ) );
+// The page exists in two states and both have to land on the same cover: this is
+// the one od-dev was left in by the previous run of this script.
+$already = od_cover_full_size(
+	'<img src="/wp-content/uploads/2020/04/' . rawurlencode( 'обложка_ЗдорМолодежьNew.jpg' ) . '" />',
+	OD_METODICHKI_COVERS
+);
+od_test( 'a body already swapped once lands on the flat cover too', $already === '<img src="/wp-content/uploads/2026/08/metodichka-zdorovaya-molodezh.jpg" />' );
+// The other half of the value's two readings, which nothing on this page uses any
+// more: a bare basename keeps the directory the page carries.
+od_test(
+	'a basename target swaps the file and keeps the path',
+	od_cover_full_size( '<img src="/a/b/x-1x1.jpg" width="1" />', array( 'x-1x1.jpg' => 'x.jpg' ) ) === '<img src="/a/b/x.jpg" />'
+);
 od_test( 'a page with none of the mapped files is returned as it is', od_cover_full_size( '<img src="/x/other.jpg" width="1" />', OD_METODICHKI_COVERS ) === '<img src="/x/other.jpg" width="1" />' );
 od_test_idempotent(
 	'od_cover_full_size',

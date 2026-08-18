@@ -1114,14 +1114,32 @@ const OD_METODICHKI_COORDINATOR_NAME = 'Андрей Алексеевич Ряз
 /**
  * The covers whose file the page should not be using, and the one it should.
  *
- * «Здоровые дети» is **not** in this list although its file is the 220×300
- * `metodic-mults-small220x300.jpg`: the library's full-size original for that
- * attachment (`metodichka-mult.jpg`, 844×1092) is not on the media bucket, and
- * both origins answer 301 for it — there is nothing to point at. Recorded in
- * `docs/next-steps.md` as an offload gap rather than worked around here.
+ * All three are the flat print covers from Figma `handbooks`, exported at the
+ * row's own 775×1092. What the library held instead was photographs of the
+ * printed booklets on white grounds — the same publications, a different
+ * presentation, and the mock draws artwork to the card's edges. Two were also too
+ * small for the 387-wide slot (500×647 and **220×300**), and «Здоровые дети» had
+ * no larger copy anywhere in the library: the `wp-image-27636` its `<img>` claims
+ * is a different booklet altogether. Approved as a departure from the library on
+ * 2026-08-18; `docs/next-steps.md` has the measurements.
+ *
+ * «Здоровая молодежь» is here **twice** because the page exists in two states: a
+ * freshly converted body references `обложка_ЗдорМолодежьNew_small.jpg`, and a
+ * body this script already ran over references the full-size file it swapped in
+ * before the flat covers existed. Both have to land on the same cover.
+ *
+ * **These four paths are the one thing in this file that is not true everywhere.**
+ * Every other address here is a slug or a path the content already carried; these
+ * are uploads *we* added, so they exist only where they have been put. Production
+ * needs the same three files under the same `2026/08/` path before this runs —
+ * `docs/prod-migration-runbook.md` §2.8 — and a swap whose source basename is
+ * absent matches nothing and says nothing, so a missed step looks like success.
  */
 const OD_METODICHKI_COVERS = [
-    'обложка_ЗдорМолодежьNew_small.jpg' => 'обложка_ЗдорМолодежьNew.jpg',
+    'metodichka-232x300.jpg'            => '/wp-content/uploads/2026/08/metodichka-zdorovaya-rossiya.jpg',
+    'metodic-mults-small220x300.jpg'    => '/wp-content/uploads/2026/08/metodichka-zdorovye-deti.jpg',
+    'обложка_ЗдорМолодежьNew_small.jpg' => '/wp-content/uploads/2026/08/metodichka-zdorovaya-molodezh.jpg',
+    'обложка_ЗдорМолодежьNew.jpg'       => '/wp-content/uploads/2026/08/metodichka-zdorovaya-molodezh.jpg',
 ];
 
 /**
@@ -1151,15 +1169,18 @@ function od_strip_attr_site_suffix(string $content): string
 }
 
 /**
- * Point a cover at the full-size file the media library already holds.
+ * Point a cover at the file it should be using.
  *
- * `$basenames` maps the file a page references to the one it should — **basenames
- * only**, so the upload directory the page carries is kept and the map stays true
- * on any environment. Two of `/materials/metodichki/`'s three covers arrived
- * pointing at deliberately small uploads: the row draws them 387 wide, and
- * `обложка_ЗдорМолодежьNew_small.jpg` is 297×420, a 1.30× upscale, where the
- * full-size original beside it in the library is 930×1315 — and at 930∶1315 =
- * 0.707 it is also the row's own ratio, so `object-fit: cover` stops cropping it.
+ * The key is always a **basename**, because that is what identifies a cover
+ * wherever the page lives — the row's three `<img>`s were written by hand over ten
+ * years and carry three different upload directories. The value is read two ways:
+ *
+ * - a **basename** swaps the file inside whatever directory the page already
+ *   carries, which is the form to use when the replacement sits beside the
+ *   original in the library — the map then stays true on every environment;
+ * - a **root-relative path** (leading `/`) replaces the whole `src`, which is the
+ *   form to use when the replacement is somewhere else. It is the stronger claim:
+ *   that path has to exist on the environment this runs against.
  *
  * `width`, `height` and `wp-image-<id>` are dropped from a swapped image on
  * purpose: all three described the old file. The size the stylesheet gives the
@@ -1169,18 +1190,27 @@ function od_strip_attr_site_suffix(string $content): string
  *
  * Idempotent: a swapped image no longer matches its own key.
  *
- * @param array<string, string> $basenames old file name => new file name.
+ * @param array<string, string> $covers old basename => new basename, or new
+ *                                      root-relative path.
  */
-function od_cover_full_size(string $content, array $basenames): string
+function od_cover_full_size(string $content, array $covers): string
 {
-    foreach ($basenames as $from => $to) {
-        $pattern = '~<img\b[^>]*\bsrc="[^"]*/' . preg_quote(rawurlencode($from), '~') . '"[^>]*>'
-            . '|<img\b[^>]*\bsrc="[^"]*/' . preg_quote($from, '~') . '"[^>]*>~u';
+    foreach ($covers as $from => $to) {
+        $pattern = '~<img\b[^>]*\bsrc="[^"]*/(?:' . preg_quote(rawurlencode($from), '~')
+            . '|' . preg_quote($from, '~') . ')"[^>]*>~u';
 
         $content = preg_replace_callback(
             $pattern,
             static function (array $m) use ($from, $to): string {
-                $img = str_replace([rawurlencode($from), $from], rawurlencode($to), $m[0]);
+                if ($to[0] === '/') {
+                    // Segment by segment: a path with a Cyrillic name in it has to
+                    // arrive encoded, and the slashes must survive.
+                    $encoded = implode('/', array_map('rawurlencode', explode('/', $to)));
+                    $img     = preg_replace('~\bsrc="[^"]*"~', 'src="' . $encoded . '"', $m[0]);
+                } else {
+                    $img = str_replace([rawurlencode($from), $from], rawurlencode($to), $m[0]);
+                }
+
                 $img = preg_replace('~\s(?:width|height)="[^"]*"~', '', $img);
                 $img = preg_replace('~\s?\bwp-image-\d+~', '', $img);
 

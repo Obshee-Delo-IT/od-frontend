@@ -238,10 +238,39 @@ scp wp/scripts/od-wp.php od-root:public_html/
 ssh od-root 'cd ~/public_html && wp --skip-plugins --skip-themes eval-file od-wp.php'         # dry run
 ssh od-root 'cd ~/public_html && wp --skip-plugins --skip-themes eval-file od-wp.php apply'
 
+ssh od-root 'mkdir -p ~/public_html/wp-content/uploads/2026/08'
+scp wp/assets/metodichki/*.jpg od-root:public_html/wp-content/uploads/2026/08/
+ssh od-root 'ls -l ~/public_html/wp-content/uploads/2026/08/metodichka-zdorov*.jpg'
+
 scp wp/scripts/od-pages.php od-root:public_html/
 ssh od-root 'cd ~/public_html && wp --skip-plugins --skip-themes eval-file od-pages.php'         # dry run
 ssh od-root 'cd ~/public_html && wp --skip-plugins --skip-themes eval-file od-pages.php apply'
 ```
+
+**The three covers are a prerequisite, not a nicety — and the failure mode is
+silence.** `/materials/metodichki/` is the one page whose fix points at uploads
+*this project added* rather than at something the content already carried: the
+library holds photographs of the printed booklets on white grounds, and Figma
+`handbooks` draws the flat print covers, edge to edge. The files are committed at
+`wp/assets/metodichki/` and `OD_METODICHKI_COVERS` in `od-pages.php` names them by
+the **exact path** `wp-content/uploads/2026/08/`, so they have to be at that path
+before the script runs. If they are not, `od_cover_full_size()` finds no source
+basename to match, changes nothing, and reports nothing — the page just keeps the
+booklet photographs, one of them at 220 px in a 387 px slot.
+
+**A plain `scp` is the whole step, and `wp media import` is the wrong tool here.**
+Import copies the file to *its* current month, which on cutover day is not
+`2026/08` — od-dev's import month, which the map has to read the same on both
+sides. The page's covers are raw `<img>` tags rather than `wp:image` blocks, so
+nothing on the frontend needs an attachment to exist; od-dev has media-library
+records for them only because that is how they were first uploaded. Register them
+on production too if an editor should be able to find them in the library — after
+the `scp`, and without a second copy of the file.
+
+They will serve **from the WordPress origin, not the media bucket**, since nothing
+in this install offloads on upload. `resolveMediaUrl` handles that by design — it
+probes the CDN, takes the bucket's 301 as "absent" and falls back — but it is one
+more reason to keep §5's image check on this page.
 
 `od-wp.php` addresses posts by slug, so it reports which of the programmes' films production is missing rather than tagging the wrong ones. It also fills each film's `poster_image_url` from an upload path — root-relative in the registry, with production's own origin put back by `home_url()` at write time — and never overwrites a value that is already there. Read that output before running `od-pages.php`.
 
