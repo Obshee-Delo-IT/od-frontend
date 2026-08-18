@@ -68,8 +68,8 @@ export const generateMetadata = (): Metadata => {
  * shape actually matters.
  *
  * The cards are `CardSection`'s, not this route's: four cards fall out as the
- * 2 + 2 wide rows the `ads` mock draws, which is the same card `/projects/`
- * leads «Проекты» with.
+ * 2 + 2 wide rows the `ads` mock draws, which is the same card the `projects`
+ * mock leads «Проекты» with.
  *
  * Worth building ahead of its entry traffic: 107 entries in 91 days against
  * 939 views (8.8×) — almost nobody lands here from search, but it is how the

@@ -14,10 +14,10 @@ interface CardSectionProps {
   /** Names the section for assistive tech, and is the visible heading unless suppressed. */
   title: string;
   /**
-   * Figma `projects` (`706:1775`) shows a heading only above «Проекты» — the
-   * programmes above it are named by the page's own H1, so their section
-   * carries the title as a label and draws nothing. `/materials/` is the same
-   * case: one section, named by the H1.
+   * `/materials/` draws one section, named by the page's own H1 — so the title
+   * is the section's accessible name and nothing is painted. The pattern comes
+   * from Figma `projects` (`706:1775`), which heads only its second row; that
+   * page is served from WordPress since D6g and no longer renders this.
    */
   showHeading?: boolean;
 }
@@ -47,12 +47,13 @@ export const toCardRows = (cards: CardData[]): CardData[][] => {
 };
 
 /**
- * A section of {@link IllustratedCard}s in the rows Figma draws — used by
- * `/projects/` for its two card sections and by `/materials/` for its four
- * groups (which land on 2 + 2 wide rows, the shape that mock draws).
+ * A section of {@link IllustratedCard}s in the rows Figma draws — `/materials/`
+ * and its four groups, which land on 2 + 2 wide rows, the shape that mock draws.
  *
- * The home page uses the same cards in a carousel instead, because there they
- * sit below the fold among six other sections.
+ * The home page uses the same card in a carousel instead, because there it sits
+ * below the fold among six other sections. `/projects/`, the third surface,
+ * left in D6g: it is a WordPress page now and its cards are blocks, styled by
+ * `.od-tiles` in `gutenberg.css`.
  */
 export const CardSection: React.FC<CardSectionProps> = ({ cards, title, showHeading = true }) => (
   <section className={css.section} aria-label={title}>
