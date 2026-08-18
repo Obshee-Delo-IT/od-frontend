@@ -253,64 +253,46 @@ mismatches are the ones whose URLs are wrong for search too.
 
 ---
 
-## The three `metodichki` covers are the wrong image files
+## ~~The three `metodichki` covers are the wrong image files~~ — done 2026-08-18
 
-**Found 2026-08-17.** Figma `handbooks` shows flat poster artwork; WordPress
-holds photographs of the printed booklets on white grounds, which is what the
-live site has always shown. `.od-covers img` crops to the mock's 387×546 with
-`object-fit: cover`, so the row is even either way and the layout already fits
-the designer's renders — but each card carries a band of the photo's own white
-background, where the mock has artwork to its edges.
+**Found 2026-08-17, closed 2026-08-18 with the mock's own artwork.** Figma
+`handbooks` shows flat poster artwork; WordPress held photographs of the printed
+booklets on white grounds, which is what the live site has always shown.
+`.od-covers img` crops to the mock's 387×546 with `object-fit: cover`, so the row
+was even either way — but each card carried a band of the photo's own white
+background where the mock has artwork to its edges.
 
-**What to do:** ask Design for the three cover files, upload them to the media
-library and repoint the three `<img src>`s. The same question will come up for
-`/materials/plakati/` and `/materials/zakladki/`, so ask once.
+Design's answer was that the flat covers are fine, so the three rects
+(`779:4396` / `779:4398` / `779:4400`) were exported at scale 2 — **775×1092
+each, exactly the row's 2× density and exactly its 0.7097 ratio, so nothing
+crops** — written to JPEG at q88 (≈190 KB each), committed at
+`wp/assets/metodichki/` and uploaded to od-dev. `OD_METODICHKI_COVERS` in
+`od-pages.php` now swaps all three, and `od_cover_full_size()` learned to take a
+**root-relative path** and not just a basename, because an upload of ours does
+not sit in the directory the page already carries.
 
-**The mock's own artwork is exportable, and it is a fallback rather than the
-answer.** `save_screenshots` on the three rects (`779:4396` / `779:4398` /
-`779:4400`) at scale 2 gives three 775×1092 PNGs — exactly the row's 2× density.
-But they are the *frame's* crop, not the print file: cover 3 comes out with the
-top of «МОЛОДЕЖЬ» clipped, because Figma fills a 387×546 rect the same way the
-CSS does. Good enough to ship if Design has nothing better; not the same as
-having the covers.
+**Three consequences, all recorded where they bite.** The exports are the
+*frame's* crop rather than the print file — cover 3 loses the top of «МОЛОДЕЖЬ»,
+exactly as the mock draws it, and cover 2's «ОПАСНОЕ ПОГРУЖЕНИЕ» sits under the
+pill. The files serve from the WordPress origin, not the media bucket, because
+nothing in this install offloads on upload (`resolveMediaUrl`'s
+301-means-absent fallback is what makes that a non-event). And production needs
+the same three files at the same `wp-content/uploads/2026/08/` path **before**
+`od-pages.php` runs there, or the swap matches nothing and says nothing —
+[`prod-migration-runbook.md` §2.8](./prod-migration-runbook.md).
 
-**Uploading is one WP-CLI line, and the repoint is the part that needs code.**
-`wp media import <file> --porcelain` is the upload — no `od-wp.php` task, it
-holds nothing but terms and postmeta and would only be wrapping that command.
-Three things follow from doing it:
+**What this replaced, for the record.** All three rendered at 386.67px wide from
+naturals of 500 / 220 / 297 px (**1.29× / 1.76× / 1.30×** upscale) because the
+page referenced deliberately small uploads. «Здоровые дети» was the one with no
+way out: its `<img>` claims `wp-image-27636`, but 27636 is a **different
+booklet** (`2016/03/metodichka-mult.jpg`, 844×1092, on the bucket and serving
+fine — the light-blue «ПРОГРАММА» cover, not the dark «Тайна едкого дыма» one the
+row shows). The picture the row showed belongs to attachment 36624, whose only
+file is a 220×300 export somebody uploaded as the original; every `metodic*` /
+`mult*` attachment in the library was checked and 220×300 was the ceiling.
 
-- `od_cover_full_size()` swaps a **basename inside the path the body already
-  carries**, and an import lands in `wp-content/uploads/2026/08/`. Its map has to
-  learn full root-relative paths first.
-- **od-dev runs no offload plugin** (checked 2026-08-18 against the active list),
-  so an imported file sits on od-dev's disk and never reaches the bucket. It
-  still renders — `resolveMediaUrl` probes the CDN, gets the bucket's 301 and
-  falls back to the origin — just off the slow host, for good.
-- It adds a **cutover step**: the same three files have to be imported on
-  production before `od-pages.php` runs there, because a swap whose `from`
-  basename is absent matches nothing and reports nothing. `docs/prod-migration-runbook.md`.
-
-**They were also too small** — all three rendered at 386.67px wide from naturals
-of 500 / 220 / 297 px (**1.29× / 1.76× / 1.30×** upscale), because the page
-referenced deliberately small uploads while the library held the originals.
-**Two thirds of that is fixed** (2026-08-18): `od_cover_full_size()` in
-`od-pages.php` repointed «Здоровая молодежь» at `обложка_ЗдорМолодежьNew.jpg`,
-930×1315 — a 0.42× downscale, and at 0.7072 it is the row's own ratio, so its crop
-went from 0.3% to **-0.2%**, i.e. none.
-
-**What is left is one file with no large copy anywhere.** «Здоровые дети» still
-renders its 220×300 upload at 1.76×, and it cannot be repointed. The body's
-`<img>` claims `wp-image-27636`, and that id **is a different booklet** — 27636 is
-`2016/03/metodichka-mult.jpg`, 844×1092, on the bucket and serving fine, but it is
-the light-blue «ПРОГРАММА» cover, where the row shows the dark «Тайна едкого
-дыма / Опасное погружение» one. The picture the row actually shows is attachment
-**36624**, whose only file is `metodic-mults-small220x300.jpg` — a 220×300 export
-somebody uploaded as the original. Every `metodic*` / `mult*` attachment in the
-library was checked (2026-08-18): 220×300 is the ceiling, so the class is simply
-stale and there is nothing to repoint to. This one needs a file from Design (or
-the Figma crop above). «Здоровая Россия» is at its own ceiling too:
-`metodichka.jpg` 500×647 is the largest copy in the library, and it still crops
-8.3% because its 0.773 ratio is not the row's.
+The same question was open for `/materials/plakati/` and `/materials/zakladki/`
+and has the same answer now: export the mock's artwork.
 
 ## ~~The covers' `alt` carried the site's own name~~ — done 2026-08-18
 
