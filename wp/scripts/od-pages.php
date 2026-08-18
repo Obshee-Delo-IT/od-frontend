@@ -1888,9 +1888,11 @@ function od_pages_plakati(string $content, int $filmTagId): string
  * buttons, which is the same zip `/materials/plakati/` needs and for the same
  * reason; the examples are the last row that carries pictures and no button.
  *
- * They become a `core/gallery` rather than more cards: they are photographs of
- * the material in use, with nothing to download, and core's gallery already has
- * the mock's two-up layout without a line of CSS here.
+ * They become an `od-figures` grid rather than more cards: they are photographs
+ * of the material in use, with nothing to download. Four across rather than the
+ * mock's two — the mock draws them as two empty placeholders the size of a
+ * sticker card, and the files behind them are 267 x 215, so a two-up row
+ * upscales each one to twice its width.
  *
  * @param string $content   Stored `post_content`.
  * @param int    $filmTagId Unused: this page carries no film row.
@@ -1939,7 +1941,7 @@ function od_pages_sticker(string $content, int $filmTagId): string
     return rtrim(
         od_pages_assets($cards)
         . od_pages_heading(2, 'Примеры использования')
-        . od_pages_figures($examples)
+        . od_pages_figures($examples, 4)
     ) . "\n";
 }
 
