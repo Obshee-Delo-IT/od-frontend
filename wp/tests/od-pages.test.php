@@ -648,6 +648,101 @@ od_test('the half-column the fifth photo left empty is gone', !str_contains($soc
 
 od_test('converted content is left alone', od_pages_social_reklama($social, 0) === $social);
 
+// ===========================================================================
+// The five asset pages under `/materials/social-reklama/` — D6l.
+// ===========================================================================
+
+/** Every card carries the download the page already had, on the mock's label. */
+function od_test_asset_downloads(string $html, int $cards, string $label): void
+{
+    od_test('a card per item', substr_count($html, 'od-asset">') === $cards);
+    od_test('each with one download row', substr_count($html, 'wp-block-buttons od-asset-actions') === $cards);
+    od_test('on the shared label', substr_count($html, '>' . $label . '</a>') >= $cards);
+    od_test('pointing at Yandex Disk, as the page did', substr_count($html, 'href="https://yadi.sk/') >= $cards);
+    od_test('the old theme\'s spacing rules are gone', !str_contains($html, '<!-- wp:separator'));
+    od_test('so is its stylesheet', !str_contains($html, '<style'));
+    od_test('and the MailPoet form whose plugin is', !str_contains($html, 'wysija_form'));
+}
+
+// -- /materials/billboards/ — Figma `social-banners` -------------------------
+
+$billboards = od_pages_billboards(file_get_contents(__DIR__ . '/fixtures/billboards.before.html'), 0);
+
+od_test_asset_downloads($billboards, 13, OD_ASSET_DOWNLOAD);
+od_test('one card per row, so no grid row at all', !str_contains($billboards, 'od-assets'));
+od_test('the artwork is labelled as the mock labels it', substr_count($billboards, '>Макет</figcaption>') === 13);
+od_test('and the photo beside it', substr_count($billboards, '>Примеры использования</figcaption>') === 13);
+// It was a paragraph floating above the picture; a figcaption belongs to the
+// picture and travels with it when an editor moves the block.
+od_test('the caption is no longer a paragraph of its own', !str_contains($billboards, '<p>Примеры использования'));
+od_test('the page\'s own wording is dropped for the mock\'s', !str_contains($billboards, 'Скачать в качестве для печати'));
+od_test('every image keeps the full-size file it linked to', str_contains($billboards, '<a href="/wp-content/uploads/2020/05/Щит3на6-Здоровая-молодежь.jpg">'));
+od_test('converted content is left alone', od_pages_billboards($billboards, 0) === $billboards);
+
+// -- /materials/plakati/ — Figma `social-posters`, the #6 entry page ---------
+
+$plakati = od_pages_plakati(file_get_contents(__DIR__ . '/fixtures/plakati.before.html'), 0);
+
+od_test_asset_downloads($plakati, 15, OD_ASSET_DOWNLOAD);
+// Fifteen cards two-up: seven full rows and one holding the odd poster out.
+od_test('two per row', substr_count($plakati, '<div class="wp-block-columns od-assets">') === 8);
+od_test('the fifteen buttons keep their own hrefs', substr_count($plakati, 'href="https://yadi.sk/') === 15);
+od_test('the first poster keeps its own link', str_contains($plakati, 'https://yadi.sk/i/8ShaiNDuQab81Q'));
+od_test('and the last', str_contains($plakati, 'https://yadi.sk/i/IW3PrSmgzfXkn'));
+// The «36 000 рублей» row is the reason pairing is positional: its second
+// column is the same poster in black and white and never got the label.
+od_test('the black-and-white twin is a photo, not a sixteenth poster', substr_count($plakati, '36000_bw_270H.jpg') === 1);
+od_test('the one poster with a name of its own keeps it', str_contains($plakati, '<h3 class="wp-block-heading">Серия плакатов'));
+od_test('the empty 25% spacer columns are gone', !str_contains($plakati, 'flex-basis:25%'));
+od_test('so is the old theme\'s border class', !str_contains($plakati, 'sectionborder'));
+od_test('converted content is left alone', od_pages_plakati($plakati, 0) === $plakati);
+
+// -- /materials/sticker/ — Figma `social-sticker` ---------------------------
+
+$sticker = od_pages_sticker(file_get_contents(__DIR__ . '/fixtures/sticker.before.html'), 0);
+
+od_test_asset_downloads($sticker, 6, OD_ASSET_DOWNLOAD);
+od_test('six stickers, two per row', substr_count($sticker, '<div class="wp-block-columns od-assets">') === 3);
+od_test('the photos of them in use get their own heading', str_contains($sticker, '<h2 class="wp-block-heading">Примеры использования</h2>'));
+// Photographs of the material in use, with nothing to download — core's gallery
+// is already the mock's two-up layout and needs no rule in `gutenberg.css`.
+od_test('and are a gallery, not four more cards', substr_count($sticker, '<!-- wp:gallery {"columns":2') === 1);
+od_test('all four of them', substr_count($sticker, 'has-nested-images columns-2') === 1 && substr_count($sticker, 'wp-block-image size-full') === 10);
+od_test('the old theme\'s border class is gone', !str_contains($sticker, 'marginbottom'));
+od_test('converted content is left alone', od_pages_sticker($sticker, 0) === $sticker);
+
+// -- /materials/led-board-roliki/ — Figma `social-video` --------------------
+
+$leds = od_pages_led_board_roliki(file_get_contents(__DIR__ . '/fixtures/led-board-roliki.before.html'), 0);
+
+od_test('ten clips', substr_count($leds, 'od-asset">') === 10);
+od_test('each with both aspect ratios', substr_count($leds, '>16 : 9</a>') === 10 && substr_count($leds, '>4 : 3</a>') === 10);
+od_test('twenty downloads in ten rows', substr_count($leds, 'wp-block-buttons od-asset-actions') === 10);
+od_test('the thirty separators are gone', !str_contains($leds, '<!-- wp:separator'));
+// The migrator wrote one `h1` per row, so the page shipped ten of them under a
+// title that is already the page's only first-level heading.
+od_test('no second h1 on the page', !str_contains($leds, '<h1'));
+od_test('the clip names survive as h3', str_contains($leds, '<h3 class="wp-block-heading">Аристотель</h3>'));
+od_test('and the last of them', str_contains($leds, '<h3 class="wp-block-heading">Углов</h3>'));
+od_test('the label over the buttons is a label, not a heading', str_contains($leds, '<p>Скачать в формате mp4</p>'));
+od_test('every video survives as an embed', substr_count($leds, '<!-- wp:embed ') === 10);
+od_test('converted content is left alone', od_pages_led_board_roliki($leds, 0) === $leds);
+
+// -- /materials/audio-roliki-social-reklama/ — Figma `social-audio` ---------
+
+$audio = od_pages_audio_roliki(file_get_contents(__DIR__ . '/fixtures/audio-roliki-social-reklama.before.html'), 0);
+
+od_test('four spots', substr_count($audio, 'od-asset">') === 4);
+// The mp3s were never migrated: they sat in the body as raw `[cmsms_audio]`
+// shortcodes, rendering as their own file path with no way to play them.
+od_test('each gets the player the mock draws', substr_count($audio, '<!-- wp:audio -->') === 4);
+od_test('pointed at the file the shortcode held', str_contains($audio, 'src="/wp-content/uploads/2017/07/Принудительное-курение-и-ПДК.-Аудио-ролик.mp3"'));
+od_test('and the shortcode itself is gone', !str_contains($audio, 'cmsms_audio'));
+od_test('the titles the migrator left inside a paragraph are headings', str_contains($audio, '<h3 class="wp-block-heading">Принудительное курение и ПДК.</h3>'));
+od_test('the script survives', str_contains($audio, 'Береги себя и подумай о близких.'));
+od_test('the download names what it is', substr_count($audio, '>Скачать аудио-ролик</a>') === 4);
+od_test('converted content is left alone', od_pages_audio_roliki($audio, 0) === $audio);
+
 // -- every transform refuses input it does not recognise --------------------------------
 
 foreach ([
@@ -657,6 +752,11 @@ foreach ([
     'od_pages_materials',
     'od_pages_printed_products',
     'od_pages_social_reklama',
+    'od_pages_billboards',
+    'od_pages_plakati',
+    'od_pages_sticker',
+    'od_pages_led_board_roliki',
+    'od_pages_audio_roliki',
 ] as $transform) {
     $threw = false;
     try {

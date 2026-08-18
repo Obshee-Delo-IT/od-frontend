@@ -19,6 +19,20 @@ describe('resolveContentImages', () => {
     expect(out).toContain('<p>x</p>');
   });
 
+  it('rewrites <audio src> too — the materials mp3s live in the uploads tree', async () => {
+    const html = '<figure class="wp-block-audio"><audio controls src="/wp-content/uploads/a.mp3"></audio></figure>';
+
+    expect(await resolveContentImages(html)).toContain('src="/wp-content/uploads/a.mp3#resolved"');
+  });
+
+  it('never makes an <audio> the eager LCP element', async () => {
+    const html = '<audio controls src="/wp-content/uploads/a.mp3"></audio><img src="https://wp.test/c.jpg" alt=""/>';
+    const out = await resolveContentImages(html, true);
+
+    expect(out).not.toContain('<audio loading="eager"');
+    expect(out).toContain('<img loading="eager" fetchpriority="high"');
+  });
+
   it('makes the first image eager and leaves the rest lazy', async () => {
     const html =
       '<img src="https://wp.test/cover.jpg" loading="lazy" alt="a"/><img src="https://wp.test/next.jpg" loading="lazy" alt="b"/>';

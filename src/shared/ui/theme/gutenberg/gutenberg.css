@@ -119,6 +119,17 @@ figure,
   margin: 0 0 1.5em;
 }
 
+/* Core marks a video embed `wp-embed-aspect-16-9`, but the rule that reads it
+   lives behind `.wp-embed-responsive` — a class WordPress puts on `<body>` and
+   we do not have. Without it every `<iframe>` renders at its own 560×315 in
+   whatever column it lands in. `aspect-ratio` does the same job in one line and
+   needs nothing on an ancestor. */
+.wp-embed-aspect-16-9 .wp-block-embed__wrapper iframe {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 16 / 9;
+}
+
 img {
   display: block;
   max-width: 100%;
@@ -877,6 +888,101 @@ h2:has(+ .od-tiles) {
   grid-area: 2 / 1;
 }
 
+/* ------------------------------------------------------------------------- *
+ * The asset pages under `/materials/` — D6l.
+ *
+ * A preview, sometimes a photo of the thing in use, and one download link, over
+ * and over. Nine Figma frames draw this card and disagree with each other about
+ * it: the download is a solid red button on every `social-*` frame, an outline
+ * one on `disks` and `flyers`, and a bare red text link on `car sticker`; only
+ * `social-ads`' sibling frames instance a component at all. Where the frames
+ * disagree the design system decides, so there is one card and one CTA here —
+ * the primary button the rest of the site uses.
+ *
+ * Both classes are written into `post_content` by `wp/scripts/od-pages.php`.
+ * `od-asset` is a card and is either a `core/group` (one per row) or a
+ * `core/column` inside an `od-assets` row (two per row); nothing else changes
+ * between the two.
+ * ------------------------------------------------------------------------- */
+
+/* Grid rather than the columns block's own flex, for the reason `.od-tiles`
+   gives: a track keeps two equal cards without the `flex-basis` core writes,
+   and it is what leaves a row of one at half width. */
+.wp-block-columns.od-assets {
+  display: grid;
+  margin-bottom: 40px;
+  gap: 40px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.od-asset {
+  display: flex;
+  flex-direction: column;
+  padding: 24px;
+  border-radius: 12px;
+  background-color: var(--white);
+  gap: 24px;
+}
+
+/* The stacked form is its own block in the flow, so it carries the 40 the grid
+   above gets from `margin-bottom`. */
+.wp-block-group.od-asset {
+  margin-bottom: 40px;
+}
+
+/* Everything inside the card is spaced by the card's own `gap`; the margins
+   core and this file give a figure, a heading or a button row would double it.
+   `.od-asset` twice, because `.wp-block-heading h3` and the base `figure` rule
+   are the same specificity and are imported after. */
+.od-asset.od-asset :is(figure, h3, p, .wp-block-buttons, .wp-block-columns) {
+  margin-bottom: 0;
+}
+
+/* A card's inner row — the artwork beside the photo of it in use, or the video
+   beside its download buttons. Left as core's flex (the grid above only claims
+   `.od-assets`), but its columns become flex boxes of their own so a short
+   right-hand column centres against a tall picture, which is what every frame
+   in the set draws.
+
+   The two rules below are less specific than `.od-card--flush`'s, which the
+   linter reads as a cascade risk. They cannot collide: that class is the
+   methodology card on `/materials/metodichki/` and this one is a card on nine
+   other pages, and no body carries both. */
+/* stylelint-disable no-descending-specificity */
+.od-asset .wp-block-columns > .wp-block-column {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 16px;
+}
+
+/* Previews are small uploads — a 270px-tall poster thumbnail, mostly — so they
+   are centred at their own size rather than stretched to the column, which
+   would blur every one of them. The full-size file is a click away: the script
+   keeps the link the page already had on each picture. */
+.od-asset .wp-block-image {
+  text-align: center;
+}
+
+.od-asset .wp-block-image img {
+  border-radius: 8px;
+  margin-inline: auto;
+}
+/* stylelint-enable no-descending-specificity */
+
+/* The download row is centred wherever it sits. */
+.od-asset .od-asset-actions {
+  justify-content: center;
+}
+
+/* At the foot of the card, `margin-top: auto` keeps it on the bottom edge when
+   the card beside it is taller. Direct child only: inside a column it is one of
+   two things being centred together, and pushing it down would strand the label
+   above it at the top — which is what `/materials/led-board-roliki/` draws. */
+.od-asset > .od-asset-actions {
+  margin-top: auto;
+}
+
 @media (--mobile) {
   .od-programme-logo {
     max-width: none;
@@ -912,6 +1018,23 @@ h2:has(+ .od-tiles) {
 
   h2:has(+ .od-tiles) {
     margin-bottom: 24px;
+  }
+
+  /* One asset card per row below 900px, at the 16px rhythm the phone layouts
+     use everywhere else. */
+  .wp-block-columns.od-assets {
+    margin-bottom: 16px;
+    gap: 16px;
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .wp-block-group.od-asset {
+    margin-bottom: 16px;
+  }
+
+  .od-asset {
+    padding: 16px;
+    gap: 16px;
   }
 
   /* The wide card goes back to being the portrait one: below 900px the row is a

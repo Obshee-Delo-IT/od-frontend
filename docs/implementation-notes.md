@@ -527,6 +527,20 @@ Figma `social-ads` (`966:8538`), WP page **#57269**, and the fourth hub on the s
 
 **Two card ids now differ by one letter.** `.od-tile--plakati` is this page's «Плакаты» (`/materials/plakati/`); `.od-tile--plakaty` is printed-products' «Плакаты Общего Дела», which points at a Yandex Disk folder. Both are correct — the id is the last segment of the href — and the CSS says so where they sit. If a third poster card ever appears, that convention is the thing to revisit, not the names.
 
+### D6l. The five asset pages under `/materials/social-reklama/` — 2026-08-18
+
+Figma `social-posters` (`998:9524`), `social-banners` (`1009:10590`), `social-sticker` (`1013:11191`), `social-video` (`1012:11084`), `social-audio` (`1009:10756`). WP pages **#20307 · #20422 · #20458 · #31288 · #34964**. The first pages in the section that are not hubs: a preview, sometimes a photo of the thing in use, and one download link, over and over.
+
+**One card for all of them, and the design system settled what it looks like.** The nine asset frames disagree with each other about the download — a solid red button on every `social-*` frame, an outline one on `disks` and `flyers`, a bare red text link on `car sticker` — and none of them instances a component, so there is no card master to read numbers off. Where unfinished frames disagree, the design system decides: one `.od-asset` card (white, 12px radius, 24px padding — the `.od-card` values) and one CTA, the primary button. `od-asset` is written into `post_content` as a `core/group` when the cards are one per row, and as a `core/column` inside an `od-assets` row when they are two-up; nothing else changes between the two, and the rows are chunked two at a time so no page ends up with a fifteen-column block nobody can edit.
+
+**Pairing on `/materials/plakati/` is positional, not by label.** The page stores rows of four columns (two posters and their photos), then rows of two buttons, then rows narrowed to 50 % and 75 % with empty 25 % spacers as the artwork got wider — so the posters and the buttons are read out separately and zipped, fifteen of each. Inside a row the picture columns alternate poster / photo-of-it-in-use, except in the «36 000 рублей» row, where the second column is the same poster in black and white and never got the «Примеры использования» paragraph the others carry. Reading that label instead of the position splits the row into two posters and leaves the page a button short.
+
+**`/materials/audio-roliki-social-reklama/` came off the legacy list.** It was on it for one reason: four `[cmsms_audios][cmsms_audio]…[/cmsms_audio][/cmsms_audios]` pairs the migrator never touched, which rendered as their own file paths with no way to play anything. The url inside each is now a `core/audio` block — the player `social-audio` draws — so the page renders natively and the entry in `legacyEmbedPages.ts` is gone. That needed one change in the repo: `resolveContentImages` now rewrites `<audio src>` as well as `<img src>`, because a root-relative `/wp-content/…` is a 404 on this origin. The mp3s resolve to the bucket and answer 200.
+
+**Two fixes that were not about these pages.** `<h1>` per row on `/materials/led-board-roliki/` — the migrator wrote one for each of the ten clips, under a page title that is already the only first-level heading — became `h3`. And core's `wp-embed-aspect-16-9` was doing nothing, because the rule that reads it lives behind a `.wp-embed-responsive` class WordPress puts on `<body>` and we do not have: every embed rendered at its own 560×315. One `aspect-ratio: 16 / 9` on the iframe fixes it for every embed on the site, not just these.
+
+Copy: the mock's «Скачать файл для печати» replaces the page's «Скачать в качестве для печати» everywhere it appears — same promise, fewer words, and it is what eight of the nine frames print. The two pages that are not print material name their own thing.
+
 ### D7. Video — index 2026-06-04, player 2026-07-02
 
 Figma: index `video` (`706:3315`) + `video-filter` (`1554:17574`) + player `video-page` (`1566:10433`) + mobile `video-page-mob` (`1567:10735`, `1567:11844`) + download (`1581:10334`).
