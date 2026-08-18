@@ -30,7 +30,7 @@ describe('resolveContentImages', () => {
     const out = await resolveContentImages(html, true);
 
     expect(out).not.toContain('<audio loading="eager"');
-    expect(out).toContain('<img loading="eager" fetchpriority="high"');
+    expect(out).toContain('<img loading="eager" fetchPriority="high"');
   });
 
   it('makes the first image eager and leaves the rest lazy', async () => {
@@ -42,17 +42,17 @@ describe('resolveContentImages', () => {
     // WordPress lazy-loads every image in a body, including the one that is the
     // page's LCP element.
     expect(first).toContain('loading="eager"');
-    expect(first).toContain('fetchpriority="high"');
+    expect(first).toContain('fetchPriority="high"');
     expect(first).not.toContain('loading="lazy"');
     expect(second).toContain('loading="lazy"');
-    expect(second).not.toContain('fetchpriority');
+    expect(second).not.toContain('fetchPriority');
   });
 
   it('leaves lazy loading alone by default — a footer widget is not a main body', async () => {
     const html = '<img src="https://wp.test/logo.png" loading="lazy" alt=""/>';
 
     expect(await resolveContentImages(html)).toContain('loading="lazy"');
-    expect(await resolveContentImages(html)).not.toContain('fetchpriority');
+    expect(await resolveContentImages(html)).not.toContain('fetchPriority');
   });
 
   it('rewrites multiple images', async () => {
