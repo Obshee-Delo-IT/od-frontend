@@ -302,9 +302,12 @@ function od_pages_film_query(int $tagId): string
         . '<div class="wp-block-query swiper">'
         . "<!-- wp:post-template {\"className\":\"swiper-wrapper\"} -->\n"
         // `alt=""` on purpose: the title below is the card's accessible name, and
-        // the cover repeats it.
+        // the cover repeats it. `loading="lazy"` because WordPress does not add
+        // it here and a printable плакат is heavy — the row is the last thing on
+        // the page, and six of them at ~800 KB each is a megabyte-scale download
+        // nobody has scrolled to yet.
         . sprintf("<!-- wp:image %s -->\n", $cover)
-        . '<figure class="wp-block-image"><img src="" alt=""/></figure>'
+        . '<figure class="wp-block-image"><img src="" alt="" loading="lazy" decoding="async"/></figure>'
         . "\n<!-- /wp:image -->\n\n"
         . "<!-- wp:post-title {\"level\":3,\"isLink\":true} /-->\n"
         . "<!-- /wp:post-template -->"

@@ -1,4 +1,12 @@
 /* stylelint-disable at-rule-no-unknown */
+
+/* Order matters twice over. Later wins ties, so core's `block-library` beats an
+   equal-specificity rule of ours and `custom-carousel.css` beats `gutenberg.css`
+   — every override in those files carries an extra class for that reason.
+   And **Turbopack does not track `@nested-import` dependencies**: editing an
+   imported file alone never invalidates this chunk, so a change to
+   `gutenberg.css` shows up only after this file is touched or `pnpm dev`
+   restarts. Check the served CSS, not the source, when a rule seems ignored. */
 .gutenberg {
   @nested-import './gutenberg.css';
   @nested-import './Carousel/carousel.css';

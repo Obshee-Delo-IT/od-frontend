@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react';
 import Swiper from 'swiper';
-import { Navigation, Pagination, Autoplay } from 'swiper/modules';
+import { A11y, Navigation, Pagination, Autoplay } from 'swiper/modules';
 import type { SwiperOptions } from 'swiper/types';
 
 /**
@@ -56,7 +56,7 @@ const parseCarouselAttributes = (carouselBlock: Element): CarouselBlockAttribute
 const QUERY_SLIDE_CLASS = 'wp-block-post';
 
 const createSwiperConfig = (carouselBlock: Element, attributes: CarouselBlockAttributes): SwiperOptions => ({
-  modules: [Navigation, Pagination, Autoplay],
+  modules: [Navigation, Pagination, Autoplay, A11y],
   slidesPerView: 'auto',
   slidesPerGroup: 1,
   spaceBetween: 40,
@@ -85,27 +85,49 @@ const createSwiperConfig = (carouselBlock: Element, attributes: CarouselBlockAtt
   },
   resizeObserver: true,
   breakpointsBase: 'window',
+  /* The plugin renders its arrows and bullets as bare `<div>`s: without this
+     module they are unreachable by keyboard and unnamed to a screen reader. It
+     supplies the roles, the tab stops and the live region — and its own copy is
+     English, so every string it announces is replaced here. */
+  a11y: {
+    prevSlideMessage: 'Предыдущий слайд',
+    nextSlideMessage: 'Следующий слайд',
+    firstSlideMessage: 'Это первый слайд',
+    lastSlideMessage: 'Это последний слайд',
+    paginationBulletMessage: 'Перейти к слайду {{index}}',
+    containerRoleDescriptionMessage: 'карусель',
+    itemRoleDescriptionMessage: 'слайд',
+  },
 });
+
+/** Swiper stamps itself onto the element it mounts on; this is that stamp. */
+type CarouselElement = HTMLElement & { swiper?: Swiper };
 
 export const GutenbergCarouselAdapter = () => {
   useEffect(() => {
-    const initializeSwipers = () => {
-      const swiperElements = document.querySelectorAll<HTMLElement>('.swiper');
+    const mounted: Swiper[] = [];
 
-      swiperElements.forEach((swiperElement) => {
-        const carouselBlock = swiperElement.closest('.cb-carousel-block');
-        if (!carouselBlock) {
-          return;
-        }
-        const attributes = parseCarouselAttributes(carouselBlock);
-        const config = createSwiperConfig(carouselBlock, attributes);
-        const queryTemplate = swiperElement.querySelector(`.${QUERY_SLIDE_CLASS}`);
+    document.querySelectorAll<CarouselElement>('.swiper').forEach((swiperElement) => {
+      const carouselBlock = swiperElement.closest('.cb-carousel-block');
+      /* `swiper` already set means another adapter got here first: the scan is
+         over the whole document, and a page can carry more than one provider —
+         a news article renders one for the lifted header and one for the body.
+         Mounting twice gave those pages doubled pagination bullets and two
+         instances fighting over one element. */
+      if (!carouselBlock || swiperElement.swiper) {
+        return;
+      }
 
-        new Swiper(swiperElement, queryTemplate ? { ...config, slideClass: QUERY_SLIDE_CLASS } : config);
-      });
-    };
+      const attributes = parseCarouselAttributes(carouselBlock);
+      const config = createSwiperConfig(carouselBlock, attributes);
+      const queryTemplate = swiperElement.querySelector(`.${QUERY_SLIDE_CLASS}`);
 
-    initializeSwipers();
+      mounted.push(new Swiper(swiperElement, queryTemplate ? { ...config, slideClass: QUERY_SLIDE_CLASS } : config));
+    });
+
+    // Swiper attaches resize and pointer listeners of its own, so leaving the
+    // instances behind on a client-side navigation leaks all of them.
+    return () => mounted.forEach((swiper) => swiper.destroy());
   }, []);
 
   return null;
