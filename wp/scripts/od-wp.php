@@ -19,9 +19,10 @@
  * **Adding a task.** One function, called from the runner at the bottom, taking
  * `$apply` and doing nothing but logging when it is false. Whatever it needs to
  * know goes in a registry function above it, so the data can be read and tested
- * without WordPress. There are two today — {@see od_wp_tag_programme_films()}
- * and {@see od_wp_rename_pages()} — and no framework between them, because two
- * calls in a row is not a thing that needs one.
+ * without WordPress. There are three today — {@see od_wp_tag_programme_films()},
+ * {@see od_wp_rename_pages()} and {@see od_wp_create_profiles()} — and still no
+ * framework between them, because three calls in a row is not a thing that needs
+ * one.
  *
  * House rules, same as `od-pages.php`: dry run by default, writing takes the
  * positional argument `apply`, everything is idempotent, and **posts are
@@ -241,6 +242,62 @@ function od_wp_page_titles(): array
 }
 
 /**
+ * Where a photograph is fetched from when the library this runs against has not
+ * got it: production, whose media library is the one every other environment is
+ * a stale copy of.
+ *
+ * It is only ever reached on a *non*-production environment — on production the
+ * file is already an attachment, so the lookup above the import finds it and the
+ * download never happens.
+ */
+const OD_WP_MEDIA_SOURCE = 'https://obshee-delo.ru';
+
+/**
+ * `profile` records the live `/team/` page needs and WordPress has not got.
+ *
+ * Three, and none of them is an oversight in this script: Анна Панферова is on
+ * the team page in prose, Дамир Нигматянов and Михаил Федоренко are on
+ * `/about/supervisory/` the same way, and none of the three has a record under any
+ * status on either server (checked 2026-08-18/19). Both pages are now links to
+ * records (`od-pages.php`, `OD_TEAM` and `OD_SUPERVISORY`), so the records have to
+ * exist before they can be linked.
+ *
+ * **The body created here is a shell** — the photograph and an empty paragraph
+ * block, in the shape all 139 records share. The role and the contacts are
+ * `od-pages.php`'s to write, from `OD_TEAM`, exactly as they are for the ten
+ * records that already exist: one dataset, and this file does not repeat it.
+ * That is also why the run order matters — this script first, then that one.
+ *
+ * `photo` is the upload path production carries, root-relative because the origin
+ * differs per environment.
+ *
+ * @return array<int, array{slug: string, title: string, photo: string}>
+ */
+function od_wp_profiles(): array
+{
+    return [
+        [
+            'slug' => 'panferova-anna-andreevna',
+            'title' => 'Панферова Анна Андреевна',
+            'photo' => '/wp-content/uploads/2026/05/Screenshot_20260507_220750_Gallery-scaled-e1778522350302.jpg',
+        ],
+        // The two members of the Наблюдательный совет who had no record either.
+        // Their photographs have been on `/about/supervisory/` since 2019, so both
+        // libraries already hold them and nothing is downloaded.
+        [
+            'slug' => 'nigmatyanov-damir-zinnurovich',
+            'title' => 'Нигматянов Дамир Зиннурович',
+            'photo' => '/wp-content/uploads/2019/08/НигматяновДамирЗиннурыч_min.jpeg',
+        ],
+        [
+            'slug' => 'fedorenko-mihail-vladimirovich',
+            'title' => 'Федоренко Михаил Владимирович',
+            'photo' => '/wp-content/uploads/2019/08/ФедоренкоМихаилВладимирович_min.jpeg',
+        ],
+    ];
+}
+
+/**
  * Renames the pages in {@see od_wp_page_titles()} that do not already carry
  * their title.
  *
@@ -282,6 +339,135 @@ function od_wp_rename_pages(bool $apply): void
     }
 }
 
+/**
+ * The body a new `profile` starts with: two columns, the photograph in the first
+ * and an empty paragraph block in the second.
+ *
+ * The empty block is load-bearing rather than tidy — `od_prepend_profile_lead()`
+ * writes the role and the contacts *into* it, and refuses a record that has none.
+ *
+ * No `esc_url()` on the path: it comes from the registry above, not from input,
+ * and leaving WordPress out is what lets `od-wp.test.php` check the shape of this
+ * string without a WordPress to load.
+ */
+function od_wp_profile_body(string $photo): string
+{
+    return '<!-- wp:group {"layout":{"type":"constrained"}} --><div class="wp-block-group">'
+        . '<!-- wp:columns --><div class="wp-block-columns">'
+        . '<!-- wp:column {"width":"50%"} --><div class="wp-block-column" style="flex-basis:50%">'
+        . '<!-- wp:image {"sizeSlug":"full","linkDestination":"media"} -->' . "\n"
+        . '<figure class="wp-block-image size-full"><a href="' . $photo . '">'
+        . '<img src="' . $photo . '" alt=""/></a></figure>' . "\n"
+        . '<!-- /wp:image --></div><!-- /wp:column -->'
+        . '<!-- wp:column {"width":"50%"} --><div class="wp-block-column" style="flex-basis:50%">'
+        . '<!-- wp:paragraph -->' . "\n"
+        . '<!-- /wp:paragraph --></div><!-- /wp:column -->'
+        . '</div><!-- /wp:columns --></div><!-- /wp:group -->';
+}
+
+/**
+ * Task: create the records {@see od_wp_profiles()} lists, and give each the
+ * photograph the team page shows.
+ *
+ * Idempotent on both halves, and each guard asks the question that is true on
+ * every environment: the record is looked up by slug, and the photograph by
+ * «does this record have a featured image» rather than by file — an imported copy
+ * lands in the importing month, so its path is not the one this file carries.
+ */
+function od_wp_create_profiles(bool $apply): void
+{
+    foreach (od_wp_profiles() as $entry) {
+        $post = get_page_by_path($entry['slug'], OBJECT, 'profile');
+
+        if (!$post) {
+            WP_CLI::log(sprintf('%s: no record, to be created as «%s»', $entry['slug'], $entry['title']));
+
+            if (!$apply) {
+                continue;
+            }
+
+            $created = wp_insert_post([
+                'post_type' => 'profile',
+                'post_status' => 'publish',
+                'post_title' => $entry['title'],
+                'post_name' => $entry['slug'],
+                'post_content' => od_wp_profile_body($entry['photo']),
+            ], true);
+
+            if (is_wp_error($created)) {
+                WP_CLI::warning(sprintf('%s: %s', $entry['slug'], $created->get_error_message()));
+                continue;
+            }
+
+            $post = get_post($created);
+            WP_CLI::success(sprintf('%s: record created (#%d)', $entry['slug'], $post->ID));
+        }
+
+        od_wp_profile_photo($post, $entry['photo'], $apply);
+    }
+}
+
+/**
+ * Give a record the featured image `PersonCard` draws, when it has none.
+ *
+ * Prefers an attachment the library already holds for that path — production has
+ * one, and importing over it would leave two copies of the same photograph. Only
+ * an environment whose library predates the file downloads it, from
+ * {@see OD_WP_MEDIA_SOURCE}.
+ */
+function od_wp_profile_photo(WP_Post $post, string $photo, bool $apply): void
+{
+    if (get_post_thumbnail_id($post->ID)) {
+        WP_CLI::log(sprintf('%s (#%d): already has a photograph, skipped', $post->post_name, $post->ID));
+
+        return;
+    }
+
+    $file = ltrim(str_replace('/wp-content/uploads/', '', $photo), '/');
+    $found = get_posts([
+        'post_type' => 'attachment',
+        'post_status' => 'inherit',
+        'numberposts' => 1,
+        'fields' => 'ids',
+        'meta_key' => '_wp_attached_file',
+        'meta_value' => $file,
+    ]);
+
+    if ($found) {
+        WP_CLI::log(sprintf('%s (#%d): photograph is attachment %d', $post->post_name, $post->ID, $found[0]));
+
+        if ($apply) {
+            set_post_thumbnail($post->ID, (int) $found[0]);
+            WP_CLI::success(sprintf('%s (#%d): photograph set', $post->post_name, $post->ID));
+        }
+
+        return;
+    }
+
+    $source = OD_WP_MEDIA_SOURCE . $photo;
+    WP_CLI::log(sprintf('%s (#%d): photograph not in this library, to be imported from %s', $post->post_name, $post->ID, $source));
+
+    if (!$apply) {
+        return;
+    }
+
+    // `media import` rather than `media_sideload_image()`: it is WP-CLI's own
+    // command, it attaches and sets the featured image in one call, and its
+    // failures come back as a non-zero exit rather than a `WP_Error` to unpack.
+    $result = WP_CLI::runcommand(
+        sprintf('media import %s --post_id=%d --featured_image --porcelain', escapeshellarg($source), $post->ID),
+        ['return' => 'all', 'exit_error' => false]
+    );
+
+    if ($result->return_code !== 0) {
+        WP_CLI::warning(sprintf('%s (#%d): import failed — %s', $post->post_name, $post->ID, trim($result->stderr)));
+
+        return;
+    }
+
+    WP_CLI::success(sprintf('%s (#%d): photograph imported as attachment %s', $post->post_name, $post->ID, trim($result->stdout)));
+}
+
 // ---------------------------------------------------------------------------
 // Runner. Everything above is a function; this is the only thing that runs.
 // ---------------------------------------------------------------------------
@@ -295,3 +481,4 @@ WP_CLI::log($apply ? 'Applying changes.' : 'Dry run — pass `apply` to write.')
 
 od_wp_tag_programme_films($apply);
 od_wp_rename_pages($apply);
+od_wp_create_profiles($apply);

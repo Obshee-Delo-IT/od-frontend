@@ -19,11 +19,28 @@ import { PersonCard } from '@/shared/ui/components/PersonCard';
  * then leaves the link exactly as WordPress wrote it. Failing back to a working
  * link is the whole reason the marker is a link.
  */
+
+/**
+ * The class `od_pages_team()` writes on the roster's wrapper, and the one thing
+ * that tells the two card layouts apart.
+ *
+ * The photo is what selects the layout (see `PersonCardProps.photo`), and the
+ * choice is per *page*, not per record: `/materials/metodichki/` draws its
+ * coordinator as a full-width banner with no portrait even though his record has
+ * one, while `/team/` draws the `team-1` card. Nothing about a `profile` says
+ * which — so the marker is the content's own, exactly as `.od-covers` is
+ * (`gutenberg.css`), and it is already in the body to lay the grid out. One class,
+ * read twice.
+ */
+const TEAM_GRID = /\bclass="[^"]*\bod-team\b/;
+
 export const resolveProfileEmbeds = async (html: string): Promise<Map<string, ReactNode>> => {
   const hrefs = collectProfileHrefs(html);
   if (hrefs.length === 0) {
     return new Map();
   }
+
+  const withPhoto = TEAM_GRID.test(html);
 
   const resolved = await Promise.all(
     hrefs.map(async (href) => ({ href, profile: await cachedFetchProfile(profileSlug(href)) }))
@@ -36,9 +53,13 @@ export const resolveProfileEmbeds = async (html: string): Promise<Map<string, Re
     if (profile?.name) {
       entries.push([
         href,
-        /* The mock draws the banner without a portrait even where the record has
-           one (46651 does). Pass `photo` here to get the `team-1` layout. */
-        <PersonCard key={href} name={profile.name} subtitle={profile.subtitle} contacts={profile.contacts} />,
+        <PersonCard
+          key={href}
+          name={profile.name}
+          subtitle={profile.subtitle}
+          photo={withPhoto ? profile.photo : null}
+          contacts={profile.contacts}
+        />,
       ]);
     }
   }

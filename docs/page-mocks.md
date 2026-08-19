@@ -66,17 +66,17 @@ The largest section after `Материалы`. Covers an "About" landing plus 6
 | --- | --- | --- |
 | About index | `about` (`706:70`) | `about-mob` (`1248:4488`) |
 | Learn more | `about-learn-more` (`706:1257`) | `about-learn-more-mob` (`1251:4457`) |
-| Team — variant 1 | `team-1` (`706:1584`) | `team-1-mob` (`1256:5981`) |
-| Team — variant 2 | `team-2` (`708:3736`) | `team-2-mob` (`1258:6333`) |
-| Documents | `documents` (`706:3499`) | — |
-| Story | `story` (`706:3568`) | `story` (`1261:7163`) |
-| Letters of appreciation | `Letters-of-appreciation` (`706:3602`) | — |
-| Charter | `charter` (`706:3695`) | `charter-mob` (`1261:6901`) |
-| Certificate | `Certificate` (`760:1662`) | `Certificate-mob` (`1261:7220`) |
+| Team — variant 1 ✅ `/team/`, 2026-08-18 | `team-1` (`706:1584`) | `team-1-mob` (`1256:5981`) |
+| Team — variant 2 ✅ `/about/supervisory/`, 2026-08-19 | `team-2` (`708:3736`) | `team-2-mob` (`1258:6333`) |
+| Documents ✅ `/about/experts-review/` + `/about/docs/`, 2026-08-19 | `documents` (`706:3499`) | — |
+| Story ✅ `/about/activist-stories/`, 2026-08-19 | `story` (`706:3568`) | `story` (`1261:7163`) |
+| Letters of appreciation ✅ `/about/reviews/` + 5 children + `/about/smi/`, 2026-08-19 | `Letters-of-appreciation` (`706:3602`) | — |
+| Charter ✅ `/about/ustav/`, 2026-08-19 | `charter` (`706:3695`) | `charter-mob` (`1261:6901`) |
+| Certificate ✅ `/about/udostoverenie/`, 2026-08-19 | `Certificate` (`760:1662`) | `Certificate-mob` (`1261:7220`) |
 
 Plus 9 `Status` workflow badges and 2 `_Carousel Button Base` instances.
 
-**Repo:** ❌ none of these routes exist. Likely future layout: `app/about/page.tsx` (index) with sub-routes for `team`, `documents`, `story`, `charter`, `letters`, `certificate`. Live site has more pages than Figma — see plan §D3.
+**Repo:** ✅ the menu is built except `/about/` itself and `/about/ostavit-otziv/`. **No route was added for any of it** — every one of these is a WordPress page the catch-all already renders, so the work was each page's `post_content` (`wp/scripts/od-pages.php`) and its design in `gutenberg.css`; `/profile/[slug]` is the section's one real route. `/about/nashi_partnery/` has no frame at all and is built on the `od-figures` grid (D6u). **`about` and `about-learn-more` both draw `/about/`** — a hub of twelve tiles and the long read behind it — which is why the index is one job, not two. `/about/ostavit-otziv/` stays on the A6 fallback: a Contact Form 7 form is §B6, not a page design. See plan §D3 and [`implementation-notes.md`](./implementation-notes.md) D6p–D6u.
 
 ### 2.3 проекты — Projects (SECTION `1227:4297`, 13 children, ~244 frames deep)
 
@@ -302,7 +302,7 @@ This section is a **dependency** order: what must exist before what *can* be bui
 3. ✅ **Video** (`video` + `video-filter` + `video-page`) — done 2026-06-04 / 07-02, and it delivered **Dropdown** and **Tabs** along the way. It jumped the queue because it is 44 % of all site traffic.
 4. **Materials** index + `plakati` / `zakladki` / `metodichki` — **next by traffic**, blocked on the CMS taxonomy decision, not on components.
 5. **Contacts** (`контакты/contact-page`) + the Accordion `Add Circle` variant — the *directory* has no form on the live site, so it does **not** depend on B6; defer the form.
-6. **`/profile/[slug]`** detail template — more search traffic than `/team/` and all of `/about/*` combined, and the CPT is already Gutenberg.
+6. ✅ **`/profile/[slug]`** detail template — done 2026-08-19. It had no Figma frame of its own; it draws the `team-1` card plus whatever else the record says. More search traffic than `/team/` and all of `/about/*` combined.
 7. **About** landing + sub-pages — biggest sub-tree, mostly composition of existing primitives now that PageHeader exists.
 8. **Projects** + per-project pages — confirm with Design that `project-1/2/3` correspond to anything real first; there is no project-detail traffic at all.
 9. **FAQ** — cheap once content is wired, but nothing is waiting on it.
