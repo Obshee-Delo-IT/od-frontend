@@ -768,7 +768,7 @@ No frame for this one; it is the section's own picture grid. Fifty-two 25 % colu
 
 Two of the 49 logos name files that are not on the origin (`ВашКадровыйРесурс.png`, `КадровыйСоветник.png`) and six carry no name. Both are content, and both are left alone rather than guessed at here.
 
-**That closes the «О нас» menu except two pages, and both are deliberate.** `/about/` and `/team/` were out of scope by request. `/about/ostavit-otziv/` **stays on the A6 fallback**: it is a Contact Form 7 form, and rendering one natively means posting to CF7's REST endpoint with its nonce and its spam checks — a feature (plan §B6), not a page design. It is the section's last entry in `LEGACY_EMBED_PAGES`.
+**That closes the «О нас» menu except two pages, and both are deliberate.** `/about/` and `/team/` were out of scope by request at the time — `/team/` shipped with D3 and `/about/` with D6w below. `/about/ostavit-otziv/` **stays on the A6 fallback**: it is a Contact Form 7 form, and rendering one natively means posting to CF7's REST endpoint with its nonce and its spam checks — a feature (plan §B6), not a page design. It is the section's last entry in `LEGACY_EMBED_PAGES`.
 
 ### D3. A `core/query` page can reach page 2 — 2026-08-19
 
@@ -782,6 +782,32 @@ The seven post-card pages D6p built had been stuck on page 1 since D6b, and the 
 
 Each page is **self-canonical** and carries its number in the `<title>` — 18 pages of «СМИ о нас» under one title is a duplicate-title report waiting to happen. They stay out of `sitemap.ts`, the same rule `?page=` follows there: the links are crawlable from page 1. Measured after: the pagination row is 1240 wide, both chevrons and the number strip centred on it, and no `wp-json` or `query-N-page` survives anywhere in the served DOM.
 
+
+### D6w. `/about/` — the section's index, and the «Узнать больше» read — 2026-08-19
+
+Figma `about` (`706:70`) + `about-mob` (`1248:4488`) and `about-learn-more` (`706:1257`) + `about-learn-more-mob` (`1251:4457`). **Four frames, one page**: the second pair is the first with four more sections between the history and the cards, so the «Узнать больше» button is a disclosure and the long read is what it discloses.
+
+**It is `core/details`.** WordPress's own block, rendering a native `<details>`: no script — a WordPress body has none of its own, which is why `/about/ustav/` has no scroll highlight — the read stays in the DOM for search, and an editor gets a block they can open and type into. The summary is styled as the mock's 163 × 48 outline button and keeps Figma's own x=526, which is the lead's second track; measured after: 164 × 49 at x=526. It stays visible when open, the one thing the expanded frame doesn't draw. Also worth knowing for the cutover: a static block stores its whole HTML in `post_content`, so production's WordPress 5.5 renders the `<details>` verbatim even though `core/details` postdates it.
+
+**The page as stored was one `wp:paragraph` block** holding the entire read as `<p><strong>Label</strong><br />…</p>` pairs — История, Миссия, Цели, Задачи, Описание деятельности — then three project paragraphs, the state-cooperation paragraph, an `<h3>` over thirteen film sentences, three registration scans, twelve `cmsms-icon-box` tiles, a dead MailPoet form and the legal details. Every piece is read back out of it and nothing is typed in. What the labels become: «История» loses its label (the mock draws none, and «основанная в 2012 году» in the lead above has already said what the paragraph is), «Миссия» is the illustrated card the expanded frame opens with, «Цели» its four numbered tiles, «Задачи» four icon cards, «Описание деятельности» a bold lead plus one 386 + 814 row per project, each labelled with the project the paragraph names.
+
+**Eleven cards, where the mock draws seven.** Four of the stored twelve tiles have no card in the frame — Наблюдательный совет, СМИ о нас, the statistics site and «Оставь свой отзыв» — and this page is the only one that links some of them, so they take the wide shape too and the row runs to four lines. Two of the twelve are not cards at all: «Видеопрезентация» is the page's own hero embed, and «Нас поддерживают» is the partner strip that replaces it. The mock's fourth card, «Отчеты», points at a page (`reports`, «Наши отчеты») that has been **private since 2017**, so its calendar drawing goes to «Документы» — the page that actually holds the reports — and nothing links to a page nobody can open.
+
+**One stale link fixed on the way.** The «СМИ о нас» tile pointed at `/smi/`, which production 301s to `/about/smi/` and which this side has no redirect for at all — it would have reached the A6 iframe. Written out to the real address.
+
+**The partner strip is not a selection the mock invented.** Its four logos are `/about/nashi_partnery/`'s own first four, in its order and with its captions, so the strip is the top of that page and the card's «Подробнее» is the rest of it. They are 2016 uploads that page already carries on both installs, which is why the paths can live in a constant — unlike `OD_METODICHKI_COVERS`, whose files are ours.
+
+**Nothing new was needed for the layout.** The cards are `/materials/`'s `.od-tiles` / `.od-tiles--wide`, and Figma draws this page's at exactly the sizes those already are (measured after: 600 × 280 at x=100/740, the portrait row 1240 × 361 — the frame's 598 × 280 and 385 × 358); the numbered goals are `team-2`'s `.od-tasks`; the mission card is `.od-card--goal` with the supervisory drawing, which `about-learn-more` reuses down to the potted plant; the partner strip is `.od-figures--logos` inside an `.od-asset`. New: the two-column lead (386 + 40 + 814, Figma's own 386.5 and 803.8), `column-count` prose where Figma hand-broke a paragraph at the column edge, the disclosure, `.od-tasks--2` with a 48px icon, and `.od-figures--3` for the scans.
+
+**Two cascade traps, both found in the browser and not in the markup.** The icon rule was written `.od-tasks--2 .od-task::before { background: center / contain no-repeat }` — (0,2,1), against `(0,1,1)` per-icon rules, so the shorthand's implicit `background-image: none` beat every one of them and all four cards drew an empty box. Longhands fix it; `.od-tile::before` gets away with the shorthand because its own modifiers tie with it and win on order. And `.od-asset .od-figures .wp-block-image img` — `/materials/zakladki/`'s tall box — is (0,3,1) and beat `.od-figures--logos`, so a coat of arms came out 420px tall inside the partner card.
+
+**Three things with no frame stay anyway.** The thirteen film sentences close the long read, as a `core/list` under their own lead (the lead ends in a colon and the old theme's markup had flattened them); the three registration scans move down beside the legal details they are the proof of, under a «Реквизиты» heading, since nothing else on the page names them. Dropped: `[wysija_form id="2"]` and its heading, the MailPoet form whose plugin is gone — the same call every other transform here makes.
+
+**The uppercase lead is CSS**, which is the opposite call to `/about/ustav/`'s sentence-cased headings and the same rule: there the content shouted and Figma did not, here Figma shouts and the content does not, so the shouting belongs to whichever side is drawing (`wp-page-redesign.md` §4). Two other content fixes: the em dash the stored lead spells as a hyphen, and the straight quote closing «Общее дело"» in the one place the full name is written out.
+
+**The page came off the A6 fallback**, which is what the twelve icon boxes had put it there for — a grey box with an icon font's glyph, meaningless without the old theme's webfont. `/about/ostavit-otziv/` is now the section's only entry in `LEGACY_EMBED_PAGES`.
+
+**Two departures from the frame, both deliberate.** The mock draws no breadcrumbs and no H1 on this page; `WpPage` renders a `PageHeader` on every WordPress page and the page would otherwise have no heading at all, so it keeps one. And the four borrowed `direction-*` drawings are landscape (335 × 194) where the seven exported ones are portrait, so in the wide card's 200 × 230 box they come out 200 × 116 — same width, half the height, and visibly lighter than their neighbours. Both are in `next-steps.md`.
 
 ### D7. Video — index 2026-06-04, player 2026-07-02
 

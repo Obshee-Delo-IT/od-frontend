@@ -469,3 +469,32 @@ they work.
 Worth doing together with **B-VIDEO2**, which is blocked on the same kind of
 editorial input, and after it if capacity is short — B-VIDEO2 is a Tier 0
 blocker and this is not.
+
+## `/about/`: the four borrowed drawings, the private «Наши отчеты», and the missing H1
+
+**Found 2026-08-19**, building `/about/` (D6w). Three loose ends, none of them
+blocking, all of them decisions the frame cannot settle on its own.
+
+**The four borrowed card drawings sit smaller than their neighbours.** Figma
+`about` supplies seven illustrations; the page carries eleven cards, because four
+of the destinations it links have no card in the frame (Наблюдательный совет, СМИ
+о нас, the statistics site, «Оставь свой отзыв»). Those four borrow
+`direction-2/3/4/5.svg`, which are **335 × 194** where the exported seven are
+portrait (200 × 206). In the wide card's 200 × 230 `::before` box `contain` gives
+them 200 × 116 — the same width and half the height, so they read as lighter than
+the drawings beside them. The fix is four portrait drawings: either exports of
+frames elsewhere in the file, or four from the same stock family Design used.
+Ask Design for the set rather than cropping these.
+
+**The mock's «Отчеты» card has no page to point at.** `reports` («Наши отчеты»,
+id 31658) is `private` and was last edited **2017-04-26**. Its calendar drawing
+went to «Документы» (`/about/docs/`), which is where the annual reports actually
+are. If the reports page is meant to come back, it needs content and publishing
+first, and then it is one row in `OD_ABOUT_CARDS`.
+
+**The frame draws no breadcrumbs and no H1.** `WpPage` renders a `PageHeader` on
+every WordPress page, so `/about/` has «Главная › Об организации» and a red
+«ОБ ОРГАНИЗАЦИИ» that the mock does not. It was kept: a 1 036-view page with no
+heading at all is an SEO regression, and suppressing it would need a per-page
+exception in `pageSections.ts`. Worth a sentence with Design — the same question
+applies to `home`, which also draws none and is a native route that renders none.

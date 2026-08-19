@@ -64,8 +64,8 @@ The largest section after `Материалы`. Covers an "About" landing plus 6
 
 | Sub-page | Desktop frame | Mobile frame |
 | --- | --- | --- |
-| About index | `about` (`706:70`) | `about-mob` (`1248:4488`) |
-| Learn more | `about-learn-more` (`706:1257`) | `about-learn-more-mob` (`1251:4457`) |
+| About index ✅ `/about/`, 2026-08-19 | `about` (`706:70`) | `about-mob` (`1248:4488`) |
+| Learn more — the same page, disclosed ✅ | `about-learn-more` (`706:1257`) | `about-learn-more-mob` (`1251:4457`) |
 | Team — variant 1 ✅ `/team/`, 2026-08-18 | `team-1` (`706:1584`) | `team-1-mob` (`1256:5981`) |
 | Team — variant 2 ✅ `/about/supervisory/`, 2026-08-19 | `team-2` (`708:3736`) | `team-2-mob` (`1258:6333`) |
 | Documents ✅ `/about/experts-review/` + `/about/docs/`, 2026-08-19 | `documents` (`706:3499`) | — |
@@ -76,7 +76,7 @@ The largest section after `Материалы`. Covers an "About" landing plus 6
 
 Plus 9 `Status` workflow badges and 2 `_Carousel Button Base` instances.
 
-**Repo:** ✅ the menu is built except `/about/` itself and `/about/ostavit-otziv/`. **No route was added for any of it** — every one of these is a WordPress page the catch-all already renders, so the work was each page's `post_content` (`wp/scripts/od-pages.php`) and its design in `gutenberg.css`; `/profile/[slug]` is the section's one real route. `/about/nashi_partnery/` has no frame at all and is built on the `od-figures` grid (D6u). **`about` and `about-learn-more` both draw `/about/`** — a hub of twelve tiles and the long read behind it — which is why the index is one job, not two. `/about/ostavit-otziv/` stays on the A6 fallback: a Contact Form 7 form is §B6, not a page design. See plan §D3 and [`implementation-notes.md`](./implementation-notes.md) D6p–D6u.
+**Repo:** ✅ the whole menu is built except `/about/ostavit-otziv/`. **No route was added for any of it** — every one of these is a WordPress page the catch-all already renders, so the work was each page's `post_content` (`wp/scripts/od-pages.php`) and its design in `gutenberg.css`; `/profile/[slug]` is the section's one real route. `/about/nashi_partnery/` has no frame at all and is built on the `od-figures` grid (D6u). **`about` and `about-learn-more` both draw `/about/`** — a hub of cards and the long read behind it — so the index was one job, and the difference between the two frames is a `core/details` (D6w). `/about/ostavit-otziv/` stays on the A6 fallback: a Contact Form 7 form is §B6, not a page design. See plan §D3 and [`implementation-notes.md`](./implementation-notes.md) D6p–D6u.
 
 ### 2.3 проекты — Projects (SECTION `1227:4297`, 13 children, ~244 frames deep)
 

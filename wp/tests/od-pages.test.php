@@ -1303,6 +1303,112 @@ od_test( 'partners: so are the three empty spacer groups', false === strpos( $bu
 od_test( 'partners: the MailPoet form is gone', false === strpos( $built, '[wysija_form' ) );
 od_test( 'partners: it is idempotent', od_pages_partners( $built, 0 ) === $built );
 
+/* ------------------------------------------------------ od_pages_about (D6w) */
+
+$about = file_get_contents( __DIR__ . '/fixtures/page-about.html' );
+
+od_test( 'the about fixture really carries twelve tiles, three scans and the video', 12 === substr_count( $about, '>Смотреть</a>' ) && 3 === substr_count( $about, '<!-- wp:image' ) && 1 === substr_count( $about, '<!-- wp:embed' ) );
+
+$built = od_pages_about( $about, 0 );
+
+/* The lead — the mock's two columns out of one stored sentence. */
+od_test( 'about: the lead keeps its own half and gains a stop', false !== strpos( $built, '<p class="od-lead-title">«Общее дело» — общероссийская общественная организация, основанная в 2012 году.</p>' ) );
+od_test( 'about: the hyphen doing an em dash\'s job is replaced', false === strpos( $built, '«Общее дело» - общероссийская' ) );
+od_test( 'about: the bold half opens with «Активно занимающаяся», not mid-sentence', false !== strpos( $built, '<p class="od-lead-text">Активно занимающаяся профилактикой' ) );
+od_test( 'about: the shouting is left to the stylesheet', false === strpos( $built, 'ОБЩЕРОССИЙСКАЯ ОБЩЕСТВЕННАЯ' ) );
+od_test( 'about: the history flows across two columns, unlabelled', false !== strpos( $built, '<p class="od-prose-2">В 2011 году' ) && false === strpos( $built, '<strong>История</strong>' ) );
+
+/* The disclosure: `about` and `about-learn-more` are this one page. */
+od_test( 'about: one core/details, opening on «Узнать больше»', 1 === substr_count( $built, '<!-- wp:details' ) && false !== strpos( $built, '<summary>Узнать больше</summary>' ) );
+
+$read = substr( $built, strpos( $built, '<summary>' ), strpos( $built, '</details>' ) - strpos( $built, '<summary>' ) );
+
+od_test( 'about: the mission card is inside the read, with its own drawing', false !== strpos( $read, 'od-card od-card--goal od-card--mission' ) && false !== strpos( $read, '<h2 class="wp-block-heading">Миссия</h2>' ) );
+od_test( 'about: so are the four sections the expanded frame adds', 1 === substr_count( $read, '>Цели</h2>' ) && 1 === substr_count( $read, '>Задачи</h2>' ) && 1 === substr_count( $read, '>Описание деятельности</h2>' ) && 1 === substr_count( $read, '>Фильмы и мультфильмы организации</h2>' ) );
+od_test( 'about: and the cards are not — they show whether the read is open or shut', false === strpos( $read, 'od-tiles' ) );
+
+/* Цели and Задачи: the same tile, ordinals against icons. */
+od_test( 'about: four numbered goals', 1 === substr_count( $built, '"className":"od-tasks"' ) && 4 === substr_count( $read, '"className":"od-task"' ) );
+od_test( 'about: a goal is a sentence — no dash, no semicolon, a stop', false !== strpos( $read, '<p>Укрепление морально-нравственных, общечеловеческих и духовных ценностей в обществе.</p>' ) );
+od_test( 'about: a goal that already ended in a stop does not gain a second', false === strpos( $built, 'образа жизни..' ) );
+od_test( 'about: four task cards, two to a row, icons in the stored order', 1 === substr_count( $built, '"className":"od-tasks od-tasks--2"' ) && false !== strpos( $read, '"className":"od-task od-task--education"' ) && false !== strpos( $read, '"className":"od-task od-task--materials"' ) );
+
+/* «Описание деятельности»: a label beside each project. */
+od_test( 'about: three labelled project rows', 3 === substr_count( $built, '"className":"od-labelled"' ) );
+od_test( 'about: the label is the project the paragraph names', false !== strpos( $read, '<p class="od-label">Проект «Путь героя»</p>' ) );
+od_test( 'about: the state-cooperation paragraph flows across three columns', false !== strpos( $read, '<p class="od-prose-3">Общественная организация «Общее дело» тесно сотрудничает' ) );
+od_test( 'about: its three sentences keep the space the `<br />`s stood for', false !== strpos( $read, 'наказаний. Совместную работу' ) && false === strpos( $read, 'наказаний.Совместную' ) );
+
+/* The films, which have no frame and stay anyway. */
+od_test( 'about: the films are a list of twelve under their own lead', 12 === substr_count( $read, '<!-- wp:list-item -->' ) && false !== strpos( $read, '<p>Общественной организацией «Общее дело» созданы следующие фильмы' ) );
+od_test( 'about: a film keeps its whole sentence', false !== strpos( $read, '<li>«Тайна едкого дыма. Команда Познавалова» - мультфильм' ) );
+
+/* The cards: every destination the page had, plus the mock's own two. */
+od_test( 'about: eleven cards — one wide row of eight, one portrait row of three', 1 === substr_count( $built, '<!-- wp:columns {"className":"od-tiles od-tiles--wide"}' ) && 1 === substr_count( $built, '<!-- wp:columns {"className":"od-tiles"}' ) && 11 === substr_count( $built, '"className":"od-tile od-tile--about-' ) );
+
+foreach ( array( '/team/', '/about/experts-review/', '/about/docs/', '/about/ustav/', '/about/supervisory/', '/about/smi/', '/about/ostavit-otziv/', '/about/activist-stories/', '/about/reviews/', '/about/udostoverenie/', '/about/nashi_partnery/' ) as $href ) {
+	od_test( "about: «{$href}» is reachable from the page", false !== strpos( $built, sprintf( '<a href="%s">', $href ) ) );
+}
+
+od_test( 'about: the tile\'s stale /smi/ is written as the page\'s real address', false === strpos( $built, '<a href="/smi/">' ) );
+od_test( 'about: the statistics site keeps its own address', false !== strpos( $built, 'xn--80a7adb' ) );
+od_test( 'about: no card points at the private «Наши отчеты»', false === strpos( $built, '/about/reports/' ) && false === strpos( $built, '>Отчеты</h3>' ) );
+od_test( 'about: «Видеопрезентация» is the hero, not a card', 1 === substr_count( $built, '<!-- wp:embed' ) && false === strpos( $built, 'youtube.com/watch' ) && false === strpos( $built, '>Видеопрезентация</h3>' ) );
+
+/* The partner strip, and what it is the top of. */
+od_test( 'about: four logos inside one card, named', 1 === substr_count( $built, '"className":"od-figures od-figures--4 od-figures--logos"' ) && false !== strpos( $built, '<figcaption class="wp-element-caption">Правительство Республики Татарстан</figcaption>' ) );
+od_test( 'about: the strip is the partner page\'s own first four, in its order', OD_ABOUT_PARTNERS[0]['caption'] === 'Агентство стратегических инициатив' && 4 === count( OD_ABOUT_PARTNERS ) );
+
+/* The legal details and the scans that prove them. */
+od_test( 'about: the four legal lines are kept, labelled', 1 === substr_count( $built, '<strong>Полное название:</strong>' ) && false !== strpos( $built, '<strong>КПП:</strong> 772101001' ) );
+od_test( 'about: the stored straight quote in the name is closed properly', false !== strpos( $built, 'нации «Общее дело»</p>' ) );
+od_test( 'about: the three scans keep the ids and the paths the page stores', 3 === substr_count( $built, '"sizeSlug":"full","linkDestination":"custom"' ) && false !== strpos( $built, '"id":33139' ) && false !== strpos( $built, '"className":"od-figures od-figures--3"' ) );
+
+/* What goes. */
+od_test( 'about: the dead MailPoet form and its heading are gone', false === strpos( $built, 'wysija' ) && false === strpos( $built, 'Хотите быть в курсе' ) );
+od_test( 'about: so is every cmsms icon box', false === strpos( $built, 'cmsms-icon-box' ) && false === strpos( $built, '>Смотреть</a>' ) );
+
+od_test( 'about: it is idempotent', od_pages_about( $built, 0 ) === $built );
+
+/* A page that is not this one is refused rather than rewritten. */
+$threw = false;
+try {
+	od_pages_about( '<!-- wp:paragraph -->\n<p>Ни одной подписи.</p>\n<!-- /wp:paragraph -->', 0 );
+} catch ( RuntimeException $e ) {
+	$threw = true;
+}
+od_test( 'about: a body with none of the labels is refused', $threw );
+
+/* Every card names a drawing the stylesheet has a rule for — a card with no rule
+   renders as an empty box, which is the one failure this file can catch. */
+$css = file_get_contents( __DIR__ . '/../../src/shared/ui/theme/gutenberg/gutenberg.css' );
+foreach ( array_merge( OD_ABOUT_CARDS, OD_ABOUT_CARDS_SMALL ) as $card ) {
+	od_test( "about: `.od-tile--{$card['id']}` has a drawing", false !== strpos( $css, ".od-tile--{$card['id']}::before" ) );
+}
+foreach ( OD_ABOUT_TASK_ICONS as $icon ) {
+	od_test( "about: `.od-task--{$icon}` has an icon", false !== strpos( $css, ".od-task--{$icon}::before" ) );
+}
+
+/* --------------------------------------------------------- the about helpers */
+
+od_test( 'od_about_items strips the dash, the semicolon and adds one stop', array( 'Первое.', 'Второе.' ) === od_about_items( '- первое;<br />- второе.' ) );
+od_test( 'od_about_items drops an empty item', array( 'Одно.' ) === od_about_items( '- одно.<br />' ) );
+od_test( 'od_about_lead ends the sentence it cuts', 'Организация, основанная в 2012 году.' === od_about_lead( 'Организация, основанная в 2012 году,' ) );
+od_test( 'od_about_project_label reads the quoted name', 'Проект «Путь героя»' === od_about_project_label( 'Разработан и реализуется проект «Путь героя», направленный на…' ) );
+
+$threw = false;
+try {
+	od_about_project_label( 'Никакого проекта здесь нет.' );
+} catch ( RuntimeException $e ) {
+	$threw = true;
+}
+od_test( 'od_about_project_label refuses a paragraph with no project in it', $threw );
+
+od_test( 'od_pages_list writes one list-item block per item', "<!-- wp:list -->\n<ul class=\"wp-block-list\"><!-- wp:list-item -->\n<li>раз</li>\n<!-- /wp:list-item -->\n</ul>\n<!-- /wp:list -->\n\n" === od_pages_list( array( 'раз' ) ) );
+od_test( 'od_pages_details closes the element it opens', false !== strpos( od_pages_details( 'Ещё', 'x' ), '<details class="wp-block-details od-more"><summary>Ещё</summary>' ) && false !== strpos( od_pages_details( 'Ещё', 'x' ), "</details>\n<!-- /wp:details -->" ) );
+od_test( 'od_pages_icon_tasks marks a card with no icon rather than mislabelling it', false !== strpos( od_pages_icon_tasks( array( 'a', 'b' ), array( 'education' ) ), 'od-task od-task--none' ) );
+od_test( 'od_pages_goal_card still heads the programme card as it did', false !== strpos( od_pages_goal_card( 'x' ), '>Цель программы</h2>' ) && false !== strpos( od_pages_goal_card( 'x' ), '"className":"od-card od-card--goal"' ) );
+
 /* ------------------------------------------------------- the registry itself */
 
 foreach ( od_pages_registry() as $entry ) {
