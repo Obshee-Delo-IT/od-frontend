@@ -648,14 +648,18 @@ function od_pages_asset_card(string $blocks): string
  * a thing nobody can edit. A row left holding a single card is half width,
  * which is what the mock draws for its odd one out.
  *
- * @param array<int, string> $cards Block HTML for each card.
+ * @param array<int, string> $cards     Block HTML for each card.
+ * @param int                $perRow    Cards per row.
+ * @param string             $className Row class — `od-assets` is the two-track
+ *                                      grid, plus `od-assets--3` for the
+ *                                      three-up `documents` pages.
  */
-function od_pages_assets(array $cards, int $perRow = 2): string
+function od_pages_assets(array $cards, int $perRow = 2, string $className = 'od-assets'): string
 {
     $out = '';
 
     foreach (array_chunk($cards, $perRow) as $row) {
-        $out .= "<!-- wp:columns {\"className\":\"od-assets\"} -->\n<div class=\"wp-block-columns od-assets\">";
+        $out .= sprintf("<!-- wp:columns {\"className\":\"%s\"} -->\n<div class=\"wp-block-columns %s\">", $className, $className);
         foreach ($row as $card) {
             $out .= "<!-- wp:column {\"className\":\"od-asset\"} -->\n<div class=\"wp-block-column od-asset\">\n"
                 . $card
@@ -673,10 +677,14 @@ function od_pages_assets(array $cards, int $perRow = 2): string
  * and this is not, so it keeps core's own flex layout and its `flex-basis`.
  *
  * @param array<int, array{width: string, blocks: string}> $columns
+ * @param string $className Row class, when the row is a layout of its own —
+ *                          `od-aside` is `/about/udostoverenie/`'s 814 + 386.
  */
-function od_pages_columns(array $columns): string
+function od_pages_columns(array $columns, string $className = ''): string
 {
-    $out = "<!-- wp:columns -->\n<div class=\"wp-block-columns\">";
+    $out = $className === ''
+        ? "<!-- wp:columns -->\n<div class=\"wp-block-columns\">"
+        : sprintf("<!-- wp:columns {\"className\":\"%s\"} -->\n<div class=\"wp-block-columns %s\">", $className, $className);
 
     foreach ($columns as $column) {
         $out .= sprintf(
@@ -705,7 +713,12 @@ function od_pages_columns(array $columns): string
  */
 function od_pages_asset_image(array $image, string $caption = ''): string
 {
-    $attrs = ['id' => (int) $image['id'], 'sizeSlug' => 'full'];
+    $attrs = ['sizeSlug' => 'full'];
+    // A partner logo has no `wp-image-N` class to read an id back out of, and
+    // `"id":0` in the block attributes is worse than no id at all.
+    if ((int) $image['id'] !== 0) {
+        $attrs = ['id' => (int) $image['id']] + $attrs;
+    }
     if ($image['href'] !== '') {
         $attrs['linkDestination'] = 'custom';
     }
@@ -729,13 +742,19 @@ function od_pages_asset_image(array $image, string $caption = ''): string
  * passes a single button.
  *
  * @param array<int, array{href: string, label: string}> $buttons
+ * @param string $style Block style slug — `''` for the primary button every
+ *                      `/materials/` card uses, `is-style-outline` for the
+ *                      `documents` pages, which is what their mock draws.
  */
-function od_pages_downloads(array $buttons): string
+function od_pages_downloads(array $buttons, string $style = ''): string
 {
+    $attrs  = $style === '' ? '' : sprintf(' {"className":"%s"}', $style);
+    $classes = $style === '' ? 'wp-block-button' : 'wp-block-button ' . $style;
+
     $out = "<!-- wp:buttons {\"className\":\"od-asset-actions\"} -->\n<div class=\"wp-block-buttons od-asset-actions\">";
     foreach ($buttons as $button) {
-        $out .= "<!-- wp:button -->\n"
-            . '<div class="wp-block-button">'
+        $out .= "<!-- wp:button" . $attrs . " -->\n"
+            . sprintf('<div class="%s">', $classes)
             . sprintf(
                 '<a class="wp-block-button__link wp-element-button" href="%s" target="_blank" rel="noopener">%s</a>',
                 $button['href'],
@@ -1205,11 +1224,27 @@ function od_pages_image_block(string $id, string $src, string $alt, string $href
 }
 
 /** A `core/heading` block. */
-function od_pages_heading(int $level, string $text): string
+function od_pages_heading(int $level, string $text, string $anchor = ''): string
 {
-    $attrs = $level === 2 ? '' : sprintf(' {"level":%d}', $level);
+    $attrs = [];
+    if ($level !== 2) {
+        $attrs['level'] = $level;
+    }
+    if ($anchor !== '') {
+        $attrs['anchor'] = $anchor;
+    }
 
-    return sprintf("<!-- wp:heading%s -->\n<h%d class=\"wp-block-heading\">%s</h%d>\n<!-- /wp:heading -->\n\n", $attrs, $level, $text, $level);
+    $json = $attrs === [] ? '' : ' ' . json_encode($attrs, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+    $id   = $anchor === '' ? '' : sprintf(' id="%s"', od_attr($anchor));
+
+    return sprintf(
+        "<!-- wp:heading%s -->\n<h%d class=\"wp-block-heading\"%s>%s</h%d>\n<!-- /wp:heading -->\n\n",
+        $json,
+        $level,
+        $id,
+        $text,
+        $level
+    );
 }
 
 /** A `core/paragraph` block. */
@@ -2427,6 +2462,586 @@ function od_pages_shop_list(string $aside): string
 }
 
 /**
+ * The post-card pages under `/about/` — Figma `Letters-of-appreciation`
+ * (`706:3602`).
+ *
+ * Seven pages share one shape: a `core/query` over a single category, a
+ * `[cmsms_sidebar]` beside it, a MailPoet form whose plugin is gone and a
+ * `<style>` block that sizes the old theme's thumbnails. Only the query is
+ * content, so it is all this keeps.
+ *
+ * The query itself is copied through **verbatim** — its `queryId` and its
+ * category id differ per page and per environment, and neither is ours to
+ * decide. What changes is the template inside it: three columns instead of one,
+ * the date dropped (the mock shows none), and an `od-post-cards` class for
+ * `gutenberg.css` to key the card on. That class is also the idempotency mark.
+ *
+ * The pagination arrows are core's `chevron` with `showLabel` off, which is the
+ * mock's two round chips — «Предыдущая страница» spelled out would be a
+ * 200px-wide link where the design has a 36px circle. Both attributes go on the
+ * **parent** `core/query-pagination`: it is what provides them as context, and
+ * the same keys written on the previous/next blocks are read by nobody.
+ *
+ * Scoping matters here. ~80 regional `/contacts/*` pages carry a `wp:query`
+ * too, so the card rules hang off `od-post-cards` rather than off
+ * `.wp-block-post-template` — a bare rule would restyle all of them.
+ *
+ * @param string $content   Stored `post_content`.
+ * @param int    $_filmTagId Unused: these pages carry no film row.
+ * @return string Rewritten content, or `$content` unchanged if it is already in
+ *                the target shape.
+ * @throws RuntimeException when the page carries no query block.
+ */
+function od_pages_post_cards(string $content, int $_filmTagId = 0): string
+{
+    if (strpos($content, 'od-post-cards') !== false) {
+        return $content; // Already converted — leave the editor's copy alone.
+    }
+
+    if (!preg_match('/<!-- wp:query (\{.*?\}) -->/s', $content, $m)) {
+        throw new RuntimeException('unexpected input: no query block');
+    }
+
+    $attrs = json_decode($m[1], true);
+    if (!is_array($attrs) || !isset($attrs['queryId'], $attrs['query'])) {
+        throw new RuntimeException('unexpected input: unreadable query attributes');
+    }
+
+    $attrs['className'] = 'od-post-cards';
+
+    return sprintf("<!-- wp:query %s -->\n<div class=\"wp-block-query od-post-cards\">\n", od_pages_json($attrs))
+        . "<!-- wp:post-template {\"layout\":{\"type\":\"grid\",\"columnCount\":3}} -->\n"
+        . "<!-- wp:post-featured-image {\"isLink\":true} /-->\n"
+        . "<!-- wp:post-title {\"isLink\":true} /-->\n"
+        . "<!-- wp:post-excerpt /-->\n"
+        . "<!-- /wp:post-template -->\n\n"
+        . "<!-- wp:query-pagination {\"paginationArrow\":\"chevron\",\"showLabel\":false} -->\n"
+        . "<!-- wp:query-pagination-previous /-->\n"
+        . "<!-- wp:query-pagination-numbers /-->\n"
+        . "<!-- wp:query-pagination-next /-->\n"
+        . "<!-- /wp:query-pagination -->\n"
+        . "</div>\n<!-- /wp:query -->\n";
+}
+
+/**
+ * `/about/experts-review/` and `/about/docs/` — Figma `documents` (`706:3499`).
+ *
+ * Two pages, one shape: a document's name in a 75 % column and a download
+ * button in the 25 % one, that pair repeated behind a separator — 33 expert
+ * opinions on one page, 23 statutory documents on the other. They become the
+ * mock's three-up grid of cards, on the `od-asset` card the `/materials/` pages
+ * already use, with `od-assets--3` for the third track.
+ *
+ * **The mock's page preview is not built, because there is nothing to build it
+ * from.** Each card in Figma is a 387 × 544 image of the PDF's first page. All
+ * 33 files on `/about/experts-review/` live on Yandex Disk, not in the library;
+ * the 23 on `/about/docs/` are local, but WordPress generated no preview for
+ * any of the install's 49 PDF attachments (none carries
+ * `_wp_attachment_metadata`). A placeholder repeated 56 times is noise, so the
+ * card is its title and its button — which is the rest of what the mock draws.
+ *
+ * The button is `is-style-outline` and reads «Скачать» on every card, both as
+ * drawn. The stored labels are «Скачать устав», «Скачать отчёт» and
+ * «Смотреть/Скачать», which said what the button did when it was the only thing
+ * on the row; above a title in a card, the noun is already there.
+ *
+ * @param string $content   Stored `post_content`.
+ * @param int    $_filmTagId Unused: these pages carry no film row.
+ * @return string Rewritten content, or `$content` unchanged if it is already in
+ *                the target shape.
+ * @throws RuntimeException when the page does not look like the expected input.
+ */
+function od_pages_documents(string $content, int $_filmTagId = 0): string
+{
+    if (od_has_block_class($content, 'od-asset')) {
+        return $content; // Already converted — leave the editor's copy alone.
+    }
+
+    $documents = od_pages_document_rows($content);
+    if (count($documents) < 2) {
+        throw new RuntimeException(sprintf('unexpected input: %d document rows', count($documents)));
+    }
+
+    $cards = [];
+    foreach ($documents as $document) {
+        $cards[] = od_pages_paragraph($document['title'])
+            . od_pages_downloads([['href' => $document['href'], 'label' => 'Скачать']], 'is-style-outline');
+    }
+
+    return rtrim(od_pages_assets($cards, 3, 'od-assets od-assets--3')) . "\n";
+}
+
+/**
+ * The document rows of a `documents` page: every `core/columns` whose first
+ * column holds a name and whose second holds one link.
+ *
+ * The two pages split their row differently — 75/25 on
+ * `/about/experts-review/`, 66.67/33.33 on `/about/docs/` — so the widths are
+ * matched loosely and the shape is what identifies a row.
+ *
+ * @return array<int, array{title: string, href: string}>
+ */
+function od_pages_document_rows(string $content): array
+{
+    $pattern = '#<!-- wp:column \{"width":"(?:75|66\.67)%"\}.*?<p[^>]*>(.*?)</p>'
+        . '.*?<!-- wp:column \{"width":"(?:25|33\.33)%"\}.*?href="([^"]+)"#s';
+
+    if (!preg_match_all($pattern, $content, $matches, PREG_SET_ORDER)) {
+        return [];
+    }
+
+    $rows = [];
+    foreach ($matches as $match) {
+        $title = od_pages_inline_text(strip_tags($match[1], '<em>'));
+        if ($title === '') {
+            continue;
+        }
+        $rows[] = ['title' => $title, 'href' => $match[2]];
+    }
+
+    return $rows;
+}
+
+/**
+ * `/about/activist-stories/` — Figma `story` (`706:3568`).
+ *
+ * Twenty-five videos, each beside a sentence naming the person in it. The
+ * stored page already pairs them in a 50/50 `core/columns`, but the halves
+ * alternate — thirteen rows put the video first and twelve put the text first —
+ * which reads as a mistake rather than a rhythm, and the mock draws the video
+ * on the left every time. So the pair is rebuilt in that order.
+ *
+ * The sentence is split where it already is: the person's name is the row's
+ * `<strong>`, what follows is what they say or do. The mock sets the two as a
+ * heading and a paragraph, so that is what they become — which also drops the
+ * dash the stored text uses to join them («Свиридов Алексей Владимирович –
+ * режиссёр…»), leaving the description to start as its own sentence. One row of
+ * the twenty-five has no dash at all («Пастухов Сергей родом из Магадана»),
+ * which is why the split is on the tag and not on the punctuation.
+ *
+ * @param string $content   Stored `post_content`.
+ * @param int    $_filmTagId Unused: this page carries no film row.
+ * @return string Rewritten content, or `$content` unchanged if it is already in
+ *                the target shape.
+ * @throws RuntimeException when the page does not look like the expected input.
+ */
+function od_pages_activist_stories(string $content, int $_filmTagId = 0): string
+{
+    if (od_has_block_class($content, 'od-story')) {
+        return $content; // Already converted — leave the editor's copy alone.
+    }
+
+    $stories = od_pages_story_rows($content);
+    if (count($stories) < 2) {
+        throw new RuntimeException(sprintf('unexpected input: %d story rows', count($stories)));
+    }
+
+    $out = '';
+    foreach ($stories as $story) {
+        $out .= "<!-- wp:columns {\"className\":\"od-story\"} -->\n<div class=\"wp-block-columns od-story\">"
+            . "<!-- wp:column -->\n<div class=\"wp-block-column\">\n"
+            . od_pages_embed($story['url'])
+            . "</div>\n<!-- /wp:column -->\n"
+            . "<!-- wp:column -->\n<div class=\"wp-block-column\">\n"
+            . od_pages_heading(3, $story['name'])
+            . od_pages_paragraph($story['about'])
+            . "</div>\n<!-- /wp:column -->\n"
+            . "</div>\n<!-- /wp:columns -->\n\n";
+    }
+
+    return rtrim($out) . "\n";
+}
+
+/**
+ * The video/sentence pairs of `/about/activist-stories/`, in document order and
+ * regardless of which half of the row each sits in.
+ *
+ * @return array<int, array{url: string, name: string, about: string}>
+ */
+function od_pages_story_rows(string $content): array
+{
+    if (!preg_match_all('#<!-- wp:columns -->(.*?)<!-- /wp:columns -->#s', $content, $matches)) {
+        return [];
+    }
+
+    $rows = [];
+    foreach ($matches[1] as $row) {
+        if (
+            !preg_match('#<!-- wp:embed \{"url":"(.*?)"#', $row, $embed)
+            || !preg_match('#<strong>(.*?)</strong>(.*?)</p>#s', $row, $text)
+        ) {
+            continue;
+        }
+
+        $about = od_pages_inline_text(strip_tags($text[2]));
+        // The joining dash and any space around it, multibyte-safe: `ltrim()`
+        // takes a byte list and would eat the lead byte of a Cyrillic letter.
+        $about = preg_replace('/^[\s\x{00a0}–—-]+/u', '', $about);
+
+        $rows[] = [
+            'url' => str_replace('\\/', '/', $embed[1]),
+            'name' => od_pages_inline_text(strip_tags($text[1])),
+            'about' => od_pages_sentence_case($about),
+        ];
+    }
+
+    return $rows;
+}
+
+/**
+ * First letter upper-cased, the rest left alone — `ucfirst()` is byte-wise and
+ * would corrupt a Cyrillic first character.
+ */
+function od_pages_sentence_case(string $text): string
+{
+    if ($text === '') {
+        return $text;
+    }
+
+    return mb_strtoupper(mb_substr($text, 0, 1)) . mb_substr($text, 1);
+}
+
+/**
+ * A `core/embed`, in the shape WordPress stores one: the bare URL on its own
+ * line, and the provider read back out of it at render time.
+ */
+function od_pages_embed(string $url): string
+{
+    return sprintf(
+        "<!-- wp:embed {\"url\":\"%s\",\"type\":\"video\",\"providerNameSlug\":\"youtube\",\"responsive\":true,"
+        . "\"className\":\"wp-embed-aspect-16-9 wp-has-aspect-ratio\"} -->\n"
+        . "<figure class=\"wp-block-embed is-type-video is-provider-youtube wp-block-embed-youtube "
+        . "wp-embed-aspect-16-9 wp-has-aspect-ratio\"><div class=\"wp-block-embed__wrapper\">\n%s\n</div></figure>\n"
+        . "<!-- /wp:embed -->\n",
+        od_attr($url),
+        $url
+    );
+}
+
+/**
+ * `/about/udostoverenie/` — Figma `Certificate` (`760:1662`).
+ *
+ * The page is one `wp:paragraph` block holding six `<p>`s and a floated photo,
+ * plus an `<h2>` with a download link. The mock reads them as four things: the
+ * photo as a hero, the first sentence as a lead, the rest as the body, and — in
+ * a 386-wide rail beside it — the «свяжитесь с нами» sentence with the two
+ * contacts under it, then «Положение о членстве» with its button.
+ *
+ * **The contact sentence is split, not moved whole.** The stored paragraph runs
+ * the note and the contacts together («…для подтверждения по телефону +7 (962)
+ * 950-75-61 E-mail: post27@bk.ru Skype: aleksey.od»); the mock ends the note at
+ * «для подтверждения.» and sets the phone and the mail as two icon rows. Skype
+ * is dropped — the mock draws two rows, and the account has not been reachable
+ * since Skype closed.
+ *
+ * **The hero is not the mock's 1241 × 508.** The library holds this photo at
+ * 600 × 445 and nothing larger, so that band would be a 2× upscale of a
+ * photograph of a document. It is drawn at the mock's *height* instead, 508
+ * with the width following, which is a 1.14× upscale and keeps it sharp.
+ *
+ * @param string $content   Stored `post_content`.
+ * @param int    $_filmTagId Unused: this page carries no film row.
+ * @return string Rewritten content, or `$content` unchanged if it is already in
+ *                the target shape.
+ * @throws RuntimeException when the page does not look like the expected input.
+ */
+function od_pages_udostoverenie(string $content, int $_filmTagId = 0): string
+{
+    if (od_has_block_class($content, 'od-hero')) {
+        return $content; // Already converted — leave the editor's copy alone.
+    }
+
+    if (!preg_match('#<img[^>]*wp-image-(\d+)[^>]*src="([^"]+)"#', $content, $photo)) {
+        throw new RuntimeException('unexpected input: no photo');
+    }
+
+    preg_match_all('#<p[^>]*>(.*?)</p>#s', $content, $found);
+    $paragraphs = [];
+    foreach ($found[1] as $paragraph) {
+        $text = od_pages_inline_text(preg_replace('#<img[^>]*>#', '', $paragraph));
+        // `[wysija_form]` is the MailPoet form whose plugin is gone; every other
+        // page in this file drops it too.
+        if ($text !== '' && $text !== '&nbsp;' && strpos($text, '[wysija_form') === false) {
+            $paragraphs[] = $text;
+        }
+    }
+
+    if (count($paragraphs) < 6) {
+        throw new RuntimeException(sprintf('unexpected input: %d paragraphs', count($paragraphs)));
+    }
+
+    $contactIndex = null;
+    foreach ($paragraphs as $index => $paragraph) {
+        if (strpos($paragraph, 'по телефону') !== false && strpos($paragraph, '@') !== false) {
+            $contactIndex = $index;
+            break;
+        }
+    }
+
+    if ($contactIndex === null) {
+        throw new RuntimeException('unexpected input: no contact paragraph');
+    }
+
+    $contacts = $paragraphs[$contactIndex];
+    $note     = rtrim(od_pages_inline_text(strip_tags(substr($contacts, 0, strpos($contacts, ' по телефону')))), " .") . '.';
+
+    if (
+        !preg_match('#\+7[\s(]*(\d{3})[\s)]*(\d{3})-(\d{2})-(\d{2})#u', $contacts, $phone)
+        || !preg_match('#mailto:([^"]+)"#', $contacts, $mail)
+        || !preg_match('#<h2[^>]*>\s*(.*?):\s*<a href="([^"]+)"#s', $content, $membership)
+    ) {
+        throw new RuntimeException('unexpected input: no contacts or membership link');
+    }
+
+    $body = '';
+    foreach ($paragraphs as $index => $paragraph) {
+        if ($index === 0 || $index === $contactIndex) {
+            continue;
+        }
+        $body .= od_pages_paragraph($paragraph);
+    }
+
+    $phoneLabel = sprintf('+7 (%s) %s-%s-%s', $phone[1], $phone[2], $phone[3], $phone[4]);
+    $phoneHref  = sprintf('tel:+7%s%s%s%s', $phone[1], $phone[2], $phone[3], $phone[4]);
+
+    $aside = od_pages_group(
+        'od-asset',
+        od_pages_paragraph($note)
+        . od_pages_contact_row('phone', $phoneHref, $phoneLabel)
+        . od_pages_contact_row('email', 'mailto:' . $mail[1], $mail[1])
+    ) . od_pages_group(
+        'od-asset',
+        od_pages_heading(3, od_pages_inline_text(strip_tags($membership[1])))
+        . od_pages_downloads([['href' => $membership[2], 'label' => 'Скачать']])
+    );
+
+    return "<!-- wp:group {\"className\":\"od-hero\",\"layout\":{\"type\":\"constrained\"}} -->\n"
+        . "<div class=\"wp-block-group od-hero\">\n"
+        . od_pages_image_block($photo[1], $photo[2], '')
+        . "</div>\n<!-- /wp:group -->\n\n"
+        . od_pages_columns([
+            ['width' => '65.65%', 'blocks' => od_pages_paragraph('<strong>' . $paragraphs[0] . '</strong>') . $body],
+            ['width' => '31.13%', 'blocks' => $aside],
+        ], 'od-aside')
+        . "\n";
+}
+
+/**
+ * A `core/group` with a class — the shape every card in this file that is not a
+ * column of a row takes.
+ */
+function od_pages_group(string $className, string $blocks): string
+{
+    return sprintf(
+        "<!-- wp:group {\"className\":\"%s\",\"layout\":{\"type\":\"constrained\"}} -->\n<div class=\"wp-block-group %s\">\n",
+        $className,
+        $className
+    ) . $blocks . "</div>\n<!-- /wp:group -->\n\n";
+}
+
+/**
+ * One contact row: a paragraph that is nothing but the link, classed so
+ * `gutenberg.css` can hang the 24px glyph the mock draws in front of it.
+ *
+ * The glyph is a `mask-image` over `currentColor` rather than a coloured copy of
+ * the SVG: the icons are stroked with `currentColor` in
+ * `src/shared/ui/assets/icons/`, and a background copy would have to bake the
+ * brand red into a file under `public/`.
+ */
+function od_pages_contact_row(string $kind, string $href, string $label): string
+{
+    return sprintf(
+        "<!-- wp:paragraph {\"className\":\"od-contact od-contact--%s\"} -->\n"
+        . "<p class=\"od-contact od-contact--%s\"><a href=\"%s\">%s</a></p>\n<!-- /wp:paragraph -->\n\n",
+        $kind,
+        $kind,
+        od_attr($href),
+        od_attr($label)
+    );
+}
+
+/**
+ * The nine sections of the charter, in order, as the mock's contents list names
+ * them and as the stored text spells them.
+ *
+ * `match` is the upper-case string to find in `post_content` — it is what the
+ * three shapes the headings arrive in have in common. `title` is what the page
+ * shows: Figma sets them sentence-cased, and this is content rather than a
+ * `text-transform`, for the reason `docs/wp-page-redesign.md` gives.
+ */
+const OD_USTAV_SECTIONS = [
+    ['id' => 'ustav-1', 'match' => 'ОБЩИЕ ПОЛОЖЕНИЯ', 'title' => 'Общие положения'],
+    ['id' => 'ustav-2', 'match' => 'ЦЕЛИ И НАПРАВЛЕНИЯ ДЕЯТЕЛЬНОСТИ ОРГАНИЗАЦИИ. ПРАВА И ОБЯЗАННОСТИ ОРГАНИЗАЦИИ', 'title' => 'Цели и направления деятельности организации. Права и обязанности организации'],
+    ['id' => 'ustav-3', 'match' => 'ПРАВА И ОБЯЗАННОСТИ ЧЛЕНОВ ОРГАНИЗАЦИИ', 'title' => 'Права и обязанности членов организации'],
+    ['id' => 'ustav-4', 'match' => 'СТРУКТУРА ОРГАНИЗАЦИИ', 'title' => 'Структура организации'],
+    ['id' => 'ustav-5', 'match' => 'КОНТРОЛЬНО-РЕВИЗИОННЫЕ ОРГАНЫ ОРГАНИЗАЦИИ', 'title' => 'Контрольно-ревизионные органы организации'],
+    ['id' => 'ustav-6', 'match' => 'СРЕДСТВА, ИМУЩЕСТВО И ВЕДЕНИЕ УЧЕТА В ОРГАНИЗАЦИИ', 'title' => 'Средства, имущество и ведение учёта в организации'],
+    ['id' => 'ustav-7', 'match' => 'ПРЕДПРИНИМАТЕЛЬСКАЯ ДЕЯТЕЛЬНОСТЬ', 'title' => 'Предпринимательская деятельность'],
+    ['id' => 'ustav-8', 'match' => 'ПОРЯДОК РЕОРГАНИЗАЦИИ И ЛИКВИДАЦИИ ОРГАНИЗАЦИИ', 'title' => 'Порядок реорганизации и ликвидации организации'],
+    ['id' => 'ustav-9', 'match' => 'ПОРЯДОК ВНЕСЕНИЯ ИЗМЕНЕНИЙ В УСТАВ', 'title' => 'Порядок внесения изменений в устав'],
+];
+
+/**
+ * `/about/ustav/` — Figma `charter` (`706:3695`).
+ *
+ * 361 paragraphs in four `wp:paragraph` blocks, with the charter's nine section
+ * headings buried in them in **three different shapes**: five as their own
+ * numbered paragraph («1. ОБЩИЕ ПОЛОЖЕНИЯ.»), four as a one-item `<ol
+ * start="6"><li>`, and the fifth appended to the end of the paragraph before it
+ * («…проводимых Организацией. 5. КОНТРОЛЬНО-РЕВИЗИОННЫЕ ОРГАНЫ ОРГАНИЗАЦИИ»).
+ * Each is found by its upper-case text and replaced by a marker, which is what
+ * makes the three shapes one thing to split on.
+ *
+ * Out of that comes the mock: a sticky contents list in a 384-wide column and
+ * the charter in the 814 beside it, each section an `<h2>` the list links to.
+ * Every paragraph becomes a block of its own — the migrator left them as raw
+ * `<p>`s inside four blocks, which is one thing to edit rather than 361.
+ *
+ * **The headings are written sentence-cased**, not lower-cased by CSS: the
+ * stored text shouts, Figma does not, and a `text-transform` would be invisible
+ * to an editor and to a grep (`docs/wp-page-redesign.md` §4).
+ *
+ * **The mock draws no «you are here» state on the list** and neither does this:
+ * a scrollspy needs JavaScript, and there is none to be had in a WordPress body.
+ * The links work; the highlight is the one thing in the frame that is not built.
+ *
+ * **The «Положение о членстве: Скачать» line at the top goes.** The mock has no
+ * such row, and the same document is a card of its own on
+ * `/about/udostoverenie/` — see `od_pages_udostoverenie()`.
+ *
+ * @param string $content   Stored `post_content`.
+ * @param int    $_filmTagId Unused: this page carries no film row.
+ * @return string Rewritten content, or `$content` unchanged if it is already in
+ *                the target shape.
+ * @throws RuntimeException when a section heading cannot be found.
+ */
+function od_pages_ustav(string $content, int $_filmTagId = 0): string
+{
+    if (od_has_block_class($content, 'od-charter')) {
+        return $content; // Already converted — leave the editor's copy alone.
+    }
+
+    $marked = $content;
+    foreach (OD_USTAV_SECTIONS as $index => $section) {
+        $marked = od_pages_mark_heading($marked, $section['match'], sprintf('@@od-ustav-%d@@', $index));
+    }
+
+    $parts = preg_split('/@@od-ustav-(\d+)@@/u', $marked, -1, PREG_SPLIT_DELIM_CAPTURE);
+    if (count($parts) !== 2 * count(OD_USTAV_SECTIONS) + 1) {
+        throw new RuntimeException(sprintf('unexpected input: %d section boundaries', (count($parts) - 1) / 2));
+    }
+
+    $body = '';
+    foreach (od_pages_ustav_paragraphs($parts[0]) as $paragraph) {
+        // The download row the mock has no place for — `/about/udostoverenie/`
+        // carries that document as a card — and the «УСТАВ» line, which is the
+        // page title `PageHeader` already draws.
+        if (strpos($paragraph, 'Положение о членстве') !== false || strip_tags($paragraph) === 'УСТАВ') {
+            continue;
+        }
+        $body .= od_pages_classed_paragraph($paragraph, 'od-charter-preamble');
+    }
+
+    for ($i = 1; $i < count($parts); $i += 2) {
+        $section = OD_USTAV_SECTIONS[(int) $parts[$i]];
+        $body   .= od_pages_heading(2, $section['title'], $section['id']);
+        foreach (od_pages_ustav_paragraphs($parts[$i + 1]) as $paragraph) {
+            $body .= od_pages_paragraph($paragraph);
+        }
+    }
+
+    return od_pages_columns([
+        ['width' => '30.97%', 'blocks' => od_pages_ustav_contents()],
+        ['width' => '65.65%', 'blocks' => $body],
+    ], 'od-charter') . "\n";
+}
+
+/**
+ * Replace one charter heading, whatever markup it arrived in, with `$marker`.
+ *
+ * Three shapes, tried in order: the `<ol start="N"><li>` core's list block left,
+ * a numbered paragraph of its own, and a heading run onto the end of the
+ * paragraph before it — that last one closes the paragraph it was stuck to.
+ *
+ * @throws RuntimeException when none of the three matches.
+ */
+function od_pages_mark_heading(string $content, string $heading, string $marker): string
+{
+    $quoted = preg_quote($heading, '#');
+
+    $patterns = [
+        '#<ol[^>]*>\s*<li>\s*' . $quoted . '\.?\s*</li>\s*</ol>#u' => $marker,
+        '#<p[^>]*>\s*\d+\.\s*' . $quoted . '\.?\s*</p>#u' => $marker,
+        '#\s*\d+\.\s*' . $quoted . '\.?\s*(?=</p>)#u' => '</p>' . $marker . '<p>',
+    ];
+
+    foreach ($patterns as $pattern => $replacement) {
+        $replaced = preg_replace($pattern, $replacement, $content, 1, $count);
+        if ($count === 1) {
+            return $replaced;
+        }
+    }
+
+    throw new RuntimeException(sprintf('unexpected input: heading «%s» not found', $heading));
+}
+
+/**
+ * The `<p>`s of one slice of the charter, as plain text: the migrator's inline
+ * `<span style="font-size: 12pt">` goes, `<em>` and `<strong>` stay.
+ *
+ * @return array<int, string>
+ */
+function od_pages_ustav_paragraphs(string $html): array
+{
+    preg_match_all('#<p[^>]*>(.*?)</p>#s', $html, $found);
+
+    $paragraphs = [];
+    foreach ($found[1] as $paragraph) {
+        $text = od_pages_inline_text(strip_tags($paragraph, '<em><strong><a><br>'));
+        $text = trim(str_replace('&nbsp;', ' ', $text));
+        $text = trim(preg_replace('#\s+#u', ' ', $text));
+        if ($text !== '') {
+            $paragraphs[] = $text;
+        }
+    }
+
+    return $paragraphs;
+}
+
+/**
+ * The contents list — a `core/list` of in-page links, which is the mock's column
+ * of buttons and, unlike a set of nine `core/button` blocks, still reads as a
+ * list of links with nothing but CSS removed.
+ */
+function od_pages_ustav_contents(): string
+{
+    $items = '';
+    foreach (OD_USTAV_SECTIONS as $section) {
+        $items .= sprintf(
+            "<!-- wp:list-item -->\n<li><a href=\"#%s\">%s</a></li>\n<!-- /wp:list-item -->\n",
+            $section['id'],
+            od_attr($section['title'])
+        );
+    }
+
+    return "<!-- wp:list {\"className\":\"od-charter-contents\"} -->\n"
+        . "<ul class=\"wp-block-list od-charter-contents\">\n" . $items . "</ul>\n<!-- /wp:list -->\n";
+}
+
+/**
+ * A paragraph with a class of its own.
+ */
+function od_pages_classed_paragraph(string $text, string $className): string
+{
+    return sprintf(
+        "<!-- wp:paragraph {\"className\":\"%s\"} -->\n<p class=\"%s\">%s</p>\n<!-- /wp:paragraph -->\n\n",
+        $className,
+        $className,
+        $text
+    );
+}
+
+/**
  * `/team/` — the roster, and the eleven records behind it. Figma `team-1`
  * (`706:1584`) and `team-1-mob` (`1256:5981`), D3.
  *
@@ -2657,6 +3272,78 @@ function od_tel_label(string $text): string
         substr($digits, 7, 2),
         substr($digits, 9, 2)
     );
+}
+
+/**
+ * `/about/nashi_partnery/` — no mock; the section's own picture grid.
+ *
+ * Fifty-two 25 % columns of a logo over its name, separated by 41 `<hr>`s and
+ * led by three empty spacer groups — so the page opened on a screenful of
+ * nothing and every fourth logo sat under a stray rule. It becomes the
+ * `od-figures` grid `/materials/` already uses, four across, with the name as
+ * the picture's own `figcaption` so it travels with it.
+ *
+ * `od-figures--logos` is the one thing that is new: these are logos on white,
+ * not photographs, so the box holds them whole (`contain`) rather than filling
+ * it, which is what `/materials/sticker/`'s photos want.
+ *
+ * Six of the 49 logos carry no name and two name files that are not on the
+ * origin — both are content, and both are left as they are rather than guessed
+ * at here.
+ *
+ * @param string $content   Stored `post_content`.
+ * @param int    $_filmTagId Unused: this page carries no film row.
+ * @return string Rewritten content, or `$content` unchanged if it is already in
+ *                the target shape.
+ * @throws RuntimeException when the page does not look like the expected input.
+ */
+function od_pages_partners(string $content, int $_filmTagId = 0): string
+{
+    if (od_has_block_class($content, 'od-figures--logos')) {
+        return $content; // Already converted — leave the editor's copy alone.
+    }
+
+    preg_match_all('#<!-- wp:column \{"width":"25%"\}(.*?)<!-- /wp:column -->#s', $content, $found);
+
+    $logos = [];
+    foreach ($found[1] as $column) {
+        if (!preg_match('#<img[^>]*src="([^"]+)"#', $column, $image)) {
+            continue;
+        }
+        preg_match('#<p[^>]*>(.*?)</p>#s', $column, $caption);
+        $logos[] = [
+            'src' => $image[1],
+            'caption' => isset($caption[1]) ? od_pages_inline_text(strip_tags($caption[1])) : '',
+        ];
+    }
+
+    if (count($logos) < 2) {
+        throw new RuntimeException(sprintf('unexpected input: %d partner logos', count($logos)));
+    }
+
+    $out   = '';
+    $class = 'od-figures od-figures--4 od-figures--logos';
+
+    foreach (array_chunk($logos, 4) as $row) {
+        $out .= sprintf("<!-- wp:columns {\"className\":\"%s\"} -->\n<div class=\"wp-block-columns %s\">", $class, $class);
+        foreach ($row as $logo) {
+            $out .= "<!-- wp:column -->\n<div class=\"wp-block-column\">\n"
+                . od_pages_asset_image(['id' => '0', 'src' => $logo['src'], 'href' => ''], $logo['caption'])
+                . "</div>\n<!-- /wp:column -->\n";
+        }
+        $out .= "</div>\n<!-- /wp:columns -->\n\n";
+    }
+
+    return rtrim($out) . "\n";
+}
+
+/**
+ * Block attributes as WordPress writes them: no escaped slashes, no unicode
+ * escapes, and the key order the block had.
+ */
+function od_pages_json(array $attrs): string
+{
+    return json_encode($attrs, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
 }
 
 /**
@@ -3088,6 +3775,71 @@ function od_pages_registry(): array
             'label' => 'D3 · /about/supervisory/ — Figma `team-2` (708:3736)',
             'path' => 'about/supervisory',
             'fix' => 'od_pages_supervisory',
+        ],
+        [
+            'label' => 'D6u · /about/nashi_partnery/ — no frame; the section\'s picture grid',
+            'path' => 'about/nashi_partnery',
+            'fix' => 'od_pages_partners',
+        ],
+        [
+            'label' => 'D6t · /about/ustav/ — Figma `charter` (706:3695)',
+            'path' => 'about/ustav',
+            'fix' => 'od_pages_ustav',
+        ],
+        [
+            'label' => 'D6s · /about/udostoverenie/ — Figma `Certificate` (760:1662)',
+            'path' => 'about/udostoverenie',
+            'fix' => 'od_pages_udostoverenie',
+        ],
+        [
+            'label' => 'D6r · /about/activist-stories/ — Figma `story` (706:3568)',
+            'path' => 'about/activist-stories',
+            'fix' => 'od_pages_activist_stories',
+        ],
+        [
+            'label' => 'D6q · /about/experts-review/ — Figma `documents` (706:3499)',
+            'path' => 'about/experts-review',
+            'fix' => 'od_pages_documents',
+        ],
+        [
+            'label' => 'D6q · /about/docs/ — the same template',
+            'path' => 'about/docs',
+            'fix' => 'od_pages_documents',
+        ],
+        [
+            'label' => 'D6p · /about/reviews/ — Figma `Letters-of-appreciation` (706:3602)',
+            'path' => 'about/reviews',
+            'fix' => 'od_pages_post_cards',
+        ],
+        [
+            'label' => 'D6p · /about/reviews/letters/ — Figma `Letters-of-appreciation` (706:3602)',
+            'path' => 'about/reviews/letters',
+            'fix' => 'od_pages_post_cards',
+        ],
+        [
+            'label' => 'D6p · /about/reviews/school/ — Figma `Letters-of-appreciation` (706:3602)',
+            'path' => 'about/reviews/school',
+            'fix' => 'od_pages_post_cards',
+        ],
+        [
+            'label' => 'D6p · /about/reviews/middle/ — Figma `Letters-of-appreciation` (706:3602)',
+            'path' => 'about/reviews/middle',
+            'fix' => 'od_pages_post_cards',
+        ],
+        [
+            'label' => 'D6p · /about/reviews/vuz/ — Figma `Letters-of-appreciation` (706:3602)',
+            'path' => 'about/reviews/vuz',
+            'fix' => 'od_pages_post_cards',
+        ],
+        [
+            'label' => 'D6p · /about/reviews/mvd/ — Figma `Letters-of-appreciation` (706:3602)',
+            'path' => 'about/reviews/mvd',
+            'fix' => 'od_pages_post_cards',
+        ],
+        [
+            'label' => 'D6p · /about/smi/ — Figma `Letters-of-appreciation` (706:3602)',
+            'path' => 'about/smi',
+            'fix' => 'od_pages_post_cards',
         ],
     ];
 

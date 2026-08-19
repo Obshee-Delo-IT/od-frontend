@@ -675,6 +675,68 @@ Five things, all from reading the shipped pages rather than the mocks. One of th
 
 **`/materials/led-board-roliki/` bottom-aligns the column beside the clip.** Measured off `social-video` (`1012:11084`): the card is 1240 × 413 with 24px padding, the video 729 × 364 ending 682px down, and the label and its two 203px buttons end 677px down — a bottom-anchored pair level with the video, filling a 425px column. It had been centred. The selector is `.od-asset .wp-block-column:has(> .wp-block-embed) + .wp-block-column`, which needs no class of its own: this is the only page that puts an embed inside an asset card (`/materials/books/`'s trailers sit in a plain `core/columns`, outside one), so no PHP changed and nothing had to be re-applied on od-dev for it.
 
+### D6p. The seven post-card pages under `/about/` — 2026-08-19
+
+The first of workstream D's «О нас» pages, Figma `Letters-of-appreciation` (`706:3602`): `/about/reviews/`, its five category children (`letters` · `school` · `middle` · `vuz` · `mvd`) and `/about/smi/`. All seven were the same page — a `core/query` over one category, a `[cmsms_sidebar]` beside it, a MailPoet form whose plugin is gone, and a `<style>` block sizing the old theme's thumbnails — so they are one transform, `od_pages_post_cards()`, registered seven times.
+
+**The query is copied through verbatim and only its template is rewritten.** `queryId` and the category id differ per page *and* per environment; neither is ours to choose. What changes is `post-template` (three columns instead of one), the date (dropped — the mock shows none) and a `className` of `od-post-cards`, which is both the styling hook and the idempotency mark.
+
+**The card is CSS on core's own blocks, keyed on that class.** Figma `Frame 33920` is 387 × 515: a 230-tall cover flush to the card's edges, 25 above the title, 10 to the excerpt, 25 below, 24 at the sides, three to a row with a 40px gutter. Measured after: 387 × 454 at 100/527/954, cover 387 × 230, title 339 wide at +25, excerpt at +10. The excerpt is clamped to four lines, which is the 80px the mock draws. **The class is not decoration** — ~80 regional `/contacts/*` pages carry a query block too, and a rule on `.wp-block-post-template` would have restyled every one of them.
+
+**Pagination: three grid tracks, not a centred flex row.** Core omits «previous» on page 1 and «next» on the last, so a centred row slides the numbers off centre by half an arrow; naming the columns keeps them on the grid's centre whichever arrows exist. The chips are 36 × 36 at a 24px gap, 80px out to each arrow, and the arrows are core's `chevron` with `showLabel` off — «Следующая страница» spelled out is a 200px link where the mock has a circle. **Both attributes belong on the parent `core/query-pagination`**, which is what provides them as context; written on the previous/next blocks they are read by nobody, and the label renders anyway.
+
+**Six pages came off the A6 fallback**, which is the whole `/about/reviews/` group — the sidebar shortcode was what put them there. `/about/ostavit-otziv/` stays on it for a different reason: a Contact Form 7 form, which nothing on this side renders.
+
+**Known limit — page 2 is not reachable yet.** WordPress builds a pagination href with `add_query_arg()` against `REQUEST_URI`, and for us that is the REST request, so the link points at `…/wp-json/wp/v2/pages?slug=smi&…&query-95-page=2`. It predates this change (`/about/smi/` has rendered natively and paginated wrongly since D6b) and it is not a content problem: the block regenerates that markup on every render. Fixing it means the page reading a query parameter, and the catch-all cannot — `searchParams` would make `/<id>` dynamic and cost every post page its ISR entry. Tracked in [`implementation-plan.md`](./implementation-plan.md) §D3. It bites two of the seven: `/about/smi/` has 210 posts and `/about/reviews/letters/` 125; the other five hold 7 – 42 and fit on one page.
+
+### D6q. `/about/experts-review/` and `/about/docs/` — 2026-08-19
+
+Figma `documents` (`706:3499`), two pages on one transform. Both stored the same row — a document's name in a 75 % column, a download button in the 25 % one, a separator, repeat — 33 expert opinions on one page and 23 statutory documents on the other. They are now the mock's three-up grid, on the `od-asset` card the `/materials/` pages already use plus an `od-assets--3` modifier for the third track (387-wide cards, 40px gutter, 1241 total — the two-up rhythm at one more column). `od_pages_assets()` and `od_pages_downloads()` each grew one optional argument for it; nothing else was needed.
+
+**The mock's page preview is not built, and cannot be.** Each Figma card is a 387 × 544 image of the PDF's first page. The 33 files on `/about/experts-review/` are Yandex Disk links, so there is no file to render; the 23 on `/about/docs/` are local uploads, but **none of the install's 49 PDF attachments carries `_wp_attachment_metadata`** — WordPress generated no preview for any of them. A single placeholder repeated 56 times is noise, so the card is its title and its button, which is the rest of what the mock draws. Measured after: 387 × 207 at 100/527/954, the title at 22px on 130 %, the button spanning the card's 339 and hanging off the bottom edge, so a two-line title and a five-line one still line up.
+
+**Two content decisions.** The button is `is-style-outline`, as drawn — a page of 33 solid red buttons is not what the `.od-asset` primary is for. And its label is «Скачать» everywhere, replacing «Скачать устав», «Скачать отчёт» and «Смотреть/Скачать»: those said what the button did when the row *was* the button, and above a card's title the noun is already there.
+
+### D6r. `/about/activist-stories/` — 2026-08-19
+
+Figma `story` (`706:3568`): twenty-five videos, each beside the person in it. The page already paired them in a 50/50 `core/columns`, but **the halves alternated** — thirteen rows put the video first, twelve the text — which reads as a mistake rather than a rhythm and is not what the mock draws, so the pair is rebuilt video-first every time.
+
+**The sentence splits where it already did.** The person's name is the row's `<strong>` and what follows is what they do, joined by a dash; the mock sets the two as a heading and a paragraph, so the dash goes and the description starts as its own sentence. The split is on the tag rather than on the punctuation because one of the twenty-five has no dash at all («Пастухов Сергей родом из Магадана»), and `od_pages_sentence_case()` upper-cases the first letter with `mb_*` — `ucfirst()` is byte-wise and would have cut a Cyrillic character in half.
+
+**The column is bottom-aligned, and core's figure margin had to go for it.** Figma lands the description's last line level with the video's bottom edge on every row. The row's height is the video's, so `justify-content: flex-end` on the second column does it — but `.wp-block-embed`'s own 16px bottom margin made the row 16px taller than the video and put the text below it. Measured after: video 600 × 343 at x=100, text at x=740 (the mock's 742), name 29px tall, both bottoms at 637.
+
+### D6s. `/about/udostoverenie/` — 2026-08-19
+
+Figma `Certificate` (`760:1662`). The page was one paragraph block holding six `<p>`s and a photo floated into the first of them, plus an `<h2>` with a download link. The mock reads that as four things, and the transform writes them out as four: the photo as a hero, the first sentence as a lead, the rest as the body, and a 386-wide rail beside it holding the «свяжитесь с нами» note with two contact rows, then «Положение о членстве» with its button. Measured after: hero at y=294, row at y=847 (Figma's 847), left column 814 at x=100, rail 386 at x=954, both Figma's.
+
+**The contact sentence is split, not moved.** Stored, it runs the note and the contacts together — «…для подтверждения по телефону +7 (962) 950-75-61 E-mail: post27@bk.ru Skype: aleksey.od». The mock ends the note at «для подтверждения.» and draws the phone and the mail as two icon rows, which is what it becomes; Skype goes, as the mock has it and as the service does.
+
+**The icons are a `mask-image` over `currentColor`.** `src/shared/ui/assets/icons/` strokes them with `currentColor`, and CSS cannot reach that directory anyway (`next.config.ts` routes every `.svg` through `@svgr/webpack`), so `public/figma/icons/` holds a copy — but as a `background-image` that copy would have to bake the brand red into the file. A mask keeps the colour in the stylesheet.
+
+**The hero is the mock's height, not its width.** Figma draws a 1241 × 508 band; the library holds this photo at 600 × 445 and nothing larger, so that band is a 2× upscale of a photograph. Drawn at 508 tall with the width following it is 685 × 508 — 1.14×, and sharp.
+
+**One existing rule had to be qualified.** `.wp-block-column > .od-asset { height: 100% }` makes a lone aside card as tall as the prose beside it — with *two* cards in the rail it stretched each to the row's height and ran the second one down over the footer.
+
+### D6t. `/about/ustav/` — 2026-08-19
+
+Figma `charter` (`706:3695`): a contents column and the charter beside it, 384 + 40 + 814 against the grid's 1240. The stored page is 361 paragraphs inside four `wp:paragraph` blocks, with the charter's nine section headings **buried in three different shapes** — five as their own numbered paragraph («1. ОБЩИЕ ПОЛОЖЕНИЯ.»), four as a one-item `<ol start="6"><li>`, and the fifth run onto the end of the paragraph before it («…проводимых Организацией. 5. КОНТРОЛЬНО-РЕВИЗИОННЫЕ ОРГАНЫ ОРГАНИЗАЦИИ»). Each is found by its upper-case text and replaced by a marker, which makes the three shapes one thing to split on; a heading that cannot be found throws rather than silently merging two sections.
+
+Out of that comes an `<h2>` with an anchor per section, a `core/list` of nine links to them, and **one block per paragraph** — 350 of them, where the migrator had left four blocks holding raw `<p>`s. Measured after: nav column 385 at x=100, items 40/63/40 tall on a 10px gap against Figma's 40/86/42, sticky from 24px down a 22 400px page.
+
+**The headings are written sentence-cased.** The stored text shouts and Figma does not; `text-transform` would be invisible to an editor, to a content export and to a grep, so this is content (`wp-page-redesign.md` §4).
+
+**Figma's red «you are here» pill is not built.** Marking the section a reader is looking at is a scroll listener, and a WordPress body has no script of its own. Every link works; the highlight is the one thing in the frame that is missing.
+
+**Two lines were dropped.** «Положение о членстве: Скачать» sat above the charter and the mock has no row for it — the same document is a card on `/about/udostoverenie/` (D6s). And the «УСТАВ» line is the page title, which `PageHeader` already draws.
+
+### D6u. `/about/nashi_partnery/`, and what is left of «О нас» — 2026-08-19
+
+No frame for this one; it is the section's own picture grid. Fifty-two 25 % columns of a logo over its name, separated by 41 `<hr>`s and led by three empty spacer groups — so the page opened on a screenful of nothing and every fourth logo sat under a stray rule. It is now the `od-figures` grid `/materials/` already uses, four across, with the name as the picture's own `figcaption` so it travels with it when an editor moves the block. `od-figures--logos` is the only new rule: these are logos on white, so the box holds each whole (`contain`) instead of filling it the way `/materials/sticker/`'s photographs do. `od_pages_asset_image()` now omits the `id` attribute rather than writing `"id":0` — a logo pasted into the old page has no `wp-image-N` class to read one out of.
+
+Two of the 49 logos name files that are not on the origin (`ВашКадровыйРесурс.png`, `КадровыйСоветник.png`) and six carry no name. Both are content, and both are left alone rather than guessed at here.
+
+**That closes the «О нас» menu except two pages, and both are deliberate.** `/about/` and `/team/` were out of scope by request. `/about/ostavit-otziv/` **stays on the A6 fallback**: it is a Contact Form 7 form, and rendering one natively means posting to CF7's REST endpoint with its nonce and its spam checks — a feature (plan §B6), not a page design. It is the section's last entry in `LEGACY_EMBED_PAGES`.
+
 ### D7. Video — index 2026-06-04, player 2026-07-02
 
 Figma: index `video` (`706:3315`) + `video-filter` (`1554:17574`) + player `video-page` (`1566:10433`) + mobile `video-page-mob` (`1567:10735`, `1567:11844`) + download (`1581:10334`).

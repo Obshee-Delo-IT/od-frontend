@@ -962,6 +962,33 @@ h2:has(+ .od-tiles) {
   gap: 24px;
 }
 
+/* Three tracks for `/about/experts-review/` and `/about/docs/` — Figma
+   `documents` (`706:3499`) draws 387-wide cards, three across a 1241 row with a
+   40px gutter, which is the same rhythm at one more column. */
+.wp-block-columns.od-assets--3 {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+/* Those cards hold a document's name and nothing else above the button, so the
+   name is the card's title and is set as one. */
+.od-assets--3 .od-asset p {
+  color: var(--gray-9);
+  font-size: var(--font-size-5);
+  line-height: 130%;
+}
+
+/* The mock's «Скачать» spans the whole card, where a `core/button` is as wide as
+   its label. Same shape as the clip column on `/materials/led-board-roliki/`. */
+.od-assets--3 .od-asset-actions .wp-block-button {
+  flex: 1;
+}
+
+.od-assets--3 .od-asset-actions .wp-block-button .wp-block-button__link {
+  display: block;
+  width: 100%;
+  text-align: center;
+}
+
 /* The stacked form is its own block in the flow, so it carries the 40 the grid
    above gets from `margin-bottom` — unless it is the aside of a row, which
    `/materials/disk/` and `/materials/books/` make it: there the row below is
@@ -1055,6 +1082,18 @@ h2:has(+ .od-tiles) {
   object-fit: cover;
 }
 
+/* `/about/nashi_partnery/`: logos on white, not photographs, so the box holds
+   each one whole and gives it something to sit on. */
+/* stylelint-disable-next-line no-descending-specificity -- `.od-card--flush` is
+   `/materials/metodichki/`'s card; no body carries both. */
+.od-figures--logos .wp-block-image img {
+  height: 120px;
+  padding: 16px;
+  border-radius: 12px;
+  background-color: var(--white);
+  object-fit: contain;
+}
+
 /* Inside a card it is `/materials/zakladki/`'s nine bookmarks instead: 1:7
    strips, which need a tall box and the whole strip inside it. */
 .od-asset .od-figures .wp-block-image img {
@@ -1092,6 +1131,339 @@ h2:has(+ .od-tiles) {
   text-align: center;
 }
 
+/* `/about/reviews/` — Figma `Letters-of-appreciation` (`706:3602`) — and the
+   six pages that share it: its five category children and `/about/smi/`. The
+   row is a `core/query` over one category, so a card is the `<li
+   class="wp-block-post">` core renders, not markup of ours.
+
+   The class on the query block is what keeps these rules off the ~80 regional
+   `/contacts/*` pages, which run a query block of their own — a rule on
+   `.wp-block-post-template` alone would restyle every one of them.
+
+   Figma `Frame 33920`: 387 × 515, three to a row with a 40px gutter — a cover
+   flush to the card's edges at 387 × 230, then 25 above the title, 10 between
+   title and excerpt and 25 below, inside a 24px side padding. The tracks are
+   set here rather than left to the block's `columnCount`, because core writes
+   that one into the document head and `content.rendered` does not carry it. */
+.od-post-cards .wp-block-post-template {
+  display: grid;
+  padding-left: 0;
+  gap: 40px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  list-style: none;
+}
+
+.od-post-cards .wp-block-post {
+  display: flex;
+  overflow: hidden;
+  flex-direction: column;
+  padding-bottom: 25px;
+  border-radius: 12px;
+  margin: 0;
+  background-color: var(--white);
+}
+
+/* One shape for every cover, whatever the post was given: the mock's card is a
+   fixed 230-tall band and the featured images behind it are anything from a
+   scanned letter to a 16∶9 still. */
+.od-post-cards .wp-block-post-featured-image {
+  margin: 0 0 25px;
+}
+
+.wp-block-query.od-post-cards .wp-block-post-featured-image img {
+  display: block;
+  width: 100%;
+  height: 230px;
+  object-fit: cover;
+}
+
+.od-post-cards .wp-block-post-title {
+  margin: 0 24px 10px;
+  font-size: var(--font-size-5);
+  line-height: 130%;
+  text-transform: none;
+}
+
+/* Dark, not the site's link red: on this card the title is the card's own
+   label. It reddens on hover, where the card is what a reader is pointing at. */
+.wp-block-query.od-post-cards .wp-block-post-title a {
+  color: var(--gray-9);
+}
+
+.od-post-cards .wp-block-post:hover .wp-block-post-title a {
+  color: var(--red-8);
+}
+
+/* Four lines and an ellipsis — the mock's excerpt is 80px at this size, and a
+   card whose text runs on pushes the whole row's height. */
+.od-post-cards .wp-block-post-excerpt {
+  margin: 0 24px;
+}
+
+.od-post-cards .wp-block-post-excerpt p {
+  display: -webkit-box;
+  overflow: hidden;
+  margin-bottom: 0;
+  -webkit-box-orient: vertical;
+  color: var(--gray-9);
+  font-size: var(--font-size-2);
+  -webkit-line-clamp: 4;
+  line-height: var(--line-height-2);
+}
+
+/* Figma `Pagination Web`: 36 × 36 chips centred under the grid, 80px out from
+   the numbers to the two arrows.
+
+   Three explicit tracks rather than a centred flex row, because core omits the
+   «previous» link on page 1 and the «next» link on the last one — under `flex`
+   the numbers then slide off centre by half an arrow. Naming the column keeps
+   them centred on the grid whichever arrows are there. */
+.od-post-cards .wp-block-query-pagination {
+  display: grid;
+  align-items: center;
+  margin-top: 60px;
+  grid-template-columns: 1fr auto 1fr;
+}
+
+.od-post-cards .wp-block-query-pagination-numbers {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  grid-column: 2;
+}
+
+.od-post-cards .wp-block-query-pagination-previous {
+  margin-right: 80px;
+  grid-column: 1;
+  justify-self: end;
+}
+
+.od-post-cards .wp-block-query-pagination-next {
+  margin-left: 80px;
+  grid-column: 3;
+  justify-self: start;
+}
+
+/* Every chip is the same 36 × 36 circle, the arrows included — core renders
+   those as `«` and `»` once `showLabel` is off. */
+.od-post-cards .wp-block-query-pagination :is(a, span) {
+  display: inline-flex;
+  width: 36px;
+  height: 36px;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-full);
+  color: var(--gray-9);
+  font-size: var(--font-size-3);
+}
+
+.od-post-cards .wp-block-query-pagination .current {
+  background-color: var(--red-8);
+  color: var(--white);
+}
+
+/* `/about/activist-stories/` — Figma `story` (`706:3568`). A video on the left
+   and the person it is of on the right, twenty-five times.
+
+   Figma puts the video at 599 × 398 from x=100 and the text at 540 from x=742,
+   with the text's last line level with the video's bottom edge on every row —
+   so the column is bottom-aligned, not centred, and the pitch between rows is
+   438 against a 398-tall video, which is the 40px gap. Two equal tracks here:
+   the mock's 599/540 leaves a gutter it never uses, and a `core/embed` is 16∶9
+   whatever box it is given. */
+.wp-block-columns.od-story {
+  display: grid;
+  margin-bottom: 40px;
+  gap: 40px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.wp-block-columns.od-story > .wp-block-column:last-child {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+
+/* 29px for the name in the mock, where a bare `h3` here is `--font-size-7`. */
+.wp-block-columns.od-story h3 {
+  margin-bottom: 15px;
+  font-size: var(--font-size-5);
+  line-height: 130%;
+}
+
+.od-story p:last-child {
+  margin-bottom: 0;
+}
+
+/* The row's height is the video's, so the text's last line lands level with its
+   bottom edge — which is what the mock draws. Core's figure margin would push
+   the row 16px taller than the video and break that. */
+.od-story .wp-block-embed {
+  margin-bottom: 0;
+}
+
+/* `/about/udostoverenie/` — Figma `Certificate` (`760:1662`): a hero photo, then
+   the text with a 386-wide rail beside it.
+
+   **Not the mock's 1241 × 508 band.** The library holds this photo at 600 × 445
+   and nothing larger, so that band would be a 2× upscale of a photograph. It is
+   given the mock's *height* instead and takes the width from its own ratio — a
+   1.14× upscale, which stays sharp. */
+.od-hero {
+  margin-bottom: 45px;
+  text-align: center;
+}
+
+/* stylelint-disable-next-line no-descending-specificity -- `.od-card--flush` is
+   `/materials/metodichki/`'s card; no body carries both. */
+.od-hero .wp-block-image img {
+  width: auto;
+  max-width: 100%;
+  height: 508px;
+  border-radius: 12px;
+}
+
+/* Figma: 814 + 40 + 386 = 1240. Written as tracks rather than left to the
+   columns block's `flex-basis`, which core pairs with its own 2em gap and
+   would leave the row 8px short of the grid. */
+.wp-block-columns.od-aside {
+  display: grid;
+  gap: 40px;
+  grid-template-columns: 814fr 386fr;
+}
+
+/* The rail's two cards stack at the mock's 40px, and the card is the `od-asset`
+   card every `/materials/` page uses — same white, same 12px radius.
+
+   `height: auto` undoes the rule that makes a lone aside card as tall as the
+   prose beside it: there are two cards here, and stretching each to the row's
+   height runs the second one down over the footer. */
+.od-aside .wp-block-column > .od-asset {
+  height: auto;
+  margin-bottom: 40px;
+}
+
+.od-aside .wp-block-group.od-asset:last-child {
+  margin-bottom: 0;
+}
+
+/* 31px for «Положение о членстве» in Figma, where a bare `h3` is
+   `--font-size-7`. */
+.od-aside .od-asset h3 {
+  font-size: var(--font-size-5);
+  line-height: 140%;
+}
+
+/* Its «Скачать» spans the card, as drawn. */
+.wp-block-columns.od-aside .od-asset .od-asset-actions .wp-block-button {
+  flex: 1;
+}
+
+.wp-block-columns.od-aside .od-asset .od-asset-actions .wp-block-button .wp-block-button__link {
+  display: block;
+  width: 100%;
+  text-align: center;
+}
+
+/* A contact row: a 24px glyph, 12px, then the link. Figma `Frame 33883` —
+   280 × 56 for the pair, so 6px between the rows.
+
+   `mask-image` over `currentColor` rather than a background copy of the SVG:
+   the icons in `src/shared/ui/assets/icons/` are stroked with `currentColor`,
+   and a `background-image` copy would have to bake the brand red into the file
+   under `public/`. */
+.od-contact {
+  display: flex;
+  align-items: center;
+  margin-bottom: 6px;
+  color: var(--red-8);
+  gap: 12px;
+}
+
+.od-contact::before {
+  display: block;
+  width: 24px;
+  height: 24px;
+  flex: 0 0 auto;
+  background-color: currentcolor;
+  content: '';
+}
+
+.od-contact--phone::before {
+  mask: center / contain no-repeat url('/figma/icons/phone-call.svg');
+}
+
+.od-contact--email::before {
+  mask: center / contain no-repeat url('/figma/icons/email.svg');
+}
+
+/* `/about/ustav/` — Figma `charter` (`706:3695`): a contents column and the
+   charter beside it. Figma: nav 384 from x=103, text 814 from x=527 — 384 + 40
+   + 814 = 1238 against the grid's 1240. */
+.wp-block-columns.od-charter {
+  display: grid;
+  gap: 40px;
+  grid-template-columns: 384fr 814fr;
+}
+
+/* The list follows the reader down a very long document; `align-self: start` is
+   what lets it, since a grid item is stretched by default and a stretched box
+   has nothing left to stick to. */
+.wp-block-columns.od-charter > .wp-block-column:first-child {
+  position: sticky;
+  top: 24px;
+  align-self: start;
+}
+
+/* The mock's column of 374-wide white buttons. It stays a list — nine
+   `core/button` blocks would read as nine unrelated actions, and this is a table
+   of contents.
+
+   **Figma's red «you are here» pill on the first item is not built.** Marking
+   the section a reader is looking at needs a scroll listener, and a WordPress
+   body has no script of its own. */
+.wp-block-list.od-charter-contents {
+  padding-left: 0;
+  margin-bottom: 0;
+  list-style: none;
+}
+
+.od-charter-contents li {
+  margin-bottom: 10px;
+}
+
+.wp-block-columns.od-charter .wp-block-list.od-charter-contents li a {
+  display: block;
+  padding: 9px 20px;
+  border-radius: 8px;
+  background-color: var(--white);
+  color: var(--gray-9);
+  line-height: 140%;
+  transition: background-color 0.2s ease;
+}
+
+.wp-block-columns.od-charter .wp-block-list.od-charter-contents li a:hover {
+  background-color: var(--red-8);
+  color: var(--white);
+  text-decoration: none;
+}
+
+/* The three lines above the charter proper — the approving protocol, whose
+   organisation it is, and which revision this is. */
+.od-charter-preamble {
+  color: var(--gray-9);
+  font-size: var(--font-size-2);
+  line-height: var(--line-height-2);
+}
+
+/* An anchor a link lands on: without this the site header would cover the
+   heading it just scrolled to. */
+.od-charter h2 {
+  margin-top: 45px;
+  scroll-margin-top: 24px;
+  text-transform: none;
+}
+
 @media (--mobile) {
   .od-programme-logo {
     max-width: none;
@@ -1115,6 +1487,52 @@ h2:has(+ .od-tiles) {
 
   h2:has(+ .od-cards, + .od-poster-cards) {
     margin-bottom: 24px;
+  }
+
+  /* The contents list goes above the charter below 900px and stops sticking —
+     a nine-item list pinned to the top of a phone is most of the screen. */
+  .wp-block-columns.od-charter {
+    gap: 24px;
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .wp-block-columns.od-charter > .wp-block-column:first-child {
+    position: static;
+  }
+
+  /* The rail goes under the text below 900px, and the hero takes its own
+     ratio rather than a fixed height. */
+  .wp-block-columns.od-aside {
+    gap: 24px;
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .od-hero {
+    margin-bottom: 24px;
+  }
+
+  .od-hero .wp-block-image img {
+    width: 100%;
+    height: auto;
+  }
+
+  /* The story rows stack below 900px: a 16∶9 video in half a phone is
+     unwatchable, so the video takes the width and its caption sits under it. */
+  .wp-block-columns.od-story {
+    margin-bottom: 24px;
+    gap: 16px;
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  /* One post card per row below 900px, at the same 16px rhythm. */
+  .od-post-cards .wp-block-post-template {
+    gap: 16px;
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .od-post-cards .wp-block-query-pagination {
+    margin-top: 32px;
+    gap: 24px;
   }
 
   /* One card per row below 900px, at the 16px rhythm the mock's phone layout

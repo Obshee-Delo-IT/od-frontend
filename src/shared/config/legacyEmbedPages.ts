@@ -51,6 +51,14 @@
  * `/video/famous-people/` are native routes, which App Router gives precedence
  * over `[...slug]`.
  *
+ * The `/about/reviews/` group — the page and its five category children — came
+ * off on 2026-08-19 (D6p). What put them here was the `[cmsms_sidebar]` beside
+ * the card grid, and `od_pages_post_cards()` drops it: the query block over the
+ * category is the whole page, and `gutenberg.css` draws its cards. That leaves
+ * `/about/ostavit-otziv/` as the section's one remaining entry, and it is here
+ * for a different reason — a Contact Form 7 form, which nothing on this side
+ * renders.
+ *
  * Paths are compared **decoded**, the form `decodeSegments` produces, which is
  * why the one Cyrillic entry is written in Cyrillic rather than as the
  * percent-encoded slug WordPress stores.
@@ -58,12 +66,6 @@
 export const LEGACY_EMBED_PAGES = [
   '/about/',
   '/about/ostavit-otziv/',
-  '/about/reviews/',
-  '/about/reviews/letters/',
-  '/about/reviews/middle/',
-  '/about/reviews/mvd/',
-  '/about/reviews/school/',
-  '/about/reviews/vuz/',
   '/actual/',
   '/contacts/',
   '/get-involved/',

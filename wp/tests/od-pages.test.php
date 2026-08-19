@@ -1060,6 +1060,12 @@ foreach ([
     'od_pages_books',
     'od_pages_team',
     'od_pages_supervisory',
+    'od_pages_post_cards',
+    'od_pages_documents',
+    'od_pages_activist_stories',
+    'od_pages_udostoverenie',
+    'od_pages_ustav',
+    'od_pages_partners',
 ] as $transform) {
     $threw = false;
     try {
@@ -1069,6 +1075,175 @@ foreach ([
     }
     od_test($transform . ': unexpected input is refused, not half-converted', $threw);
 }
+
+/* ------------------------------------------------- od_pages_post_cards (D6p) */
+
+$reviews = file_get_contents( __DIR__ . '/fixtures/about-reviews.before.html' );
+$smi     = file_get_contents( __DIR__ . '/fixtures/about-smi.before.html' );
+
+od_test( 'the reviews fixture really carries the sidebar shortcode', false !== strpos( $reviews, '[cmsms_sidebar' ) );
+od_test( 'the reviews fixture really carries the dead MailPoet form', false !== strpos( $reviews, '[wysija_form' ) );
+od_test( 'the reviews fixture really carries the old theme CSS', false !== strpos( $reviews, '<style' ) );
+
+$cards = od_pages_post_cards( $reviews, 0 );
+
+od_test( 'post cards: the sidebar shortcode is gone', false === strpos( $cards, '[cmsms_sidebar' ) );
+od_test( 'post cards: the MailPoet form is gone', false === strpos( $cards, '[wysija_form' ) );
+od_test( 'post cards: the old theme CSS is gone', false === strpos( $cards, '<style' ) );
+od_test( 'post cards: the two-column shell is gone', false === strpos( $cards, 'wp-block-column' ) );
+od_test( 'post cards: the query keeps its own id', false !== strpos( $cards, '"queryId":96' ) );
+od_test( 'post cards: the query keeps its own category', false !== strpos( $cards, '"category":[570]' ) );
+od_test( 'post cards: the query keeps its page size', false !== strpos( $cards, '"perPage":12' ) );
+od_test( 'post cards: the block is classed for gutenberg.css', false !== strpos( $cards, '"className":"od-post-cards"' ) );
+od_test( 'post cards: and carries the class in its markup too', false !== strpos( $cards, 'class="wp-block-query od-post-cards"' ) );
+od_test( 'post cards: three to a row', false !== strpos( $cards, '"columnCount":3' ) );
+od_test( 'post cards: the cover links to the post', false !== strpos( $cards, '<!-- wp:post-featured-image {"isLink":true} /-->' ) );
+od_test( 'post cards: so does the title', false !== strpos( $cards, '<!-- wp:post-title {"isLink":true} /-->' ) );
+od_test( 'post cards: the excerpt is kept', false !== strpos( $cards, '<!-- wp:post-excerpt /-->' ) );
+od_test( 'post cards: the date is dropped — the mock shows none', false === strpos( $cards, 'post-date' ) );
+od_test( 'post cards: pagination survives', 1 === substr_count( $cards, '<!-- wp:query-pagination ' ) );
+od_test( 'post cards: with all three of its parts', 3 === substr_count( $cards, '<!-- wp:query-pagination-' ) );
+od_test( 'post cards: its arrows are the mock\'s chips, not spelled-out labels', false !== strpos( $cards, '<!-- wp:query-pagination {"paginationArrow":"chevron","showLabel":false} -->' ) );
+od_test( 'post cards: it is idempotent', od_pages_post_cards( $cards, 0 ) === $cards );
+
+$smiCards = od_pages_post_cards( $smi, 0 );
+
+od_test( 'post cards: /about/smi/ keeps its own query id', false !== strpos( $smiCards, '"queryId":95' ) );
+od_test( 'post cards: /about/smi/ keeps its own category', false !== strpos( $smiCards, '"category":[79]' ) );
+od_test( 'post cards: the two pages differ only in that query', str_replace( array( '"queryId":95', '"category":[79]' ), array( '"queryId":96', '"category":[570]' ), $smiCards ) === $cards );
+
+od_test( 'post cards: every /about/ post-card page is registered', 7 === count( array_filter( od_pages_registry(), function ( $entry ) {
+	return 'od_pages_post_cards' === $entry['fix'];
+} ) ) );
+
+/* -------------------------------------------------- od_pages_documents (D6q) */
+
+$experts = file_get_contents( __DIR__ . '/fixtures/about-experts-review.before.html' );
+$docs    = file_get_contents( __DIR__ . '/fixtures/about-docs.before.html' );
+
+od_test( 'the experts fixture really carries 33 download rows', 33 === count( od_pages_document_rows( $experts ) ) );
+od_test( 'the docs fixture really carries 23 of them', 23 === count( od_pages_document_rows( $docs ) ) );
+
+$rows = od_pages_document_rows( $experts );
+od_test( 'document rows: the name comes back without its markup', 'Комплекное социокультурное исследование медиасреды видеопродуктов ООО "Общее Дело" - 2020.pdf' === $rows[0]['title'] );
+od_test( 'document rows: so does the file it links to', 'https://yadi.sk/i/EuouI-VMlqZndA' === $rows[0]['href'] );
+
+$built = od_pages_documents( $experts, 0 );
+
+od_test( 'documents: one card per document', 33 === substr_count( $built, 'wp-block-column od-asset' ) );
+od_test( 'documents: three to a row', 11 === substr_count( $built, '"className":"od-assets od-assets--3"' ) );
+od_test( 'documents: every card has its download', 33 === substr_count( $built, '<!-- wp:buttons {"className":"od-asset-actions"} -->' ) );
+od_test( 'documents: the button is the mock\'s outline one', 33 === substr_count( $built, '"className":"is-style-outline"' ) );
+od_test( 'documents: and reads «Скачать» on all of them', 33 === substr_count( $built, '>Скачать</a>' ) );
+od_test( 'documents: the stored label is gone', false === strpos( $built, 'Смотреть/Скачать' ) );
+od_test( 'documents: the separators are gone', false === strpos( $built, 'wp:separator' ) );
+od_test( 'documents: the MailPoet form is gone', false === strpos( $built, '[wysija_form' ) );
+od_test( 'documents: the first file is still linked', false !== strpos( $built, 'href="https://yadi.sk/i/EuouI-VMlqZndA"' ) );
+od_test( 'documents: it is idempotent', od_pages_documents( $built, 0 ) === $built );
+
+$builtDocs = od_pages_documents( $docs, 0 );
+od_test( 'documents: /about/docs/ splits its row 66.67/33.33 and is read the same way', 23 === substr_count( $builtDocs, 'wp-block-column od-asset' ) );
+od_test( 'documents: its last row holds the two left over', 8 === substr_count( $builtDocs, '"className":"od-assets od-assets--3"' ) );
+od_test( 'documents: a local upload keeps its root-relative path for the pipeline to fix', false !== strpos( $builtDocs, 'href="/wp-content/uploads/2019/03/2012-Устав-ОБЩЕЕ-ДЕЛО.pdf"' ) );
+
+/* ------------------------------------------ od_pages_activist_stories (D6r) */
+
+$stories = file_get_contents( __DIR__ . '/fixtures/about-activist-stories.before.html' );
+
+od_test( 'the stories fixture really carries 25 video rows', 25 === count( od_pages_story_rows( $stories ) ) );
+
+$storyRows = od_pages_story_rows( $stories );
+
+od_test( 'story rows: the url is unescaped back out of the block attribute', 'https://youtu.be/5WFYZZRhjfo' === $storyRows[0]['url'] );
+od_test( 'story rows: the name is the row\'s <strong>', 'Свиридов Алексей Владимирович' === $storyRows[0]['name'] );
+od_test( 'story rows: the joining dash goes and the sentence starts itself', 'Режиссёр, руководитель киностудии ApostolFilms благодарит организацию ООО «Общее Дело» за неоценимый вклад в нравственное просвещение молодёжи' === $storyRows[0]['about'] );
+od_test( 'story rows: a row that never had a dash reads the same way', 'Пастухов Сергей' === $storyRows[22]['name'] && 0 === mb_strpos( $storyRows[22]['about'], 'Родом из Магадана' ) );
+od_test( 'story rows: the text half is read whichever column it sits in', 'https://youtu.be/JZRKwu3yPr8' === $storyRows[1]['url'] && 'Моисеев Олег Олегович' === $storyRows[1]['name'] );
+
+$built = od_pages_activist_stories( $stories, 0 );
+
+od_test( 'stories: one row per video', 25 === substr_count( $built, '"className":"od-story"' ) );
+od_test( 'stories: each row is two columns', 50 === substr_count( $built, '<!-- wp:column -->' ) );
+od_test( 'stories: every video is kept', 25 === substr_count( $built, '<!-- wp:embed ' ) );
+od_test( 'stories: the video is always the first column', 25 === substr_count( $built, "<div class=\"wp-block-columns od-story\"><!-- wp:column -->\n<div class=\"wp-block-column\">\n<!-- wp:embed " ) );
+od_test( 'stories: the name is a heading', 25 === substr_count( $built, '<!-- wp:heading {"level":3} -->' ) );
+od_test( 'stories: the MailPoet form is gone', false === strpos( $built, '[wysija_form' ) );
+od_test( 'stories: the separators are gone', false === strpos( $built, 'wp:separator' ) );
+od_test( 'stories: it is idempotent', od_pages_activist_stories( $built, 0 ) === $built );
+
+od_test( 'od_pages_sentence_case upper-cases a Cyrillic first letter', 'Режиссёр' === od_pages_sentence_case( 'режиссёр' ) );
+od_test( 'od_pages_sentence_case leaves an empty string alone', '' === od_pages_sentence_case( '' ) );
+
+/* ----------------------------------------------- od_pages_udostoverenie (D6s) */
+
+$certificate = file_get_contents( __DIR__ . '/fixtures/about-udostoverenie.before.html' );
+$built       = od_pages_udostoverenie( $certificate, 0 );
+
+od_test( 'certificate: the floated photo becomes the hero', false !== strpos( $built, '"className":"od-hero"' ) && false !== strpos( $built, '"id":20112' ) );
+od_test( 'certificate: the hero image is out of the prose', 1 === substr_count( $built, '<!-- wp:image ' ) );
+od_test( 'certificate: the row is 814 + 386', false !== strpos( $built, '"width":"65.65%"' ) && false !== strpos( $built, '"width":"31.13%"' ) );
+od_test( 'certificate: the lead is set as one', false !== strpos( $built, '<p><strong>Общероссийская общественная организация' ) );
+od_test( 'certificate: the note stops where the contacts start', false !== strpos( $built, '<p>Если у вас возникают сомнения в компетентности обратившегося к вам человека или группы лиц – пожалуйста, свяжитесь с нами для подтверждения.</p>' ) );
+od_test( 'certificate: the phone is a row of its own', false !== strpos( $built, '<p class="od-contact od-contact--phone"><a href="tel:+79629507561">+7 (962) 950-75-61</a></p>' ) );
+od_test( 'certificate: so is the mail', false !== strpos( $built, '<p class="od-contact od-contact--email"><a href="mailto:post27@bk.ru">post27@bk.ru</a></p>' ) );
+od_test( 'certificate: Skype is dropped', false === strpos( $built, 'aleksey.od' ) );
+od_test( 'certificate: the contact sentence is not left in the prose too', 1 === substr_count( $built, 'свяжитесь с нами для подтверждения' ) );
+od_test( 'certificate: the membership document keeps its link', false !== strpos( $built, 'href="/wp-content/uploads/2019/10/Положение-о-членстве-4.docx"' ) );
+od_test( 'certificate: under the heading the mock gives it', false !== strpos( $built, '<h3 class="wp-block-heading">Положение о членстве</h3>' ) );
+od_test( 'certificate: the MailPoet form is gone', false === strpos( $built, '[wysija_form' ) );
+od_test( 'certificate: the closing paragraph is kept', false !== strpos( $built, 'С уважением, председатель правления' ) );
+od_test( 'certificate: it is idempotent', od_pages_udostoverenie( $built, 0 ) === $built );
+
+/* ------------------------------------------------------ od_pages_ustav (D6t) */
+
+$charter = file_get_contents( __DIR__ . '/fixtures/about-ustav.before.html' );
+
+od_test( 'the charter fixture really holds 361 paragraphs in 4 blocks', 361 === substr_count( $charter, '<p' ) && 4 === substr_count( $charter, '<!-- wp:paragraph' ) );
+od_test( 'and its headings really arrive in three shapes', 4 === substr_count( $charter, '<ol start=' ) && false !== strpos( $charter, '<p>1. ОБЩИЕ ПОЛОЖЕНИЯ.</p>' ) && false !== strpos( $charter, 'проводимых Организацией. 5. КОНТРОЛЬНО' ) );
+
+$built = od_pages_ustav( $charter, 0 );
+
+od_test( 'charter: nine sections, nine headings', 9 === substr_count( $built, '<!-- wp:heading' ) );
+od_test( 'charter: each is an anchor the list can reach', 9 === substr_count( $built, '<h2 class="wp-block-heading" id="ustav-' ) );
+od_test( 'charter: the contents list links all nine', 9 === substr_count( $built, '<li><a href="#ustav-' ) );
+od_test( 'charter: the first heading is sentence-cased, not shouted', false !== strpos( $built, '<h2 class="wp-block-heading" id="ustav-1">Общие положения</h2>' ) );
+od_test( 'charter: the one buried mid-paragraph is lifted out', false !== strpos( $built, '<h2 class="wp-block-heading" id="ustav-5">Контрольно-ревизионные органы организации</h2>' ) );
+od_test( 'charter: and the paragraph it was stuck to keeps its own text', false !== strpos( $built, '<p>- принимать участие во всех мероприятиях, организуемых и проводимых Организацией.</p>' ) );
+od_test( 'charter: the four one-item lists are gone', false === strpos( $built, '<ol start=' ) );
+od_test( 'charter: every paragraph is a block of its own', 350 === substr_count( $built, '<!-- wp:paragraph' ) );
+od_test( 'charter: which accounts for all 361 less the headings, the title and the download row', 361 === 350 + 9 + 1 + 1 );
+od_test( 'charter: the row is the mock\'s 384 + 814', false !== strpos( $built, '"width":"30.97%"' ) && false !== strpos( $built, '"width":"65.65%"' ) );
+od_test( 'charter: the duplicate «Положение о членстве» download is dropped', false === strpos( $built, 'Положение о членстве' ) );
+od_test( 'charter: so is the «УСТАВ» line PageHeader already draws', false === strpos( $built, '<p class="od-charter-preamble"><strong>УСТАВ</strong></p>' ) );
+od_test( 'charter: the approving protocol is kept', false !== strpos( $built, 'УТВЕРЖДЕН СЪЕЗДОМ ДЕЛЕГАТОВ ПРОТОКОЛ №3' ) );
+od_test( 'charter: the migrator\'s inline font spans are gone', false === strpos( $built, 'font-size: 12pt' ) );
+od_test( 'charter: it is idempotent', od_pages_ustav( $built, 0 ) === $built );
+
+$threw = false;
+try {
+	od_pages_ustav( str_replace( 'ПОРЯДОК ВНЕСЕНИЯ ИЗМЕНЕНИЙ В УСТАВ', 'что-то другое', $charter ), 0 );
+} catch ( RuntimeException $e ) {
+	$threw = true;
+}
+od_test( 'charter: a missing section heading is refused, not silently dropped', $threw );
+
+/* --------------------------------------------------- od_pages_partners (D6u) */
+
+$partners = file_get_contents( __DIR__ . '/fixtures/about-nashi-partnery.before.html' );
+
+od_test( 'the partners fixture really carries 49 logos and 41 rules', 49 === substr_count( $partners, '<img' ) && 41 === substr_count( $partners, '<!-- wp:separator' ) );
+
+$built = od_pages_partners( $partners, 0 );
+
+od_test( 'partners: every logo is kept', 49 === substr_count( $built, '<!-- wp:image' ) );
+od_test( 'partners: four to a row, thirteen rows', 13 === substr_count( $built, '"className":"od-figures od-figures--4 od-figures--logos"' ) );
+od_test( 'partners: the name travels with the picture as its caption', false !== strpos( $built, '<figcaption class="wp-element-caption">Агентство стратегических инициатив</figcaption>' ) );
+od_test( 'partners: a logo with no name gets no empty caption', false === strpos( $built, '<figcaption class="wp-element-caption"></figcaption>' ) );
+od_test( 'partners: no image block claims id 0', false === strpos( $built, '"id":0' ) );
+od_test( 'partners: the rules between rows are gone', false === strpos( $built, 'wp:separator' ) );
+od_test( 'partners: so are the three empty spacer groups', false === strpos( $built, 'wp:group' ) );
+od_test( 'partners: the MailPoet form is gone', false === strpos( $built, '[wysija_form' ) );
+od_test( 'partners: it is idempotent', od_pages_partners( $built, 0 ) === $built );
 
 /* ------------------------------------------------------- the registry itself */
 

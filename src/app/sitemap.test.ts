@@ -140,7 +140,7 @@ describe('sitemap', () => {
       if (isPagesRequest(path)) {
         return pagesIndex([
           'https://wp.test/healthy-russia/',
-          'https://wp.test/about/reviews/',
+          'https://wp.test/about/ostavit-otziv/',
           'https://wp.test/news/',
           'https://wp.test/%D0%B4%D0%BE%D0%B1%D1%80%D0%BE%D0%B2%D0%BE%D0%BB%D1%8C%D1%87%D0%B5%D1%81%D1%82%D0%B2%D0%BE/',
         ]);
@@ -151,9 +151,9 @@ describe('sitemap', () => {
     const urls = (await sitemap()).map((entry) => entry.url);
 
     expect(urls).toContain(`${siteUrl}/healthy-russia/`);
-    // `/about/reviews/` is on the exception list, `/news/` is a static entry —
-    // the latter exactly once, not twice.
-    expect(urls).not.toContain(`${siteUrl}/about/reviews/`);
+    // `/about/ostavit-otziv/` is on the exception list, `/news/` is a static
+    // entry — the latter exactly once, not twice.
+    expect(urls).not.toContain(`${siteUrl}/about/ostavit-otziv/`);
     expect(urls.filter((url) => url === `${siteUrl}/news/`)).toHaveLength(1);
     // Matched decoded, published encoded: `<loc>` has to be URL-escaped.
     expect(urls.some((url) => url.includes('%D0%B4%D0%BE'))).toBe(false);
