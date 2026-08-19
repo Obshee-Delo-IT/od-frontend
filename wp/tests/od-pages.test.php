@@ -868,6 +868,7 @@ foreach ([
     'od_pages_documents',
     'od_pages_activist_stories',
     'od_pages_udostoverenie',
+    'od_pages_ustav',
 ] as $transform) {
     $threw = false;
     try {
@@ -995,6 +996,39 @@ od_test( 'certificate: under the heading the mock gives it', false !== strpos( $
 od_test( 'certificate: the MailPoet form is gone', false === strpos( $built, '[wysija_form' ) );
 od_test( 'certificate: the closing paragraph is kept', false !== strpos( $built, 'С уважением, председатель правления' ) );
 od_test( 'certificate: it is idempotent', od_pages_udostoverenie( $built, 0 ) === $built );
+
+/* ------------------------------------------------------ od_pages_ustav (D6t) */
+
+$charter = file_get_contents( __DIR__ . '/fixtures/about-ustav.before.html' );
+
+od_test( 'the charter fixture really holds 361 paragraphs in 4 blocks', 361 === substr_count( $charter, '<p' ) && 4 === substr_count( $charter, '<!-- wp:paragraph' ) );
+od_test( 'and its headings really arrive in three shapes', 4 === substr_count( $charter, '<ol start=' ) && false !== strpos( $charter, '<p>1. ОБЩИЕ ПОЛОЖЕНИЯ.</p>' ) && false !== strpos( $charter, 'проводимых Организацией. 5. КОНТРОЛЬНО' ) );
+
+$built = od_pages_ustav( $charter, 0 );
+
+od_test( 'charter: nine sections, nine headings', 9 === substr_count( $built, '<!-- wp:heading' ) );
+od_test( 'charter: each is an anchor the list can reach', 9 === substr_count( $built, '<h2 class="wp-block-heading" id="ustav-' ) );
+od_test( 'charter: the contents list links all nine', 9 === substr_count( $built, '<li><a href="#ustav-' ) );
+od_test( 'charter: the first heading is sentence-cased, not shouted', false !== strpos( $built, '<h2 class="wp-block-heading" id="ustav-1">Общие положения</h2>' ) );
+od_test( 'charter: the one buried mid-paragraph is lifted out', false !== strpos( $built, '<h2 class="wp-block-heading" id="ustav-5">Контрольно-ревизионные органы организации</h2>' ) );
+od_test( 'charter: and the paragraph it was stuck to keeps its own text', false !== strpos( $built, '<p>- принимать участие во всех мероприятиях, организуемых и проводимых Организацией.</p>' ) );
+od_test( 'charter: the four one-item lists are gone', false === strpos( $built, '<ol start=' ) );
+od_test( 'charter: every paragraph is a block of its own', 350 === substr_count( $built, '<!-- wp:paragraph' ) );
+od_test( 'charter: which accounts for all 361 less the headings, the title and the download row', 361 === 350 + 9 + 1 + 1 );
+od_test( 'charter: the row is the mock\'s 384 + 814', false !== strpos( $built, '"width":"30.97%"' ) && false !== strpos( $built, '"width":"65.65%"' ) );
+od_test( 'charter: the duplicate «Положение о членстве» download is dropped', false === strpos( $built, 'Положение о членстве' ) );
+od_test( 'charter: so is the «УСТАВ» line PageHeader already draws', false === strpos( $built, '<p class="od-charter-preamble"><strong>УСТАВ</strong></p>' ) );
+od_test( 'charter: the approving protocol is kept', false !== strpos( $built, 'УТВЕРЖДЕН СЪЕЗДОМ ДЕЛЕГАТОВ ПРОТОКОЛ №3' ) );
+od_test( 'charter: the migrator\'s inline font spans are gone', false === strpos( $built, 'font-size: 12pt' ) );
+od_test( 'charter: it is idempotent', od_pages_ustav( $built, 0 ) === $built );
+
+$threw = false;
+try {
+	od_pages_ustav( str_replace( 'ПОРЯДОК ВНЕСЕНИЯ ИЗМЕНЕНИЙ В УСТАВ', 'что-то другое', $charter ), 0 );
+} catch ( RuntimeException $e ) {
+	$threw = true;
+}
+od_test( 'charter: a missing section heading is refused, not silently dropped', $threw );
 
 /* ------------------------------------------------------- the registry itself */
 

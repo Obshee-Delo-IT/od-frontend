@@ -1219,11 +1219,27 @@ function od_pages_image_block(string $id, string $src, string $alt, string $href
 }
 
 /** A `core/heading` block. */
-function od_pages_heading(int $level, string $text): string
+function od_pages_heading(int $level, string $text, string $anchor = ''): string
 {
-    $attrs = $level === 2 ? '' : sprintf(' {"level":%d}', $level);
+    $attrs = [];
+    if ($level !== 2) {
+        $attrs['level'] = $level;
+    }
+    if ($anchor !== '') {
+        $attrs['anchor'] = $anchor;
+    }
 
-    return sprintf("<!-- wp:heading%s -->\n<h%d class=\"wp-block-heading\">%s</h%d>\n<!-- /wp:heading -->\n\n", $attrs, $level, $text, $level);
+    $json = $attrs === [] ? '' : ' ' . json_encode($attrs, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+    $id   = $anchor === '' ? '' : sprintf(' id="%s"', od_attr($anchor));
+
+    return sprintf(
+        "<!-- wp:heading%s -->\n<h%d class=\"wp-block-heading\"%s>%s</h%d>\n<!-- /wp:heading -->\n\n",
+        $json,
+        $level,
+        $id,
+        $text,
+        $level
+    );
 }
 
 /** A `core/paragraph` block. */
@@ -2840,6 +2856,187 @@ function od_pages_contact_row(string $kind, string $href, string $label): string
 }
 
 /**
+ * The nine sections of the charter, in order, as the mock's contents list names
+ * them and as the stored text spells them.
+ *
+ * `match` is the upper-case string to find in `post_content` — it is what the
+ * three shapes the headings arrive in have in common. `title` is what the page
+ * shows: Figma sets them sentence-cased, and this is content rather than a
+ * `text-transform`, for the reason `docs/wp-page-redesign.md` gives.
+ */
+const OD_USTAV_SECTIONS = [
+    ['id' => 'ustav-1', 'match' => 'ОБЩИЕ ПОЛОЖЕНИЯ', 'title' => 'Общие положения'],
+    ['id' => 'ustav-2', 'match' => 'ЦЕЛИ И НАПРАВЛЕНИЯ ДЕЯТЕЛЬНОСТИ ОРГАНИЗАЦИИ. ПРАВА И ОБЯЗАННОСТИ ОРГАНИЗАЦИИ', 'title' => 'Цели и направления деятельности организации. Права и обязанности организации'],
+    ['id' => 'ustav-3', 'match' => 'ПРАВА И ОБЯЗАННОСТИ ЧЛЕНОВ ОРГАНИЗАЦИИ', 'title' => 'Права и обязанности членов организации'],
+    ['id' => 'ustav-4', 'match' => 'СТРУКТУРА ОРГАНИЗАЦИИ', 'title' => 'Структура организации'],
+    ['id' => 'ustav-5', 'match' => 'КОНТРОЛЬНО-РЕВИЗИОННЫЕ ОРГАНЫ ОРГАНИЗАЦИИ', 'title' => 'Контрольно-ревизионные органы организации'],
+    ['id' => 'ustav-6', 'match' => 'СРЕДСТВА, ИМУЩЕСТВО И ВЕДЕНИЕ УЧЕТА В ОРГАНИЗАЦИИ', 'title' => 'Средства, имущество и ведение учёта в организации'],
+    ['id' => 'ustav-7', 'match' => 'ПРЕДПРИНИМАТЕЛЬСКАЯ ДЕЯТЕЛЬНОСТЬ', 'title' => 'Предпринимательская деятельность'],
+    ['id' => 'ustav-8', 'match' => 'ПОРЯДОК РЕОРГАНИЗАЦИИ И ЛИКВИДАЦИИ ОРГАНИЗАЦИИ', 'title' => 'Порядок реорганизации и ликвидации организации'],
+    ['id' => 'ustav-9', 'match' => 'ПОРЯДОК ВНЕСЕНИЯ ИЗМЕНЕНИЙ В УСТАВ', 'title' => 'Порядок внесения изменений в устав'],
+];
+
+/**
+ * `/about/ustav/` — Figma `charter` (`706:3695`).
+ *
+ * 361 paragraphs in four `wp:paragraph` blocks, with the charter's nine section
+ * headings buried in them in **three different shapes**: five as their own
+ * numbered paragraph («1. ОБЩИЕ ПОЛОЖЕНИЯ.»), four as a one-item `<ol
+ * start="6"><li>`, and the fifth appended to the end of the paragraph before it
+ * («…проводимых Организацией. 5. КОНТРОЛЬНО-РЕВИЗИОННЫЕ ОРГАНЫ ОРГАНИЗАЦИИ»).
+ * Each is found by its upper-case text and replaced by a marker, which is what
+ * makes the three shapes one thing to split on.
+ *
+ * Out of that comes the mock: a sticky contents list in a 384-wide column and
+ * the charter in the 814 beside it, each section an `<h2>` the list links to.
+ * Every paragraph becomes a block of its own — the migrator left them as raw
+ * `<p>`s inside four blocks, which is one thing to edit rather than 361.
+ *
+ * **The headings are written sentence-cased**, not lower-cased by CSS: the
+ * stored text shouts, Figma does not, and a `text-transform` would be invisible
+ * to an editor and to a grep (`docs/wp-page-redesign.md` §4).
+ *
+ * **The mock draws no «you are here» state on the list** and neither does this:
+ * a scrollspy needs JavaScript, and there is none to be had in a WordPress body.
+ * The links work; the highlight is the one thing in the frame that is not built.
+ *
+ * **The «Положение о членстве: Скачать» line at the top goes.** The mock has no
+ * such row, and the same document is a card of its own on
+ * `/about/udostoverenie/` — see `od_pages_udostoverenie()`.
+ *
+ * @param string $content   Stored `post_content`.
+ * @param int    $_filmTagId Unused: this page carries no film row.
+ * @return string Rewritten content, or `$content` unchanged if it is already in
+ *                the target shape.
+ * @throws RuntimeException when a section heading cannot be found.
+ */
+function od_pages_ustav(string $content, int $_filmTagId = 0): string
+{
+    if (od_has_block_class($content, 'od-charter')) {
+        return $content; // Already converted — leave the editor's copy alone.
+    }
+
+    $marked = $content;
+    foreach (OD_USTAV_SECTIONS as $index => $section) {
+        $marked = od_pages_mark_heading($marked, $section['match'], sprintf('@@od-ustav-%d@@', $index));
+    }
+
+    $parts = preg_split('/@@od-ustav-(\d+)@@/u', $marked, -1, PREG_SPLIT_DELIM_CAPTURE);
+    if (count($parts) !== 2 * count(OD_USTAV_SECTIONS) + 1) {
+        throw new RuntimeException(sprintf('unexpected input: %d section boundaries', (count($parts) - 1) / 2));
+    }
+
+    $body = '';
+    foreach (od_pages_ustav_paragraphs($parts[0]) as $paragraph) {
+        // The download row the mock has no place for — `/about/udostoverenie/`
+        // carries that document as a card — and the «УСТАВ» line, which is the
+        // page title `PageHeader` already draws.
+        if (strpos($paragraph, 'Положение о членстве') !== false || strip_tags($paragraph) === 'УСТАВ') {
+            continue;
+        }
+        $body .= od_pages_classed_paragraph($paragraph, 'od-charter-preamble');
+    }
+
+    for ($i = 1; $i < count($parts); $i += 2) {
+        $section = OD_USTAV_SECTIONS[(int) $parts[$i]];
+        $body   .= od_pages_heading(2, $section['title'], $section['id']);
+        foreach (od_pages_ustav_paragraphs($parts[$i + 1]) as $paragraph) {
+            $body .= od_pages_paragraph($paragraph);
+        }
+    }
+
+    return od_pages_columns([
+        ['width' => '30.97%', 'blocks' => od_pages_ustav_contents()],
+        ['width' => '65.65%', 'blocks' => $body],
+    ], 'od-charter') . "\n";
+}
+
+/**
+ * Replace one charter heading, whatever markup it arrived in, with `$marker`.
+ *
+ * Three shapes, tried in order: the `<ol start="N"><li>` core's list block left,
+ * a numbered paragraph of its own, and a heading run onto the end of the
+ * paragraph before it — that last one closes the paragraph it was stuck to.
+ *
+ * @throws RuntimeException when none of the three matches.
+ */
+function od_pages_mark_heading(string $content, string $heading, string $marker): string
+{
+    $quoted = preg_quote($heading, '#');
+
+    $patterns = [
+        '#<ol[^>]*>\s*<li>\s*' . $quoted . '\.?\s*</li>\s*</ol>#u' => $marker,
+        '#<p[^>]*>\s*\d+\.\s*' . $quoted . '\.?\s*</p>#u' => $marker,
+        '#\s*\d+\.\s*' . $quoted . '\.?\s*(?=</p>)#u' => '</p>' . $marker . '<p>',
+    ];
+
+    foreach ($patterns as $pattern => $replacement) {
+        $replaced = preg_replace($pattern, $replacement, $content, 1, $count);
+        if ($count === 1) {
+            return $replaced;
+        }
+    }
+
+    throw new RuntimeException(sprintf('unexpected input: heading «%s» not found', $heading));
+}
+
+/**
+ * The `<p>`s of one slice of the charter, as plain text: the migrator's inline
+ * `<span style="font-size: 12pt">` goes, `<em>` and `<strong>` stay.
+ *
+ * @return array<int, string>
+ */
+function od_pages_ustav_paragraphs(string $html): array
+{
+    preg_match_all('#<p[^>]*>(.*?)</p>#s', $html, $found);
+
+    $paragraphs = [];
+    foreach ($found[1] as $paragraph) {
+        $text = od_pages_inline_text(strip_tags($paragraph, '<em><strong><a><br>'));
+        $text = trim(str_replace('&nbsp;', ' ', $text));
+        $text = trim(preg_replace('#\s+#u', ' ', $text));
+        if ($text !== '') {
+            $paragraphs[] = $text;
+        }
+    }
+
+    return $paragraphs;
+}
+
+/**
+ * The contents list — a `core/list` of in-page links, which is the mock's column
+ * of buttons and, unlike a set of nine `core/button` blocks, still reads as a
+ * list of links with nothing but CSS removed.
+ */
+function od_pages_ustav_contents(): string
+{
+    $items = '';
+    foreach (OD_USTAV_SECTIONS as $section) {
+        $items .= sprintf(
+            "<!-- wp:list-item -->\n<li><a href=\"#%s\">%s</a></li>\n<!-- /wp:list-item -->\n",
+            $section['id'],
+            od_attr($section['title'])
+        );
+    }
+
+    return "<!-- wp:list {\"className\":\"od-charter-contents\"} -->\n"
+        . "<ul class=\"wp-block-list od-charter-contents\">\n" . $items . "</ul>\n<!-- /wp:list -->\n";
+}
+
+/**
+ * A paragraph with a class of its own.
+ */
+function od_pages_classed_paragraph(string $text, string $className): string
+{
+    return sprintf(
+        "<!-- wp:paragraph {\"className\":\"%s\"} -->\n<p class=\"%s\">%s</p>\n<!-- /wp:paragraph -->\n\n",
+        $className,
+        $className,
+        $text
+    );
+}
+
+/**
  * Block attributes as WordPress writes them: no escaped slashes, no unicode
  * escapes, and the key order the block had.
  */
@@ -2961,6 +3158,11 @@ function od_pages_registry(): array
             'label' => 'D6m · /materials/autosticker/ — Figma `car sticker` (966:8388)',
             'path' => 'materials/autosticker',
             'fix' => 'od_pages_autosticker',
+        ],
+        [
+            'label' => 'D6t · /about/ustav/ — Figma `charter` (706:3695)',
+            'path' => 'about/ustav',
+            'fix' => 'od_pages_ustav',
         ],
         [
             'label' => 'D6s · /about/udostoverenie/ — Figma `Certificate` (760:1662)',

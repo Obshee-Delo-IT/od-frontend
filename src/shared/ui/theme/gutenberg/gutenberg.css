@@ -1347,6 +1347,73 @@ h2:has(+ .od-tiles) {
   mask: center / contain no-repeat url('/figma/icons/email.svg');
 }
 
+/* `/about/ustav/` — Figma `charter` (`706:3695`): a contents column and the
+   charter beside it. Figma: nav 384 from x=103, text 814 from x=527 — 384 + 40
+   + 814 = 1238 against the grid's 1240. */
+.wp-block-columns.od-charter {
+  display: grid;
+  gap: 40px;
+  grid-template-columns: 384fr 814fr;
+}
+
+/* The list follows the reader down a very long document; `align-self: start` is
+   what lets it, since a grid item is stretched by default and a stretched box
+   has nothing left to stick to. */
+.wp-block-columns.od-charter > .wp-block-column:first-child {
+  position: sticky;
+  top: 24px;
+  align-self: start;
+}
+
+/* The mock's column of 374-wide white buttons. It stays a list — nine
+   `core/button` blocks would read as nine unrelated actions, and this is a table
+   of contents.
+
+   **Figma's red «you are here» pill on the first item is not built.** Marking
+   the section a reader is looking at needs a scroll listener, and a WordPress
+   body has no script of its own. */
+.wp-block-list.od-charter-contents {
+  padding-left: 0;
+  margin-bottom: 0;
+  list-style: none;
+}
+
+.od-charter-contents li {
+  margin-bottom: 10px;
+}
+
+.wp-block-columns.od-charter .wp-block-list.od-charter-contents li a {
+  display: block;
+  padding: 9px 20px;
+  border-radius: 8px;
+  background-color: var(--white);
+  color: var(--gray-9);
+  line-height: 140%;
+  transition: background-color 0.2s ease;
+}
+
+.wp-block-columns.od-charter .wp-block-list.od-charter-contents li a:hover {
+  background-color: var(--red-8);
+  color: var(--white);
+  text-decoration: none;
+}
+
+/* The three lines above the charter proper — the approving protocol, whose
+   organisation it is, and which revision this is. */
+.od-charter-preamble {
+  color: var(--gray-9);
+  font-size: var(--font-size-2);
+  line-height: var(--line-height-2);
+}
+
+/* An anchor a link lands on: without this the site header would cover the
+   heading it just scrolled to. */
+.od-charter h2 {
+  margin-top: 45px;
+  scroll-margin-top: 24px;
+  text-transform: none;
+}
+
 @media (--mobile) {
   .od-programme-logo {
     max-width: none;
@@ -1370,6 +1437,17 @@ h2:has(+ .od-tiles) {
 
   h2:has(+ .od-cards, + .od-poster-cards) {
     margin-bottom: 24px;
+  }
+
+  /* The contents list goes above the charter below 900px and stops sticking —
+     a nine-item list pinned to the top of a phone is most of the screen. */
+  .wp-block-columns.od-charter {
+    gap: 24px;
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .wp-block-columns.od-charter > .wp-block-column:first-child {
+    position: static;
   }
 
   /* The rail goes under the text below 900px, and the hero takes its own

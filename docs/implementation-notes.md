@@ -617,6 +617,18 @@ Figma `Certificate` (`760:1662`). The page was one paragraph block holding six `
 
 **One existing rule had to be qualified.** `.wp-block-column > .od-asset { height: 100% }` makes a lone aside card as tall as the prose beside it — with *two* cards in the rail it stretched each to the row's height and ran the second one down over the footer.
 
+### D6t. `/about/ustav/` — 2026-08-19
+
+Figma `charter` (`706:3695`): a contents column and the charter beside it, 384 + 40 + 814 against the grid's 1240. The stored page is 361 paragraphs inside four `wp:paragraph` blocks, with the charter's nine section headings **buried in three different shapes** — five as their own numbered paragraph («1. ОБЩИЕ ПОЛОЖЕНИЯ.»), four as a one-item `<ol start="6"><li>`, and the fifth run onto the end of the paragraph before it («…проводимых Организацией. 5. КОНТРОЛЬНО-РЕВИЗИОННЫЕ ОРГАНЫ ОРГАНИЗАЦИИ»). Each is found by its upper-case text and replaced by a marker, which makes the three shapes one thing to split on; a heading that cannot be found throws rather than silently merging two sections.
+
+Out of that comes an `<h2>` with an anchor per section, a `core/list` of nine links to them, and **one block per paragraph** — 350 of them, where the migrator had left four blocks holding raw `<p>`s. Measured after: nav column 385 at x=100, items 40/63/40 tall on a 10px gap against Figma's 40/86/42, sticky from 24px down a 22 400px page.
+
+**The headings are written sentence-cased.** The stored text shouts and Figma does not; `text-transform` would be invisible to an editor, to a content export and to a grep, so this is content (`wp-page-redesign.md` §4).
+
+**Figma's red «you are here» pill is not built.** Marking the section a reader is looking at is a scroll listener, and a WordPress body has no script of its own. Every link works; the highlight is the one thing in the frame that is missing.
+
+**Two lines were dropped.** «Положение о членстве: Скачать» sat above the charter and the mock has no row for it — the same document is a card on `/about/udostoverenie/` (D6s). And the «УСТАВ» line is the page title, which `PageHeader` already draws.
+
 ### D7. Video — index 2026-06-04, player 2026-07-02
 
 Figma: index `video` (`706:3315`) + `video-filter` (`1554:17574`) + player `video-page` (`1566:10433`) + mobile `video-page-mob` (`1567:10735`, `1567:11844`) + download (`1581:10334`).
