@@ -730,7 +730,7 @@ Figma `story` (`706:3568`): twenty-five videos, each beside the person in it. Th
 
 **The sentence splits where it already did.** The person's name is the row's `<strong>` and what follows is what they do, joined by a dash; the mock sets the two as a heading and a paragraph, so the dash goes and the description starts as its own sentence. The split is on the tag rather than on the punctuation because one of the twenty-five has no dash at all («Пастухов Сергей родом из Магадана»), and `od_pages_sentence_case()` upper-cases the first letter with `mb_*` — `ucfirst()` is byte-wise and would have cut a Cyrillic character in half.
 
-**The clips stay on YouTube — they are not in the Kinescope library.** Checked the way D6n's mapping was built: each of the 25 embeds resolved through YouTube oEmbed, and every resulting title compared against all 262 videos in the account. **Zero matches, exact or partial** — the library holds films and cartoons, and these are personal testimonials that were never imported. Nothing to replace.
+**The clips stay on YouTube — they are not in the Kinescope library.** Checked the way D6n's mapping was built: each of the 25 embeds resolved through YouTube oEmbed, and every resulting title compared against all 262 videos in the account. **Zero matches, exact or partial** — the library holds films and cartoons, and these are personal testimonials that were never imported. Nothing to replace, so the follow-up is to *upload* them: [`next-steps.md`](./next-steps.md).
 
 **The column is bottom-aligned, and core's figure margin had to go for it.** Figma lands the description's last line level with the video's bottom edge on every row. The row's height is the video's, so `justify-content: flex-end` on the second column does it — but `.wp-block-embed`'s own 16px bottom margin made the row 16px taller than the video and put the text below it. Measured after: video 600 × 343 at x=100, text at x=740 (the mock's 742), name 29px tall, both bottoms at 637.
 
@@ -769,6 +769,19 @@ No frame for this one; it is the section's own picture grid. Fifty-two 25 % colu
 Two of the 49 logos name files that are not on the origin (`ВашКадровыйРесурс.png`, `КадровыйСоветник.png`) and six carry no name. Both are content, and both are left alone rather than guessed at here.
 
 **That closes the «О нас» menu except two pages, and both are deliberate.** `/about/` and `/team/` were out of scope by request. `/about/ostavit-otziv/` **stays on the A6 fallback**: it is a Contact Form 7 form, and rendering one natively means posting to CF7's REST endpoint with its nonce and its spam checks — a feature (plan §B6), not a page design. It is the section's last entry in `LEGACY_EMBED_PAGES`.
+
+### D3. A `core/query` page can reach page 2 — 2026-08-19
+
+The seven post-card pages D6p built had been stuck on page 1 since D6b, and the reason is that **WordPress builds a pagination href out of `$_SERVER['REQUEST_URI']`** — and the request it renders for is ours, a REST call. So `core/query-pagination-next` emitted `…/wp-json/wp/v2/pages?slug=smi&_fields=…&query-95-page=2`, an address no visitor can follow. It bit `/about/smi/` (210 posts, 18 pages) and `/about/reviews/letters/` (125, 11) hardest; the other five fit on one page and never showed it.
+
+**The parameter works; only the links were wrong.** `render_block_core_post_template` reads `$_GET` directly, so the REST request carries the page through untouched — `?slug=smi&query-95-page=2` really does render page 2. Verified against od-dev before any code was written: page 18 returns the last 6 posts, page 19 returns **no `post-template` at all**, which is the 404 signal the fetcher now uses. A page past the end is a 404 here, not a soft-404 with an empty grid.
+
+**Page 2 is a path, `/about/smi/page/2/`, and not the `?page=2` the site's own listings use.** `/news/` and `/materials/articles/` are routes of their own and may read `searchParams`; these pages are served by the `[...slug]` catch-all, which also serves `/<id>` — **46 % of all site entries**. One `searchParams` read there makes the whole route dynamic and costs every post its ISR entry, which is the trade the plan had flagged and the reason this sat open. A path segment costs nothing, is what WordPress itself paginates with, and stays statically generatable. `splitPageNumber()` in the route takes the suffix off (three segments minimum, so the proxy keeps `/page/N/` and `/news/page/N/`), and `resolveQueryPagination()` writes the links.
+
+**The parameter's id is read out of the markup, never assumed.** `queryId` is the *editor's* number — 95 on `/about/smi/`, 100 on `/about/reviews/letters/` — and re-saving a page in Gutenberg can assign a new one. Normalising it in `od_pages_post_cards()` would have made the key constant at the cost of breaking silently the first time an editor opened the page, so `fetchWpPage()` matches `query-\d+-page` in the page-1 body instead and asks again with it. That is a second round trip, and only for `/…/page/2/` and beyond: page 1 is the request the unpaginated URL already makes, so ISR shares it. A page with no query block has no key, and `/…/page/2/` under it 404s.
+
+Each page is **self-canonical** and carries its number in the `<title>` — 18 pages of «СМИ о нас» under one title is a duplicate-title report waiting to happen. They stay out of `sitemap.ts`, the same rule `?page=` follows there: the links are crawlable from page 1. Measured after: the pagination row is 1240 wide, both chevrons and the number strip centred on it, and no `wp-json` or `query-N-page` survives anywhere in the served DOM.
+
 
 ### D7. Video — index 2026-06-04, player 2026-07-02
 

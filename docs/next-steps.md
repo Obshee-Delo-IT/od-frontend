@@ -448,3 +448,24 @@ over the ~25 icons.
   → `h2` «События». The coordinator query block has no section heading of its own.
   A skipped level on ~75 pages; fixable with one heading block per page, or by
   dropping the teaser title's level.
+
+## The 25 «Истории активистов» clips are on YouTube, not Kinescope — upload them
+
+**Checked 2026-08-19, twice.** `/about/activist-stories/` (D6r) embeds 25 clips,
+all of them YouTube. They were matched the way D6n's film mapping was built —
+each embed resolved through YouTube oEmbed, every resulting title compared
+against all **262** videos in the Kinescope account — and there are **zero**
+matches, exact or partial. Searching the library for `Отзыв` and for the
+surnames (`Свиридов`, `Моисеев`, `Гурин`, `Нигматянов`) returns nothing either.
+The library holds films and cartoons; these testimonials were never imported.
+
+**What has to happen:** upload the 25 to Kinescope, then swap the embeds. The
+page keeps them in `core/embed` blocks, one per row, so the swap is a
+`od_pages_activist_stories()` re-run against a slug→`kinescope_id` list — the
+same shape `film:kinescope` already produces for films, and the same reason:
+YouTube is not ours, Kinescope is. Until then the embeds stay as they are, and
+they work.
+
+Worth doing together with **B-VIDEO2**, which is blocked on the same kind of
+editorial input, and after it if capacity is short — B-VIDEO2 is a Tier 0
+blocker and this is not.

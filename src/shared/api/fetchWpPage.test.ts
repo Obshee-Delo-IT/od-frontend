@@ -129,3 +129,76 @@ describe('fetchWpPage', () => {
     expect(wpFetch).not.toHaveBeenCalled();
   });
 });
+
+/**
+ * D3 — a later page of the body's `core/query` block. The parameter's id is the
+ * editor's (`query-95-page` here, `query-100-page` on
+ * `/about/reviews/letters/`), so it is read out of the page-1 body rather than
+ * assumed.
+ */
+describe('fetchWpPage, paginated', () => {
+  const paginated = (n: number) =>
+    page({
+      link: 'https://wp.test/about/smi/',
+      content: {
+        rendered:
+          `<ul class="wp-block-post-template"><li>страница ${n}</li></ul>` +
+          '<a class="page-numbers" href="?query-95-page=2&#038;slug=smi">2</a>',
+      },
+    });
+
+  it('asks for page 1 only, and once, when no page is requested', async () => {
+    wpFetch.mockResolvedValue(makeResponse([paginated(1)]));
+
+    await fetchWpPage('/about/smi/');
+
+    expect(wpFetch).toHaveBeenCalledTimes(1);
+    expect(wpFetch.mock.calls[0][0]).not.toContain('query-95-page');
+  });
+
+  it('reads the query id off page 1 and asks for the page under it', async () => {
+    wpFetch.mockResolvedValueOnce(makeResponse([paginated(1)])).mockResolvedValueOnce(makeResponse([paginated(2)]));
+
+    const result = await fetchWpPage('/about/smi/', 2);
+
+    expect(wpFetch.mock.calls[1][0]).toContain('&query-95-page=2');
+    expect(result?.contentHtml).toContain('страница 2');
+  });
+
+  /** The title, the description and the trail are the page's, not the page-of-posts'. */
+  it('keeps everything but the body from page 1', async () => {
+    wpFetch.mockResolvedValueOnce(makeResponse([paginated(1)])).mockResolvedValueOnce(
+      makeResponse([
+        page({
+          link: 'https://wp.test/about/smi/',
+          title: { rendered: 'подменённый' },
+          excerpt: { rendered: '<p>подменённое</p>' },
+          content: { rendered: '<ul class="wp-block-post-template"><li>страница 2</li></ul>' },
+        }),
+      ])
+    );
+
+    await expect(fetchWpPage('/about/smi/', 2)).resolves.toMatchObject({
+      title: 'Здоровая Россия 2021',
+      description: 'Программа',
+    });
+  });
+
+  /** Past the last page core renders no `post-template` at all — that is the 404 signal. */
+  it('returns null past the last page rather than an empty list', async () => {
+    wpFetch
+      .mockResolvedValueOnce(makeResponse([paginated(1)]))
+      .mockResolvedValueOnce(
+        makeResponse([page({ link: 'https://wp.test/about/smi/', content: { rendered: '<div></div>' } })])
+      );
+
+    await expect(fetchWpPage('/about/smi/', 19)).resolves.toBeNull();
+  });
+
+  it('returns null, without a second request, for a page that has no query block', async () => {
+    wpFetch.mockResolvedValue(makeResponse([page({ link: 'https://wp.test/about/ustav/' })]));
+
+    await expect(fetchWpPage('/about/ustav/', 2)).resolves.toBeNull();
+    expect(wpFetch).toHaveBeenCalledTimes(1);
+  });
+});

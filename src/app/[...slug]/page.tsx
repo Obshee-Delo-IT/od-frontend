@@ -42,6 +42,27 @@ export const revalidate = 3600;
 const legacyPostId = (slug: string[] | undefined) => (slug?.length === 1 && /^\d+$/.test(slug[0]) ? slug[0] : null);
 
 /**
+ * Split a trailing `page/<n>` off the slug — `/about/smi/page/2/` is page 2 of
+ * the `core/query` block in `/about/smi/` (D3).
+ *
+ * A path segment rather than the `?page=` the site's own listings use, because
+ * this route also serves `/<id>` and `searchParams` here would make **every**
+ * post page dynamic. See `resolveQueryPagination`, which writes these links.
+ *
+ * Three segments minimum, so the proxy keeps `/page/N/` (the live home's
+ * paginated feed) and `/news/page/N/`.
+ */
+const splitPageNumber = (slug: string[] | undefined): { base: string[] | undefined; pageNumber: number } => {
+  const depth = slug?.length ?? 0;
+  if (!slug || depth < 3 || slug[depth - 2] !== 'page' || !/^\d+$/.test(slug[depth - 1])) {
+    return { base: slug, pageNumber: 1 };
+  }
+  // `page/1` renders page 1 and canonicalises onto the page's own address —
+  // core never links to it, but a visitor can type it.
+  return { base: slug.slice(0, -2), pageNumber: Math.max(1, Number(slug[depth - 1])) };
+};
+
+/**
  * The path to ask WordPress for, or `null` when this slug is not to be answered
  * from WP at all — an exception in `shared/config/legacyEmbedPages.ts`, or a
  * slug the path allowlist rejects.
@@ -137,12 +158,16 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     if (!isEmbeddable(slug)) {
       return {};
     }
-    const nativePath = nativeWpPath(slug);
+    const { base, pageNumber } = splitPageNumber(slug);
+    const nativePath = nativeWpPath(base);
     if (nativePath) {
-      const page = await cachedFetchWpPage(nativePath);
+      const page = await cachedFetchWpPage(nativePath, pageNumber);
       if (page) {
-        return wpPageMetadata({ page, path: nativePath });
+        return wpPageMetadata({ page, path: nativePath, pageNumber });
       }
+    }
+    if (pageNumber > 1) {
+      return {};
     }
     // Always **our** canonical, never the legacy origin's: after cutover that
     // origin is a private frozen copy, and pointing at it would canonicalise
@@ -186,12 +211,20 @@ const Page = async ({ params }: { params: Promise<{ slug: string[] }> }) => {
     // round matters: this is the branch that decides whether a page the editors
     // maintain is served as ours or as a frame of the old site, and the answer
     // is "ours unless listed otherwise".
-    const nativePath = nativeWpPath(slug);
+    const { base, pageNumber } = splitPageNumber(slug);
+    const nativePath = nativeWpPath(base);
     if (nativePath) {
-      const page = await cachedFetchWpPage(nativePath);
+      const page = await cachedFetchWpPage(nativePath, pageNumber);
       if (page) {
-        return <WpPage page={page} path={nativePath} />;
+        return <WpPage page={page} path={nativePath} pageNumber={pageNumber} />;
       }
+    }
+
+    // A `/page/N/` WordPress could not serve is not a legacy address either —
+    // the old site paginated `/news/` and `/category/*`, and the proxy answers
+    // for both before this route sees them.
+    if (pageNumber > 1) {
+      notFound();
     }
 
     const legacy = await loadLegacyPage(legacyPathname(slug));

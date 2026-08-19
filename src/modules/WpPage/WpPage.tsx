@@ -1,6 +1,6 @@
 import { resolvePageSection } from '@/shared/config/pageSections';
 import { canonicalUrl, SITE_NAME } from '@/shared/config/site';
-import { parsePost, resolveContentHtml } from '@/shared/lib/wpContent';
+import { paginatedPath, parsePost, resolveContentHtml, resolveQueryPagination } from '@/shared/lib/wpContent';
 import { Box } from '@/shared/ui/components/Box';
 import { ImagePreviewClient } from '@/shared/ui/components/ImagePreview';
 import { PageHeader } from '@/shared/ui/components/PageHeader';
@@ -23,16 +23,27 @@ import type { Metadata } from 'next';
 
 export interface WpPageProps {
   page: WpPageContent;
-  /** The path it was reached at — the canonical URL, unchanged from the old site. */
+  /** The page's own path — the canonical URL, unchanged from the old site. */
   path: string;
+  /**
+   * Which page of the body's `core/query` block is being shown, from the
+   * `/about/smi/page/2/` suffix the route strips off `path` (D3). 1 for every
+   * page that has no query block, which is nearly all of them.
+   */
+  pageNumber?: number;
 }
 
-export const wpPageMetadata = ({ page, path }: WpPageProps): Metadata => {
-  const url = canonicalUrl(path);
+export const wpPageMetadata = ({ page, path, pageNumber = 1 }: WpPageProps): Metadata => {
+  // Self-canonical per page, the same rule `/materials/articles/?page=2` follows:
+  // page 2 is its own set of posts, so pointing it at page 1 would ask the index
+  // to drop content nothing else links to.
+  const url = canonicalUrl(paginatedPath(path, pageNumber));
   const description = page.description ?? undefined;
   // The suffix every native route writes into its own title. A WP title is an
   // editor's sentence — «Материалы» on its own is not what a tab should read.
-  const title = `${page.title} — ${SITE_NAME}`;
+  // The page number goes in it too: 18 pages of `/about/smi/` under one title
+  // is a duplicate-title report waiting to happen.
+  const title = `${page.title}${pageNumber > 1 ? ` — страница ${pageNumber}` : ''} — ${SITE_NAME}`;
 
   return {
     title,
@@ -53,7 +64,10 @@ export const WpPage = async ({ page, path }: WpPageProps) => {
      parent, which on a page is the column an editor dropped the gallery into.
      Both od-dev pages that carry one would lose a sibling, and neither has it
      as a leading block, so there is nothing to lift and everything to lose. */
-  const html = await resolveContentHtml(page.contentHtml, true);
+  /* Pagination first: WordPress rendered those hrefs against the REST request it
+     was answering, so they address `wp-json` and nobody can follow them. See
+     `resolveQueryPagination`. */
+  const html = await resolveContentHtml(resolveQueryPagination(page.contentHtml, path), true);
   /* A `/profile/…` link alone in its paragraph is the marker for "draw this
      person here" — the only page↔profile relation WordPress can express, since
      it has neither a meta field nor a shared taxonomy for one. See
