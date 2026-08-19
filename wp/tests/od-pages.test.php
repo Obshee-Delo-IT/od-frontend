@@ -866,6 +866,7 @@ foreach ([
     'od_pages_books',
     'od_pages_post_cards',
     'od_pages_documents',
+    'od_pages_activist_stories',
 ] as $transform) {
     $threw = false;
     try {
@@ -945,6 +946,34 @@ $builtDocs = od_pages_documents( $docs, 0 );
 od_test( 'documents: /about/docs/ splits its row 66.67/33.33 and is read the same way', 23 === substr_count( $builtDocs, 'wp-block-column od-asset' ) );
 od_test( 'documents: its last row holds the two left over', 8 === substr_count( $builtDocs, '"className":"od-assets od-assets--3"' ) );
 od_test( 'documents: a local upload keeps its root-relative path for the pipeline to fix', false !== strpos( $builtDocs, 'href="/wp-content/uploads/2019/03/2012-Устав-ОБЩЕЕ-ДЕЛО.pdf"' ) );
+
+/* ------------------------------------------ od_pages_activist_stories (D6r) */
+
+$stories = file_get_contents( __DIR__ . '/fixtures/about-activist-stories.before.html' );
+
+od_test( 'the stories fixture really carries 25 video rows', 25 === count( od_pages_story_rows( $stories ) ) );
+
+$storyRows = od_pages_story_rows( $stories );
+
+od_test( 'story rows: the url is unescaped back out of the block attribute', 'https://youtu.be/5WFYZZRhjfo' === $storyRows[0]['url'] );
+od_test( 'story rows: the name is the row\'s <strong>', 'Свиридов Алексей Владимирович' === $storyRows[0]['name'] );
+od_test( 'story rows: the joining dash goes and the sentence starts itself', 'Режиссёр, руководитель киностудии ApostolFilms благодарит организацию ООО «Общее Дело» за неоценимый вклад в нравственное просвещение молодёжи' === $storyRows[0]['about'] );
+od_test( 'story rows: a row that never had a dash reads the same way', 'Пастухов Сергей' === $storyRows[22]['name'] && 0 === mb_strpos( $storyRows[22]['about'], 'Родом из Магадана' ) );
+od_test( 'story rows: the text half is read whichever column it sits in', 'https://youtu.be/JZRKwu3yPr8' === $storyRows[1]['url'] && 'Моисеев Олег Олегович' === $storyRows[1]['name'] );
+
+$built = od_pages_activist_stories( $stories, 0 );
+
+od_test( 'stories: one row per video', 25 === substr_count( $built, '"className":"od-story"' ) );
+od_test( 'stories: each row is two columns', 50 === substr_count( $built, '<!-- wp:column -->' ) );
+od_test( 'stories: every video is kept', 25 === substr_count( $built, '<!-- wp:embed ' ) );
+od_test( 'stories: the video is always the first column', 25 === substr_count( $built, "<div class=\"wp-block-columns od-story\"><!-- wp:column -->\n<div class=\"wp-block-column\">\n<!-- wp:embed " ) );
+od_test( 'stories: the name is a heading', 25 === substr_count( $built, '<!-- wp:heading {"level":3} -->' ) );
+od_test( 'stories: the MailPoet form is gone', false === strpos( $built, '[wysija_form' ) );
+od_test( 'stories: the separators are gone', false === strpos( $built, 'wp:separator' ) );
+od_test( 'stories: it is idempotent', od_pages_activist_stories( $built, 0 ) === $built );
+
+od_test( 'od_pages_sentence_case upper-cases a Cyrillic first letter', 'Режиссёр' === od_pages_sentence_case( 'режиссёр' ) );
+od_test( 'od_pages_sentence_case leaves an empty string alone', '' === od_pages_sentence_case( '' ) );
 
 /* ------------------------------------------------------- the registry itself */
 

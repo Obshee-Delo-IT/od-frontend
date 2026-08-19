@@ -597,6 +597,14 @@ Figma `documents` (`706:3499`), two pages on one transform. Both stored the same
 
 **Two content decisions.** The button is `is-style-outline`, as drawn — a page of 33 solid red buttons is not what the `.od-asset` primary is for. And its label is «Скачать» everywhere, replacing «Скачать устав», «Скачать отчёт» and «Смотреть/Скачать»: those said what the button did when the row *was* the button, and above a card's title the noun is already there.
 
+### D6r. `/about/activist-stories/` — 2026-08-19
+
+Figma `story` (`706:3568`): twenty-five videos, each beside the person in it. The page already paired them in a 50/50 `core/columns`, but **the halves alternated** — thirteen rows put the video first, twelve the text — which reads as a mistake rather than a rhythm and is not what the mock draws, so the pair is rebuilt video-first every time.
+
+**The sentence splits where it already did.** The person's name is the row's `<strong>` and what follows is what they do, joined by a dash; the mock sets the two as a heading and a paragraph, so the dash goes and the description starts as its own sentence. The split is on the tag rather than on the punctuation because one of the twenty-five has no dash at all («Пастухов Сергей родом из Магадана»), and `od_pages_sentence_case()` upper-cases the first letter with `mb_*` — `ucfirst()` is byte-wise and would have cut a Cyrillic character in half.
+
+**The column is bottom-aligned, and core's figure margin had to go for it.** Figma lands the description's last line level with the video's bottom edge on every row. The row's height is the video's, so `justify-content: flex-end` on the second column does it — but `.wp-block-embed`'s own 16px bottom margin made the row 16px taller than the video and put the text below it. Measured after: video 600 × 343 at x=100, text at x=740 (the mock's 742), name 29px tall, both bottoms at 637.
+
 ### D7. Video — index 2026-06-04, player 2026-07-02
 
 Figma: index `video` (`706:3315`) + `video-filter` (`1554:17574`) + player `video-page` (`1566:10433`) + mobile `video-page-mob` (`1567:10735`, `1567:11844`) + download (`1581:10334`).

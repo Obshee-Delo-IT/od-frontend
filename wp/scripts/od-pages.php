@@ -2578,6 +2578,122 @@ function od_pages_document_rows(string $content): array
 }
 
 /**
+ * `/about/activist-stories/` — Figma `story` (`706:3568`).
+ *
+ * Twenty-five videos, each beside a sentence naming the person in it. The
+ * stored page already pairs them in a 50/50 `core/columns`, but the halves
+ * alternate — thirteen rows put the video first and twelve put the text first —
+ * which reads as a mistake rather than a rhythm, and the mock draws the video
+ * on the left every time. So the pair is rebuilt in that order.
+ *
+ * The sentence is split where it already is: the person's name is the row's
+ * `<strong>`, what follows is what they say or do. The mock sets the two as a
+ * heading and a paragraph, so that is what they become — which also drops the
+ * dash the stored text uses to join them («Свиридов Алексей Владимирович –
+ * режиссёр…»), leaving the description to start as its own sentence. One row of
+ * the twenty-five has no dash at all («Пастухов Сергей родом из Магадана»),
+ * which is why the split is on the tag and not on the punctuation.
+ *
+ * @param string $content   Stored `post_content`.
+ * @param int    $_filmTagId Unused: this page carries no film row.
+ * @return string Rewritten content, or `$content` unchanged if it is already in
+ *                the target shape.
+ * @throws RuntimeException when the page does not look like the expected input.
+ */
+function od_pages_activist_stories(string $content, int $_filmTagId = 0): string
+{
+    if (od_has_block_class($content, 'od-story')) {
+        return $content; // Already converted — leave the editor's copy alone.
+    }
+
+    $stories = od_pages_story_rows($content);
+    if (count($stories) < 2) {
+        throw new RuntimeException(sprintf('unexpected input: %d story rows', count($stories)));
+    }
+
+    $out = '';
+    foreach ($stories as $story) {
+        $out .= "<!-- wp:columns {\"className\":\"od-story\"} -->\n<div class=\"wp-block-columns od-story\">"
+            . "<!-- wp:column -->\n<div class=\"wp-block-column\">\n"
+            . od_pages_embed($story['url'])
+            . "</div>\n<!-- /wp:column -->\n"
+            . "<!-- wp:column -->\n<div class=\"wp-block-column\">\n"
+            . od_pages_heading(3, $story['name'])
+            . od_pages_paragraph($story['about'])
+            . "</div>\n<!-- /wp:column -->\n"
+            . "</div>\n<!-- /wp:columns -->\n\n";
+    }
+
+    return rtrim($out) . "\n";
+}
+
+/**
+ * The video/sentence pairs of `/about/activist-stories/`, in document order and
+ * regardless of which half of the row each sits in.
+ *
+ * @return array<int, array{url: string, name: string, about: string}>
+ */
+function od_pages_story_rows(string $content): array
+{
+    if (!preg_match_all('#<!-- wp:columns -->(.*?)<!-- /wp:columns -->#s', $content, $matches)) {
+        return [];
+    }
+
+    $rows = [];
+    foreach ($matches[1] as $row) {
+        if (
+            !preg_match('#<!-- wp:embed \{"url":"(.*?)"#', $row, $embed)
+            || !preg_match('#<strong>(.*?)</strong>(.*?)</p>#s', $row, $text)
+        ) {
+            continue;
+        }
+
+        $about = od_pages_inline_text(strip_tags($text[2]));
+        // The joining dash and any space around it, multibyte-safe: `ltrim()`
+        // takes a byte list and would eat the lead byte of a Cyrillic letter.
+        $about = preg_replace('/^[\s\x{00a0}–—-]+/u', '', $about);
+
+        $rows[] = [
+            'url' => str_replace('\\/', '/', $embed[1]),
+            'name' => od_pages_inline_text(strip_tags($text[1])),
+            'about' => od_pages_sentence_case($about),
+        ];
+    }
+
+    return $rows;
+}
+
+/**
+ * First letter upper-cased, the rest left alone — `ucfirst()` is byte-wise and
+ * would corrupt a Cyrillic first character.
+ */
+function od_pages_sentence_case(string $text): string
+{
+    if ($text === '') {
+        return $text;
+    }
+
+    return mb_strtoupper(mb_substr($text, 0, 1)) . mb_substr($text, 1);
+}
+
+/**
+ * A `core/embed`, in the shape WordPress stores one: the bare URL on its own
+ * line, and the provider read back out of it at render time.
+ */
+function od_pages_embed(string $url): string
+{
+    return sprintf(
+        "<!-- wp:embed {\"url\":\"%s\",\"type\":\"video\",\"providerNameSlug\":\"youtube\",\"responsive\":true,"
+        . "\"className\":\"wp-embed-aspect-16-9 wp-has-aspect-ratio\"} -->\n"
+        . "<figure class=\"wp-block-embed is-type-video is-provider-youtube wp-block-embed-youtube "
+        . "wp-embed-aspect-16-9 wp-has-aspect-ratio\"><div class=\"wp-block-embed__wrapper\">\n%s\n</div></figure>\n"
+        . "<!-- /wp:embed -->\n",
+        od_attr($url),
+        $url
+    );
+}
+
+/**
  * Block attributes as WordPress writes them: no escaped slashes, no unicode
  * escapes, and the key order the block had.
  */
@@ -2699,6 +2815,11 @@ function od_pages_registry(): array
             'label' => 'D6m · /materials/autosticker/ — Figma `car sticker` (966:8388)',
             'path' => 'materials/autosticker',
             'fix' => 'od_pages_autosticker',
+        ],
+        [
+            'label' => 'D6r · /about/activist-stories/ — Figma `story` (706:3568)',
+            'path' => 'about/activist-stories',
+            'fix' => 'od_pages_activist_stories',
         ],
         [
             'label' => 'D6q · /about/experts-review/ — Figma `documents` (706:3499)',

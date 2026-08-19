@@ -1212,6 +1212,46 @@ h2:has(+ .od-tiles) {
   color: var(--white);
 }
 
+/* `/about/activist-stories/` — Figma `story` (`706:3568`). A video on the left
+   and the person it is of on the right, twenty-five times.
+
+   Figma puts the video at 599 × 398 from x=100 and the text at 540 from x=742,
+   with the text's last line level with the video's bottom edge on every row —
+   so the column is bottom-aligned, not centred, and the pitch between rows is
+   438 against a 398-tall video, which is the 40px gap. Two equal tracks here:
+   the mock's 599/540 leaves a gutter it never uses, and a `core/embed` is 16∶9
+   whatever box it is given. */
+.wp-block-columns.od-story {
+  display: grid;
+  margin-bottom: 40px;
+  gap: 40px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.wp-block-columns.od-story > .wp-block-column:last-child {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+
+/* 29px for the name in the mock, where a bare `h3` here is `--font-size-7`. */
+.wp-block-columns.od-story h3 {
+  margin-bottom: 15px;
+  font-size: var(--font-size-5);
+  line-height: 130%;
+}
+
+.od-story p:last-child {
+  margin-bottom: 0;
+}
+
+/* The row's height is the video's, so the text's last line lands level with its
+   bottom edge — which is what the mock draws. Core's figure margin would push
+   the row 16px taller than the video and break that. */
+.od-story .wp-block-embed {
+  margin-bottom: 0;
+}
+
 @media (--mobile) {
   .od-programme-logo {
     max-width: none;
@@ -1235,6 +1275,14 @@ h2:has(+ .od-tiles) {
 
   h2:has(+ .od-cards, + .od-poster-cards) {
     margin-bottom: 24px;
+  }
+
+  /* The story rows stack below 900px: a 16∶9 video in half a phone is
+     unwatchable, so the video takes the width and its caption sits under it. */
+  .wp-block-columns.od-story {
+    margin-bottom: 24px;
+    gap: 16px;
+    grid-template-columns: minmax(0, 1fr);
   }
 
   /* One post card per row below 900px, at the same 16px rhythm. */
