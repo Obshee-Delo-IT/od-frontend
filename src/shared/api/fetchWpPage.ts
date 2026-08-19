@@ -98,6 +98,43 @@ const fetchAncestors = async (parentId: number): Promise<WpPageAncestor[]> => {
 };
 
 /**
+ * The page served at `path`, asked for once — optionally with extra query
+ * parameters appended to the REST call, which is how a later page of a
+ * `core/query` block is requested (see below).
+ */
+const requestPage = async (path: string, slug: string, extra = ''): Promise<RawPage | null> => {
+  const query = new URLSearchParams({
+    slug,
+    per_page: '10',
+    _fields: 'id,link,parent,title,content,excerpt',
+  });
+  const res = await wpFetch(`/wp/v2/pages?${query}${extra}`, wpCache([WP_TAGS.pages]));
+  if (!res.ok) {
+    return null;
+  }
+
+  const body = (await res.json()) as RawPage[] | null;
+  return (
+    (Array.isArray(body) ? body : []).find((candidate) => candidate.link && pathnameOf(candidate.link) === path) ?? null
+  );
+};
+
+/**
+ * The parameter a `core/query` block reads its page number from, as it appears
+ * in the pagination links WordPress just rendered.
+ *
+ * Read out of the markup rather than hardcoded because the id in it is the
+ * *editor's*: `/about/smi/` is `query-95-page`, `/about/reviews/letters/` is
+ * `query-100-page`, and re-saving a page in Gutenberg can assign a new one. The
+ * page-1 body always carries the key when there is more than one page, so the
+ * body is the authority.
+ */
+const PAGE_PARAM = /\bquery-\d+-page(?==\d)/;
+
+/** What core's `post-template` renders as, and renders **nothing** at all past the last page. */
+const POST_TEMPLATE = 'wp-block-post-template';
+
+/**
  * The page served at `path` (leading and trailing slash), or `null` when WP has
  * no published page there.
  *
@@ -106,35 +143,48 @@ const fetchAncestors = async (parentId: number): Promise<WpPageAncestor[]> => {
  * therefore never matches and falls back to the embed. Fixing that means
  * querying both forms, which is two round trips on every miss to serve pages
  * that between them see no measurable traffic.
+ *
+ * `pageNumber` is the page *of the body's `core/query` block* — the
+ * `/about/smi/page/2/` half of D3. Above 1 it returns `null` for anything the
+ * block cannot serve, so the route can 404 instead of publishing an address
+ * that renders an empty list.
  */
-export const fetchWpPage = async (path: string): Promise<WpPageContent | null> => {
+export const fetchWpPage = async (path: string, pageNumber = 1): Promise<WpPageContent | null> => {
   const slug = path.split('/').filter(Boolean).pop();
   if (!slug) {
     return null;
   }
 
-  const query = new URLSearchParams({
-    slug,
-    per_page: '10',
-    _fields: 'id,link,parent,title,content,excerpt',
-  });
-  const res = await wpFetch(`/wp/v2/pages?${query}`, wpCache([WP_TAGS.pages]));
-  if (!res.ok) {
-    return null;
-  }
-
-  const body = (await res.json()) as RawPage[] | null;
-  const page = (Array.isArray(body) ? body : []).find(
-    (candidate) => candidate.link && pathnameOf(candidate.link) === path
-  );
+  const page = await requestPage(path, slug);
   if (!page?.id) {
     return null;
   }
 
+  let contentHtml = page.content?.rendered ?? '';
+
+  if (pageNumber > 1) {
+    // A second round trip, and only ever for `/…/page/2/` and beyond — the
+    // key is not knowable before the first body is in hand, and page 1 is the
+    // request the unpaginated URL makes anyway, so ISR shares it.
+    const param = contentHtml.match(PAGE_PARAM)?.[0];
+    if (!param) {
+      return null; // No pagination on this page: `/…/page/2/` is not an address.
+    }
+    const paged = await requestPage(path, slug, `&${param}=${pageNumber}`);
+    const rendered = paged?.content?.rendered ?? '';
+    if (!rendered.includes(POST_TEMPLATE)) {
+      return null; // Past the last page. A soft-404 would be worse than a 404.
+    }
+    contentHtml = rendered;
+  }
+
+  // Everything but the body is the page's own and identical on every page of
+  // it, so it is read from the first response — a title and a description that
+  // drifted with the pagination would be a defect, not a feature.
   return {
     id: page.id,
     title: stripHtml(page.title?.rendered),
-    contentHtml: page.content?.rendered ?? '',
+    contentHtml,
     description: buildNewsPreview(page.excerpt?.rendered, page.content?.rendered),
     ancestors: await fetchAncestors(page.parent ?? 0),
   };

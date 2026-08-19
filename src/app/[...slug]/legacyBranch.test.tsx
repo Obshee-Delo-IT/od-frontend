@@ -18,11 +18,11 @@ vi.mock('@/shared/legacy', async (importOriginal) => ({
   loadLegacyDocument: (slug: readonly string[] | undefined, policy?: string) => loadLegacyDocument(slug, policy),
 }));
 
-const fetchWpPage = vi.fn<(path: string) => Promise<unknown>>().mockResolvedValue(null);
+const fetchWpPage = vi.fn<(path: string, pageNumber?: number) => Promise<unknown>>().mockResolvedValue(null);
 
 vi.mock('@/shared/api/fetchWpPage', () => ({
-  cachedFetchWpPage: (path: string) => fetchWpPage(path),
-  fetchWpPage: (path: string) => fetchWpPage(path),
+  cachedFetchWpPage: (path: string, pageNumber?: number) => fetchWpPage(path, pageNumber),
+  fetchWpPage: (path: string, pageNumber?: number) => fetchWpPage(path, pageNumber),
 }));
 
 class NotFound extends Error {}
@@ -117,7 +117,7 @@ describe('the native WP page branch (D6)', () => {
     const element = await render(['healthy-russia']);
 
     expect(element.type).toBe(WpPage);
-    expect(element.props).toEqual({ page: wpPage, path: '/healthy-russia/' });
+    expect(element.props).toEqual({ page: wpPage, path: '/healthy-russia/', pageNumber: 1 });
     expect(loadLegacyDocument).not.toHaveBeenCalled();
   });
 
@@ -150,7 +150,7 @@ describe('the native WP page branch (D6)', () => {
 
     await render(['branch-unconfigured']);
 
-    expect(fetchWpPage).toHaveBeenCalledWith('/branch-unconfigured/');
+    expect(fetchWpPage).toHaveBeenCalledWith('/branch-unconfigured/', 1);
   });
 
   it('never asks about an exception path, WP page or not', async () => {
@@ -171,6 +171,65 @@ describe('the native WP page branch (D6)', () => {
 
     expect(fetchWpPage).not.toHaveBeenCalled();
     expect(loadLegacyDocument).not.toHaveBeenCalled();
+  });
+});
+
+/**
+ * D3 — `/about/smi/page/2/` is page 2 of the body's `core/query` block. A path
+ * segment rather than `?page=`, because this route also serves `/<id>` and one
+ * `searchParams` read here would cost every post its ISR entry.
+ */
+describe('the paginated WP page branch (D3)', () => {
+  const wpPage = { id: 20114, title: 'СМИ о нас', contentHtml: '<p>тело</p>', description: null };
+
+  it('strips the `page/N` suffix and asks WordPress for that page of the query', async () => {
+    fetchWpPage.mockClear();
+    fetchWpPage.mockResolvedValueOnce(wpPage);
+
+    const element = await render(['about', 'smi', 'page', '2']);
+
+    expect(fetchWpPage).toHaveBeenCalledWith('/about/smi/', 2);
+    expect(element.type).toBe(WpPage);
+    expect(element.props).toEqual({ page: wpPage, path: '/about/smi/', pageNumber: 2 });
+  });
+
+  it('self-canonicalises and numbers the title, so 18 pages are not one', async () => {
+    fetchWpPage.mockResolvedValueOnce(wpPage);
+
+    const meta = await metadata(['about', 'smi', 'page', '3']);
+
+    expect(meta.title).toBe('СМИ о нас — страница 3 — ОБЩЕЕ ДЕЛО');
+    expect(meta.alternates?.canonical).toContain('/about/smi/page/3/');
+  });
+
+  /** Past the last page `fetchWpPage` returns null, and a soft-404 would be worse than a 404. */
+  it('404s rather than falling through to the embed when the page has no such page', async () => {
+    fetchWpPage.mockClear();
+    fetchWpPage.mockResolvedValueOnce(null);
+    loadLegacyDocument.mockClear();
+
+    await expect(render(['about', 'smi', 'page', '99'])).rejects.toBeInstanceOf(NotFound);
+    expect(loadLegacyDocument).not.toHaveBeenCalled();
+  });
+
+  it('leaves `/page/N/` and `/news/page/N/` to the proxy — three segments minimum', async () => {
+    fetchWpPage.mockClear();
+    fetchWpPage.mockResolvedValue(null);
+    loadLegacyDocument.mockResolvedValue(ok(null));
+
+    await render(['branch-news', 'page']);
+
+    expect(fetchWpPage).toHaveBeenCalledWith('/branch-news/page/', 1);
+  });
+
+  it('does not read a non-numeric last segment as a page number', async () => {
+    fetchWpPage.mockClear();
+    fetchWpPage.mockResolvedValue(null);
+    loadLegacyDocument.mockResolvedValue(ok(null));
+
+    await render(['branch-about', 'page', 'two']);
+
+    expect(fetchWpPage).toHaveBeenCalledWith('/branch-about/page/two/', 1);
   });
 });
 
