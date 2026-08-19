@@ -963,6 +963,54 @@ od_test_idempotent(
     $kasatikov
 );
 
+/* ------------------------------------------------ od_drop_superseded_lines */
+
+// The bug this fixes, in the shape it shipped in: Варламов's own role line said
+// what the merged role now says, so `/profile/varlamov/` printed it twice.
+$varlamov = '<!-- wp:paragraph -->' . "\n"
+    . '<p><strong>Председатель правления организации, член Межведомственного совета, член общественного совета при ФСИН России</strong></p>' . "\n"
+    . '<p>Председатель правления организации, член общественного совета при ФСИН&nbsp;России</p>' . "\n"
+    . '<p><a href="mailto:a@b.ru">a@b.ru</a></p>' . "\n"
+    . '<!-- /wp:paragraph -->';
+
+$deduped = od_drop_superseded_lines($varlamov, ['Председатель правления организации, член общественного совета при ФСИН России']);
+od_test('the superseded line is gone', 1 === substr_count($deduped, 'член общественного совета при ФСИН'));
+od_test('the role that swallowed it stays', str_contains($deduped, '<strong>Председатель правления организации, член Межведомственного'));
+od_test('and so does everything else', str_contains($deduped, 'mailto:a@b.ru'));
+od_test_idempotent(
+    'od_drop_superseded_lines',
+    static fn(string $c): string => od_drop_superseded_lines($c, ['Председатель правления организации, член общественного совета при ФСИН России']),
+    $varlamov
+);
+
+od_test('an empty list changes nothing', od_drop_superseded_lines($varlamov, []) === $varlamov);
+od_test(
+    'a line nobody quoted stays',
+    od_drop_superseded_lines('<p>Лектор</p>', ['Психолог-педагог']) === '<p>Лектор</p>'
+);
+// The corpus writes its lines three ways: a body pasted out of Word is
+// `<div><span>`, and one CV is a `<ul>`.
+od_test('a <div><span> line matches too', od_drop_superseded_lines('<div><span>Руководитель отделения</span></div>', ['Руководитель отделения']) === '');
+od_test('and a bolded <li>', od_drop_superseded_lines('<ul><li><strong>Председатель СРОО «Общее дело»</strong></li></ul>', ['Председатель СРОО «Общее дело»']) === '<ul></ul>');
+// What normalisation is for: an editor cannot see any of these three differences.
+od_test('a trailing comma does not stop a match', od_drop_superseded_lines('<p><strong>Лектор,</strong></p>', ['Лектор']) === '');
+od_test('nor a non-breaking space', od_drop_superseded_lines('<p>Лектор&nbsp;года</p>', ['Лектор года']) === '');
+od_test('nor a run of whitespace', od_drop_superseded_lines("<p>Лектор\n  года</p>", ['Лектор года']) === '');
+
+// Every quoted line has to be quoted *correctly*, or it silently matches nothing —
+// the same failure mode as a cover swap whose source file is absent.
+od_test('every listed line is written the way od_line_text() reads it', (static function (): bool {
+    foreach (array_merge(OD_TEAM, OD_SUPERVISORY) as $member) {
+        foreach ($member['supersedes'] ?? [] as $line) {
+            if (od_line_text($line) !== $line) {
+                return false;
+            }
+        }
+    }
+
+    return true;
+})());
+
 // A record whose body is not the shape every `profile` has is refused rather than
 // led with a paragraph of its own.
 $threw = false;
