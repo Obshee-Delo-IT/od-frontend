@@ -677,10 +677,14 @@ function od_pages_assets(array $cards, int $perRow = 2, string $className = 'od-
  * and this is not, so it keeps core's own flex layout and its `flex-basis`.
  *
  * @param array<int, array{width: string, blocks: string}> $columns
+ * @param string $className Row class, when the row is a layout of its own —
+ *                          `od-aside` is `/about/udostoverenie/`'s 814 + 386.
  */
-function od_pages_columns(array $columns): string
+function od_pages_columns(array $columns, string $className = ''): string
 {
-    $out = "<!-- wp:columns -->\n<div class=\"wp-block-columns\">";
+    $out = $className === ''
+        ? "<!-- wp:columns -->\n<div class=\"wp-block-columns\">"
+        : sprintf("<!-- wp:columns {\"className\":\"%s\"} -->\n<div class=\"wp-block-columns %s\">", $className, $className);
 
     foreach ($columns as $column) {
         $out .= sprintf(
@@ -2694,6 +2698,148 @@ function od_pages_embed(string $url): string
 }
 
 /**
+ * `/about/udostoverenie/` — Figma `Certificate` (`760:1662`).
+ *
+ * The page is one `wp:paragraph` block holding six `<p>`s and a floated photo,
+ * plus an `<h2>` with a download link. The mock reads them as four things: the
+ * photo as a hero, the first sentence as a lead, the rest as the body, and — in
+ * a 386-wide rail beside it — the «свяжитесь с нами» sentence with the two
+ * contacts under it, then «Положение о членстве» with its button.
+ *
+ * **The contact sentence is split, not moved whole.** The stored paragraph runs
+ * the note and the contacts together («…для подтверждения по телефону +7 (962)
+ * 950-75-61 E-mail: post27@bk.ru Skype: aleksey.od»); the mock ends the note at
+ * «для подтверждения.» and sets the phone and the mail as two icon rows. Skype
+ * is dropped — the mock draws two rows, and the account has not been reachable
+ * since Skype closed.
+ *
+ * **The hero is not the mock's 1241 × 508.** The library holds this photo at
+ * 600 × 445 and nothing larger, so that band would be a 2× upscale of a
+ * photograph of a document. It is drawn at the mock's *height* instead, 508
+ * with the width following, which is a 1.14× upscale and keeps it sharp.
+ *
+ * @param string $content   Stored `post_content`.
+ * @param int    $_filmTagId Unused: this page carries no film row.
+ * @return string Rewritten content, or `$content` unchanged if it is already in
+ *                the target shape.
+ * @throws RuntimeException when the page does not look like the expected input.
+ */
+function od_pages_udostoverenie(string $content, int $_filmTagId = 0): string
+{
+    if (od_has_block_class($content, 'od-hero')) {
+        return $content; // Already converted — leave the editor's copy alone.
+    }
+
+    if (!preg_match('#<img[^>]*wp-image-(\d+)[^>]*src="([^"]+)"#', $content, $photo)) {
+        throw new RuntimeException('unexpected input: no photo');
+    }
+
+    preg_match_all('#<p[^>]*>(.*?)</p>#s', $content, $found);
+    $paragraphs = [];
+    foreach ($found[1] as $paragraph) {
+        $text = od_pages_inline_text(preg_replace('#<img[^>]*>#', '', $paragraph));
+        // `[wysija_form]` is the MailPoet form whose plugin is gone; every other
+        // page in this file drops it too.
+        if ($text !== '' && $text !== '&nbsp;' && strpos($text, '[wysija_form') === false) {
+            $paragraphs[] = $text;
+        }
+    }
+
+    if (count($paragraphs) < 6) {
+        throw new RuntimeException(sprintf('unexpected input: %d paragraphs', count($paragraphs)));
+    }
+
+    $contactIndex = null;
+    foreach ($paragraphs as $index => $paragraph) {
+        if (strpos($paragraph, 'по телефону') !== false && strpos($paragraph, '@') !== false) {
+            $contactIndex = $index;
+            break;
+        }
+    }
+
+    if ($contactIndex === null) {
+        throw new RuntimeException('unexpected input: no contact paragraph');
+    }
+
+    $contacts = $paragraphs[$contactIndex];
+    $note     = rtrim(od_pages_inline_text(strip_tags(substr($contacts, 0, strpos($contacts, ' по телефону')))), " .") . '.';
+
+    if (
+        !preg_match('#\+7[\s(]*(\d{3})[\s)]*(\d{3})-(\d{2})-(\d{2})#u', $contacts, $phone)
+        || !preg_match('#mailto:([^"]+)"#', $contacts, $mail)
+        || !preg_match('#<h2[^>]*>\s*(.*?):\s*<a href="([^"]+)"#s', $content, $membership)
+    ) {
+        throw new RuntimeException('unexpected input: no contacts or membership link');
+    }
+
+    $body = '';
+    foreach ($paragraphs as $index => $paragraph) {
+        if ($index === 0 || $index === $contactIndex) {
+            continue;
+        }
+        $body .= od_pages_paragraph($paragraph);
+    }
+
+    $phoneLabel = sprintf('+7 (%s) %s-%s-%s', $phone[1], $phone[2], $phone[3], $phone[4]);
+    $phoneHref  = sprintf('tel:+7%s%s%s%s', $phone[1], $phone[2], $phone[3], $phone[4]);
+
+    $aside = od_pages_group(
+        'od-asset',
+        od_pages_paragraph($note)
+        . od_pages_contact_row('phone', $phoneHref, $phoneLabel)
+        . od_pages_contact_row('email', 'mailto:' . $mail[1], $mail[1])
+    ) . od_pages_group(
+        'od-asset',
+        od_pages_heading(3, od_pages_inline_text(strip_tags($membership[1])))
+        . od_pages_downloads([['href' => $membership[2], 'label' => 'Скачать']])
+    );
+
+    return "<!-- wp:group {\"className\":\"od-hero\",\"layout\":{\"type\":\"constrained\"}} -->\n"
+        . "<div class=\"wp-block-group od-hero\">\n"
+        . od_pages_image_block($photo[1], $photo[2], '')
+        . "</div>\n<!-- /wp:group -->\n\n"
+        . od_pages_columns([
+            ['width' => '65.65%', 'blocks' => od_pages_paragraph('<strong>' . $paragraphs[0] . '</strong>') . $body],
+            ['width' => '31.13%', 'blocks' => $aside],
+        ], 'od-aside')
+        . "\n";
+}
+
+/**
+ * A `core/group` with a class — the shape every card in this file that is not a
+ * column of a row takes.
+ */
+function od_pages_group(string $className, string $blocks): string
+{
+    return sprintf(
+        "<!-- wp:group {\"className\":\"%s\",\"layout\":{\"type\":\"constrained\"}} -->\n<div class=\"wp-block-group %s\">\n",
+        $className,
+        $className
+    ) . $blocks . "</div>\n<!-- /wp:group -->\n\n";
+}
+
+/**
+ * One contact row: a paragraph that is nothing but the link, classed so
+ * `gutenberg.css` can hang the 24px glyph the mock draws in front of it.
+ *
+ * The glyph is a `mask-image` over `currentColor` rather than a coloured copy of
+ * the SVG: the icons are stroked with `currentColor` in
+ * `src/shared/ui/assets/icons/`, and a background copy would have to bake the
+ * brand red into a file under `public/`.
+ */
+function od_pages_contact_row(string $kind, string $href, string $label): string
+{
+    return sprintf(
+        "<!-- wp:paragraph {\"className\":\"od-contact od-contact--%s\"} -->\n"
+        . "<p class=\"od-contact od-contact--%s\"><a href=\"%s\">%s</a></p>\n<!-- /wp:paragraph -->\n\n",
+        $kind,
+        $kind,
+        od_attr($href),
+        od_attr($label)
+    );
+}
+
+/**
  * Block attributes as WordPress writes them: no escaped slashes, no unicode
  * escapes, and the key order the block had.
  */
@@ -2815,6 +2961,11 @@ function od_pages_registry(): array
             'label' => 'D6m · /materials/autosticker/ — Figma `car sticker` (966:8388)',
             'path' => 'materials/autosticker',
             'fix' => 'od_pages_autosticker',
+        ],
+        [
+            'label' => 'D6s · /about/udostoverenie/ — Figma `Certificate` (760:1662)',
+            'path' => 'about/udostoverenie',
+            'fix' => 'od_pages_udostoverenie',
         ],
         [
             'label' => 'D6r · /about/activist-stories/ — Figma `story` (706:3568)',

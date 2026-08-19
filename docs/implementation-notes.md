@@ -605,6 +605,18 @@ Figma `story` (`706:3568`): twenty-five videos, each beside the person in it. Th
 
 **The column is bottom-aligned, and core's figure margin had to go for it.** Figma lands the description's last line level with the video's bottom edge on every row. The row's height is the video's, so `justify-content: flex-end` on the second column does it — but `.wp-block-embed`'s own 16px bottom margin made the row 16px taller than the video and put the text below it. Measured after: video 600 × 343 at x=100, text at x=740 (the mock's 742), name 29px tall, both bottoms at 637.
 
+### D6s. `/about/udostoverenie/` — 2026-08-19
+
+Figma `Certificate` (`760:1662`). The page was one paragraph block holding six `<p>`s and a photo floated into the first of them, plus an `<h2>` with a download link. The mock reads that as four things, and the transform writes them out as four: the photo as a hero, the first sentence as a lead, the rest as the body, and a 386-wide rail beside it holding the «свяжитесь с нами» note with two contact rows, then «Положение о членстве» with its button. Measured after: hero at y=294, row at y=847 (Figma's 847), left column 814 at x=100, rail 386 at x=954, both Figma's.
+
+**The contact sentence is split, not moved.** Stored, it runs the note and the contacts together — «…для подтверждения по телефону +7 (962) 950-75-61 E-mail: post27@bk.ru Skype: aleksey.od». The mock ends the note at «для подтверждения.» and draws the phone and the mail as two icon rows, which is what it becomes; Skype goes, as the mock has it and as the service does.
+
+**The icons are a `mask-image` over `currentColor`.** `src/shared/ui/assets/icons/` strokes them with `currentColor`, and CSS cannot reach that directory anyway (`next.config.ts` routes every `.svg` through `@svgr/webpack`), so `public/figma/icons/` holds a copy — but as a `background-image` that copy would have to bake the brand red into the file. A mask keeps the colour in the stylesheet.
+
+**The hero is the mock's height, not its width.** Figma draws a 1241 × 508 band; the library holds this photo at 600 × 445 and nothing larger, so that band is a 2× upscale of a photograph. Drawn at 508 tall with the width following it is 685 × 508 — 1.14×, and sharp.
+
+**One existing rule had to be qualified.** `.wp-block-column > .od-asset { height: 100% }` makes a lone aside card as tall as the prose beside it — with *two* cards in the rail it stretched each to the row's height and ran the second one down over the footer.
+
 ### D7. Video — index 2026-06-04, player 2026-07-02
 
 Figma: index `video` (`706:3315`) + `video-filter` (`1554:17574`) + player `video-page` (`1566:10433`) + mobile `video-page-mob` (`1567:10735`, `1567:11844`) + download (`1581:10334`).

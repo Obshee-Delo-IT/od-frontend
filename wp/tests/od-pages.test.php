@@ -867,6 +867,7 @@ foreach ([
     'od_pages_post_cards',
     'od_pages_documents',
     'od_pages_activist_stories',
+    'od_pages_udostoverenie',
 ] as $transform) {
     $threw = false;
     try {
@@ -974,6 +975,26 @@ od_test( 'stories: it is idempotent', od_pages_activist_stories( $built, 0 ) ===
 
 od_test( 'od_pages_sentence_case upper-cases a Cyrillic first letter', 'Режиссёр' === od_pages_sentence_case( 'режиссёр' ) );
 od_test( 'od_pages_sentence_case leaves an empty string alone', '' === od_pages_sentence_case( '' ) );
+
+/* ----------------------------------------------- od_pages_udostoverenie (D6s) */
+
+$certificate = file_get_contents( __DIR__ . '/fixtures/about-udostoverenie.before.html' );
+$built       = od_pages_udostoverenie( $certificate, 0 );
+
+od_test( 'certificate: the floated photo becomes the hero', false !== strpos( $built, '"className":"od-hero"' ) && false !== strpos( $built, '"id":20112' ) );
+od_test( 'certificate: the hero image is out of the prose', 1 === substr_count( $built, '<!-- wp:image ' ) );
+od_test( 'certificate: the row is 814 + 386', false !== strpos( $built, '"width":"65.65%"' ) && false !== strpos( $built, '"width":"31.13%"' ) );
+od_test( 'certificate: the lead is set as one', false !== strpos( $built, '<p><strong>Общероссийская общественная организация' ) );
+od_test( 'certificate: the note stops where the contacts start', false !== strpos( $built, '<p>Если у вас возникают сомнения в компетентности обратившегося к вам человека или группы лиц – пожалуйста, свяжитесь с нами для подтверждения.</p>' ) );
+od_test( 'certificate: the phone is a row of its own', false !== strpos( $built, '<p class="od-contact od-contact--phone"><a href="tel:+79629507561">+7 (962) 950-75-61</a></p>' ) );
+od_test( 'certificate: so is the mail', false !== strpos( $built, '<p class="od-contact od-contact--email"><a href="mailto:post27@bk.ru">post27@bk.ru</a></p>' ) );
+od_test( 'certificate: Skype is dropped', false === strpos( $built, 'aleksey.od' ) );
+od_test( 'certificate: the contact sentence is not left in the prose too', 1 === substr_count( $built, 'свяжитесь с нами для подтверждения' ) );
+od_test( 'certificate: the membership document keeps its link', false !== strpos( $built, 'href="/wp-content/uploads/2019/10/Положение-о-членстве-4.docx"' ) );
+od_test( 'certificate: under the heading the mock gives it', false !== strpos( $built, '<h3 class="wp-block-heading">Положение о членстве</h3>' ) );
+od_test( 'certificate: the MailPoet form is gone', false === strpos( $built, '[wysija_form' ) );
+od_test( 'certificate: the closing paragraph is kept', false !== strpos( $built, 'С уважением, председатель правления' ) );
+od_test( 'certificate: it is idempotent', od_pages_udostoverenie( $built, 0 ) === $built );
 
 /* ------------------------------------------------------- the registry itself */
 
