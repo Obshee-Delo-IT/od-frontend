@@ -869,6 +869,7 @@ foreach ([
     'od_pages_activist_stories',
     'od_pages_udostoverenie',
     'od_pages_ustav',
+    'od_pages_partners',
 ] as $transform) {
     $threw = false;
     try {
@@ -1029,6 +1030,24 @@ try {
 	$threw = true;
 }
 od_test( 'charter: a missing section heading is refused, not silently dropped', $threw );
+
+/* --------------------------------------------------- od_pages_partners (D6u) */
+
+$partners = file_get_contents( __DIR__ . '/fixtures/about-nashi-partnery.before.html' );
+
+od_test( 'the partners fixture really carries 49 logos and 41 rules', 49 === substr_count( $partners, '<img' ) && 41 === substr_count( $partners, '<!-- wp:separator' ) );
+
+$built = od_pages_partners( $partners, 0 );
+
+od_test( 'partners: every logo is kept', 49 === substr_count( $built, '<!-- wp:image' ) );
+od_test( 'partners: four to a row, thirteen rows', 13 === substr_count( $built, '"className":"od-figures od-figures--4 od-figures--logos"' ) );
+od_test( 'partners: the name travels with the picture as its caption', false !== strpos( $built, '<figcaption class="wp-element-caption">Агентство стратегических инициатив</figcaption>' ) );
+od_test( 'partners: a logo with no name gets no empty caption', false === strpos( $built, '<figcaption class="wp-element-caption"></figcaption>' ) );
+od_test( 'partners: no image block claims id 0', false === strpos( $built, '"id":0' ) );
+od_test( 'partners: the rules between rows are gone', false === strpos( $built, 'wp:separator' ) );
+od_test( 'partners: so are the three empty spacer groups', false === strpos( $built, 'wp:group' ) );
+od_test( 'partners: the MailPoet form is gone', false === strpos( $built, '[wysija_form' ) );
+od_test( 'partners: it is idempotent', od_pages_partners( $built, 0 ) === $built );
 
 /* ------------------------------------------------------- the registry itself */
 

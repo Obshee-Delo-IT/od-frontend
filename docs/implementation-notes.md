@@ -629,6 +629,14 @@ Out of that comes an `<h2>` with an anchor per section, a `core/list` of nine li
 
 **Two lines were dropped.** «Положение о членстве: Скачать» sat above the charter and the mock has no row for it — the same document is a card on `/about/udostoverenie/` (D6s). And the «УСТАВ» line is the page title, which `PageHeader` already draws.
 
+### D6u. `/about/nashi_partnery/`, and what is left of «О нас» — 2026-08-19
+
+No frame for this one; it is the section's own picture grid. Fifty-two 25 % columns of a logo over its name, separated by 41 `<hr>`s and led by three empty spacer groups — so the page opened on a screenful of nothing and every fourth logo sat under a stray rule. It is now the `od-figures` grid `/materials/` already uses, four across, with the name as the picture's own `figcaption` so it travels with it when an editor moves the block. `od-figures--logos` is the only new rule: these are logos on white, so the box holds each whole (`contain`) instead of filling it the way `/materials/sticker/`'s photographs do. `od_pages_asset_image()` now omits the `id` attribute rather than writing `"id":0` — a logo pasted into the old page has no `wp-image-N` class to read one out of.
+
+Two of the 49 logos name files that are not on the origin (`ВашКадровыйРесурс.png`, `КадровыйСоветник.png`) and six carry no name. Both are content, and both are left alone rather than guessed at here.
+
+**That closes the «О нас» menu except two pages, and both are deliberate.** `/about/` and `/team/` were out of scope by request. `/about/ostavit-otziv/` **stays on the A6 fallback**: it is a Contact Form 7 form, and rendering one natively means posting to CF7's REST endpoint with its nonce and its spam checks — a feature (plan §B6), not a page design. It is the section's last entry in `LEGACY_EMBED_PAGES`.
+
 ### D7. Video — index 2026-06-04, player 2026-07-02
 
 Figma: index `video` (`706:3315`) + `video-filter` (`1554:17574`) + player `video-page` (`1566:10433`) + mobile `video-page-mob` (`1567:10735`, `1567:11844`) + download (`1581:10334`).

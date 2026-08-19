@@ -1044,6 +1044,18 @@ h2:has(+ .od-tiles) {
   object-fit: cover;
 }
 
+/* `/about/nashi_partnery/`: logos on white, not photographs, so the box holds
+   each one whole and gives it something to sit on. */
+/* stylelint-disable-next-line no-descending-specificity -- `.od-card--flush` is
+   `/materials/metodichki/`'s card; no body carries both. */
+.od-figures--logos .wp-block-image img {
+  height: 120px;
+  padding: 16px;
+  border-radius: 12px;
+  background-color: var(--white);
+  object-fit: contain;
+}
+
 /* Inside a card it is `/materials/zakladki/`'s nine bookmarks instead: 1:7
    strips, which need a tall box and the whole strip inside it. */
 .od-asset .od-figures .wp-block-image img {

@@ -713,7 +713,12 @@ function od_pages_columns(array $columns, string $className = ''): string
  */
 function od_pages_asset_image(array $image, string $caption = ''): string
 {
-    $attrs = ['id' => (int) $image['id'], 'sizeSlug' => 'full'];
+    $attrs = ['sizeSlug' => 'full'];
+    // A partner logo has no `wp-image-N` class to read an id back out of, and
+    // `"id":0` in the block attributes is worse than no id at all.
+    if ((int) $image['id'] !== 0) {
+        $attrs = ['id' => (int) $image['id']] + $attrs;
+    }
     if ($image['href'] !== '') {
         $attrs['linkDestination'] = 'custom';
     }
@@ -3037,6 +3042,69 @@ function od_pages_classed_paragraph(string $text, string $className): string
 }
 
 /**
+ * `/about/nashi_partnery/` — no mock; the section's own picture grid.
+ *
+ * Fifty-two 25 % columns of a logo over its name, separated by 41 `<hr>`s and
+ * led by three empty spacer groups — so the page opened on a screenful of
+ * nothing and every fourth logo sat under a stray rule. It becomes the
+ * `od-figures` grid `/materials/` already uses, four across, with the name as
+ * the picture's own `figcaption` so it travels with it.
+ *
+ * `od-figures--logos` is the one thing that is new: these are logos on white,
+ * not photographs, so the box holds them whole (`contain`) rather than filling
+ * it, which is what `/materials/sticker/`'s photos want.
+ *
+ * Six of the 49 logos carry no name and two name files that are not on the
+ * origin — both are content, and both are left as they are rather than guessed
+ * at here.
+ *
+ * @param string $content   Stored `post_content`.
+ * @param int    $_filmTagId Unused: this page carries no film row.
+ * @return string Rewritten content, or `$content` unchanged if it is already in
+ *                the target shape.
+ * @throws RuntimeException when the page does not look like the expected input.
+ */
+function od_pages_partners(string $content, int $_filmTagId = 0): string
+{
+    if (od_has_block_class($content, 'od-figures--logos')) {
+        return $content; // Already converted — leave the editor's copy alone.
+    }
+
+    preg_match_all('#<!-- wp:column \{"width":"25%"\}(.*?)<!-- /wp:column -->#s', $content, $found);
+
+    $logos = [];
+    foreach ($found[1] as $column) {
+        if (!preg_match('#<img[^>]*src="([^"]+)"#', $column, $image)) {
+            continue;
+        }
+        preg_match('#<p[^>]*>(.*?)</p>#s', $column, $caption);
+        $logos[] = [
+            'src' => $image[1],
+            'caption' => isset($caption[1]) ? od_pages_inline_text(strip_tags($caption[1])) : '',
+        ];
+    }
+
+    if (count($logos) < 2) {
+        throw new RuntimeException(sprintf('unexpected input: %d partner logos', count($logos)));
+    }
+
+    $out   = '';
+    $class = 'od-figures od-figures--4 od-figures--logos';
+
+    foreach (array_chunk($logos, 4) as $row) {
+        $out .= sprintf("<!-- wp:columns {\"className\":\"%s\"} -->\n<div class=\"wp-block-columns %s\">", $class, $class);
+        foreach ($row as $logo) {
+            $out .= "<!-- wp:column -->\n<div class=\"wp-block-column\">\n"
+                . od_pages_asset_image(['id' => '0', 'src' => $logo['src'], 'href' => ''], $logo['caption'])
+                . "</div>\n<!-- /wp:column -->\n";
+        }
+        $out .= "</div>\n<!-- /wp:columns -->\n\n";
+    }
+
+    return rtrim($out) . "\n";
+}
+
+/**
  * Block attributes as WordPress writes them: no escaped slashes, no unicode
  * escapes, and the key order the block had.
  */
@@ -3158,6 +3226,11 @@ function od_pages_registry(): array
             'label' => 'D6m · /materials/autosticker/ — Figma `car sticker` (966:8388)',
             'path' => 'materials/autosticker',
             'fix' => 'od_pages_autosticker',
+        ],
+        [
+            'label' => 'D6u · /about/nashi_partnery/ — no frame; the section\'s picture grid',
+            'path' => 'about/nashi_partnery',
+            'fix' => 'od_pages_partners',
         ],
         [
             'label' => 'D6t · /about/ustav/ — Figma `charter` (706:3695)',
