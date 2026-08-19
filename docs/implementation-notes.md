@@ -371,6 +371,33 @@ comma, Бальцевич's is the first of seven, and five of the eleven bold n
 all). `od_prepend_profile_lead()` rewrites a bold-only line it wrote before when
 the new role begins with it, so lengthening a role does not stack two.
 
+**A merged role leaves the line it merged behind, and that had to be cleaned up
+(2026-08-19, reported from the page).** `/profile/varlamov/` printed «Председатель
+правления организации, член общественного совета при ФСИН России» in the card and
+again in the body: the card's subtitle is the merged role, and
+`stripProfileCardFields()` only recognises a paragraph that is *nothing but* a bold
+run — his own line is plain text, so it stayed. Ten of the fourteen records were in
+that state, four with the line as plain prose and six with it bolded below the lead
+(only the first bold-only paragraph is dropped, deliberately: a record may bold
+several distinct roles).
+
+Fixed on the WordPress side, because the redundancy is one this project created:
+`od_drop_superseded_lines()` removes the lines a role has swallowed, listed per
+record and matched by text. A rule was tried first — "drop a line the role
+contains" — and it catches five of the ten; the other five are the same fact in
+different words («Руководитель *направления* по связям с госструктурами» against
+the current «департамента»), which no substring test can see and no fuzzy one
+should guess at. So each string is quoted from the record it removes, a test asserts
+every quote is spelled the way the matcher reads it, and a line nobody quoted stays
+— Бальцевич keeps the four CV items the card does not carry.
+
+Two things about the matching. `<p>` and `<li>` do not nest here, so the first
+closing tag ends the line; a `<div>` **does** — the record's own column is one — so
+only a leaf div qualifies, and the first attempt matched a whole column whose text
+was every line at once. And normalisation covers what an editor cannot see:
+entities, `&nbsp;`, runs of whitespace, a trailing comma. Four records now say
+nothing beyond their card and render no body at all, which is exactly right.
+
 Same rule for contacts, asked and answered on 2026-08-19: **where a record and a
 page disagree, the union ships.** Варламов's 2016 gmail stays next to his current
 address, Васильев's Pskov address next to the team's, Чагаев's landline above his

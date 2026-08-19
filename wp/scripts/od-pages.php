@@ -3101,6 +3101,9 @@ const OD_TEAM = [
         'name' => 'Варламов Леонид Геннадьевич',
         'href' => '/profile/varlamov/',
         'role' => 'Председатель правления организации, член Межведомственного совета по общественному здоровью Департамента здравоохранения города Москвы, член общественного совета при ФСИН России',
+        'supersedes' => [
+            'Председатель правления организации, член общественного совета при ФСИН России',
+        ],
         'contacts' => [
             ['mailto:l.varlamov@obshee-delo.ru', 'l.varlamov@obshee-delo.ru'],
             ['https://vk.com/l.varlamov', 'https://vk.com/l.varlamov'],
@@ -3110,6 +3113,9 @@ const OD_TEAM = [
         'name' => 'Калашников Павел Сергеевич',
         'href' => '/profile/kalashnikov-pavel/',
         'role' => 'Руководитель департамента фандрайзинга, член Наблюдательного совета организации',
+        'supersedes' => [
+            'Руководитель департамента фандрайзинга',
+        ],
         // The one thing `/about/supervisory/` said about him that his record did
         // not; his role is this page's, so the description arrives as prose.
         'prose' => 'Предприниматель, общественный деятель, ведёт здоровый образ жизни, увлекается альпинизмом и каратэ кёкусинкай, отец двоих детей.',
@@ -3122,6 +3128,9 @@ const OD_TEAM = [
         'name' => 'Чагаев Дмитрий Владимирович',
         'href' => '/profile/chagaev/',
         'role' => 'Руководитель департамента по связям с госструктурами',
+        'supersedes' => [
+            'Руководитель направления по связям с госструктурами',
+        ],
         'contacts' => [
             ['tel:+79037225329', '+7 903 722-53-29'],
             ['mailto:chagaev@mail.ru', 'chagaev@mail.ru'],
@@ -3131,6 +3140,9 @@ const OD_TEAM = [
         'name' => 'Васильев Михаил Геннадьевич',
         'href' => '/profile/%d0%b2%d0%b0%d1%81%d0%b8%d0%bb%d1%8c%d0%b5%d0%b2-%d0%bc%d0%b8%d1%85%d0%b0%d0%b8%d0%bb-%d0%b3%d0%b5%d0%bd%d0%bd%d0%b0%d0%b4%d1%8c%d0%b5%d0%b2%d0%b8%d1%87/',
         'role' => 'Руководитель департамента по развитию добровольчества, руководитель оргкомитета ежегодного Всероссийского конкурса «Общее дело — ПРО». Руководитель отделения, Псков',
+        'supersedes' => [
+            'Руководитель отделения',
+        ],
         'contacts' => [
             ['tel:+79113592167', '+7 911 359-21-67'],
             ['mailto:pro@obshee-delo.ru', 'pro@obshee-delo.ru'],
@@ -3141,6 +3153,10 @@ const OD_TEAM = [
         'name' => 'Дегтярёв Алексей Анатольевич',
         'href' => '/profile/%d0%b4%d0%b5%d0%b3%d1%82%d1%8f%d1%80%d1%91%d0%b2-%d0%b0%d0%bb%d0%b5%d0%ba%d1%81%d0%b5%d0%b9-%d0%b0%d0%bd%d0%b0%d1%82%d0%be%d0%bb%d1%8c%d0%b5%d0%b2%d0%b8%d1%87/',
         'role' => 'Руководитель медиа департамента. Режиссер, продюсер',
+        'supersedes' => [
+            'Руководитель медиа-направления',
+            'Режиссер, продюсер',
+        ],
         'contacts' => [
             ['tel:+79629507561', '+7 962 950-75-61'],
             ['mailto:post27@bk.ru', 'post27@bk.ru'],
@@ -3150,6 +3166,10 @@ const OD_TEAM = [
         'name' => 'Моисеев Олег Олегович',
         'href' => '/profile/moiseev-oleg-olegovich/',
         'role' => 'Руководитель департамента профилактики. Руководитель Московского городского отделения',
+        'supersedes' => [
+            'Руководитель Московского городского отделения',
+            'Руководитель департамента профилактики',
+        ],
         'contacts' => [
             ['tel:+79037748061', '+7 903 774-80-61'],
             ['mailto:moiseev_od@mail.ru', 'moiseev_od@mail.ru'],
@@ -3159,6 +3179,11 @@ const OD_TEAM = [
         'name' => 'Бальцевич Вячеслав Павлович',
         'href' => '/profile/baltsevich/',
         'role' => 'Уполномоченный по развитию в УФО. Член Правления организации, председатель СРОО «Общее дело»',
+        'supersedes' => [
+            'Член Правления Общероссийской общественной организации «Общее дело»',
+            'Уполномоченный по развитию деятельности организации в Уральском Федеральном округе',
+            'Председатель СРОО «Общее дело»',
+        ],
         'contacts' => [
             ['tel:+79826119777', '+7 982 611-97-77'],
             ['tel:+79292211999', '+7 929 221-19-99'],
@@ -3169,6 +3194,9 @@ const OD_TEAM = [
         'name' => 'Касатиков Александр Юрьевич',
         'href' => '/profile/%d0%ba%d0%b0%d1%81%d0%b0%d1%82%d0%b8%d0%ba%d0%be%d0%b2-%d0%b0%d0%bb%d0%b5%d0%ba%d1%81%d0%b0%d0%bd%d0%b4%d1%80-%d1%8e%d1%80%d1%8c%d0%b5%d0%b2%d0%b8%d1%87/',
         'role' => 'Уполномоченный по развитию в ЦФО. Координатор по Тульской области',
+        'supersedes' => [
+            'Координатор по Тульской области Касатиков Александр Юрьевич',
+        ],
         'contacts' => [
             ['tel:+79030377708', '+7 903 037-77-08'],
             ['mailto:SilaOtechestva@mail.ru', 'SilaOtechestva@mail.ru'],
@@ -3187,6 +3215,9 @@ const OD_TEAM = [
         'name' => 'Тарасов Сергей Валентинович',
         'href' => '/profile/%d1%82%d0%b0%d1%80%d0%b0%d1%81%d0%be%d0%b2-%d1%81%d0%b5%d1%80%d0%b3%d0%b5%d0%b9-%d0%b2%d0%b0%d0%bb%d0%b5%d0%bd%d1%82%d0%b8%d0%bd%d0%be%d0%b2%d0%b8%d1%87/',
         'role' => 'Заместитель руководителя департамента информационной политики и комплексной безопасности. Координатор по Кингисеппскому, Сланцевскому, Волосовскому району',
+        'supersedes' => [
+            'Координатор по Кингисеппскому, Сланцевскому, Волосовскому району',
+        ],
         'contacts' => [
             ['tel:+79062755758', '+7 906 275-57-58'],
             ['mailto:politbez_od@mail.ru', 'politbez_od@mail.ru'],
@@ -3196,6 +3227,9 @@ const OD_TEAM = [
         'name' => 'Чернов Евгений Павлович',
         'href' => '/profile/%d1%87%d0%b5%d1%80%d0%bd%d0%be%d0%b2-%d0%b5%d0%b2%d0%b3%d0%b5%d0%bd%d0%b8%d0%b9-%d0%bf%d0%b0%d0%b2%d0%bb%d0%be%d0%b2%d0%b8%d1%87/',
         'role' => 'Руководитель департамента информационной политики и комплексной безопасности. Региональный координатор по развитию добровольчества в Ленинградской области',
+        'supersedes' => [
+            'Региональный координатор по развитию добровольчества в Ленинградской области',
+        ],
         'contacts' => [
             ['tel:+79111620252', '+7 911 162-02-52'],
             ['mailto:politbez@obshee-delo.ru', 'politbez@obshee-delo.ru'],
@@ -3477,6 +3511,63 @@ function od_prepend_profile_lead(string $content, string $role, array $contacts)
 }
 
 /**
+ * Lines the merged role has swallowed, gone from the body.
+ *
+ * **Why this exists at all.** The role written by {@see od_prepend_profile_lead()}
+ * is the federal one *plus* the record's own regional line, so that line is now
+ * said twice — once in the card at the top of `/profile/<slug>/` and once in the
+ * body under it. Two of them are word-for-word: «Председатель правления
+ * организации, член общественного совета при ФСИН России» read as a duplicate of
+ * the card's first sentence, which is what this removes.
+ *
+ * **Matched by text, listed per record, no heuristic.** A rule was tried — "drop a
+ * line the role contains" — and it catches five of the ten: the other five are the
+ * same fact in different words («Руководитель *направления* по связям с
+ * госструктурами» against the current «департамента»), which no substring test can
+ * see and no fuzzy one should guess at. So each string below is quoted from the
+ * record it belongs to, and a line nobody quoted stays.
+ *
+ * Matching normalises what an editor cannot see: entities, `&nbsp;`, runs of
+ * whitespace and a trailing comma or full stop. `<p>`, `<div>` and `<li>` all
+ * qualify, because the corpus uses all three — a body pasted out of Word is
+ * `<div><span>`, and one CV is a `<ul>`.
+ *
+ * @param array<int, string> $lines Plain text, as the record reads it.
+ */
+function od_drop_superseded_lines(string $content, array $lines): string
+{
+    if ($lines === []) {
+        return $content;
+    }
+
+    $wanted = array_map('od_line_text', $lines);
+    $drop = static function (array $m) use ($wanted): string {
+        return in_array(od_line_text($m[2]), $wanted, true) ? '' : $m[0];
+    };
+
+    // `<p>` and `<li>` do not nest in this corpus, so the first closing tag ends
+    // the line. A `<div>` does nest — the record's own column is one — so only a
+    // **leaf** div qualifies, or the pattern would match a whole column and its
+    // text would be every line at once.
+    $content = preg_replace_callback('~<(p|li)\b[^>]*>((?:(?!</\1>).)*)</\1>~s', $drop, $content);
+
+    return preg_replace_callback(
+        '~<(div)\b[^>]*>((?:(?!<div\b|</div>)[\s\S])*)</div>~',
+        $drop,
+        $content
+    );
+}
+
+/** One line of a record, reduced to the text an editor sees. */
+function od_line_text(string $html): string
+{
+    $text = html_entity_decode(strip_tags($html), ENT_QUOTES, 'UTF-8');
+    $text = preg_replace('~[\s\x{00a0}]+~u', ' ', $text);
+
+    return rtrim(trim($text), '.,;: ');
+}
+
+/**
  * One member's `profile` record: canonical phone links, then the role and the
  * contacts only the page carried, then anything the page said about them that the
  * record did not.
@@ -3486,9 +3577,19 @@ function od_prepend_profile_lead(string $content, string $role, array $contacts)
  * @param string                                  $role       The role, from {@see OD_TEAM} or {@see OD_SUPERVISORY}.
  * @param array<int, array{0: string, 1: string}> $contacts   href, label.
  * @param string                                  $prose      A sentence about the person, appended once.
+ * @param array<int, string>                       $supersedes Lines the role has swallowed.
  */
-function od_pages_profile_team(string $content, int $_filmTagId, string $role, array $contacts, string $prose = ''): string
-{
+function od_pages_profile_team(
+    string $content,
+    int $_filmTagId,
+    string $role,
+    array $contacts,
+    string $prose = '',
+    array $supersedes = []
+): string {
+    // Before the lead is written, so a line this drops can never be the lead
+    // itself — the merged role is longer than any single line it swallowed.
+    $content = od_drop_superseded_lines($content, $supersedes);
     $content = od_prepend_profile_lead(od_canonical_tel_links($content), $role, $contacts);
 
     if ($prose === '' || str_contains($content, $prose)) {
@@ -3882,7 +3983,7 @@ function od_pages_registry(): array
             'post_type' => 'profile',
             'path' => $slug,
             'fix' => 'od_pages_profile_team',
-            'args' => [$member['role'], $member['contacts'], $member['prose'] ?? ''],
+            'args' => [$member['role'], $member['contacts'], $member['prose'] ?? '', $member['supersedes'] ?? []],
         ];
     }
 
