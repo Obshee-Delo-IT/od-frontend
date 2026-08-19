@@ -282,6 +282,106 @@ Data via `fetchNewsList` (`src/shared/api/fetchNewsList.ts`) — paginated `/wp/
 
 **GitHub:** newsletter *submission* wiring still open (#54); markup side is #66/#39.
 
+### D3. `/team/` — the roster as eleven `profile` records, 2026-08-18
+
+Figma `team-1` (`706:1584`) and `team-1-mob` (`1256:5981`). The page needed **no route**: `/team/` is WordPress page 59436 and the catch-all was already rendering it natively (D6b), duplicate `<h1>` and grey `.team-member` boxes included. So the change is content plus two config additions.
+
+**The body is now eleven links and nothing else**, in one `wp:group` classed `od-team` (`od_pages_team()`). `parsePost`'s `embeds` seam swaps each for a `PersonCard`, which is the mechanism B-CPT built for `/materials/metodichki/` — the page keeps a link, the record keeps the data, the card is ours. Dropped: the page's own `<h1>`, the `wp:html` block carrying the old theme's CSS, and the boxes it styled.
+
+**The roster is production's, not od-dev's** — hardcoded in `OD_TEAM` rather than read out of the page, which is the one place `od-pages.php` departs from its own house rule. od-dev's copy of this page lists 13 people; the live site lists 11, and the two sets differ by six. A transform that reads the page would have converted a stale roster on od-dev and a current one on prod, from the same code.
+
+Four things this turned up, all of which cost a rewrite of the first attempt:
+
+- **The records held the *regional* role, not the federal one.** Six of eleven would have come out labelled «Координатор по Кингисеппскому району» on a page about the department they run. One record cannot hold two roles — so the federal role is *prepended* as the new first bold line, which is the one `parseProfileBody` reads, and the regional line stays right under it. Safe because a `/contacts/<region>/` page's `wp:query` renders only the featured image and the title: the role line in a record's body is read by `/profile/<slug>/` and by our cards, nowhere else.
+- **Five of eleven had no phone the card could show** — the numbers were plain text, the known `next-steps.md` item. `od_canonical_tel_links()` links them, and rewrites existing `tel:` hrefs to one spelling (`tel:+79037225329`) so the merge below can tell «the number the record has» from «the number the page has». It also groups a label stored as a bare run of digits, on the way past an existing link as well as on the way in — `+79062755758` reads as a phone number now.
+- **Which card variant to draw is a fact about the page.** `handbooks` draws its coordinator without a portrait, `team-1` draws one, and both are the same component with `photo` filled or empty. `profileEmbeds.tsx` decides from the `od-team` class the content carries — the same class `gutenberg.css` lays the grid out with.
+- **The cards are not the group's own children.** WordPress wraps a `wp:group`'s children in `wp-block-group__inner-container`, so the grid on `.od-team` laid out exactly one item and every card came out half-width in a single column. `display: contents` on the wrapper fixes it and keeps working if a future WordPress stops emitting one.
+
+**One record had to be created**: Анна Панферова is on the team page in prose and has no `profile` record under any status on either server. `od_wp_create_profiles()` makes the shell — title, slug, and the photograph, imported from production when the local library has not got it — and `od-pages.php` fills in the role and the contacts from the same `OD_TEAM` entry as everyone else's. Run order is od-wp first, then od-pages.
+
+**Two config additions on the frontend.** `shared/config/pageSections.ts` is a table of two: it gives `/team/` and `/about/supervisory/` the tab strip the mock draws (they are unrelated pages in WordPress — different parents, no shared taxonomy) and the shorter H1 Figma uses, since the long WP title is what the tab itself says. And `MAX_PROFILES_PER_PAGE` went from 8 to 16: the cap predated a page with a roster, and 11 links would have silently lost three.
+
+**Left as it is, deliberately:** three cards show a contact the team page does not — Варламов's 2016 gmail, Васильев's Pskov address, Чагаев's city landline — because they are in the record and deleting a contact nobody has said is dead is not this pass's call. The breadcrumbs are «Главная › О нас › Команда», a superset of the mock's «О нас ›», so this page is not the only one on the site that starts somewhere other than «Главная».
+
+### D3. `/profile/[slug]` and `/about/supervisory/` — 2026-08-19
+
+The rest of the section, on the pieces `/team/` had just put in place.
+
+**`/profile/<slug>/` is a native route now**, `app/profile/[slug]/page.tsx`, and it
+retires the A6 iframe for the whole family — 566 entry visits in 91 days were
+landing on the old theme's page, complete with a «Детали» sidebar of WordPress
+internals («Categories: Центральный Аппарат»), a like counter, prev/next links
+through the CPT and a comment form nobody can post to. It draws the same
+`PersonCard` the team page embeds and then the record's remaining body.
+
+**That "remaining" is the whole design.** 121 of the 139 records say something the
+card's four fields do not — a second and third role, education, a bio, a phone
+still typed as plain text and therefore never a contact row (measured: 18 records
+add nothing, 63 add under 40 characters, 51 up to 200, 8 more than that). Printing
+the body whole would repeat the role and every contact; dropping it would lose all
+of that. `stripProfileCardFields()` removes exactly three things — the first
+`<figure>`, a paragraph that is *nothing but* a bold run (the role line this
+project writes), and any paragraph holding a `tel:`/`mailto:`/`vk`/`t.me` link —
+and returns `''` when what is left is blank, so a record that says nothing extra
+renders no body at all. A bold run *followed by text* stays: that is a record's own
+«<b>Координатор по Тульской области</b> Касатиков Александр Юрьевич».
+
+One CSS rule came with it, and the class is the route's rather than the content's:
+a record's body is `columns > [photograph, text]`, and with the photograph removed
+the empty column would hold its 50 % of the row open beside the prose. `.od-profile-body
+.wp-block-columns { display: block }` unstacks it.
+
+**`/about/supervisory/` is Figma `team-2`** — the second tab of the same section,
+rebuilt from its own content: the illustrated statement card (the same
+`.od-card--goal` geometry with its own drawing, since `team-2` splits 640/572
+exactly as `project-1` does), the seven tasks as numbered tiles, and the three
+members as profile cards. **Its member cards are `team-1`'s**, not the wide
+full-bleed card `team-2` draws — a deliberate call so that one component draws a
+person everywhere, and `od_pages_profile_grid()` is now shared by both pages.
+
+The tasks are the one place the numbered cards are a **grid** rather than a
+carousel: `team-2` draws seven at four per row, and a carousel with no arrows would
+leave the last three unreachable. `.od-task` reuses the slide's padding, radius and
+fill, and `.od-tasks .od-task-number` joins the existing selector list, so the 32px
+red ordinal stays one rule.
+
+**Two more things the pages said and the records did not.** Дамир Нигматянов and
+Михаил Федоренко had no `profile` record on either server, so
+`od_wp_create_profiles()` makes them (their photographs have been in both libraries
+since 2019, so nothing is downloaded). Their role is «Член Наблюдательного совета
+организации» plus the description the page gave them; Павел Калашников sits on both
+councils and one record holds one role, so his stays `OD_TEAM`'s and the council
+page's description of him arrives as that entry's `prose` — appended at the end of
+his paragraph block, where a description is not mistaken for the role line.
+
+**The roster is written down here too, and this page is the argument for it.**
+Production's copy was last edited **2026-04-29** and lists three members; od-dev's
+was last edited **2021-05-10** and lists four, Леонид Варламов among them — he has
+left the council since. Figma draws four as well, because it was traced from that
+2021 page. A transform reading the roster out of whichever page it ran against
+would have put a five-year-old council on production.
+
+**The roles now carry both halves.** `parseProfileBody()` reads one line, and the
+answer to "federal or regional?" is *both* — so `OD_TEAM`'s `role` is the merged
+sentence and every tail in it is quoted from the record it belongs to. Composing
+that automatically was tried and abandoned: joining «federal» to «whatever the
+record bolds first» reads as nonsense on more than half the roster (Калашников's
+first bold *is* his federal role, Моисеев's is one of four lines each ending in a
+comma, Бальцевич's is the first of seven, and five of the eleven bold nothing at
+all). `od_prepend_profile_lead()` rewrites a bold-only line it wrote before when
+the new role begins with it, so lengthening a role does not stack two.
+
+Same rule for contacts, asked and answered on 2026-08-19: **where a record and a
+page disagree, the union ships.** Варламов's 2016 gmail stays next to his current
+address, Васильев's Pskov address next to the team's, Чагаев's landline above his
+mobile — none is provably dead, and the mock is not a data source.
+
+**One production write, outside the scripts.** Александр Касатиков's record was a
+`draft` on production and published on od-dev; the two differ in `post_status` and
+in nothing else — same content, same photograph (71226), same `pl-categs` term
+(Тульская область), no revisions. Published on 2026-08-19, and the live page
+answers 200.
+
 ### D6. Projects index (`app/projects/page.tsx`) — 2026-08-15
 
 Figma: `projects` (`706:1775`). **Index only** — the three `project-1/2/3` detail mocks stay unbuilt, and the plan's reason holds: zero `/projects/<slug>/` URLs in 91 days, and the `project` CPT is 21 Lorem-ipsum drafts (B-CPT). The index itself is worth building — 794 views / 85 entries, **9.3×**, the section's whole traffic.

@@ -20,13 +20,19 @@
 const PROFILE_HREF = /\bhref=["'](\/profile\/[^"'\s]+)["']/gi;
 
 /**
- * How many profiles one body may pull. Nothing on od-dev links more than three,
- * but the input is editor-controlled and each one is a WordPress round trip.
+ * How many profiles one body may pull. The input is editor-controlled and each
+ * one is a WordPress round trip, so there is a ceiling — but the ceiling has to
+ * clear the real page that needs the most.
  *
- * ponytail: a flat cap, with no signal to the reader that it bit — raise it, or
- * report the overflow, if a page ever legitimately lists a team.
+ * That page is `/team/`, whose roster is **11** (D3). It was 8 until then, on the
+ * reasoning that nothing on od-dev linked more than three; the cap is now the
+ * roster plus room to grow, since a 12th member appearing in the admin must not
+ * silently vanish from the page.
+ *
+ * ponytail: still a flat cap with no signal to the reader that it bit. Report the
+ * overflow if a page ever wants more than this.
  */
-const MAX_PROFILES_PER_PAGE = 8;
+const MAX_PROFILES_PER_PAGE = 16;
 
 export const collectProfileHrefs = (html?: string | null): string[] => {
   if (!html) {

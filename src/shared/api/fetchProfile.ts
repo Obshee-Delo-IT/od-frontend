@@ -28,6 +28,15 @@ export interface ProfileCard {
   subtitle: string | null;
   photo: { src: string; alt: string } | null;
   contacts: PersonContact[];
+  /**
+   * The record's rendered body, as WordPress returns it.
+   *
+   * The card is built from four fields above; `/profile/[slug]` also draws what
+   * the body says *beyond* them — a second role, education, a bio, a phone still
+   * typed as plain text. `stripProfileCardFields()` is what takes the card's own
+   * lines back out before it renders.
+   */
+  contentHtml: string;
 }
 
 interface RawProfile {
@@ -84,6 +93,7 @@ export const fetchProfile = async (slug: string): Promise<ProfileCard | null> =>
     // a photo of a person labelled with that person's name.
     photo: src ? { src, alt: stripHtml(media?.alt_text) || name } : null,
     contacts,
+    contentHtml: profile.content?.rendered ?? '',
   };
 };
 

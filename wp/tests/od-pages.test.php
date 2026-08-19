@@ -410,10 +410,8 @@ od_test('and so does its Punycode form', od_pages_site_link('https://xn----9sbkc
 od_test('another site keeps its origin', od_pages_site_link('https://metodic.obshee-delo.ru/') === 'https://metodic.obshee-delo.ru/');
 od_test('and so does a download', od_pages_site_link('https://disk.yandex.ru/i/abc') === 'https://disk.yandex.ru/i/abc');
 
-// ===========================================================================
-// `/healthy-youth/` — Figma `project-2`.
-// ===========================================================================
-
+// ====================================================================// `/healthy-youth/` — Figma `project-2`.
+// ====================================================================
 $youthBefore = file_get_contents(__DIR__ . '/fixtures/healthy-youth.before.html');
 $youth = od_pages_healthy_youth($youthBefore, 666);
 
@@ -460,10 +458,8 @@ od_test('inline alignment gone', !str_contains($youth, 'text-align: center'));
 
 od_test('converted content is left alone', od_pages_healthy_youth($youth, 666) === $youth);
 
-// ===========================================================================
-// `/healthy-kids/` — Figma `project-3`.
-// ===========================================================================
-
+// ====================================================================// `/healthy-kids/` — Figma `project-3`.
+// ====================================================================
 $kidsBefore = file_get_contents(__DIR__ . '/fixtures/healthy-kids.before.html');
 $kids = od_pages_healthy_kids($kidsBefore, 667);
 
@@ -506,10 +502,8 @@ od_test('the task list became cards', !str_contains($kids, '<ul>'));
 
 od_test('converted content is left alone', od_pages_healthy_kids($kids, 667) === $kids);
 
-// ===========================================================================
-// `/projects/` — Figma `projects`, the index of the three above.
-// ===========================================================================
-
+// ====================================================================// `/projects/` — Figma `projects`, the index of the three above.
+// ====================================================================
 $projectsBefore = file_get_contents(__DIR__ . '/fixtures/projects.before.html');
 /**
  * Every card in a converted row has a drawing: a `background-image` rule in
@@ -562,10 +556,8 @@ od_test('the shouted programme names are gone', !str_contains($projects, 'ОБЩ
 
 od_test('converted content is left alone', od_pages_projects($projects, 0) === $projects);
 
-// ===========================================================================
-// `/materials/` — Figma `ads`, the same card at 598×280.
-// ===========================================================================
-
+// ====================================================================// `/materials/` — Figma `ads`, the same card at 598×280.
+// ====================================================================
 $materialsBefore = file_get_contents(__DIR__ . '/fixtures/materials.before.html');
 $materials = od_pages_materials($materialsBefore, 0);
 
@@ -588,10 +580,8 @@ od_test('the caption\'s tail went with it', !str_contains($materials, 'Обще�
 
 od_test('converted content is left alone', od_pages_materials($materials, 0) === $materials);
 
-// ===========================================================================
-// `/materials/printed-products/` — Figma `printing`, the same hub one level down.
-// ===========================================================================
-
+// ====================================================================// `/materials/printed-products/` — Figma `printing`, the same hub one level down.
+// ====================================================================
 $printedBefore = file_get_contents(__DIR__ . '/fixtures/printed-products.before.html');
 $printed = od_pages_printed_products($printedBefore, 0);
 
@@ -617,10 +607,8 @@ od_test('the photos are not the mock\'s drawings', !str_contains($printed, '<!--
 
 od_test('converted content is left alone', od_pages_printed_products($printed, 0) === $printed);
 
-// ===========================================================================
-// `/materials/social-reklama/` — Figma `social-ads`, the last hub on these cards.
-// ===========================================================================
-
+// ====================================================================// `/materials/social-reklama/` — Figma `social-ads`, the last hub on these cards.
+// ====================================================================
 $socialBefore = file_get_contents(__DIR__ . '/fixtures/social-reklama.before.html');
 $social = od_pages_social_reklama($socialBefore, 0);
 
@@ -648,10 +636,8 @@ od_test('the half-column the fifth photo left empty is gone', !str_contains($soc
 
 od_test('converted content is left alone', od_pages_social_reklama($social, 0) === $social);
 
-// ===========================================================================
-// The five asset pages under `/materials/social-reklama/` — D6l.
-// ===========================================================================
-
+// ====================================================================// The five asset pages under `/materials/social-reklama/` — D6l.
+// ====================================================================
 /** Every card carries the download the page already had, on the mock's label. */
 function od_test_asset_downloads(string $html, int $cards, string $label): void
 {
@@ -755,10 +741,8 @@ od_test('the script survives', str_contains($audio, 'Береги себя и п
 od_test('the download names what it is', substr_count($audio, '>Скачать аудио-ролик</a>') === 4);
 od_test('converted content is left alone', od_pages_audio_roliki($audio, 0) === $audio);
 
-// ===========================================================================
-// The five asset pages under `/materials/printed-products/` — D6m.
-// ===========================================================================
-
+// ====================================================================// The five asset pages under `/materials/printed-products/` — D6m.
+// ====================================================================
 // -- /materials/autosticker/ — Figma `car sticker` --------------------------
 
 $autosticker = od_pages_autosticker(file_get_contents(__DIR__ . '/fixtures/autosticker.before.html'), 0);
@@ -845,6 +829,216 @@ od_test('and none of them keeps its semicolon', !str_contains($books, ';</a>'));
 od_test('the dashes that made the list are gone', !str_contains($books, '<li>- '));
 od_test('converted content is left alone', od_pages_books($books, 0) === $books);
 
+/* ---------------------------------------------- /team/ and its records (D3) */
+
+$team      = file_get_contents(__DIR__ . '/fixtures/page-team.html');
+$chagaev   = file_get_contents(__DIR__ . '/fixtures/profile-chagaev.html');
+$kasatikov = file_get_contents(__DIR__ . '/fixtures/profile-kasatikov.html');
+
+od_test('the fixture is od-dev\'s stale roster', 13 === substr_count($team, 'class="team-member"'));
+
+$roster = od_pages_team($team, 0);
+
+od_test('the class both the grid CSS and the card variant read', str_contains($roster, '{"className":"od-team"}'));
+od_test('and it is on the rendered wrapper too', str_contains($roster, 'class="wp-block-group od-team"'));
+od_test('eleven links — production\'s roster, not the fixture\'s', 11 === substr_count($roster, '<a href="/profile/'));
+od_test(
+    'each alone in its own paragraph, which is what parsePost swaps for a card',
+    11 === substr_count($roster, "<!-- wp:paragraph -->\n<p><a href=\"/profile/")
+);
+od_test('the old theme\'s stylesheet is gone', !str_contains($roster, '<style'));
+od_test('and the boxes it styled', !str_contains($roster, 'team-member'));
+od_test('and the body\'s own <h1>, which the page header draws', !str_contains($roster, '<h1'));
+// The point of hardcoding the roster: od-dev lists six people the live site does
+// not, and misses two it does.
+od_test('nobody who has left the team is still listed', !str_contains($roster, 'Рябовичева') && !str_contains($roster, 'Максимченко'));
+od_test('and the two od-dev was missing are on it', str_contains($roster, 'Панферова Анна Андреевна') && str_contains($roster, 'Чернов Евгений Павлович'));
+od_test('converted content is left alone', od_pages_team($roster, 0) === $roster);
+
+foreach (OD_TEAM as $member) {
+    od_test(
+        $member['name'] . ': linked from the page under their own name',
+        str_contains($roster, '<a href="' . $member['href'] . '">' . $member['name'] . '</a>')
+    );
+}
+
+/* -------------------------------------------------------- od_profile_slug */
+
+od_test('od_profile_slug takes the last segment', od_profile_slug('/profile/varlamov/') === 'varlamov');
+od_test(
+    'and leaves percent-encoding spelled the way the record spells it',
+    od_profile_slug('/profile/%d1%87%d0%b5%d1%80%d0%bd%d0%be%d0%b2/') === '%d1%87%d0%b5%d1%80%d0%bd%d0%be%d0%b2'
+);
+
+/* ------------------------------------------------------------ od_tel_href */
+
+od_test('od_tel_href normalises a formatted number', od_tel_href('+7 (903) 037-77-08') === 'tel:+79030377708');
+od_test('a leading 8 becomes +7', od_tel_href('8-925-190-66-99') === 'tel:+79251906699');
+od_test('a year is not a phone number', od_tel_href('2008') === '');
+od_test('nor is a ten-digit string', od_tel_href('903 123-45-67') === '');
+
+/* ----------------------------------------------------------- od_tel_label */
+
+od_test('od_tel_label groups a bare run of digits', od_tel_label('+79062755758') === '+7 906 275-57-58');
+od_test('a leading 8 is grouped as +7 too', od_tel_label('89113592167') === '+7 911 359-21-67');
+od_test('an editor\'s own grouping is left alone', od_tel_label('+7 (962) 950-75-61') === '+7 (962) 950-75-61');
+od_test('and so is anything that is not a number', od_tel_label('обратитесь в приёмную') === 'обратитесь в приёмную');
+
+/* -------------------------------------------------- od_canonical_tel_links */
+
+od_test('the fixture writes both its hrefs with dashes', 2 === substr_count($chagaev, 'href="tel:+7-'));
+$canon = od_canonical_tel_links($chagaev);
+od_test('the city number\'s href is the digits form', str_contains($canon, 'href="tel:+74957225329"'));
+od_test('the mobile number\'s too', str_contains($canon, 'href="tel:+79037225329"'));
+od_test('and the visible number is left exactly as it was', str_contains($canon, '>+7-495-722-53-29</a>'));
+od_test_idempotent('od_canonical_tel_links (already linked)', 'od_canonical_tel_links', $chagaev);
+
+od_test('the second fixture writes its number as plain text', str_contains($kasatikov, 'Тел.: +7 903 037-77-08'));
+$linked = od_canonical_tel_links($kasatikov);
+od_test(
+    'a plain-text number becomes a link, label untouched',
+    str_contains($linked, 'Тел.: <a href="tel:+79030377708">+7 903 037-77-08</a>')
+);
+od_test('an address that was already a link is not linked twice', 1 === substr_count($linked, 'mailto:SilaOtechestva@mail.ru'));
+od_test_idempotent('od_canonical_tel_links (plain text)', 'od_canonical_tel_links', $kasatikov);
+
+// The label is fixed on the way past an existing link, not only when one is made:
+// a record this script has already linked keeps its text inside the anchor.
+$bare = od_canonical_tel_links('<p><a href="tel:+79062755758">+79062755758</a></p>');
+od_test('an already-linked bare number is grouped', $bare === '<p><a href="tel:+79062755758">+7 906 275-57-58</a></p>');
+od_test_idempotent('od_canonical_tel_links (bare label)', 'od_canonical_tel_links', '<p><a href="tel:+79062755758">+79062755758</a></p>');
+
+// The guard that keeps prose out: a record with a date in it must come back with
+// the date as text.
+od_test(
+    'a year in the prose is not turned into a phone link',
+    od_canonical_tel_links('<p>Юридическое - 2008 г.</p>') === '<p>Юридическое - 2008 г.</p>'
+);
+od_test(
+    'and a number inside an attribute is never seen',
+    od_canonical_tel_links('<img alt="8-925-190-66-99" />') === '<img alt="8-925-190-66-99" />'
+);
+
+/* ------------------------------------------------------ od_pages_profile_team */
+
+$kasatikovMember = null;
+foreach (OD_TEAM as $member) {
+    if ($member['name'] === 'Касатиков Александр Юрьевич') {
+        $kasatikovMember = $member;
+    }
+}
+od_test('the roster holds the member the fixture is', $kasatikovMember !== null);
+
+$led = od_pages_profile_team($kasatikov, 0, $kasatikovMember['role'], $kasatikovMember['contacts']);
+
+// This is the whole reason the lead is prepended rather than appended:
+// `parseProfileBody()` reads the *first* bold line as the card's subtitle.
+od_test(
+    'the merged role is the body\'s first bold line',
+    str_contains($led, '<strong>Уполномоченный по развитию в ЦФО. Координатор по Тульской области</strong>')
+);
+od_test(
+    'and the record\'s own regional line is still there, under it',
+    strpos($led, '<strong>Уполномоченный') < strpos($led, '<strong>Координатор по Тульской области')
+);
+od_test('the lead sits inside the paragraph block, not before it', str_contains($led, "<!-- wp:paragraph -->\n<p><strong>Уполномоченный"));
+
+// A run that follows an earlier one with a shorter role rewrites that line rather
+// than stacking a second above it — which would leave the card right and the body
+// carrying both halves.
+$shorter = od_pages_profile_team($kasatikov, 0, 'Уполномоченный по развитию в ЦФО', []);
+$upgraded = od_pages_profile_team($shorter, 0, $kasatikovMember['role'], $kasatikovMember['contacts']);
+od_test('an earlier, shorter role line is rewritten in place', 1 === substr_count($upgraded, '<strong>Уполномоченный'));
+od_test('and the result is what a first run would have written', $upgraded === $led);
+od_test(
+    'a bold line that is not a prefix of the role is left alone',
+    str_contains(od_pages_profile_team($kasatikov, 0, 'Совсем другая роль', []), '<strong>Координатор по Тульской области')
+);
+od_test('the phone the card needs is now a link', str_contains($led, 'href="tel:+79030377708"'));
+od_test('a contact the record already had is not repeated', 1 === substr_count($led, 'mailto:SilaOtechestva@mail.ru'));
+od_test('nothing the record held is lost', str_contains($led, 'https://vk.com/id44507712'));
+od_test_idempotent(
+    'od_pages_profile_team',
+    static fn(string $c): string => od_pages_profile_team($c, 0, $kasatikovMember['role'], $kasatikovMember['contacts']),
+    $kasatikov
+);
+
+// A record whose body is not the shape every `profile` has is refused rather than
+// led with a paragraph of its own.
+$threw = false;
+try {
+    od_pages_profile_team('<h2>ничего похожего</h2>', 0, 'Роль', []);
+} catch (RuntimeException $e) {
+    $threw = true;
+}
+od_test('a record with no paragraph block is refused', $threw);
+
+/* --------------------------------------- /about/supervisory/ (D3, team-2) */
+
+$supervisory = file_get_contents(__DIR__ . '/fixtures/page-supervisory.html');
+
+// The fixture is od-dev's copy, last edited 2021 — four members, one of whom has
+// since left the council. Production's page is the roster; this is why it is not
+// read out of the page.
+od_test('the fixture is the 2021 four-member page', 4 === substr_count($supervisory, '<b>'));
+
+$council = od_pages_supervisory($supervisory, 0);
+
+od_test('the statement is the illustrated card', str_contains($council, 'od-card od-card--goal od-card--supervisory'));
+od_test('headed by the page\'s own <h2>', str_contains($council, '<h2 class="wp-block-heading">Наблюдательный совет Общероссийской'));
+od_test('with the remit under it', str_contains($council, 'Наблюдательный совет создан в целях обеспечения'));
+od_test('and the aim under «Цель»', str_contains($council, '<h2 class="wp-block-heading">Цель</h2>') && str_contains($council, 'Основной целью Наблюдательного совета'));
+od_test('the centring the old theme needed is gone', !str_contains($council, 'text-align'));
+
+od_test('seven tasks, as tiles in a grid', str_contains($council, '{"className":"od-tasks"}') && 7 === substr_count($council, '{"className":"od-task"}'));
+od_test('numbered 01 to 07', str_contains($council, '>01</p>') && str_contains($council, '>07</p>'));
+od_test('the list they were is gone', !str_contains($council, '<li>') && !str_contains($council, '<ul>'));
+od_test('and the bold paragraph that stood in for their heading', !str_contains($council, '<strong>Задачи'));
+od_test('replaced by a real one', str_contains($council, '<h2 class="wp-block-heading">Задачи Наблюдательного совета</h2>'));
+
+od_test('three members — production\'s roster, not the fixture\'s four', 3 === substr_count($council, '<a href="/profile/'));
+od_test('as the same grid /team/ uses, so one component draws a person everywhere', 1 === substr_count($council, '{"className":"od-team"}'));
+od_test('nobody who has left the council is listed', !str_contains($council, 'Варламов'));
+od_test('the hand-built image rows are gone', !str_contains($council, '<figure') && !str_contains($council, 'wp-block-image'));
+od_test('and so are the contacts the records now hold', !str_contains($council, 'mailto:'));
+od_test('converted content is left alone', od_pages_supervisory($council, 0) === $council);
+
+foreach (OD_SUPERVISORY as $member) {
+    od_test(
+        $member['name'] . ': linked from the council page',
+        str_contains($council, '<a href="' . $member['href'] . '">' . $member['name'] . '</a>')
+    );
+}
+
+// Павел Калашников sits on both councils and has one record, so his role is
+// `OD_TEAM`'s and this page contributes only what it said about him.
+$both = array_values(array_filter(OD_SUPERVISORY, static fn(array $m): bool => !isset($m['role'])));
+od_test('the member on both councils carries no second role', count($both) === 1);
+od_test('and it is Калашников', $both[0]['name'] === 'Калашников Павел Сергеевич');
+
+$kalashnikov = null;
+foreach (OD_TEAM as $member) {
+    if ($member['name'] === 'Калашников Павел Сергеевич') {
+        $kalashnikov = $member;
+    }
+}
+od_test('his description reaches his record as prose', isset($kalashnikov['prose']));
+
+$withProse = od_pages_profile_team(
+    '<!-- wp:paragraph -->' . "\n" . '<p>Что-то ещё</p>' . "\n" . '<!-- /wp:paragraph -->',
+    0,
+    'Роль',
+    [],
+    'Предприниматель, отец двоих детей.'
+);
+od_test('prose lands inside the paragraph block, after what was there', str_contains($withProse, '<p>Что-то ещё</p>' . "\n" . '<p>Предприниматель, отец двоих детей.</p>'));
+od_test('and the role still leads', strpos($withProse, '<strong>Роль</strong>') < strpos($withProse, 'Предприниматель'));
+od_test_idempotent(
+    'od_pages_profile_team (with prose)',
+    static fn(string $c): string => od_pages_profile_team($c, 0, 'Роль', [], 'Предприниматель, отец двоих детей.'),
+    '<!-- wp:paragraph -->' . "\n" . '<p>Что-то ещё</p>' . "\n" . '<!-- /wp:paragraph -->'
+);
+
 // -- every transform refuses input it does not recognise --------------------------------
 
 foreach ([
@@ -864,6 +1058,8 @@ foreach ([
     'od_pages_booklet',
     'od_pages_disk',
     'od_pages_books',
+    'od_pages_team',
+    'od_pages_supervisory',
 ] as $transform) {
     $threw = false;
     try {
