@@ -272,6 +272,19 @@ in this install offloads on upload. `resolveMediaUrl` handles that by design —
 probes the CDN, takes the bucket's 301 as "absent" and falls back — but it is one
 more reason to keep §5's image check on this page.
 
+**`/about/` needs nothing uploaded, and that is worth knowing so nobody looks
+for it.** Its partner strip names four files by path
+(`OD_ABOUT_PARTNERS` in `od-pages.php`) — `2016/02/аси.jpg`, `фсин2.jpg`, `MO.png`,
+`татарстан2.png` — and unlike the `metodichki` covers these are **production's own
+uploads**, the first four of `/about/nashi_partnery/`. All four were checked on the
+live site on 2026-08-19: each 301s to the media bucket and answers 200 there. The
+three registration scans and the video are read out of the page itself, so they
+carry production's own ids either way. The one prerequisite is the migrator: the
+transform reads Gutenberg `<p>`s, so it must run **after** §2.7, and against
+un-migrated shortcodes it refuses the page — «unexpected input: no «История»
+paragraph», checked against production's stored body — rather than writing
+anything.
+
 **`/team/` and `/about/supervisory/` need `od-wp.php` to have run first.** Between
 them they are fourteen links to fourteen `profile` records (`OD_TEAM` and
 `OD_SUPERVISORY` in `od-pages.php`), and production is short of three:

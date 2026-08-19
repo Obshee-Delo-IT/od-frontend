@@ -1109,12 +1109,24 @@ function od_pages_film_query(int $tagId): string
  * about the programme.
  *
  * @param array<int, array{href: string, label: string}> $links
+ * @param string $heading  What the card is headed with — «Цель программы» on the
+ *                         three programme pages, «Миссия» on `/about/`, where the
+ *                         page's own label for the same shape is that word.
+ * @param string $modifier One more class, when the card's drawing is not the
+ *                         programme one: `gutenberg.css` keys the background on
+ *                         it (`od-card--mission`).
  */
-function od_pages_goal_card(string $text, array $links = []): string
-{
-    $out = "<!-- wp:group {\"className\":\"od-card od-card--goal\",\"layout\":{\"type\":\"constrained\"}} -->\n"
-        . '<div class="wp-block-group od-card od-card--goal">'
-        . od_pages_heading(2, 'Цель программы')
+function od_pages_goal_card(
+    string $text,
+    array $links = [],
+    string $heading = 'Цель программы',
+    string $modifier = ''
+): string {
+    $class = 'od-card od-card--goal' . ($modifier === '' ? '' : ' ' . $modifier);
+
+    $out = sprintf("<!-- wp:group {\"className\":\"%s\",\"layout\":{\"type\":\"constrained\"}} -->\n", $class)
+        . sprintf('<div class="wp-block-group %s">', $class)
+        . od_pages_heading(2, $heading)
         . od_pages_paragraph($text);
 
     foreach ($links as $link) {
@@ -3372,20 +3384,7 @@ function od_pages_partners(string $content, int $_filmTagId = 0): string
         throw new RuntimeException(sprintf('unexpected input: %d partner logos', count($logos)));
     }
 
-    $out   = '';
-    $class = 'od-figures od-figures--4 od-figures--logos';
-
-    foreach (array_chunk($logos, 4) as $row) {
-        $out .= sprintf("<!-- wp:columns {\"className\":\"%s\"} -->\n<div class=\"wp-block-columns %s\">", $class, $class);
-        foreach ($row as $logo) {
-            $out .= "<!-- wp:column -->\n<div class=\"wp-block-column\">\n"
-                . od_pages_asset_image(['id' => '0', 'src' => $logo['src'], 'href' => ''], $logo['caption'])
-                . "</div>\n<!-- /wp:column -->\n";
-        }
-        $out .= "</div>\n<!-- /wp:columns -->\n\n";
-    }
-
-    return rtrim($out) . "\n";
+    return rtrim(od_pages_logo_row($logos)) . "\n";
 }
 
 /**
@@ -3763,6 +3762,464 @@ function od_pages_supervisory(string $content, int $_filmTagId = 0): string
 }
 
 /**
+ * The cards under the long read, in the order they are drawn.
+ *
+ * **Eleven, where the mock draws seven.** `about` shows four wide cards, the
+ * partner strip and three portrait ones; the stored page carried twelve tiles.
+ * Four of those the mock has no card for — the Наблюдательный совет, СМИ о нас,
+ * the statistics site and «Оставь свой отзыв» — and this is the only page that
+ * links to some of them, so they take the wide shape too and the row flows onto
+ * two more lines. Dropping a card here would drop the destination, which a
+ * redesign is not.
+ *
+ * Two of the twelve are not cards at all: «Видеопрезентация» is the page's own
+ * hero embed, and «Нас поддерживают» is the partner strip that replaces it.
+ *
+ * `id` is the drawing, not the page — `gutenberg.css` pairs each with a file the
+ * same way the `/materials/` tiles do. The mock's fourth card is «Отчеты», whose
+ * page (`reports`, «Наши отчеты») has been **private since 2017**, so its
+ * calendar drawing goes to «Документы» — the page that actually holds the
+ * reports — and no card points at a page nobody can open.
+ *
+ * `/about/smi/`, not the `/smi/` the tile carried: production 301s the second to
+ * the first, and this side has no redirect for it at all.
+ */
+const OD_ABOUT_CARDS = [
+    ['id' => 'about-team', 'title' => 'Команда', 'href' => '/team/'],
+    ['id' => 'about-experts', 'title' => 'Экспертные заключения', 'href' => '/about/experts-review/'],
+    ['id' => 'about-docs', 'title' => 'Документы', 'href' => '/about/docs/'],
+    ['id' => 'about-ustav', 'title' => 'Устав', 'href' => '/about/ustav/'],
+    ['id' => 'about-supervisory', 'title' => 'Наблюдательный совет', 'href' => '/about/supervisory/'],
+    ['id' => 'about-smi', 'title' => 'СМИ о нас', 'href' => '/about/smi/'],
+    ['id' => 'about-stats', 'title' => 'Наша статистика', 'href' => 'http://xn--80a7adb.xn----9sbkcac6brh7h.xn--p1ai/'],
+    ['id' => 'about-otziv', 'title' => 'Оставь свой отзыв', 'href' => '/about/ostavit-otziv/'],
+];
+
+/** The three the mock draws portrait, under the partner strip. */
+const OD_ABOUT_CARDS_SMALL = [
+    ['id' => 'about-stories', 'title' => 'Истории активистов', 'href' => '/about/activist-stories/'],
+    ['id' => 'about-reviews', 'title' => 'Благодарственные письма', 'href' => '/about/reviews/'],
+    ['id' => 'about-udostoverenie', 'title' => 'Удостоверение', 'href' => '/about/udostoverenie/'],
+];
+
+/**
+ * The four logos of the partner strip.
+ *
+ * Not a selection the mock invented: they are `/about/nashi_partnery/`'s own
+ * first four, in its order, with its captions — so the strip is the top of that
+ * page and the card's link is the rest of it. The paths are 2016 uploads the
+ * partner page already carries on both installs, which is why they can be
+ * written down here (contrast {@see OD_METODICHKI_COVERS}, whose files are ours).
+ */
+const OD_ABOUT_PARTNERS = [
+    ['src' => '/wp-content/uploads/2016/02/аси.jpg', 'caption' => 'Агентство стратегических инициатив'],
+    ['src' => '/wp-content/uploads/2016/02/фсин2.jpg', 'caption' => 'Федеральная служба исполнения наказаний России'],
+    ['src' => '/wp-content/uploads/2016/02/MO.png', 'caption' => 'Правительство Московской области'],
+    ['src' => '/wp-content/uploads/2016/02/татарстан2.png', 'caption' => 'Правительство Республики Татарстан'],
+];
+
+/**
+ * The «Задачи» icons, in the order the four tasks are stored.
+ *
+ * Figma names them `education 1`, `film-making 1`, `agreement 1` and
+ * `book (1) 1`; they are backgrounds on `.od-task--<id>` the same way the card
+ * drawings are, so nothing about them is in the content for an editor to lose.
+ */
+const OD_ABOUT_TASK_ICONS = ['education', 'film', 'law', 'materials'];
+
+/**
+ * Where the stored intro splits into the mock's two columns: everything before
+ * it is the grey uppercase lead, everything after is the bold sentence beside
+ * it. A fingerprint as much as a split — the sentence is one paragraph and this
+ * is the only place it can be cut without inventing words.
+ */
+const OD_ABOUT_LEAD_SPLIT = ', активно занимающаяся';
+
+/**
+ * `/about/` — Figma `about` (`706:70`) + `about-learn-more` (`706:1257`), D6w.
+ *
+ * **Both frames are one page.** `about` draws the video, a two-column lead, the
+ * history, an «Узнать больше» button and the cards; `about-learn-more` is the
+ * same page with four more sections between the history and the cards. So the
+ * button is a disclosure and the long read is what it discloses — written as
+ * `core/details`, which is WordPress's own block and a native `<details>`: no
+ * script (a WordPress body has none of its own — see `/about/ustav/`'s missing
+ * scroll highlight), the text stays in the DOM for search, and an editor gets a
+ * block they can open and type into. The summary stays visible when open, which
+ * is the one thing the expanded frame does not draw.
+ *
+ * **What the stored page is.** One `wp:paragraph` block holding the whole read as
+ * `<p><strong>Label</strong><br />…</p>` pairs — История, Миссия, Цели, Задачи,
+ * Описание деятельности — then three project paragraphs, the state-cooperation
+ * paragraph, an `<h3>` of thirteen films, three registration scans, twelve
+ * `cmsms-icon-box` tiles, a dead MailPoet form and the legal details.
+ *
+ * Every piece is read back out of it. What the labels become: «История» loses its
+ * label (the mock draws none, and «основанная в 2012 году» in the lead above it
+ * has already said what the paragraph is), «Миссия» becomes the illustrated card
+ * `about-learn-more` heads the read with, «Цели» its four numbered tiles, «Задачи»
+ * its four icon cards, «Описание деятельности» the bold lead plus one 386 + 814
+ * row per project.
+ *
+ * **Three things have no frame and stay anyway.** The thirteen films are the last
+ * section of the long read; the three registration scans move down to sit beside
+ * the legal details they are the proof of, under a "Реквизиты" heading, since
+ * nothing else on the page names them. Dropped: `[wysija_form id="2"]` and its
+ * heading — the MailPoet plugin is gone and it renders as its own text, the same
+ * call every other transform in this file makes.
+ *
+ * **The uppercase lead is CSS, not content**, which is the opposite of the call
+ * `/about/ustav/` makes and the same rule: the stored sentence is sentence-cased
+ * and Figma shouts, so the shouting is the drawing (`wp-page-redesign.md` §4).
+ *
+ * @param string $content    Stored `post_content`.
+ * @param int    $_filmTagId Unused: this page carries no film row.
+ * @return string Rewritten content, or `$content` unchanged if it is already in
+ *                the target shape.
+ * @throws RuntimeException when the page does not look like the expected input.
+ */
+function od_pages_about(string $content, int $_filmTagId = 0): string
+{
+    if (od_has_block_class($content, 'od-lead')) {
+        return $content; // Already converted — leave the editor's copy alone.
+    }
+
+    [$labelled, $plain] = od_about_paragraphs($content);
+
+    foreach (['История', 'Миссия', 'Цели', 'Задачи', 'Описание деятельности'] as $label) {
+        if (!isset($labelled[$label])) {
+            throw new RuntimeException(sprintf('unexpected input: no «%s» paragraph', $label));
+        }
+    }
+
+    $goals = od_about_items($labelled['Цели']);
+    $tasks = od_about_items($labelled['Задачи']);
+    if (count($goals) !== 4 || count($tasks) !== count(OD_ABOUT_TASK_ICONS)) {
+        throw new RuntimeException(sprintf('unexpected input: %d goals, %d tasks', count($goals), count($tasks)));
+    }
+
+    // The comma and the space go with the cut; «активно занимающаяся» opens the
+    // bold half, which is what the mock draws.
+    $intro = od_about_first($plain, OD_ABOUT_LEAD_SPLIT, 'the intro sentence');
+    $cut   = strpos($intro, OD_ABOUT_LEAD_SPLIT);
+    $lead  = substr($intro, 0, $cut);
+    $rest  = substr($intro, $cut + strlen(', '));
+
+    $projects = array_values(array_filter($plain, static fn(string $p): bool => (bool) preg_match('~реализуется проект «~u', $p)));
+    if (count($projects) !== 3) {
+        throw new RuntimeException(sprintf('unexpected input: %d project paragraphs', count($projects)));
+    }
+
+    // The films run from their own lead paragraph to the end of the `<h3>`
+    // section — everything after it in the body is a tile, the dead form or the
+    // legal details, and none of those is a plain paragraph of prose.
+    $films = array_slice($plain, od_about_index($plain, 'созданы следующие фильмы'));
+    $films = array_values(array_filter($films, static fn(string $p): bool => strpos($p, 'wysija') === false));
+    // The lead sentence and the twelve films it introduces. A floor rather than
+    // an exact count: the list is content and a thirteenth film is an edit, not a
+    // different page.
+    if (count($films) < 10) {
+        throw new RuntimeException(sprintf('unexpected input: %d film paragraphs', count($films)));
+    }
+
+    $presentation = od_about_link($content, 'Скачать презентацию');
+    if (!preg_match('~<!-- wp:embed \{"url":"([^"]+)"~', $content, $video)) {
+        throw new RuntimeException('unexpected input: no video embed');
+    }
+
+    $out = od_pages_embed($video[1]);
+    $out .= od_pages_paragraph($presentation);
+
+    $out .= od_pages_columns([
+        ['width' => '386px', 'blocks' => od_pages_classed_paragraph(od_about_lead($lead), 'od-lead-title')],
+        [
+            'width' => '814px',
+            'blocks' => od_pages_classed_paragraph(od_pages_sentence_case(trim($rest)), 'od-lead-text')
+                . od_pages_classed_paragraph(od_pages_inline_text($labelled['История']), 'od-prose-2'),
+        ],
+    ], 'od-lead');
+
+    $long = od_pages_goal_card(od_pages_inline_text($labelled['Миссия']), [], 'Миссия', 'od-card--mission');
+    $long .= od_pages_heading(2, 'Цели');
+    $long .= od_pages_tasks_grid($goals);
+    $long .= od_pages_heading(2, 'Задачи');
+    $long .= od_pages_icon_tasks($tasks, OD_ABOUT_TASK_ICONS);
+    $long .= od_pages_heading(2, 'Описание деятельности');
+    $long .= od_pages_classed_paragraph(od_pages_inline_text($labelled['Описание деятельности']), 'od-lead-text');
+
+    foreach ($projects as $project) {
+        $long .= od_pages_labelled_row(od_about_project_label($project), od_pages_paragraph($project));
+    }
+
+    $long .= od_pages_classed_paragraph(od_about_first($plain, 'тесно сотрудничает', 'the cooperation paragraph'), 'od-prose-3');
+    // The lead ends in a colon and twelve sentences follow it, so they are a list
+    // — which is what they were before the old theme's markup flattened them.
+    $long .= od_pages_heading(2, 'Фильмы и мультфильмы организации');
+    $long .= od_pages_paragraph(array_shift($films));
+    $long .= od_pages_list($films);
+
+    $out .= od_pages_details('Узнать больше', $long);
+
+    $out .= od_pages_tiles(OD_ABOUT_CARDS, 'od-tiles od-tiles--wide');
+    $out .= od_pages_heading(2, 'Наши партнеры');
+    $out .= od_pages_asset_card(od_pages_logo_row(OD_ABOUT_PARTNERS) . od_pages_classed_paragraph(
+        '<a href="/about/nashi_partnery/">Подробнее</a>',
+        'od-tile-link'
+    ));
+    $out .= od_pages_tiles(OD_ABOUT_CARDS_SMALL);
+
+    $out .= od_pages_heading(2, 'Реквизиты');
+    foreach (['Полное название', 'ОГРН', 'ИНН', 'КПП'] as $label) {
+        if (!isset($labelled[$label])) {
+            throw new RuntimeException(sprintf('unexpected input: no «%s» line', $label));
+        }
+        // «…«Общее дело"» — the closing quote is a straight one in the stored
+        // line, and this is the only place on the page the name is spelled out.
+        $value = str_replace('дело"', 'дело»', od_pages_inline_text($labelled[$label]));
+        $out .= od_pages_paragraph(sprintf('<strong>%s:</strong> %s', $label, $value));
+    }
+
+    $out .= od_pages_figures(od_about_scans($content), 3);
+
+    return rtrim($out) . "\n";
+}
+
+/**
+ * The body's paragraphs, split into the labelled ones and the rest.
+ *
+ * A labelled paragraph is `<p><strong>Label</strong><br />…</p>`, which is how
+ * the migrator left every section of this page and how the legal details are
+ * stored too — so one pass reads both. The label keeps no trailing colon or
+ * space; the body is returned **raw**, because «Цели» and «Задачи» are lists
+ * whose items are separated by the `<br />`s inside it.
+ *
+ * @return array{0: array<string, string>, 1: array<int, string>}
+ */
+function od_about_paragraphs(string $content): array
+{
+    preg_match_all('~<p[^>]*>(.*?)</p>~s', $content, $found);
+
+    $labelled = [];
+    $plain    = [];
+    foreach ($found[1] as $html) {
+        if (preg_match('~^\s*<strong[^>]*>(.*?)</strong>\s*(?:<br\s*/?>)?(.*)$~s', $html, $parts)) {
+            $labelled[rtrim(od_pages_inline_text($parts[1]), ': ')] = $parts[2];
+            continue;
+        }
+        // `od_pages_inline_text()` first and `strip_tags()` second: the other order
+        // deletes the `<br />`s instead of turning them into spaces, and the
+        // state-cooperation paragraph is three sentences joined by them —
+        // «…наказаний.Совместную работу…».
+        $text = trim(preg_replace('~\s+~u', ' ', strip_tags(od_pages_inline_text($html))));
+        if ($text !== '' && $text !== '&nbsp;') {
+            $plain[] = $text;
+        }
+    }
+
+    return [$labelled, $plain];
+}
+
+/**
+ * A `<br />`-separated dash list, as the items the mock draws as cards: the
+ * leading «- » goes, the trailing «;» goes, and each starts with a capital,
+ * because the mock sets them as sentences rather than as a run-on list.
+ *
+ * @return array<int, string>
+ */
+function od_about_items(string $html): array
+{
+    $items = [];
+    foreach (preg_split('~<br\s*/?>~i', $html) as $item) {
+        $text = od_pages_inline_text(strip_tags($item));
+        // The dash and the semicolon are the list's punctuation, not the item's;
+        // a stop is added back because the mock sets each card as a sentence.
+        $text = rtrim(preg_replace('~^[-\s\x{00a0}]+~u', '', $text), " ;.\u{00a0}");
+        if ($text !== '') {
+            $items[] = od_pages_sentence_case($text) . '.';
+        }
+    }
+
+    return $items;
+}
+
+/** The first paragraph carrying `$needle`, or a throw naming what was missing. */
+function od_about_first(array $paragraphs, string $needle, string $what): string
+{
+    foreach ($paragraphs as $paragraph) {
+        if (strpos($paragraph, $needle) !== false) {
+            return $paragraph;
+        }
+    }
+
+    throw new RuntimeException(sprintf('unexpected input: %s is missing', $what));
+}
+
+/** Its index, for the sections that are "everything from here on". */
+function od_about_index(array $paragraphs, string $needle): int
+{
+    foreach ($paragraphs as $index => $paragraph) {
+        if (strpos($paragraph, $needle) !== false) {
+            return $index;
+        }
+    }
+
+    throw new RuntimeException(sprintf('unexpected input: no paragraph carrying «%s»', $needle));
+}
+
+/**
+ * The lead, as the mock ends it: at «основанная в 2012 году», with a full stop of
+ * its own and an em dash where the stored sentence has a hyphen doing the job.
+ */
+function od_about_lead(string $text): string
+{
+    return rtrim(str_replace('» - ', '» — ', trim($text)), ' ,.') . '.';
+}
+
+/**
+ * A project row's label — «Проект «Здоровая Россия - общее дело»», the way the
+ * mock heads each row. The name is the paragraph's first quoted run, which is
+ * the project in all three: two open with «Разработан и реализуется проект …»
+ * and the third names the organisation first.
+ */
+function od_about_project_label(string $paragraph): string
+{
+    if (!preg_match('~реализуется проект (?:под названием )?(«[^»]+»)~u', $paragraph, $name)) {
+        throw new RuntimeException(sprintf('no project name in «%s…»', mb_substr($paragraph, 0, 40)));
+    }
+
+    return 'Проект ' . $name[1];
+}
+
+/**
+ * The «Скачать презентацию…» link, kept whole. The mock has no row for it, and
+ * it is the only address on the page for the presentation file — so it stays,
+ * under the video it belongs to.
+ */
+function od_about_link(string $content, string $label): string
+{
+    if (!preg_match(sprintf('~<a [^>]*href="([^"]+)"[^>]*>(%s[^<]*)</a>~u', preg_quote($label, '~')), $content, $link)) {
+        throw new RuntimeException(sprintf('unexpected input: no «%s» link', $label));
+    }
+
+    return sprintf('<a href="%s" target="_blank" rel="noopener">%s</a>', $link[1], $link[2]);
+}
+
+/**
+ * The registration scans the page already carries, with the ids and the paths it
+ * stores — both per-environment, which is why they are read rather than written
+ * down.
+ *
+ * @return array<int, array{id: string, src: string, href: string}>
+ */
+function od_about_scans(string $content): array
+{
+    preg_match_all('~<!-- wp:image \{"id":(\d+).*?<img src="([^"]+)"~s', $content, $found, PREG_SET_ORDER);
+
+    $scans = [];
+    foreach ($found as $image) {
+        $scans[] = ['id' => $image[1], 'src' => $image[2], 'href' => $image[2]];
+    }
+
+    if (count($scans) !== 3) {
+        throw new RuntimeException(sprintf('unexpected input: %d registration scans', count($scans)));
+    }
+
+    return $scans;
+}
+
+/**
+ * A `core/list` of plain items — one `wp:list-item` each, which is how WordPress
+ * has stored a list since 6.0 and what the editor needs to treat the items as
+ * blocks it can reorder.
+ *
+ * @param array<int, string> $items Inline HTML, one per item.
+ */
+function od_pages_list(array $items): string
+{
+    $out = "<!-- wp:list -->\n<ul class=\"wp-block-list\">";
+    foreach ($items as $item) {
+        $out .= sprintf("<!-- wp:list-item -->\n<li>%s</li>\n<!-- /wp:list-item -->\n", $item);
+    }
+
+    return $out . "</ul>\n<!-- /wp:list -->\n\n";
+}
+
+/**
+ * The `core/details` disclosure — WordPress's own block, so what an editor sees
+ * is a summary they can retype and blocks they can add to. The class is both the
+ * styling hook and what tells a converted page from a fresh one.
+ */
+function od_pages_details(string $summary, string $blocks): string
+{
+    return "<!-- wp:details {\"className\":\"od-more\"} -->\n"
+        . sprintf("<details class=\"wp-block-details od-more\"><summary>%s</summary>\n", $summary)
+        . $blocks
+        . "</details>\n<!-- /wp:details -->\n\n";
+}
+
+/**
+ * The «Задачи» cards: the same tile as {@see od_pages_tasks_grid()} with an icon
+ * where that one puts an ordinal, two to a row — Figma draws them 600 × 192.
+ *
+ * The icon is a background on the card's own class, so a task can be reworded in
+ * the admin without touching it, and a fifth task drawn with no icon still lays
+ * out (an empty box, which says what is missing — the same call `.od-tile` makes).
+ *
+ * @param array<int, string> $tasks Plain text of each card, in order.
+ * @param array<int, string> $icons One icon id per card, in the same order.
+ */
+function od_pages_icon_tasks(array $tasks, array $icons): string
+{
+    $tiles = '';
+    foreach (array_values($tasks) as $index => $task) {
+        $class = 'od-task od-task--' . ($icons[$index] ?? 'none');
+        $tiles .= sprintf("<!-- wp:group {\"className\":\"%s\"} -->\n<div class=\"wp-block-group %s\">\n", $class, $class)
+            . od_pages_paragraph($task)
+            . "</div>\n<!-- /wp:group -->\n\n";
+    }
+
+    return "<!-- wp:group {\"className\":\"od-tasks od-tasks--2\"} -->\n<div class=\"wp-block-group od-tasks od-tasks--2\">\n"
+        . rtrim($tiles) . "\n</div>\n<!-- /wp:group -->\n\n";
+}
+
+/**
+ * A label beside its prose — Figma's 386 + 814 against the 1240 column, the same
+ * split `/about/udostoverenie/`'s rail uses the other way round.
+ */
+function od_pages_labelled_row(string $label, string $blocks): string
+{
+    return od_pages_columns([
+        ['width' => '386px', 'blocks' => od_pages_classed_paragraph($label, 'od-label')],
+        ['width' => '814px', 'blocks' => $blocks],
+    ], 'od-labelled') . "\n";
+}
+
+/**
+ * Logos four to a row, each with its name as its own `figcaption` —
+ * `/about/nashi_partnery/`'s whole grid, and the four of it `/about/` shows.
+ *
+ * @param array<int, array{src: string, caption: string}> $logos
+ */
+function od_pages_logo_row(array $logos): string
+{
+    $out   = '';
+    $class = 'od-figures od-figures--4 od-figures--logos';
+
+    foreach (array_chunk($logos, 4) as $row) {
+        $out .= sprintf("<!-- wp:columns {\"className\":\"%s\"} -->\n<div class=\"wp-block-columns %s\">", $class, $class);
+        foreach ($row as $logo) {
+            $out .= "<!-- wp:column -->\n<div class=\"wp-block-column\">\n"
+                . od_pages_asset_image(['id' => '0', 'src' => $logo['src'], 'href' => ''], $logo['caption'])
+                . "</div>\n<!-- /wp:column -->\n";
+        }
+        $out .= "</div>\n<!-- /wp:columns -->\n\n";
+    }
+
+    return $out;
+}
+
+
+/**
  * Every record workstream D rewrites, newest last.
  *
  * `path` is resolved with `get_page_by_path()` — exact and hierarchy-aware.
@@ -3962,6 +4419,11 @@ function od_pages_registry(): array
             'label' => 'D6p · /about/smi/ — Figma `Letters-of-appreciation` (706:3602)',
             'path' => 'about/smi',
             'fix' => 'od_pages_post_cards',
+        ],
+        [
+            'label' => 'D6w · /about/ — Figma `about` (706:70) + `about-learn-more` (706:1257)',
+            'path' => 'about',
+            'fix' => 'od_pages_about',
         ],
     ];
 

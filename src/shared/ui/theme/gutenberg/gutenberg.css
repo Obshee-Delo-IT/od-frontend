@@ -458,8 +458,13 @@ h2:has(+ .od-cards, + .od-poster-cards) {
 /* Same card, `/about/supervisory/`'s drawing — Figma `team-2` splits its statement
    card 640 / 572 exactly as `project-1` does, so the only difference is the
    picture. Both classes are on the block; this rule is after the shorthand above
-   and therefore wins the `background-image` half of it. */
-.od-card--supervisory::before {
+   and therefore wins the `background-image` half of it.
+
+   `/about/`'s mission card is the same drawing: `about-learn-more` heads the long
+   read with this frame, down to the potted plant. One file, two pages — the same
+   sharing the tile drawings do, and the class names the page it was exported for. */
+.od-card--supervisory::before,
+.od-card--mission::before {
   background-image: url('/figma/supervisory.svg');
 }
 
@@ -899,6 +904,56 @@ h2:has(+ .od-tiles) {
   background-image: url('/figma/cards/direction-3.svg');
 }
 
+/* `/about/` — Figma `about` (`706:70`) draws seven of these; the four with a
+   `direction-*` file are the destinations the page links that the mock has no card
+   for (`od_pages_about()` says why they are still cards), and they borrow a drawing
+   the way «Плакаты Общего Дела» does above. «Отчеты»'s calendar goes to
+   «Документы»: the mock's own card points at a page that has been private since
+   2017. */
+.od-tile--about-team::before {
+  background-image: url('/figma/cards/about-team.svg');
+}
+
+.od-tile--about-experts::before {
+  background-image: url('/figma/cards/about-experts.svg');
+}
+
+.od-tile--about-docs::before {
+  background-image: url('/figma/cards/about-docs.svg');
+}
+
+.od-tile--about-ustav::before {
+  background-image: url('/figma/cards/about-ustav.svg');
+}
+
+.od-tile--about-stories::before {
+  background-image: url('/figma/cards/about-stories.svg');
+}
+
+.od-tile--about-reviews::before {
+  background-image: url('/figma/cards/about-reviews.svg');
+}
+
+.od-tile--about-udostoverenie::before {
+  background-image: url('/figma/cards/about-udostoverenie.svg');
+}
+
+.od-tile--about-supervisory::before {
+  background-image: url('/figma/cards/direction-4.svg');
+}
+
+.od-tile--about-smi::before {
+  background-image: url('/figma/cards/direction-3.svg');
+}
+
+.od-tile--about-stats::before {
+  background-image: url('/figma/cards/direction-2.svg');
+}
+
+.od-tile--about-otziv::before {
+  background-image: url('/figma/cards/direction-5.svg');
+}
+
 .od-tiles--wide .od-tile {
   display: grid;
   min-height: 280px;
@@ -1112,6 +1167,14 @@ h2:has(+ .od-tiles) {
 .od-asset .od-figures .wp-block-image img {
   height: 420px;
   object-fit: contain;
+}
+
+/* …except logos, which are in a card on `/about/`: the rule above is (0,3,1) and
+   beats the `--logos` box, so a coat of arms came out 420px tall. Taller than the
+   120 the grid of 49 uses, because `about` draws four of them in a card of their
+   own and gives each ~180. */
+.od-asset .od-figures--logos .wp-block-image img {
+  height: 180px;
 }
 
 /* The download row is centred wherever it sits. */
@@ -1741,4 +1804,237 @@ h2:has(+ .od-tiles) {
  * the whole fix; the empty column then takes no height at all. */
 .od-profile-body .wp-block-columns {
   display: block;
+}
+
+/* ------------------------------------------------------------------------- *
+ * `/about/` — Figma `about` (`706:70`) / `about-mob` (`1248:4488`), and the same
+ * page disclosed: `about-learn-more` (`706:1257`) / `about-learn-more-mob`
+ * (`1251:4457`). D6w.
+ *
+ * **The two frames are one page**, and the difference between them is a native
+ * `<details>`: `od_pages_about()` writes the long read as `core/details` classed
+ * `od-more`, so there is no state to style here beyond a summary that has to read
+ * as the mock's outline button.
+ *
+ * Most of the page is already built. The eleven cards are `/materials/`'s
+ * `.od-tiles` / `.od-tiles--wide` at Figma's own 385 × 358 and 598 × 280 — the
+ * mock draws this page's cards at exactly those sizes — the four numbered goals
+ * are `team-2`'s `.od-tasks`, the mission card is `.od-card--goal` with the
+ * supervisory drawing, and the partner strip is `/about/nashi_partnery/`'s
+ * `.od-figures--logos` inside an `.od-asset`. What is new: the two-column lead,
+ * prose that flows across columns, the disclosure, an icon on a task card, and a
+ * three-track figure row for the registration scans.
+ * ------------------------------------------------------------------------- */
+
+/* Figma: 386.5 for the uppercase lead, 803.8 for the bold half beside it at
+   x=527 — the 1240 column as 386 + 40 + 814, which is
+   `/about/udostoverenie/`'s rail the other way round. A grid for the reason
+   `.od-tiles` gives: core's flex writes a `flex-basis` per column and the mock's
+   split is not a percentage. */
+.wp-block-columns.od-lead {
+  display: grid;
+  margin-bottom: 40px;
+  gap: 40px;
+  grid-template-columns: 386px minmax(0, 1fr);
+}
+
+/* 22px on 130 %, and upper-cased **here**: the stored sentence is sentence-cased,
+   so the shouting belongs to the drawing. `/about/ustav/` applies the same rule in
+   the other direction — there the content shouted and Figma did not
+   (`docs/wp-page-redesign.md` §4). */
+.od-lead-title {
+  color: var(--gray-9);
+  font-size: var(--font-size-5);
+  line-height: 130%;
+  text-transform: uppercase;
+}
+
+/* The bold half of the lead — and the same 24px paragraph that opens «Описание
+   деятельности» inside the read, which the mock sets identically. */
+.od-lead-text {
+  color: var(--gray-9);
+  font-size: var(--font-size-6);
+  font-weight: 700;
+  line-height: 130%;
+}
+
+/* The history flows across the lead's right column in two 387-wide columns and the
+   state-cooperation paragraph across the full 1240 in three. Figma hand-broke both
+   into separate text frames at the column edge; `columns` is that break, done by
+   the browser, so an edit to the prose cannot leave one column short. */
+.od-prose-2,
+.od-prose-3 {
+  color: var(--gray-7);
+  column-gap: 40px;
+  font-size: var(--font-size-4);
+}
+
+.od-prose-2 {
+  column-count: 2;
+}
+
+.od-prose-3 {
+  column-count: 3;
+}
+
+/* The disclosure control. A `<details>` is the whole mechanism — a WordPress body
+   has no script of its own (see the missing scroll highlight on `/about/ustav/`) —
+   so this is the mock's 163 × 48 outline button, marker removed, and the same
+   declarations `.wp-element-button.is-style-outline` carries.
+
+   The indent is on the summary alone, not on the `<details>`: Figma draws the
+   button at x=526.44, the lead's second track, while everything it opens is the
+   page's full width. Putting it here also keeps the button still when the read
+   opens. */
+.od-more summary {
+  display: inline-flex;
+  padding: 12px 24px;
+  border-radius: var(--radius-full);
+  margin-left: 426px;
+  box-shadow: inset 0 0 0 1px var(--red-8);
+  color: var(--red-8);
+  cursor: pointer;
+  font-size: var(--font-size-4);
+  line-height: 1.4;
+  list-style: none;
+}
+
+.od-more summary::-webkit-details-marker {
+  display: none;
+}
+
+.od-more summary:hover {
+  background-color: var(--red-1);
+  box-shadow: inset 0 0 0 1px var(--red-10);
+  color: var(--red-10);
+}
+
+/* Open, the read starts 40px under the button, the same gap the mock leaves
+   between its sections. */
+.od-more[open] summary {
+  margin-bottom: 40px;
+}
+
+/* «Задачи»: the goals' tile with an icon where the ordinal is, two to a row —
+   Figma draws them 600 × 192 at a 41px gap. */
+.od-tasks--2 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+/* The icon is a background, like every other drawing in this file: a `mask-image`
+   over `currentColor` (the call `.od-contact` makes) would flatten two-tone line
+   art to one colour. A card with no icon class draws an empty box, which keeps the
+   row aligned and says what is missing — `.od-tile` behaves the same way.
+
+   **Longhands, not the `background` shorthand**, and that is not tidiness: this
+   selector is (0,2,1) and the four `--icon` rules below are (0,1,1), so the
+   shorthand's implicit `background-image: none` would win over every one of them
+   and each card would draw an empty box. `.od-tile::before` can use the shorthand
+   because its own modifiers tie with it and win on order. */
+.od-tasks--2 .od-task::before {
+  display: block;
+  width: 48px;
+  height: 48px;
+  margin-bottom: 24px;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: contain;
+  content: '';
+}
+
+.od-task--education::before {
+  background-image: url('/figma/icons/task-education.svg');
+}
+
+.od-task--film::before {
+  background-image: url('/figma/icons/task-film.svg');
+}
+
+.od-task--law::before {
+  background-image: url('/figma/icons/task-law.svg');
+}
+
+.od-task--materials::before {
+  background-image: url('/figma/icons/task-materials.svg');
+}
+
+/* «Описание деятельности»: the project's name beside its prose, on the lead's own
+   386 + 814 tracks. */
+.wp-block-columns.od-labelled {
+  display: grid;
+  margin-bottom: 24px;
+  gap: 40px;
+  grid-template-columns: 386px minmax(0, 1fr);
+}
+
+.od-label {
+  color: var(--gray-9);
+  font-size: var(--font-size-4);
+  font-weight: 700;
+}
+
+/* The three registration scans, which have no frame of their own: three tracks
+   across the 1240 column, and a box that holds a whole document rather than
+   cropping it the way the photo grids do. They link to the full-size file, so the
+   lightbox is what a reader actually reads them in. */
+.wp-block-columns.od-figures--3 {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+/* stylelint-disable-next-line no-descending-specificity -- the `--logos` box
+   above is the same idea at another size; no row carries both classes. */
+.od-figures--3 .wp-block-image img {
+  height: 400px;
+  padding: 16px;
+  border-radius: 12px;
+  background-color: var(--white);
+  object-fit: contain;
+}
+
+/* The phone layout of both frames: one column everywhere, and the button spans
+   the screen the way `about-mob` draws it. */
+@media (--mobile) {
+  .wp-block-columns.od-lead,
+  .wp-block-columns.od-labelled {
+    gap: 16px;
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .od-lead-text {
+    font-size: var(--font-size-5);
+  }
+
+  .od-prose-2,
+  .od-prose-3 {
+    column-count: 1;
+  }
+
+  /* `about-mob` draws the button across the screen. */
+  .od-more summary {
+    width: 100%;
+    justify-content: center;
+    margin-left: 0;
+  }
+
+  /* The in-card logo box again — the mobile bookmark rule is later than the
+     `--logos` one above and would give a coat of arms 260px. */
+  .od-asset .od-figures--logos .wp-block-image img {
+    height: 140px;
+  }
+
+  /* Declared after the mobile block that stacks `.od-tasks`, and at the same
+     specificity — so the two-up modifier has to stack itself. */
+  .od-tasks--2 {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .wp-block-columns.od-figures--3 {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  /* stylelint-disable-next-line no-descending-specificity -- the in-card logo box
+     is the same shape at another size; no row carries both classes. */
+  .od-figures--3 .wp-block-image img {
+    height: 300px;
+  }
 }
