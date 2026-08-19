@@ -589,6 +589,14 @@ The first of workstream D's «О нас» pages, Figma `Letters-of-appreciation`
 
 **Known limit — page 2 is not reachable yet.** WordPress builds a pagination href with `add_query_arg()` against `REQUEST_URI`, and for us that is the REST request, so the link points at `…/wp-json/wp/v2/pages?slug=smi&…&query-95-page=2`. It predates this change (`/about/smi/` has rendered natively and paginated wrongly since D6b) and it is not a content problem: the block regenerates that markup on every render. Fixing it means the page reading a query parameter, and the catch-all cannot — `searchParams` would make `/<id>` dynamic and cost every post page its ISR entry. Tracked in [`implementation-plan.md`](./implementation-plan.md) §D3. It bites two of the seven: `/about/smi/` has 210 posts and `/about/reviews/letters/` 125; the other five hold 7 – 42 and fit on one page.
 
+### D6q. `/about/experts-review/` and `/about/docs/` — 2026-08-19
+
+Figma `documents` (`706:3499`), two pages on one transform. Both stored the same row — a document's name in a 75 % column, a download button in the 25 % one, a separator, repeat — 33 expert opinions on one page and 23 statutory documents on the other. They are now the mock's three-up grid, on the `od-asset` card the `/materials/` pages already use plus an `od-assets--3` modifier for the third track (387-wide cards, 40px gutter, 1241 total — the two-up rhythm at one more column). `od_pages_assets()` and `od_pages_downloads()` each grew one optional argument for it; nothing else was needed.
+
+**The mock's page preview is not built, and cannot be.** Each Figma card is a 387 × 544 image of the PDF's first page. The 33 files on `/about/experts-review/` are Yandex Disk links, so there is no file to render; the 23 on `/about/docs/` are local uploads, but **none of the install's 49 PDF attachments carries `_wp_attachment_metadata`** — WordPress generated no preview for any of them. A single placeholder repeated 56 times is noise, so the card is its title and its button, which is the rest of what the mock draws. Measured after: 387 × 207 at 100/527/954, the title at 22px on 130 %, the button spanning the card's 339 and hanging off the bottom edge, so a two-line title and a five-line one still line up.
+
+**Two content decisions.** The button is `is-style-outline`, as drawn — a page of 33 solid red buttons is not what the `.od-asset` primary is for. And its label is «Скачать» everywhere, replacing «Скачать устав», «Скачать отчёт» and «Смотреть/Скачать»: those said what the button did when the row *was* the button, and above a card's title the noun is already there.
+
 ### D7. Video — index 2026-06-04, player 2026-07-02
 
 Figma: index `video` (`706:3315`) + `video-filter` (`1554:17574`) + player `video-page` (`1566:10433`) + mobile `video-page-mob` (`1567:10735`, `1567:11844`) + download (`1581:10334`).

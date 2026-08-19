@@ -865,6 +865,7 @@ foreach ([
     'od_pages_disk',
     'od_pages_books',
     'od_pages_post_cards',
+    'od_pages_documents',
 ] as $transform) {
     $threw = false;
     try {
@@ -914,6 +915,36 @@ od_test( 'post cards: the two pages differ only in that query', str_replace( arr
 od_test( 'post cards: every /about/ post-card page is registered', 7 === count( array_filter( od_pages_registry(), function ( $entry ) {
 	return 'od_pages_post_cards' === $entry['fix'];
 } ) ) );
+
+/* -------------------------------------------------- od_pages_documents (D6q) */
+
+$experts = file_get_contents( __DIR__ . '/fixtures/about-experts-review.before.html' );
+$docs    = file_get_contents( __DIR__ . '/fixtures/about-docs.before.html' );
+
+od_test( 'the experts fixture really carries 33 download rows', 33 === count( od_pages_document_rows( $experts ) ) );
+od_test( 'the docs fixture really carries 23 of them', 23 === count( od_pages_document_rows( $docs ) ) );
+
+$rows = od_pages_document_rows( $experts );
+od_test( 'document rows: the name comes back without its markup', 'Комплекное социокультурное исследование медиасреды видеопродуктов ООО "Общее Дело" - 2020.pdf' === $rows[0]['title'] );
+od_test( 'document rows: so does the file it links to', 'https://yadi.sk/i/EuouI-VMlqZndA' === $rows[0]['href'] );
+
+$built = od_pages_documents( $experts, 0 );
+
+od_test( 'documents: one card per document', 33 === substr_count( $built, 'wp-block-column od-asset' ) );
+od_test( 'documents: three to a row', 11 === substr_count( $built, '"className":"od-assets od-assets--3"' ) );
+od_test( 'documents: every card has its download', 33 === substr_count( $built, '<!-- wp:buttons {"className":"od-asset-actions"} -->' ) );
+od_test( 'documents: the button is the mock\'s outline one', 33 === substr_count( $built, '"className":"is-style-outline"' ) );
+od_test( 'documents: and reads «Скачать» on all of them', 33 === substr_count( $built, '>Скачать</a>' ) );
+od_test( 'documents: the stored label is gone', false === strpos( $built, 'Смотреть/Скачать' ) );
+od_test( 'documents: the separators are gone', false === strpos( $built, 'wp:separator' ) );
+od_test( 'documents: the MailPoet form is gone', false === strpos( $built, '[wysija_form' ) );
+od_test( 'documents: the first file is still linked', false !== strpos( $built, 'href="https://yadi.sk/i/EuouI-VMlqZndA"' ) );
+od_test( 'documents: it is idempotent', od_pages_documents( $built, 0 ) === $built );
+
+$builtDocs = od_pages_documents( $docs, 0 );
+od_test( 'documents: /about/docs/ splits its row 66.67/33.33 and is read the same way', 23 === substr_count( $builtDocs, 'wp-block-column od-asset' ) );
+od_test( 'documents: its last row holds the two left over', 8 === substr_count( $builtDocs, '"className":"od-assets od-assets--3"' ) );
+od_test( 'documents: a local upload keeps its root-relative path for the pipeline to fix', false !== strpos( $builtDocs, 'href="/wp-content/uploads/2019/03/2012-Устав-ОБЩЕЕ-ДЕЛО.pdf"' ) );
 
 /* ------------------------------------------------------- the registry itself */
 

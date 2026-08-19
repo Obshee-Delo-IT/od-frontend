@@ -924,6 +924,33 @@ h2:has(+ .od-tiles) {
   gap: 24px;
 }
 
+/* Three tracks for `/about/experts-review/` and `/about/docs/` — Figma
+   `documents` (`706:3499`) draws 387-wide cards, three across a 1241 row with a
+   40px gutter, which is the same rhythm at one more column. */
+.wp-block-columns.od-assets--3 {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+/* Those cards hold a document's name and nothing else above the button, so the
+   name is the card's title and is set as one. */
+.od-assets--3 .od-asset p {
+  color: var(--gray-9);
+  font-size: var(--font-size-5);
+  line-height: 130%;
+}
+
+/* The mock's «Скачать» spans the whole card, where a `core/button` is as wide as
+   its label. Same shape as the clip column on `/materials/led-board-roliki/`. */
+.od-assets--3 .od-asset-actions .wp-block-button {
+  flex: 1;
+}
+
+.od-assets--3 .od-asset-actions .wp-block-button .wp-block-button__link {
+  display: block;
+  width: 100%;
+  text-align: center;
+}
+
 /* The stacked form is its own block in the flow, so it carries the 40 the grid
    above gets from `margin-bottom` — unless it is the aside of a row, which
    `/materials/disk/` and `/materials/books/` make it: there the row below is

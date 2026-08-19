@@ -648,14 +648,18 @@ function od_pages_asset_card(string $blocks): string
  * a thing nobody can edit. A row left holding a single card is half width,
  * which is what the mock draws for its odd one out.
  *
- * @param array<int, string> $cards Block HTML for each card.
+ * @param array<int, string> $cards     Block HTML for each card.
+ * @param int                $perRow    Cards per row.
+ * @param string             $className Row class — `od-assets` is the two-track
+ *                                      grid, plus `od-assets--3` for the
+ *                                      three-up `documents` pages.
  */
-function od_pages_assets(array $cards, int $perRow = 2): string
+function od_pages_assets(array $cards, int $perRow = 2, string $className = 'od-assets'): string
 {
     $out = '';
 
     foreach (array_chunk($cards, $perRow) as $row) {
-        $out .= "<!-- wp:columns {\"className\":\"od-assets\"} -->\n<div class=\"wp-block-columns od-assets\">";
+        $out .= sprintf("<!-- wp:columns {\"className\":\"%s\"} -->\n<div class=\"wp-block-columns %s\">", $className, $className);
         foreach ($row as $card) {
             $out .= "<!-- wp:column {\"className\":\"od-asset\"} -->\n<div class=\"wp-block-column od-asset\">\n"
                 . $card
@@ -729,13 +733,19 @@ function od_pages_asset_image(array $image, string $caption = ''): string
  * passes a single button.
  *
  * @param array<int, array{href: string, label: string}> $buttons
+ * @param string $style Block style slug — `''` for the primary button every
+ *                      `/materials/` card uses, `is-style-outline` for the
+ *                      `documents` pages, which is what their mock draws.
  */
-function od_pages_downloads(array $buttons): string
+function od_pages_downloads(array $buttons, string $style = ''): string
 {
+    $attrs  = $style === '' ? '' : sprintf(' {"className":"%s"}', $style);
+    $classes = $style === '' ? 'wp-block-button' : 'wp-block-button ' . $style;
+
     $out = "<!-- wp:buttons {\"className\":\"od-asset-actions\"} -->\n<div class=\"wp-block-buttons od-asset-actions\">";
     foreach ($buttons as $button) {
-        $out .= "<!-- wp:button -->\n"
-            . '<div class="wp-block-button">'
+        $out .= "<!-- wp:button" . $attrs . " -->\n"
+            . sprintf('<div class="%s">', $classes)
             . sprintf(
                 '<a class="wp-block-button__link wp-element-button" href="%s" target="_blank" rel="noopener">%s</a>',
                 $button['href'],
@@ -2489,6 +2499,85 @@ function od_pages_post_cards(string $content, int $_filmTagId = 0): string
 }
 
 /**
+ * `/about/experts-review/` and `/about/docs/` — Figma `documents` (`706:3499`).
+ *
+ * Two pages, one shape: a document's name in a 75 % column and a download
+ * button in the 25 % one, that pair repeated behind a separator — 33 expert
+ * opinions on one page, 23 statutory documents on the other. They become the
+ * mock's three-up grid of cards, on the `od-asset` card the `/materials/` pages
+ * already use, with `od-assets--3` for the third track.
+ *
+ * **The mock's page preview is not built, because there is nothing to build it
+ * from.** Each card in Figma is a 387 × 544 image of the PDF's first page. All
+ * 33 files on `/about/experts-review/` live on Yandex Disk, not in the library;
+ * the 23 on `/about/docs/` are local, but WordPress generated no preview for
+ * any of the install's 49 PDF attachments (none carries
+ * `_wp_attachment_metadata`). A placeholder repeated 56 times is noise, so the
+ * card is its title and its button — which is the rest of what the mock draws.
+ *
+ * The button is `is-style-outline` and reads «Скачать» on every card, both as
+ * drawn. The stored labels are «Скачать устав», «Скачать отчёт» and
+ * «Смотреть/Скачать», which said what the button did when it was the only thing
+ * on the row; above a title in a card, the noun is already there.
+ *
+ * @param string $content   Stored `post_content`.
+ * @param int    $_filmTagId Unused: these pages carry no film row.
+ * @return string Rewritten content, or `$content` unchanged if it is already in
+ *                the target shape.
+ * @throws RuntimeException when the page does not look like the expected input.
+ */
+function od_pages_documents(string $content, int $_filmTagId = 0): string
+{
+    if (od_has_block_class($content, 'od-asset')) {
+        return $content; // Already converted — leave the editor's copy alone.
+    }
+
+    $documents = od_pages_document_rows($content);
+    if (count($documents) < 2) {
+        throw new RuntimeException(sprintf('unexpected input: %d document rows', count($documents)));
+    }
+
+    $cards = [];
+    foreach ($documents as $document) {
+        $cards[] = od_pages_paragraph($document['title'])
+            . od_pages_downloads([['href' => $document['href'], 'label' => 'Скачать']], 'is-style-outline');
+    }
+
+    return rtrim(od_pages_assets($cards, 3, 'od-assets od-assets--3')) . "\n";
+}
+
+/**
+ * The document rows of a `documents` page: every `core/columns` whose first
+ * column holds a name and whose second holds one link.
+ *
+ * The two pages split their row differently — 75/25 on
+ * `/about/experts-review/`, 66.67/33.33 on `/about/docs/` — so the widths are
+ * matched loosely and the shape is what identifies a row.
+ *
+ * @return array<int, array{title: string, href: string}>
+ */
+function od_pages_document_rows(string $content): array
+{
+    $pattern = '#<!-- wp:column \{"width":"(?:75|66\.67)%"\}.*?<p[^>]*>(.*?)</p>'
+        . '.*?<!-- wp:column \{"width":"(?:25|33\.33)%"\}.*?href="([^"]+)"#s';
+
+    if (!preg_match_all($pattern, $content, $matches, PREG_SET_ORDER)) {
+        return [];
+    }
+
+    $rows = [];
+    foreach ($matches as $match) {
+        $title = od_pages_inline_text(strip_tags($match[1], '<em>'));
+        if ($title === '') {
+            continue;
+        }
+        $rows[] = ['title' => $title, 'href' => $match[2]];
+    }
+
+    return $rows;
+}
+
+/**
  * Block attributes as WordPress writes them: no escaped slashes, no unicode
  * escapes, and the key order the block had.
  */
@@ -2610,6 +2699,16 @@ function od_pages_registry(): array
             'label' => 'D6m · /materials/autosticker/ — Figma `car sticker` (966:8388)',
             'path' => 'materials/autosticker',
             'fix' => 'od_pages_autosticker',
+        ],
+        [
+            'label' => 'D6q · /about/experts-review/ — Figma `documents` (706:3499)',
+            'path' => 'about/experts-review',
+            'fix' => 'od_pages_documents',
+        ],
+        [
+            'label' => 'D6q · /about/docs/ — the same template',
+            'path' => 'about/docs',
+            'fix' => 'od_pages_documents',
         ],
         [
             'label' => 'D6p · /about/reviews/ — Figma `Letters-of-appreciation` (706:3602)',
