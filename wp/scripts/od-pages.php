@@ -2734,18 +2734,28 @@ function od_pages_embed(string $url): string
  * is dropped — the mock draws two rows, and the account has not been reachable
  * since Skype closed.
  *
- * **The hero is not the mock's 1241 × 508.** The library holds this photo at
- * 600 × 445 and nothing larger, so that band would be a 2× upscale of a
- * photograph of a document. It is drawn at the mock's *height* instead, 508
- * with the width following, which is a 1.14× upscale and keeps it sharp.
+ * **The hero is the mock's 1241 × 508, from a file cropped to it.** The library
+ * held this photo only at 600 × 445, and 1.35∶1 cannot be drawn as 2.44∶1
+ * without cropping — so it was cropped to the mock's window and resampled to
+ * 1240 × 508 (Lanczos, light unsharp) and re-uploaded, which is a better 2×
+ * than the browser's own and leaves the page nothing to stretch. That is the
+ * ceiling: **no larger original exists** — the mock's own image fill is the same
+ * photograph upscaled, and reads softer than this at the same size.
  *
- * @param string $content   Stored `post_content`.
+ * The upload is named by slug in the registry and resolved by the runner,
+ * because both its id and its `/uploads/YYYY/MM/` path are per-environment. On
+ * a fresh install the file has to be uploaded first:
+ * `wp media import udostoverenie-hero.jpg --title="Удостоверение «Общее дело»"`.
+ *
+ * @param string $content    Stored `post_content`.
  * @param int    $_filmTagId Unused: this page carries no film row.
+ * @param array  $hero       `['id' => string, 'src' => string]` for the cropped
+ *                           upload, resolved from its slug by the runner.
  * @return string Rewritten content, or `$content` unchanged if it is already in
  *                the target shape.
  * @throws RuntimeException when the page does not look like the expected input.
  */
-function od_pages_udostoverenie(string $content, int $_filmTagId = 0): string
+function od_pages_udostoverenie(string $content, int $_filmTagId = 0, array $hero = []): string
 {
     if (od_has_block_class($content, 'od-hero')) {
         return $content; // Already converted — leave the editor's copy alone.
@@ -2754,6 +2764,10 @@ function od_pages_udostoverenie(string $content, int $_filmTagId = 0): string
     if (!preg_match('#<img[^>]*wp-image-(\d+)[^>]*src="([^"]+)"#', $content, $photo)) {
         throw new RuntimeException('unexpected input: no photo');
     }
+
+    // The uncropped original is the fallback, so the transform is testable and a
+    // run before the upload still produces the page rather than failing.
+    $hero = $hero === [] ? ['id' => $photo[1], 'src' => $photo[2]] : $hero;
 
     preg_match_all('#<p[^>]*>(.*?)</p>#s', $content, $found);
     $paragraphs = [];
@@ -2817,7 +2831,7 @@ function od_pages_udostoverenie(string $content, int $_filmTagId = 0): string
 
     return "<!-- wp:group {\"className\":\"od-hero\",\"layout\":{\"type\":\"constrained\"}} -->\n"
         . "<div class=\"wp-block-group od-hero\">\n"
-        . od_pages_image_block($photo[1], $photo[2], '')
+        . od_pages_image_block($hero['id'], $hero['src'], '')
         . "</div>\n<!-- /wp:group -->\n\n"
         . od_pages_columns([
             ['width' => '65.65%', 'blocks' => od_pages_paragraph('<strong>' . $paragraphs[0] . '</strong>') . $body],
@@ -3000,7 +3014,10 @@ function od_pages_ustav_paragraphs(string $html): array
         $text = od_pages_inline_text(strip_tags($paragraph, '<em><strong><a><br>'));
         $text = trim(str_replace('&nbsp;', ' ', $text));
         $text = trim(preg_replace('#\s+#u', ' ', $text));
-        if ($text !== '') {
+        // `[wysija_form]` is the MailPoet form whose plugin is gone; it sits at
+        // the foot of this page as it does at the foot of every other one the
+        // migrator touched, and renders as its own source text.
+        if ($text !== '' && strpos($text, '[wysija_form') === false) {
             $paragraphs[] = $text;
         }
     }
@@ -3757,6 +3774,9 @@ function od_pages_supervisory(string $content, int $_filmTagId = 0): string
  *
  * `args` is passed on to the transform after those two, which is what lets one
  * function serve eleven records that differ only in their data (see `OD_TEAM`).
+ * `attachment` is a media slug the runner resolves to `['id', 'src']` and
+ * appends to those args — an upload's id and its `/uploads/YYYY/MM/` path are
+ * both per-environment, so neither can be written into a transform.
  *
  * ⚠️ **`title` needs WordPress 5.7 and production runs 5.5.5.** The query var did
  * not exist before then, so 5.5 ignores it, `get_posts()` returns the two newest
@@ -3890,6 +3910,7 @@ function od_pages_registry(): array
         [
             'label' => 'D6s · /about/udostoverenie/ — Figma `Certificate` (760:1662)',
             'path' => 'about/udostoverenie',
+            'attachment' => 'udostoverenie-hero',
             'fix' => 'od_pages_udostoverenie',
         ],
         [
@@ -4018,8 +4039,22 @@ foreach (od_pages_registry() as $entry) {
         continue;
     }
 
+    // Same reason as the tag above, one object further out: an attachment's id
+    // *and* its URL are per-environment — WordPress files an upload under the
+    // year and month it arrived, so even the path differs between installs.
+    // The registry names the slug; the runner hands the transform both.
+    $extra = $entry['args'] ?? [];
+    if (isset($entry['attachment'])) {
+        $media = get_page_by_path($entry['attachment'], OBJECT, 'attachment');
+        if (!$media) {
+            WP_CLI::warning(sprintf('%s: attachment `%s` is missing — upload it first (see the transform).', $entry['label'], $entry['attachment']));
+            continue;
+        }
+        $extra[] = ['id' => (string) $media->ID, 'src' => wp_get_attachment_url($media->ID)];
+    }
+
     try {
-        $new = $entry['fix']($post->post_content, $filmTag ? (int) $filmTag->term_id : 0, ...($entry['args'] ?? []));
+        $new = $entry['fix']($post->post_content, $filmTag ? (int) $filmTag->term_id : 0, ...$extra);
     } catch (Throwable $e) {
         WP_CLI::warning(sprintf('%s (#%d): %s', $entry['label'], $post->ID, $e->getMessage()));
         continue;
