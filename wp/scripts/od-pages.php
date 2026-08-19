@@ -2427,6 +2427,77 @@ function od_pages_shop_list(string $aside): string
 }
 
 /**
+ * The post-card pages under `/about/` — Figma `Letters-of-appreciation`
+ * (`706:3602`).
+ *
+ * Seven pages share one shape: a `core/query` over a single category, a
+ * `[cmsms_sidebar]` beside it, a MailPoet form whose plugin is gone and a
+ * `<style>` block that sizes the old theme's thumbnails. Only the query is
+ * content, so it is all this keeps.
+ *
+ * The query itself is copied through **verbatim** — its `queryId` and its
+ * category id differ per page and per environment, and neither is ours to
+ * decide. What changes is the template inside it: three columns instead of one,
+ * the date dropped (the mock shows none), and an `od-post-cards` class for
+ * `gutenberg.css` to key the card on. That class is also the idempotency mark.
+ *
+ * The pagination arrows are core's `chevron` with `showLabel` off, which is the
+ * mock's two round chips — «Предыдущая страница» spelled out would be a
+ * 200px-wide link where the design has a 36px circle. Both attributes go on the
+ * **parent** `core/query-pagination`: it is what provides them as context, and
+ * the same keys written on the previous/next blocks are read by nobody.
+ *
+ * Scoping matters here. ~80 regional `/contacts/*` pages carry a `wp:query`
+ * too, so the card rules hang off `od-post-cards` rather than off
+ * `.wp-block-post-template` — a bare rule would restyle all of them.
+ *
+ * @param string $content   Stored `post_content`.
+ * @param int    $_filmTagId Unused: these pages carry no film row.
+ * @return string Rewritten content, or `$content` unchanged if it is already in
+ *                the target shape.
+ * @throws RuntimeException when the page carries no query block.
+ */
+function od_pages_post_cards(string $content, int $_filmTagId = 0): string
+{
+    if (strpos($content, 'od-post-cards') !== false) {
+        return $content; // Already converted — leave the editor's copy alone.
+    }
+
+    if (!preg_match('/<!-- wp:query (\{.*?\}) -->/s', $content, $m)) {
+        throw new RuntimeException('unexpected input: no query block');
+    }
+
+    $attrs = json_decode($m[1], true);
+    if (!is_array($attrs) || !isset($attrs['queryId'], $attrs['query'])) {
+        throw new RuntimeException('unexpected input: unreadable query attributes');
+    }
+
+    $attrs['className'] = 'od-post-cards';
+
+    return sprintf("<!-- wp:query %s -->\n<div class=\"wp-block-query od-post-cards\">\n", od_pages_json($attrs))
+        . "<!-- wp:post-template {\"layout\":{\"type\":\"grid\",\"columnCount\":3}} -->\n"
+        . "<!-- wp:post-featured-image {\"isLink\":true} /-->\n"
+        . "<!-- wp:post-title {\"isLink\":true} /-->\n"
+        . "<!-- wp:post-excerpt /-->\n"
+        . "<!-- /wp:post-template -->\n\n"
+        . "<!-- wp:query-pagination {\"paginationArrow\":\"chevron\",\"showLabel\":false} -->\n"
+        . "<!-- wp:query-pagination-previous /-->\n"
+        . "<!-- wp:query-pagination-numbers /-->\n"
+        . "<!-- wp:query-pagination-next /-->\n"
+        . "<!-- /wp:query-pagination -->\n"
+        . "</div>\n<!-- /wp:query -->\n";
+}
+
+/**
+ * Block attributes as WordPress writes them: no escaped slashes, no unicode
+ * escapes, and the key order the block had.
+ */
+function od_pages_json(array $attrs): string
+{
+    return json_encode($attrs, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+}
+
+/**
  * Every record workstream D rewrites, newest last.
  *
  * `path` is resolved with `get_page_by_path()` — exact and hierarchy-aware.
@@ -2539,6 +2610,41 @@ function od_pages_registry(): array
             'label' => 'D6m · /materials/autosticker/ — Figma `car sticker` (966:8388)',
             'path' => 'materials/autosticker',
             'fix' => 'od_pages_autosticker',
+        ],
+        [
+            'label' => 'D6p · /about/reviews/ — Figma `Letters-of-appreciation` (706:3602)',
+            'path' => 'about/reviews',
+            'fix' => 'od_pages_post_cards',
+        ],
+        [
+            'label' => 'D6p · /about/reviews/letters/ — Figma `Letters-of-appreciation` (706:3602)',
+            'path' => 'about/reviews/letters',
+            'fix' => 'od_pages_post_cards',
+        ],
+        [
+            'label' => 'D6p · /about/reviews/school/ — Figma `Letters-of-appreciation` (706:3602)',
+            'path' => 'about/reviews/school',
+            'fix' => 'od_pages_post_cards',
+        ],
+        [
+            'label' => 'D6p · /about/reviews/middle/ — Figma `Letters-of-appreciation` (706:3602)',
+            'path' => 'about/reviews/middle',
+            'fix' => 'od_pages_post_cards',
+        ],
+        [
+            'label' => 'D6p · /about/reviews/vuz/ — Figma `Letters-of-appreciation` (706:3602)',
+            'path' => 'about/reviews/vuz',
+            'fix' => 'od_pages_post_cards',
+        ],
+        [
+            'label' => 'D6p · /about/reviews/mvd/ — Figma `Letters-of-appreciation` (706:3602)',
+            'path' => 'about/reviews/mvd',
+            'fix' => 'od_pages_post_cards',
+        ],
+        [
+            'label' => 'D6p · /about/smi/ — Figma `Letters-of-appreciation` (706:3602)',
+            'path' => 'about/smi',
+            'fix' => 'od_pages_post_cards',
         ],
     ];
 }

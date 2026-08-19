@@ -864,6 +864,7 @@ foreach ([
     'od_pages_booklet',
     'od_pages_disk',
     'od_pages_books',
+    'od_pages_post_cards',
 ] as $transform) {
     $threw = false;
     try {
@@ -873,6 +874,46 @@ foreach ([
     }
     od_test($transform . ': unexpected input is refused, not half-converted', $threw);
 }
+
+/* ------------------------------------------------- od_pages_post_cards (D6p) */
+
+$reviews = file_get_contents( __DIR__ . '/fixtures/about-reviews.before.html' );
+$smi     = file_get_contents( __DIR__ . '/fixtures/about-smi.before.html' );
+
+od_test( 'the reviews fixture really carries the sidebar shortcode', false !== strpos( $reviews, '[cmsms_sidebar' ) );
+od_test( 'the reviews fixture really carries the dead MailPoet form', false !== strpos( $reviews, '[wysija_form' ) );
+od_test( 'the reviews fixture really carries the old theme CSS', false !== strpos( $reviews, '<style' ) );
+
+$cards = od_pages_post_cards( $reviews, 0 );
+
+od_test( 'post cards: the sidebar shortcode is gone', false === strpos( $cards, '[cmsms_sidebar' ) );
+od_test( 'post cards: the MailPoet form is gone', false === strpos( $cards, '[wysija_form' ) );
+od_test( 'post cards: the old theme CSS is gone', false === strpos( $cards, '<style' ) );
+od_test( 'post cards: the two-column shell is gone', false === strpos( $cards, 'wp-block-column' ) );
+od_test( 'post cards: the query keeps its own id', false !== strpos( $cards, '"queryId":96' ) );
+od_test( 'post cards: the query keeps its own category', false !== strpos( $cards, '"category":[570]' ) );
+od_test( 'post cards: the query keeps its page size', false !== strpos( $cards, '"perPage":12' ) );
+od_test( 'post cards: the block is classed for gutenberg.css', false !== strpos( $cards, '"className":"od-post-cards"' ) );
+od_test( 'post cards: and carries the class in its markup too', false !== strpos( $cards, 'class="wp-block-query od-post-cards"' ) );
+od_test( 'post cards: three to a row', false !== strpos( $cards, '"columnCount":3' ) );
+od_test( 'post cards: the cover links to the post', false !== strpos( $cards, '<!-- wp:post-featured-image {"isLink":true} /-->' ) );
+od_test( 'post cards: so does the title', false !== strpos( $cards, '<!-- wp:post-title {"isLink":true} /-->' ) );
+od_test( 'post cards: the excerpt is kept', false !== strpos( $cards, '<!-- wp:post-excerpt /-->' ) );
+od_test( 'post cards: the date is dropped — the mock shows none', false === strpos( $cards, 'post-date' ) );
+od_test( 'post cards: pagination survives', 1 === substr_count( $cards, '<!-- wp:query-pagination ' ) );
+od_test( 'post cards: with all three of its parts', 3 === substr_count( $cards, '<!-- wp:query-pagination-' ) );
+od_test( 'post cards: its arrows are the mock\'s chips, not spelled-out labels', false !== strpos( $cards, '<!-- wp:query-pagination {"paginationArrow":"chevron","showLabel":false} -->' ) );
+od_test( 'post cards: it is idempotent', od_pages_post_cards( $cards, 0 ) === $cards );
+
+$smiCards = od_pages_post_cards( $smi, 0 );
+
+od_test( 'post cards: /about/smi/ keeps its own query id', false !== strpos( $smiCards, '"queryId":95' ) );
+od_test( 'post cards: /about/smi/ keeps its own category', false !== strpos( $smiCards, '"category":[79]' ) );
+od_test( 'post cards: the two pages differ only in that query', str_replace( array( '"queryId":95', '"category":[79]' ), array( '"queryId":96', '"category":[570]' ), $smiCards ) === $cards );
+
+od_test( 'post cards: every /about/ post-card page is registered', 7 === count( array_filter( od_pages_registry(), function ( $entry ) {
+	return 'od_pages_post_cards' === $entry['fix'];
+} ) ) );
 
 /* ------------------------------------------------------- the registry itself */
 
