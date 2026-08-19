@@ -703,6 +703,8 @@ Figma `story` (`706:3568`): twenty-five videos, each beside the person in it. Th
 
 **The sentence splits where it already did.** The person's name is the row's `<strong>` and what follows is what they do, joined by a dash; the mock sets the two as a heading and a paragraph, so the dash goes and the description starts as its own sentence. The split is on the tag rather than on the punctuation because one of the twenty-five has no dash at all («Пастухов Сергей родом из Магадана»), and `od_pages_sentence_case()` upper-cases the first letter with `mb_*` — `ucfirst()` is byte-wise and would have cut a Cyrillic character in half.
 
+**The clips stay on YouTube — they are not in the Kinescope library.** Checked the way D6n's mapping was built: each of the 25 embeds resolved through YouTube oEmbed, and every resulting title compared against all 262 videos in the account. **Zero matches, exact or partial** — the library holds films and cartoons, and these are personal testimonials that were never imported. Nothing to replace.
+
 **The column is bottom-aligned, and core's figure margin had to go for it.** Figma lands the description's last line level with the video's bottom edge on every row. The row's height is the video's, so `justify-content: flex-end` on the second column does it — but `.wp-block-embed`'s own 16px bottom margin made the row 16px taller than the video and put the text below it. Measured after: video 600 × 343 at x=100, text at x=740 (the mock's 742), name 29px tall, both bottoms at 637.
 
 ### D6s. `/about/udostoverenie/` — 2026-08-19
@@ -713,9 +715,13 @@ Figma `Certificate` (`760:1662`). The page was one paragraph block holding six `
 
 **The icons are a `mask-image` over `currentColor`.** `src/shared/ui/assets/icons/` strokes them with `currentColor`, and CSS cannot reach that directory anyway (`next.config.ts` routes every `.svg` through `@svgr/webpack`), so `public/figma/icons/` holds a copy — but as a `background-image` that copy would have to bake the brand red into the file. A mask keeps the colour in the stylesheet.
 
-**The hero is the mock's height, not its width.** Figma draws a 1241 × 508 band; the library holds this photo at 600 × 445 and nothing larger, so that band is a 2× upscale of a photograph. Drawn at 508 tall with the width following it is 685 × 508 — 1.14×, and sharp.
+**The hero is the mock's 1241 × 508, off a file cropped to it.** The library held the photo only at 600 × 445, and 1.35∶1 cannot be drawn as 2.44∶1 without cropping — so it was cropped to the mock's window, resampled to 1240 × 508 (Lanczos plus a light unsharp) and re-uploaded as `udostoverenie-hero`. That is a better 2× than the browser's own bilinear and leaves the page nothing to stretch, and it is the ceiling: **no larger original exists anywhere** — the mock's own image fill is this same photograph upscaled, and reads *softer* than this at the same magnification (checked by exporting the Figma rectangle at 2× and comparing a stamp's linework).
+
+**The upload is named in the registry, not written into the transform.** An attachment's id *and* its `/uploads/YYYY/MM/` path are per-environment — WordPress files an upload under the month it arrives — so `attachment` joins `tag` as a slug the **runner** resolves, handing the transform `['id', 'src']`. A missing attachment warns and skips the page, the way a missing tag does. The transform falls back to the page's own uncropped photo when it is handed nothing, which is what keeps it testable.
 
 **One existing rule had to be qualified.** `.wp-block-column > .od-asset { height: 100% }` makes a lone aside card as tall as the prose beside it — with *two* cards in the rail it stretched each to the row's height and ran the second one down over the footer.
+
+**And one long-standing bug came out of it: the group form of `.od-asset` never got its `gap`.** WordPress renders a constrained `core/group` with a `.wp-block-group__inner-container` between the card and its contents, so the card's flex column has exactly one child and its 24px lands nowhere — while the *column* form of the same card, which has no such wrapper, spaces its contents correctly. Every group card in the set was drawing its contents flush: `/materials/disk/`'s button against its disc, `/materials/books/`'s aside, and this page's note against its phone number. Fixed on `.od-asset > .wp-block-group__inner-container`, with the rail taking a tighter 8 plus 12 under its first child — Figma's 20 under the note and under «Положение о членстве», 8 between the two contact rows.
 
 ### D6t. `/about/ustav/` — 2026-08-19
 
@@ -727,7 +733,7 @@ Out of that comes an `<h2>` with an anchor per section, a `core/list` of nine li
 
 **Figma's red «you are here» pill is not built.** Marking the section a reader is looking at is a scroll listener, and a WordPress body has no script of its own. Every link works; the highlight is the one thing in the frame that is missing.
 
-**Two lines were dropped.** «Положение о членстве: Скачать» sat above the charter and the mock has no row for it — the same document is a card on `/about/udostoverenie/` (D6s). And the «УСТАВ» line is the page title, which `PageHeader` already draws.
+**Three lines were dropped.** «Положение о членстве: Скачать» sat above the charter and the mock has no row for it — the same document is a card on `/about/udostoverenie/` (D6s). The «УСТАВ» line is the page title, which `PageHeader` already draws. And `[wysija_form id="2"]` at the foot, the MailPoet form whose plugin is gone, which rendered as a dead subscribe box — the paragraph extractor drops it the way every other transform in the file does.
 
 ### D6u. `/about/nashi_partnery/`, and what is left of «О нас» — 2026-08-19
 

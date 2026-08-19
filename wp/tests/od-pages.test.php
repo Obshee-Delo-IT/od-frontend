@@ -1179,7 +1179,16 @@ od_test( 'od_pages_sentence_case leaves an empty string alone', '' === od_pages_
 $certificate = file_get_contents( __DIR__ . '/fixtures/about-udostoverenie.before.html' );
 $built       = od_pages_udostoverenie( $certificate, 0 );
 
-od_test( 'certificate: the floated photo becomes the hero', false !== strpos( $built, '"className":"od-hero"' ) && false !== strpos( $built, '"id":20112' ) );
+od_test( 'certificate: without an upload it falls back to the page\'s own photo', false !== strpos( $built, '"className":"od-hero"' ) && false !== strpos( $built, '"id":20112' ) );
+
+$cropped = od_pages_udostoverenie( $certificate, 0, array( 'id' => '76023', 'src' => 'https://wp.test/wp-content/uploads/2026/08/udostoverenie-hero.jpg' ) );
+od_test( 'certificate: the runner\'s upload is what the hero draws when there is one', false !== strpos( $cropped, '<!-- wp:image {"id":76023,"sizeSlug":"full"} -->' ) && false !== strpos( $cropped, 'src="https://wp.test/wp-content/uploads/2026/08/udostoverenie-hero.jpg"' ) );
+od_test( 'certificate: and the uncropped original is not left behind with it', false === strpos( $cropped, 'c07f3ba5595b9713e6e46bcf417c9a3e' ) );
+od_test( 'certificate: only the hero changes between the two', $cropped !== $built && substr( $cropped, strpos( $cropped, '<!-- wp:columns' ) ) === substr( $built, strpos( $built, '<!-- wp:columns' ) ) );
+od_test( 'certificate: the cropped run is idempotent too', od_pages_udostoverenie( $cropped, 0, array( 'id' => '76023', 'src' => 'x' ) ) === $cropped );
+od_test( 'certificate: the upload is named in the registry, not written into the transform', 1 === count( array_filter( od_pages_registry(), function ( $entry ) {
+	return 'udostoverenie-hero' === ( $entry['attachment'] ?? '' );
+} ) ) );
 od_test( 'certificate: the hero image is out of the prose', 1 === substr_count( $built, '<!-- wp:image ' ) );
 od_test( 'certificate: the row is 814 + 386', false !== strpos( $built, '"width":"65.65%"' ) && false !== strpos( $built, '"width":"31.13%"' ) );
 od_test( 'certificate: the lead is set as one', false !== strpos( $built, '<p><strong>Общероссийская общественная организация' ) );
@@ -1210,8 +1219,9 @@ od_test( 'charter: the first heading is sentence-cased, not shouted', false !== 
 od_test( 'charter: the one buried mid-paragraph is lifted out', false !== strpos( $built, '<h2 class="wp-block-heading" id="ustav-5">Контрольно-ревизионные органы организации</h2>' ) );
 od_test( 'charter: and the paragraph it was stuck to keeps its own text', false !== strpos( $built, '<p>- принимать участие во всех мероприятиях, организуемых и проводимых Организацией.</p>' ) );
 od_test( 'charter: the four one-item lists are gone', false === strpos( $built, '<ol start=' ) );
-od_test( 'charter: every paragraph is a block of its own', 350 === substr_count( $built, '<!-- wp:paragraph' ) );
-od_test( 'charter: which accounts for all 361 less the headings, the title and the download row', 361 === 350 + 9 + 1 + 1 );
+od_test( 'charter: every paragraph is a block of its own', 349 === substr_count( $built, '<!-- wp:paragraph' ) );
+od_test( 'charter: which accounts for all 361 less the headings, the title, the download row and the dead form', 361 === 349 + 9 + 1 + 1 + 1 );
+od_test( 'charter: the MailPoet form is gone', false === strpos( $built, '[wysija_form' ) );
 od_test( 'charter: the row is the mock\'s 384 + 814', false !== strpos( $built, '"width":"30.97%"' ) && false !== strpos( $built, '"width":"65.65%"' ) );
 od_test( 'charter: the duplicate «Положение о членстве» download is dropped', false === strpos( $built, 'Положение о членстве' ) );
 od_test( 'charter: so is the «УСТАВ» line PageHeader already draws', false === strpos( $built, '<p class="od-charter-preamble"><strong>УСТАВ</strong></p>' ) );

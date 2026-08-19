@@ -1001,6 +1001,19 @@ h2:has(+ .od-tiles) {
   margin-bottom: 0;
 }
 
+/* **The group form of the card never got its own `gap`.** WordPress renders a
+   constrained `core/group` with a `.wp-block-group__inner-container` between the
+   card and its contents, so `.od-asset`'s flex column has exactly one child and
+   the 24px lands nowhere — while the column form of the same card, which has no
+   such wrapper, spaces its contents correctly. The contents were flush against
+   each other on every group card in the set (`/materials/disk/`,
+   `/materials/books/`, `/about/udostoverenie/`). */
+.od-asset > .wp-block-group__inner-container {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
 /* A card holding an aside is as tall as the prose beside it, and its contents
    sit at the top rather than spreading down the empty space. */
 .wp-block-column > .od-asset {
@@ -1305,22 +1318,20 @@ h2:has(+ .od-tiles) {
 /* `/about/udostoverenie/` — Figma `Certificate` (`760:1662`): a hero photo, then
    the text with a 386-wide rail beside it.
 
-   **Not the mock's 1241 × 508 band.** The library holds this photo at 600 × 445
-   and nothing larger, so that band would be a 2× upscale of a photograph. It is
-   given the mock's *height* instead and takes the width from its own ratio — a
-   1.14× upscale, which stays sharp. */
+   The band is the mock's 1241 × 508 and the file behind it is cropped to that
+   (see `od_pages_udostoverenie()`), so `cover` has nothing to crop — it is here
+   for the next photograph an editor drops in, which will not be 2.44∶1. */
 .od-hero {
   margin-bottom: 45px;
-  text-align: center;
 }
 
 /* stylelint-disable-next-line no-descending-specificity -- `.od-card--flush` is
    `/materials/metodichki/`'s card; no body carries both. */
 .od-hero .wp-block-image img {
-  width: auto;
-  max-width: 100%;
+  width: 100%;
   height: 508px;
   border-radius: 12px;
+  object-fit: cover;
 }
 
 /* Figma: 814 + 40 + 386 = 1240. Written as tracks rather than left to the
@@ -1365,8 +1376,19 @@ h2:has(+ .od-tiles) {
   text-align: center;
 }
 
+/* The rail's cards are tighter than the 24 a `/materials/` card takes: Figma
+   puts 20 under the note and under «Положение о членстве», and 8 between the two
+   contact rows — 8 from the card and 12 from the first child gives both. */
+.od-aside .od-asset > .wp-block-group__inner-container {
+  gap: 8px;
+}
+
+.od-aside .od-asset > .wp-block-group__inner-container > :is(p, h3):first-child {
+  margin-bottom: 12px;
+}
+
 /* A contact row: a 24px glyph, 12px, then the link. Figma `Frame 33883` —
-   280 × 56 for the pair, so 6px between the rows.
+   280 × 56 for the pair, so 8px between the rows.
 
    `mask-image` over `currentColor` rather than a background copy of the SVG:
    the icons in `src/shared/ui/assets/icons/` are stroked with `currentColor`,
@@ -1375,7 +1397,6 @@ h2:has(+ .od-tiles) {
 .od-contact {
   display: flex;
   align-items: center;
-  margin-bottom: 6px;
   color: var(--red-8);
   gap: 12px;
 }
@@ -1512,8 +1533,7 @@ h2:has(+ .od-tiles) {
   }
 
   .od-hero .wp-block-image img {
-    width: 100%;
-    height: auto;
+    height: 200px;
   }
 
   /* The story rows stack below 900px: a 16∶9 video in half a phone is
@@ -1695,7 +1715,9 @@ h2:has(+ .od-tiles) {
   grid-template-columns: repeat(2, 1fr);
 }
 
-.od-team > .wp-block-group__inner-container {
+/* Two classes so the linter reads the file's `.od-asset` inner-container rules
+   as ascending — nothing here competes with them, `.od-team` is `/team/`'s grid. */
+.wp-block-group.od-team > .wp-block-group__inner-container {
   display: contents;
 }
 
