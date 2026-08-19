@@ -232,11 +232,12 @@ const OD_WP_MEDIA_SOURCE = 'https://obshee-delo.ru';
 /**
  * `profile` records the live `/team/` page needs and WordPress has not got.
  *
- * There is one, and it is not an oversight in this script: Анна Панферова is on
- * the team page in prose and has no record under any status, on either server
- * (checked 2026-08-18). `/team/` is eleven links to eleven records
- * (`od-pages.php`, `OD_TEAM`), so the eleventh has to exist before it can be
- * linked.
+ * Three, and none of them is an oversight in this script: Анна Панферова is on
+ * the team page in prose, Дамир Нигматянов and Михаил Федоренко are on
+ * `/about/supervisory/` the same way, and none of the three has a record under any
+ * status on either server (checked 2026-08-18/19). Both pages are now links to
+ * records (`od-pages.php`, `OD_TEAM` and `OD_SUPERVISORY`), so the records have to
+ * exist before they can be linked.
  *
  * **The body created here is a shell** — the photograph and an empty paragraph
  * block, in the shape all 139 records share. The role and the contacts are
@@ -256,6 +257,19 @@ function od_wp_profiles(): array
             'slug' => 'panferova-anna-andreevna',
             'title' => 'Панферова Анна Андреевна',
             'photo' => '/wp-content/uploads/2026/05/Screenshot_20260507_220750_Gallery-scaled-e1778522350302.jpg',
+        ],
+        // The two members of the Наблюдательный совет who had no record either.
+        // Their photographs have been on `/about/supervisory/` since 2019, so both
+        // libraries already hold them and nothing is downloaded.
+        [
+            'slug' => 'nigmatyanov-damir-zinnurovich',
+            'title' => 'Нигматянов Дамир Зиннурович',
+            'photo' => '/wp-content/uploads/2019/08/НигматяновДамирЗиннурыч_min.jpeg',
+        ],
+        [
+            'slug' => 'fedorenko-mihail-vladimirovich',
+            'title' => 'Федоренко Михаил Владимирович',
+            'photo' => '/wp-content/uploads/2019/08/ФедоренкоМихаилВладимирович_min.jpeg',
         ],
     ];
 }

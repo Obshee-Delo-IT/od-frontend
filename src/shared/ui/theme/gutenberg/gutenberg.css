@@ -444,6 +444,14 @@ h2:has(+ .od-cards, + .od-poster-cards) {
   content: '';
 }
 
+/* Same card, `/about/supervisory/`'s drawing — Figma `team-2` splits its statement
+   card 640 / 572 exactly as `project-1` does, so the only difference is the
+   picture. Both classes are on the block; this rule is after the shorthand above
+   and therefore wins the `background-image` half of it. */
+.od-card--supervisory::before {
+  background-image: url('/figma/supervisory.svg');
+}
+
 .od-card--goal > .wp-block-group__inner-container {
   flex: 1;
 }
@@ -485,12 +493,42 @@ h2:has(+ .od-cards, + .od-poster-cards) {
   background-color: var(--white);
 }
 
-/* One rule for both, because the mock draws them identically — 32px red above
-   24px of space, whether the card leads with a title (`project-1`) or with its
-   number (`project-2`, `project-3`). The number is a paragraph rather than an
-   `<h3>`, so the weight a heading gets for free is set here. */
+/* The same numbered cards as a **grid**: `team-2` draws seven of them, 276.5 wide
+   with 44 between, wrapping onto a second row. A carousel is right for three or
+   four and wrong for seven — with no arrows the last three would be unreachable —
+   so this is the one place the tiles are laid out rather than scrolled. Padding,
+   radius and fill are the slide's; only the container differs. */
+.od-tasks {
+  display: grid;
+  margin-bottom: 120px;
+  gap: 40px 44px;
+  grid-template-columns: repeat(4, 1fr);
+}
+
+/* WordPress wraps a group's children — see `.od-team` further down for the same
+   note and what it cost. */
+.od-tasks > .wp-block-group__inner-container {
+  display: contents;
+}
+
+.od-task {
+  padding: 24px 20px;
+  border-radius: 16px;
+  background-color: var(--white);
+}
+
+.od-task :is(p, ul, ol):last-child {
+  margin-bottom: 0;
+}
+
+/* One rule for all three, because the mock draws them identically — 32px red above
+   24px of space, whether the card leads with a title (`project-1`), with its
+   number in a carousel (`project-2`, `project-3`) or with its number in a grid
+   (`team-2`). The number is a paragraph rather than an `<h3>`, so the weight a
+   heading gets for free is set here. */
 .od-cards h3,
-.od-cards--numbered .od-task-number {
+.od-cards--numbered .od-task-number,
+.od-tasks .od-task-number {
   margin-bottom: 24px;
   color: var(--red-8);
   font-size: var(--font-size-8);
@@ -913,6 +951,13 @@ h2:has(+ .od-tiles) {
     font-size: var(--font-size-4);
   }
 
+  /* `team-2-mob` stacks the tasks, like every other card row on a phone. */
+  .od-tasks {
+    margin-bottom: 60px;
+    gap: 20px;
+    grid-template-columns: 1fr;
+  }
+
   .od-card--flush {
     padding: 0 0 24px;
   }
@@ -975,4 +1020,17 @@ h2:has(+ .od-tiles) {
     gap: 20px;
     grid-template-columns: 1fr;
   }
+}
+
+/* ------------------------------------------------------------------------- *
+ * `/profile/<slug>/` — what is left of a record's body under its card (D3).
+ *
+ * The class is put on by the route, not by the content: unlike `od-covers` and
+ * `od-team` this is not a shape an editor chose, it is the shape all 139 records
+ * already have — `group > columns > [photograph, text]`. The card above draws the
+ * photograph, `stripProfileCardFields()` removes it, and an emptied column would
+ * otherwise hold its 50 % of the row open beside the prose. Unstacking the row is
+ * the whole fix; the empty column then takes no height at all. */
+.od-profile-body .wp-block-columns {
+  display: block;
 }

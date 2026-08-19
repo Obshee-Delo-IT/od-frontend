@@ -67,7 +67,7 @@ The largest section after `Материалы`. Covers an "About" landing plus 6
 | About index | `about` (`706:70`) | `about-mob` (`1248:4488`) |
 | Learn more | `about-learn-more` (`706:1257`) | `about-learn-more-mob` (`1251:4457`) |
 | Team — variant 1 ✅ `/team/`, 2026-08-18 | `team-1` (`706:1584`) | `team-1-mob` (`1256:5981`) |
-| Team — variant 2 | `team-2` (`708:3736`) | `team-2-mob` (`1258:6333`) |
+| Team — variant 2 ✅ `/about/supervisory/`, 2026-08-19 | `team-2` (`708:3736`) | `team-2-mob` (`1258:6333`) |
 | Documents | `documents` (`706:3499`) | — |
 | Story | `story` (`706:3568`) | `story` (`1261:7163`) |
 | Letters of appreciation | `Letters-of-appreciation` (`706:3602`) | — |
@@ -302,7 +302,7 @@ This section is a **dependency** order: what must exist before what *can* be bui
 3. ✅ **Video** (`video` + `video-filter` + `video-page`) — done 2026-06-04 / 07-02, and it delivered **Dropdown** and **Tabs** along the way. It jumped the queue because it is 44 % of all site traffic.
 4. **Materials** index + `plakati` / `zakladki` / `metodichki` — **next by traffic**, blocked on the CMS taxonomy decision, not on components.
 5. **Contacts** (`контакты/contact-page`) + the Accordion `Add Circle` variant — the *directory* has no form on the live site, so it does **not** depend on B6; defer the form.
-6. **`/profile/[slug]`** detail template — more search traffic than `/team/` and all of `/about/*` combined, and the CPT is already Gutenberg.
+6. ✅ **`/profile/[slug]`** detail template — done 2026-08-19. It had no Figma frame of its own; it draws the `team-1` card plus whatever else the record says. More search traffic than `/team/` and all of `/about/*` combined.
 7. **About** landing + sub-pages — biggest sub-tree, mostly composition of existing primitives now that PageHeader exists.
 8. **Projects** + per-project pages — confirm with Design that `project-1/2/3` correspond to anything real first; there is no project-detail traffic at all.
 9. **FAQ** — cheap once content is wired, but nothing is waiting on it.

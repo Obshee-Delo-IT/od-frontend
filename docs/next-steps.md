@@ -241,11 +241,11 @@ past the first before deciding whether this is a sweep or a handful.
 without re-slugging. `/materials/metodichki/` now links it, so the wrong name is
 visible in the href.
 
-**Not fixable from here, and that is the interesting part.** After cutover
-`/profile/*` is still served by the A6 iframe against the frozen copy, which is
-keyed on the **live** path — so re-slugging od-dev's record would make the page
-404 in the iframe. The slug can only change once `/profile/[slug]` is a native
-route (D3, Tier 2), and even then it wants a `_wp_old_slug` redirect.
+**Now fixable, and it was not before.** `/profile/[slug]` became a native route on
+2026-08-19, so the A6 iframe — which is keyed on the frozen copy's **live** paths
+and would have 404'd on a re-slug — is no longer in the way. What re-slugging still
+needs is a redirect from the old path: WordPress writes `_wp_old_slug` on rename,
+and nothing on this frontend reads it yet.
 
 **Also: 46651 is unlikely to be the only one.** Worth a pass comparing each
 `profile`'s title against its slug once D3 starts — 139 records, and the
@@ -386,17 +386,19 @@ entry; a sweep over a whole post type needs a third resolver kind (~10 lines).
 E-mails and bare `vk.com`/`t.me` URLs are still unhandled — `od_canonical_tel_links()`
 is phones only.
 
-## Three team cards show a contact the team page does not
+## ~~Three team cards show a contact the team page does not~~ — decided 2026-08-19
 
-**Found 2026-08-18, while building `/team/`.** A card lists every contact its
-record links, in document order, so three of the eleven show one more row than
-Figma draws: Варламов's `obshee.delo21@gmail.com` (in his record since ~2016, next
-to the `l.varlamov@obshee-delo.ru` the live page gives), Васильев's regional
-`pskov@obshee-delo.ru` beside the team's `pro@obshee-delo.ru`, and Чагаев's
-`+7-495-722-53-29` landline above his mobile. None is provably dead, and deleting
-a contact is not a thing to guess at — **ask the client which to drop**, then one
-line each in `od-pages.php`. Capping the card at one row per kind is the wrong fix:
-Бальцевич's two mobiles are both in the mock.
+Raised while building `/team/`: three of the eleven cards show one row more than
+Figma draws — Варламов's `obshee.delo21@gmail.com` beside the
+`l.varlamov@obshee-delo.ru` the live page gives, Васильев's regional
+`pskov@obshee-delo.ru` beside the team's `pro@obshee-delo.ru`, Чагаев's
+`+7-495-722-53-29` landline above his mobile.
+
+**Answered: keep them all.** Where a record and a page disagree the union is what
+ships, because neither source is provably current and the mock is not a data
+source. It is the same rule the roles follow — the federal one and the regional one
+both go on the card. If the client ever prunes a contact, it is one line each in
+`od-pages.php`; nothing needs a code change to *show* it.
 
 ## `/contacts/samarskaya/` lists no coordinators, and the term exists
 

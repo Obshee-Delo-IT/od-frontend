@@ -272,33 +272,40 @@ in this install offloads on upload. `resolveMediaUrl` handles that by design —
 probes the CDN, takes the bucket's 301 as "absent" and falls back — but it is one
 more reason to keep §5's image check on this page.
 
-**`/team/` needs `od-wp.php` to have run, and one thing to check by hand.** The
-roster is eleven links to eleven `profile` records (`OD_TEAM` in `od-pages.php`),
-and production is short of two of them:
+**`/team/` and `/about/supervisory/` need `od-wp.php` to have run first.** Between
+them they are fourteen links to fourteen `profile` records (`OD_TEAM` and
+`OD_SUPERVISORY` in `od-pages.php`), and production is short of three:
 
 - **Анна Панферова has no record at all**, under any status, on either server.
   `od_wp_create_profiles()` creates it — and on production it will *find* the
   photograph already in the library (attachment 74543 as of 2026-08-18) rather
   than importing a second copy, because it looks the path up before downloading.
-- **Александр Касатиков's record is a `draft` on production** (71225) and
-  published on od-dev. `get_page_by_path()` finds a draft, so `od-pages.php` will
-  write his role and contacts into it — but `/wp/v2/profile?slug=` returns only
-  published records, so his card renders as a plain link until somebody publishes
-  it. Decide with the client, then `wp post update 71225 --post_status=publish`.
+- ~~**Александр Касатиков's record is a `draft` on production**~~ — **published
+  2026-08-19.** The draft and od-dev's published copy differed in `post_status` and
+  nothing else: same text, same photograph (71226), same `pl-categs` term
+  (Тульская область), no revisions. `/profile/<his slug>/` answers 200 on the live
+  site now.
+- **Дамир Нигматянов and Михаил Федоренко** are the same case as Панферова, on
+  `/about/supervisory/` — no record on either server, photographs already in both
+  libraries since 2019, so `od_wp_create_profiles()` creates and attaches them
+  without downloading anything.
 
 Check both after the run:
 
 ```bash
 ssh od-root 'cd ~/public_html && wp --skip-plugins --skip-themes post list --post_type=profile \
   --post_status=any --fields=ID,post_status,post_title --posts_per_page=400 --format=csv \
-  | grep -iE "панферова|касатиков"'
+  | grep -iE "панферова|нигматянов|федоренко|касатиков"'
 ```
 
-**The roster in `OD_TEAM` was read off production**, so unlike every other entry
-in `od-pages.php` it is not derived from the page it rewrites — od-dev's copy of
-`/team/` lists a 13-person roster six of whom have left. If the live page has
-changed since 2026-08-18, update `OD_TEAM` before running this, because the
-transform will not read the new names out of the page.
+**`OD_TEAM` and `OD_SUPERVISORY` were read off production**, so unlike every other
+entry in `od-pages.php` they are not derived from the pages they rewrite. Both
+od-dev copies are stale, and not by a little: `/team/` there lists 13 people, six of
+whom have left, and `/about/supervisory/` was last edited **2021-05-10** and lists a
+member who has since left the council (production's was edited 2026-04-29). Figma
+draws both stale rosters, having been traced from them. **If either live page has
+changed since 2026-08-19, update the table before running this** — the transforms
+will not read the new names out of the page.
 
 `od-wp.php` addresses posts by slug, so it reports which of the programmes' films production is missing rather than tagging the wrong ones. It also fills each film's `poster_image_url` from an upload path — root-relative in the registry, with production's own origin put back by `home_url()` at write time — and never overwrites a value that is already there. Read that output before running `od-pages.php`.
 

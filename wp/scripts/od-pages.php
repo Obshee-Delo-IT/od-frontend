@@ -1296,6 +1296,15 @@ function od_pages_profile_ryazanov(string $content, int $_filmTagId = 0): string
  * the line {@see parseProfileBody()} reads, and the regional line stays right
  * under it: `/profile/<slug>/` now states both, and neither page loses anything.
  *
+ * **`role` below is therefore both roles, and it is written out rather than
+ * composed.** Joining «federal» to «whatever the record bolds first» reads as
+ * nonsense on more than half the roster: Калашников's own first bold *is* his
+ * federal role, Моисеев's is one of four lines each ending in a comma, Бальцевич's
+ * is the first of seven, and five of the eleven bold nothing at all — their role
+ * is plain text. Every tail here is quoted from the record it belongs to; the
+ * record keeps its own lines untouched underneath, so `/profile/<slug>/` still
+ * shows the long form and this is the short one.
+ *
  * The same pass gives each record the contacts the team page had and it did not,
  * and canonicalises its phone numbers into `tel:` links — most were plain text,
  * which is why cards drew no phone row (`docs/next-steps.md`).
@@ -1304,7 +1313,7 @@ const OD_TEAM = [
     [
         'name' => 'Варламов Леонид Геннадьевич',
         'href' => '/profile/varlamov/',
-        'role' => 'Председатель правления организации, член Межведомственного совета по общественному здоровью Департамента здравоохранения города Москвы',
+        'role' => 'Председатель правления организации, член Межведомственного совета по общественному здоровью Департамента здравоохранения города Москвы, член общественного совета при ФСИН России',
         'contacts' => [
             ['mailto:l.varlamov@obshee-delo.ru', 'l.varlamov@obshee-delo.ru'],
             ['https://vk.com/l.varlamov', 'https://vk.com/l.varlamov'],
@@ -1314,6 +1323,9 @@ const OD_TEAM = [
         'name' => 'Калашников Павел Сергеевич',
         'href' => '/profile/kalashnikov-pavel/',
         'role' => 'Руководитель департамента фандрайзинга, член Наблюдательного совета организации',
+        // The one thing `/about/supervisory/` said about him that his record did
+        // not; his role is this page's, so the description arrives as prose.
+        'prose' => 'Предприниматель, общественный деятель, ведёт здоровый образ жизни, увлекается альпинизмом и каратэ кёкусинкай, отец двоих детей.',
         'contacts' => [
             ['tel:+79251906699', '+7 925 190-66-99'],
             ['mailto:p.kalashnikov@obshee-delo.ru', 'p.kalashnikov@obshee-delo.ru'],
@@ -1331,7 +1343,7 @@ const OD_TEAM = [
     [
         'name' => 'Васильев Михаил Геннадьевич',
         'href' => '/profile/%d0%b2%d0%b0%d1%81%d0%b8%d0%bb%d1%8c%d0%b5%d0%b2-%d0%bc%d0%b8%d1%85%d0%b0%d0%b8%d0%bb-%d0%b3%d0%b5%d0%bd%d0%bd%d0%b0%d0%b4%d1%8c%d0%b5%d0%b2%d0%b8%d1%87/',
-        'role' => 'Руководитель департамента по развитию добровольчества, руководитель оргкомитета ежегодного Всероссийского конкурса «Общее дело — ПРО»',
+        'role' => 'Руководитель департамента по развитию добровольчества, руководитель оргкомитета ежегодного Всероссийского конкурса «Общее дело — ПРО». Руководитель отделения, Псков',
         'contacts' => [
             ['tel:+79113592167', '+7 911 359-21-67'],
             ['mailto:pro@obshee-delo.ru', 'pro@obshee-delo.ru'],
@@ -1341,7 +1353,7 @@ const OD_TEAM = [
     [
         'name' => 'Дегтярёв Алексей Анатольевич',
         'href' => '/profile/%d0%b4%d0%b5%d0%b3%d1%82%d1%8f%d1%80%d1%91%d0%b2-%d0%b0%d0%bb%d0%b5%d0%ba%d1%81%d0%b5%d0%b9-%d0%b0%d0%bd%d0%b0%d1%82%d0%be%d0%bb%d1%8c%d0%b5%d0%b2%d0%b8%d1%87/',
-        'role' => 'Руководитель медиа департамента',
+        'role' => 'Руководитель медиа департамента. Режиссер, продюсер',
         'contacts' => [
             ['tel:+79629507561', '+7 962 950-75-61'],
             ['mailto:post27@bk.ru', 'post27@bk.ru'],
@@ -1350,7 +1362,7 @@ const OD_TEAM = [
     [
         'name' => 'Моисеев Олег Олегович',
         'href' => '/profile/moiseev-oleg-olegovich/',
-        'role' => 'Руководитель департамента профилактики',
+        'role' => 'Руководитель департамента профилактики. Руководитель Московского городского отделения',
         'contacts' => [
             ['tel:+79037748061', '+7 903 774-80-61'],
             ['mailto:moiseev_od@mail.ru', 'moiseev_od@mail.ru'],
@@ -1359,7 +1371,7 @@ const OD_TEAM = [
     [
         'name' => 'Бальцевич Вячеслав Павлович',
         'href' => '/profile/baltsevich/',
-        'role' => 'Уполномоченный по развитию в УФО',
+        'role' => 'Уполномоченный по развитию в УФО. Член Правления организации, председатель СРОО «Общее дело»',
         'contacts' => [
             ['tel:+79826119777', '+7 982 611-97-77'],
             ['tel:+79292211999', '+7 929 221-19-99'],
@@ -1369,7 +1381,7 @@ const OD_TEAM = [
     [
         'name' => 'Касатиков Александр Юрьевич',
         'href' => '/profile/%d0%ba%d0%b0%d1%81%d0%b0%d1%82%d0%b8%d0%ba%d0%be%d0%b2-%d0%b0%d0%bb%d0%b5%d0%ba%d1%81%d0%b0%d0%bd%d0%b4%d1%80-%d1%8e%d1%80%d1%8c%d0%b5%d0%b2%d0%b8%d1%87/',
-        'role' => 'Уполномоченный по развитию в ЦФО',
+        'role' => 'Уполномоченный по развитию в ЦФО. Координатор по Тульской области',
         'contacts' => [
             ['tel:+79030377708', '+7 903 037-77-08'],
             ['mailto:SilaOtechestva@mail.ru', 'SilaOtechestva@mail.ru'],
@@ -1387,7 +1399,7 @@ const OD_TEAM = [
     [
         'name' => 'Тарасов Сергей Валентинович',
         'href' => '/profile/%d1%82%d0%b0%d1%80%d0%b0%d1%81%d0%be%d0%b2-%d1%81%d0%b5%d1%80%d0%b3%d0%b5%d0%b9-%d0%b2%d0%b0%d0%bb%d0%b5%d0%bd%d1%82%d0%b8%d0%bd%d0%be%d0%b2%d0%b8%d1%87/',
-        'role' => 'Заместитель руководителя департамента информационной политики и комплексной безопасности',
+        'role' => 'Заместитель руководителя департамента информационной политики и комплексной безопасности. Координатор по Кингисеппскому, Сланцевскому, Волосовскому району',
         'contacts' => [
             ['tel:+79062755758', '+7 906 275-57-58'],
             ['mailto:politbez_od@mail.ru', 'politbez_od@mail.ru'],
@@ -1396,7 +1408,7 @@ const OD_TEAM = [
     [
         'name' => 'Чернов Евгений Павлович',
         'href' => '/profile/%d1%87%d0%b5%d1%80%d0%bd%d0%be%d0%b2-%d0%b5%d0%b2%d0%b3%d0%b5%d0%bd%d0%b8%d0%b9-%d0%bf%d0%b0%d0%b2%d0%bb%d0%be%d0%b2%d0%b8%d1%87/',
-        'role' => 'Руководитель департамента информационной политики и комплексной безопасности',
+        'role' => 'Руководитель департамента информационной политики и комплексной безопасности. Региональный координатор по развитию добровольчества в Ленинградской области',
         'contacts' => [
             ['tel:+79111620252', '+7 911 162-02-52'],
             ['mailto:politbez@obshee-delo.ru', 'politbez@obshee-delo.ru'],
@@ -1443,13 +1455,7 @@ function od_pages_team(string $content, int $_filmTagId = 0): string
         throw new RuntimeException('no `.team-member` boxes — not the shape this converts');
     }
 
-    $links = '';
-    foreach (OD_TEAM as $member) {
-        $links .= od_pages_paragraph('<a href="' . od_attr($member['href']) . '">' . $member['name'] . '</a>');
-    }
-
-    return "<!-- wp:group {\"className\":\"od-team\"} -->\n<div class=\"wp-block-group od-team\">\n"
-        . rtrim($links) . "\n</div>\n<!-- /wp:group -->";
+    return rtrim(od_pages_profile_grid(OD_TEAM));
 }
 
 /**
@@ -1562,16 +1568,36 @@ function od_canonical_tel_links(string $content): string
  * with a contact that has not been current since 2017.
  *
  * A line already there is not written twice, which is what makes a re-run a
- * no-op.
+ * no-op — and a bold-only line this script wrote *before*, whose text the current
+ * role begins with, is rewritten in place rather than joined by a second one.
  *
  * @param array<int, array{0: string, 1: string}> $contacts href, label.
  * @throws RuntimeException when the record has no paragraph block to lead.
  */
 function od_prepend_profile_lead(string $content, string $role, array $contacts): string
 {
-    $lines = str_contains($content, '<strong>' . $role . '</strong>')
-        ? ''
-        : '<p><strong>' . $role . '</strong></p>' . "\n";
+    $line = '<p><strong>' . $role . '</strong></p>';
+
+    if (!str_contains($content, $line)) {
+        // An earlier run may have written a **shorter** role — the federal half,
+        // before the record's own regional line was merged into it. Rewrite that
+        // paragraph instead of stacking a second one above it, which would leave
+        // the card right and the body carrying both halves separately. Only a
+        // bold-*only* paragraph qualifies, which is the shape this writes and
+        // never the shape a record's own role line has.
+        $content = preg_replace_callback(
+            '~<p>\s*<strong>([^<]*)</strong>\s*</p>~',
+            static function (array $m) use ($role, $line): string {
+                $text = trim($m[1]);
+
+                return $text !== '' && str_starts_with($role, $text) ? $line : $m[0];
+            },
+            $content,
+            1
+        );
+    }
+
+    $lines = str_contains($content, $line) ? '' : $line . "\n";
 
     foreach ($contacts as list($href, $label)) {
         if (!str_contains($content, $href)) {
@@ -1592,17 +1618,188 @@ function od_prepend_profile_lead(string $content, string $role, array $contacts)
 }
 
 /**
- * One team member's `profile` record: canonical phone links, then the federal
- * role and the contacts only `/team/` carried.
+ * One member's `profile` record: canonical phone links, then the role and the
+ * contacts only the page carried, then anything the page said about them that the
+ * record did not.
  *
  * @param string                                  $content    Stored `post_content`.
  * @param int                                     $_filmTagId Unused — see {@see od_pages_metodichki()}.
- * @param string                                  $role       The federal role, from {@see OD_TEAM}.
+ * @param string                                  $role       The role, from {@see OD_TEAM} or {@see OD_SUPERVISORY}.
  * @param array<int, array{0: string, 1: string}> $contacts   href, label.
+ * @param string                                  $prose      A sentence about the person, appended once.
  */
-function od_pages_profile_team(string $content, int $_filmTagId, string $role, array $contacts): string
+function od_pages_profile_team(string $content, int $_filmTagId, string $role, array $contacts, string $prose = ''): string
 {
-    return od_prepend_profile_lead(od_canonical_tel_links($content), $role, $contacts);
+    $content = od_prepend_profile_lead(od_canonical_tel_links($content), $role, $contacts);
+
+    if ($prose === '' || str_contains($content, $prose)) {
+        return $content;
+    }
+
+    // At the end of the record's own paragraph block, where a description reads as
+    // a description and not as the role line the card takes.
+    $closing = strrpos($content, '<!-- /wp:paragraph -->');
+
+    return false === $closing
+        ? rtrim($content) . "\n<p>" . $prose . '</p>'
+        : substr_replace($content, '<p>' . $prose . "</p>\n", $closing, 0);
+}
+
+/**
+ * `/about/supervisory/` — the “Наблюдательный совет” tab of the same section,
+ * Figma `team-2` (`708:3736`) and `team-2-mob` (`1258:6333`), D3.
+ *
+ * Three members, and they are listed here for the same reason `OD_TEAM` is: this
+ * page proves the point twice over. Production's copy was last edited
+ * **2026-04-29** and names three people; od-dev's was last edited **2021-05-10**
+ * and names four, Леонид Варламов among them — he has since left the council. The
+ * mock draws four as well, because it was traced from that same 2021 page. A
+ * transform that read the roster out of whichever page it happened to run against
+ * would put a five-year-old council on production.
+ *
+ * Two of the three had no `profile` record at all; `od_wp_create_profiles()` makes
+ * them, and their photographs are already in both libraries — the page has been
+ * showing them since 2019.
+ *
+ * **The role is «Член Наблюдательного совета организации» plus what the page says
+ * about the person.** The page's own text for each is a description rather than a
+ * post («Тренер-консультант, бизнес- и лайф-коуч, …»), and the mock puts it where
+ * a role goes; merged, the card states both and neither is invented. Павел
+ * Калашников is on both councils, so his role belongs to `OD_TEAM` — his entry
+ * here carries no role, and the description this page had reaches his record as
+ * that entry's `prose`.
+ */
+const OD_SUPERVISORY = [
+    // Role and contacts live in `OD_TEAM`: the same record cannot take two.
+    [
+        'name' => 'Калашников Павел Сергеевич',
+        'href' => '/profile/kalashnikov-pavel/',
+    ],
+    [
+        'name' => 'Нигматянов Дамир Зиннурович',
+        'href' => '/profile/nigmatyanov-damir-zinnurovich/',
+        'role' => 'Член Наблюдательного совета организации. Тренер-консультант, бизнес- и лайф-коуч, автор программ по развитию персональной эффективности руководителей, многодетный отец',
+        'contacts' => [
+            ['mailto:d.nigmatyanov@obshee-delo.ru', 'd.nigmatyanov@obshee-delo.ru'],
+        ],
+    ],
+    [
+        'name' => 'Федоренко Михаил Владимирович',
+        'href' => '/profile/fedorenko-mihail-vladimirovich/',
+        'role' => 'Член Наблюдательного совета организации. Советник руководителя Федеральной антимонопольной службы России, член экспертного совета Агентства стратегических инициатив, кандидат экономических наук, предприниматель, отец двоих детей',
+        'contacts' => [
+            ['mailto:team@fedmix.ru', 'team@fedmix.ru'],
+        ],
+    ],
+];
+
+/**
+ * The roster as a grid of profile links — the markup `parsePost` swaps for cards.
+ *
+ * Shared by `/team/` and `/about/supervisory/` on purpose: the second page's mock
+ * draws a wider card with a full-bleed photograph, and using the first page's card
+ * instead is a deliberate call (2026-08-19) so that one component draws a person
+ * everywhere. `od-team` is the class both `gutenberg.css` and `profileEmbeds.tsx`
+ * read.
+ *
+ * @param array<int, array{name: string, href: string}> $members
+ */
+function od_pages_profile_grid(array $members): string
+{
+    $links = '';
+    foreach ($members as $member) {
+        $links .= od_pages_paragraph('<a href="' . od_attr($member['href']) . '">' . $member['name'] . '</a>');
+    }
+
+    return "<!-- wp:group {\"className\":\"od-team\"} -->\n<div class=\"wp-block-group od-team\">\n"
+        . rtrim($links) . "\n</div>\n<!-- /wp:group -->\n\n";
+}
+
+/**
+ * Numbered task cards as a **grid**, four to a row — Figma `team-2` draws seven
+ * of them at 276.5 wide with 44 between, wrapping onto a second row.
+ *
+ * The programme pages put the same cards in a carousel ({@see
+ * od_pages_numbered_tasks()}), which is right for three or four and wrong here:
+ * with seven and no arrows the last three would be unreachable. The tile shares
+ * `od-task-number`, so the 32px red ordinal is one rule for both.
+ *
+ * @param array<int, string> $tasks Inline HTML, one per card.
+ */
+function od_pages_tasks_grid(array $tasks): string
+{
+    $tiles = '';
+    foreach (array_values($tasks) as $index => $task) {
+        $tiles .= "<!-- wp:group {\"className\":\"od-task\"} -->\n<div class=\"wp-block-group od-task\">\n"
+            . sprintf(
+                "<!-- wp:paragraph {\"className\":\"od-task-number\"} -->\n<p class=\"od-task-number\">%02d</p>\n<!-- /wp:paragraph -->\n\n",
+                $index + 1
+            )
+            . od_pages_paragraph($task)
+            . "</div>\n<!-- /wp:group -->\n\n";
+    }
+
+    return "<!-- wp:group {\"className\":\"od-tasks\"} -->\n<div class=\"wp-block-group od-tasks\">\n"
+        . rtrim($tiles) . "\n</div>\n<!-- /wp:group -->\n\n";
+}
+
+/**
+ * `/about/supervisory/` — the illustrated statement, the seven tasks, the three
+ * members.
+ *
+ * Everything the page says is read back out of it; only the drawing is ours (a
+ * background on `.od-card--supervisory`, the same card `.od-card--goal` is) and
+ * only the roster is written down ({@see OD_SUPERVISORY} for why). What goes: the
+ * centred `<h2>`s' inline `text-align`, the `<strong>Задачи…</strong>` paragraph
+ * that stood in for a heading, the `<ul>` the tasks were, and the three
+ * hand-built image/text rows the members were.
+ *
+ * @param string $content    Stored `post_content`.
+ * @param int    $_filmTagId Unused — see {@see od_pages_metodichki()}.
+ * @throws RuntimeException when the page is neither converted nor the shape this
+ *                          converts.
+ */
+function od_pages_supervisory(string $content, int $_filmTagId = 0): string
+{
+    if (od_has_block_class($content, 'od-tasks')) {
+        return $content;
+    }
+
+    if (!preg_match('~<h2[^>]*>(.*?)</h2>~s', $content, $title)) {
+        throw new RuntimeException('no <h2> to head the card with');
+    }
+
+    // The two paragraphs before the task list: the council's remit, then its aim.
+    // Anything bolded is the heading the list used to have, not prose.
+    preg_match_all('~<p>((?:(?!</p>).)*)</p>~s', $content, $paragraphs);
+    $prose = [];
+    foreach ($paragraphs[1] as $paragraph) {
+        if (!str_contains($paragraph, '<strong>') && trim(strip_tags($paragraph)) !== '') {
+            $prose[] = od_pages_inline_text($paragraph);
+        }
+    }
+
+    if (count($prose) < 2) {
+        throw new RuntimeException('expected the remit and the aim as the first two paragraphs');
+    }
+
+    if (!preg_match_all('~<li>(.*?)</li>~s', $content, $items) || count($items[1]) < 2) {
+        throw new RuntimeException('no task list to convert');
+    }
+
+    $out = "<!-- wp:group {\"className\":\"od-card od-card--goal od-card--supervisory\",\"layout\":{\"type\":\"constrained\"}} -->\n"
+        . '<div class="wp-block-group od-card od-card--goal od-card--supervisory">'
+        . od_pages_heading(2, od_pages_inline_text($title[1]))
+        . od_pages_paragraph($prose[0])
+        . od_pages_heading(2, 'Цель')
+        . od_pages_paragraph($prose[1])
+        . "</div>\n<!-- /wp:group -->\n\n";
+
+    $out .= od_pages_heading(2, 'Задачи Наблюдательного совета');
+    $out .= od_pages_tasks_grid(array_map('od_pages_inline_text', $items[1]));
+    $out .= od_pages_heading(2, 'Члены Наблюдательного совета');
+
+    return rtrim($out . od_pages_profile_grid(OD_SUPERVISORY)) . "\n";
 }
 
 /**
@@ -1674,18 +1871,32 @@ function od_pages_registry(): array
             'path' => 'team',
             'fix' => 'od_pages_team',
         ],
+        [
+            'label' => 'D3 · /about/supervisory/ — Figma `team-2` (708:3736)',
+            'path' => 'about/supervisory',
+            'fix' => 'od_pages_supervisory',
+        ],
     ];
 
-    // One entry per team member, because each is a record of its own — the list
-    // is `OD_TEAM` so that the page's links and the records they address cannot
-    // drift apart.
-    foreach (OD_TEAM as $member) {
+    // One entry per person, because each is a record of its own — the lists are
+    // the same ones the pages are built from, so a page's links and the records
+    // they address cannot drift apart. A person on both councils is written once:
+    // one record holds one role, and `OD_TEAM` is where theirs is.
+    $seen = [];
+    foreach (array_merge(OD_TEAM, OD_SUPERVISORY) as $member) {
+        $slug = od_profile_slug($member['href']);
+
+        if (!isset($member['role']) || isset($seen[$slug])) {
+            continue;
+        }
+
+        $seen[$slug] = true;
         $registry[] = [
-            'label' => sprintf('D3 · profile «%s» — the team role and the contacts only /team/ had', $member['name']),
+            'label' => sprintf('D3 · profile «%s» — the role and the contacts only the page had', $member['name']),
             'post_type' => 'profile',
-            'path' => od_profile_slug($member['href']),
+            'path' => $slug,
             'fix' => 'od_pages_profile_team',
-            'args' => [$member['role'], $member['contacts']],
+            'args' => [$member['role'], $member['contacts'], $member['prose'] ?? ''],
         ];
     }
 

@@ -51,7 +51,7 @@ od_test('all seven «Здоровая молодежь» lessons have one', coun
 /* ------------------------------------------------- the records to be created */
 
 $profiles = od_wp_profiles();
-od_test('one record is missing on both servers — Анна Панферова', count($profiles) === 1);
+od_test('three records are missing on both servers — Панферова, Нигматянов, Федоренко', count($profiles) === 3);
 
 foreach ($profiles as $entry) {
     od_test($entry['slug'] . ': slug is a plain ASCII slug', (bool) preg_match('#^[a-z0-9-]+$#', $entry['slug']));
@@ -67,5 +67,8 @@ foreach ($profiles as $entry) {
     od_test($entry['slug'] . ': the photograph is in the body as well as the thumbnail', 2 === substr_count($body, $entry['photo']));
     od_test($entry['slug'] . ': two columns, the shape all 139 records share', 2 === substr_count($body, '<!-- wp:column '));
 }
+
+$slugs = array_column($profiles, 'slug');
+od_test('no slug is listed twice', count($slugs) === count(array_unique($slugs)));
 
 od_test_summary();

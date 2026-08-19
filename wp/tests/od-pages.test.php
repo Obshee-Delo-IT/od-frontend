@@ -676,12 +676,27 @@ $led = od_pages_profile_team($kasatikov, 0, $kasatikovMember['role'], $kasatikov
 
 // This is the whole reason the lead is prepended rather than appended:
 // `parseProfileBody()` reads the *first* bold line as the card's subtitle.
-od_test('the federal role is the body\'s first bold line', str_contains($led, '<strong>Уполномоченный по развитию в ЦФО</strong>'));
 od_test(
-    'and it comes before the regional one, which is still there',
-    strpos($led, 'Уполномоченный по развитию в ЦФО') < strpos($led, 'Координатор по Тульской области')
+    'the merged role is the body\'s first bold line',
+    str_contains($led, '<strong>Уполномоченный по развитию в ЦФО. Координатор по Тульской области</strong>')
+);
+od_test(
+    'and the record\'s own regional line is still there, under it',
+    strpos($led, '<strong>Уполномоченный') < strpos($led, '<strong>Координатор по Тульской области')
 );
 od_test('the lead sits inside the paragraph block, not before it', str_contains($led, "<!-- wp:paragraph -->\n<p><strong>Уполномоченный"));
+
+// A run that follows an earlier one with a shorter role rewrites that line rather
+// than stacking a second above it — which would leave the card right and the body
+// carrying both halves.
+$shorter = od_pages_profile_team($kasatikov, 0, 'Уполномоченный по развитию в ЦФО', []);
+$upgraded = od_pages_profile_team($shorter, 0, $kasatikovMember['role'], $kasatikovMember['contacts']);
+od_test('an earlier, shorter role line is rewritten in place', 1 === substr_count($upgraded, '<strong>Уполномоченный'));
+od_test('and the result is what a first run would have written', $upgraded === $led);
+od_test(
+    'a bold line that is not a prefix of the role is left alone',
+    str_contains(od_pages_profile_team($kasatikov, 0, 'Совсем другая роль', []), '<strong>Координатор по Тульской области')
+);
 od_test('the phone the card needs is now a link', str_contains($led, 'href="tel:+79030377708"'));
 od_test('a contact the record already had is not repeated', 1 === substr_count($led, 'mailto:SilaOtechestva@mail.ru'));
 od_test('nothing the record held is lost', str_contains($led, 'https://vk.com/id44507712'));
@@ -701,9 +716,75 @@ try {
 }
 od_test('a record with no paragraph block is refused', $threw);
 
+/* --------------------------------------- /about/supervisory/ (D3, team-2) */
+
+$supervisory = file_get_contents(__DIR__ . '/fixtures/page-supervisory.html');
+
+// The fixture is od-dev's copy, last edited 2021 — four members, one of whom has
+// since left the council. Production's page is the roster; this is why it is not
+// read out of the page.
+od_test('the fixture is the 2021 four-member page', 4 === substr_count($supervisory, '<b>'));
+
+$council = od_pages_supervisory($supervisory, 0);
+
+od_test('the statement is the illustrated card', str_contains($council, 'od-card od-card--goal od-card--supervisory'));
+od_test('headed by the page\'s own <h2>', str_contains($council, '<h2 class="wp-block-heading">Наблюдательный совет Общероссийской'));
+od_test('with the remit under it', str_contains($council, 'Наблюдательный совет создан в целях обеспечения'));
+od_test('and the aim under «Цель»', str_contains($council, '<h2 class="wp-block-heading">Цель</h2>') && str_contains($council, 'Основной целью Наблюдательного совета'));
+od_test('the centring the old theme needed is gone', !str_contains($council, 'text-align'));
+
+od_test('seven tasks, as tiles in a grid', str_contains($council, '{"className":"od-tasks"}') && 7 === substr_count($council, '{"className":"od-task"}'));
+od_test('numbered 01 to 07', str_contains($council, '>01</p>') && str_contains($council, '>07</p>'));
+od_test('the list they were is gone', !str_contains($council, '<li>') && !str_contains($council, '<ul>'));
+od_test('and the bold paragraph that stood in for their heading', !str_contains($council, '<strong>Задачи'));
+od_test('replaced by a real one', str_contains($council, '<h2 class="wp-block-heading">Задачи Наблюдательного совета</h2>'));
+
+od_test('three members — production\'s roster, not the fixture\'s four', 3 === substr_count($council, '<a href="/profile/'));
+od_test('as the same grid /team/ uses, so one component draws a person everywhere', 1 === substr_count($council, '{"className":"od-team"}'));
+od_test('nobody who has left the council is listed', !str_contains($council, 'Варламов'));
+od_test('the hand-built image rows are gone', !str_contains($council, '<figure') && !str_contains($council, 'wp-block-image'));
+od_test('and so are the contacts the records now hold', !str_contains($council, 'mailto:'));
+od_test('converted content is left alone', od_pages_supervisory($council, 0) === $council);
+
+foreach (OD_SUPERVISORY as $member) {
+    od_test(
+        $member['name'] . ': linked from the council page',
+        str_contains($council, '<a href="' . $member['href'] . '">' . $member['name'] . '</a>')
+    );
+}
+
+// Павел Калашников sits on both councils and has one record, so his role is
+// `OD_TEAM`'s and this page contributes only what it said about him.
+$both = array_values(array_filter(OD_SUPERVISORY, static fn(array $m): bool => !isset($m['role'])));
+od_test('the member on both councils carries no second role', count($both) === 1);
+od_test('and it is Калашников', $both[0]['name'] === 'Калашников Павел Сергеевич');
+
+$kalashnikov = null;
+foreach (OD_TEAM as $member) {
+    if ($member['name'] === 'Калашников Павел Сергеевич') {
+        $kalashnikov = $member;
+    }
+}
+od_test('his description reaches his record as prose', isset($kalashnikov['prose']));
+
+$withProse = od_pages_profile_team(
+    '<!-- wp:paragraph -->' . "\n" . '<p>Что-то ещё</p>' . "\n" . '<!-- /wp:paragraph -->',
+    0,
+    'Роль',
+    [],
+    'Предприниматель, отец двоих детей.'
+);
+od_test('prose lands inside the paragraph block, after what was there', str_contains($withProse, '<p>Что-то ещё</p>' . "\n" . '<p>Предприниматель, отец двоих детей.</p>'));
+od_test('and the role still leads', strpos($withProse, '<strong>Роль</strong>') < strpos($withProse, 'Предприниматель'));
+od_test_idempotent(
+    'od_pages_profile_team (with prose)',
+    static fn(string $c): string => od_pages_profile_team($c, 0, 'Роль', [], 'Предприниматель, отец двоих детей.'),
+    '<!-- wp:paragraph -->' . "\n" . '<p>Что-то ещё</p>' . "\n" . '<!-- /wp:paragraph -->'
+);
+
 // -- every transform refuses input it does not recognise --------------------------------
 
-foreach (['od_pages_healthy_youth', 'od_pages_healthy_kids', 'od_pages_projects', 'od_pages_materials', 'od_pages_team'] as $transform) {
+foreach (['od_pages_healthy_youth', 'od_pages_healthy_kids', 'od_pages_projects', 'od_pages_materials', 'od_pages_team', 'od_pages_supervisory'] as $transform) {
     $threw = false;
     try {
         $transform('<!-- wp:paragraph --><p>что-то другое</p><!-- /wp:paragraph -->', 666);

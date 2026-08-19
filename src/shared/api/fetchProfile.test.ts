@@ -17,15 +17,15 @@ import { fetchProfile } from './fetchProfile';
 
 const makeResponse = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status });
 
+const BODY =
+  '<p><strong>Координатор по городу Магнитогорску</strong></p>' +
+  '<p><a href="tel:+7(904)818-08-69">+7(904)818-08-69</a></p>' +
+  '<p><a href="https://t.me/paramon1302">@paramon1302</a></p>';
+
 const record = (over: Record<string, unknown> = {}) => ({
   id: 46651,
   title: { rendered: 'Андрей&nbsp;Алексеевич Рязанов' },
-  content: {
-    rendered:
-      '<p><strong>Координатор по городу Магнитогорску</strong></p>' +
-      '<p><a href="tel:+7(904)818-08-69">+7(904)818-08-69</a></p>' +
-      '<p><a href="https://t.me/paramon1302">@paramon1302</a></p>',
-  },
+  content: { rendered: BODY },
   meta: { cmsms_profile_subtitle: 'Магнитогорск' },
   ...over,
 });
@@ -52,6 +52,9 @@ describe('fetchProfile', () => {
         { kind: 'phone', href: 'tel:+7(904)818-08-69', label: '+7(904)818-08-69' },
         { kind: 'telegram', href: 'https://t.me/paramon1302', label: '@paramon1302' },
       ],
+      // Carried through unparsed: `/profile/[slug]` renders what the body says
+      // beyond these four fields, which is 121 of the 139 records.
+      contentHtml: BODY,
     });
   });
 
