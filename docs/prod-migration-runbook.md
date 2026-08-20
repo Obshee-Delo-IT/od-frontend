@@ -4,7 +4,7 @@ Everything needed to move the Next.js redesign from **od-dev** to **od-stage** a
 
 > ⚠ **Prod lives on BeGet: `ssh od-root`, `~/public_html`.** Not Timeweb — `obshee-delo.ru` resolves to `45.130.41.70` (`ssl.dream.beget.com`), while `ssh timeweb ~/public_html` is a full *copy* of the same site that now serves only `общее-дело.рф` as 301s, so edits there are invisible. Established 2026-08-15, after a round of edits landed on the copy. The prod commands below have been repointed at `od-root`; the prod *measurements* (§2.5's PHP/mod_php notes, the plugin inventory, the WP Rocket behaviour) were taken on the twin and are marked where they matter. Two tells if you're unsure which install you're on: `dig +short obshee-delo.ru` against the host's IPs, and a request with a unique query string that never shows up in the copy's `~/access_log`.
 
-> **Read this first.** Every step below has been executed **only against od-dev**; od-stage has never been written to. Prod has, three times and narrowly: 2026-08-13's F6 privacy page + cookie notice (on Timeweb, before the copy diverged), and 2026-08-15's deletion of three dead nav/footer links (on BeGet — [`next-steps.md`](./next-steps.md)). Everything else in this runbook is unexecuted. Prod facts in §0 come from a **read-only probe** recorded in [`legacy-page-fallback.md` §2](./legacy-page-fallback.md). Treat them as *expected*, and re-verify in §1 before acting. Run the whole runbook on **od-stage first** — it exists precisely so prod isn't the rehearsal.
+> **Read this first.** Every step below has been executed **only against od-dev**. **od-stage was wiped and re-synced from live prod on 2026-08-20** (§0.5), so it is finally the faithful rehearsal target this runbook assumes — but no step below has been run there yet. Prod has, three times and narrowly: 2026-08-13's F6 privacy page + cookie notice (on Timeweb, before the copy diverged), and 2026-08-15's deletion of three dead nav/footer links (on BeGet — [`next-steps.md`](./next-steps.md)). Everything else in this runbook is unexecuted. Prod facts in §0 come from a **read-only probe** recorded in [`legacy-page-fallback.md` §2](./legacy-page-fallback.md). Treat them as *expected*, and re-verify in §1 before acting. Run the whole runbook on **od-stage first** — it exists precisely so prod isn't the rehearsal.
 
 Related: [`implementation-plan.md`](./implementation-plan.md) (task state) · [`wp-backend.md`](./wp-backend.md) (hosting, access, plugins) · [`legacy-page-fallback.md`](./legacy-page-fallback.md) (un-redesigned pages).
 
@@ -27,49 +27,60 @@ Related: [`implementation-plan.md`](./implementation-plan.md) (task state) · [`
 
 ---
 
+## 0.5 od-stage is a prod clone as of 2026-08-20
+
+`~/od-stage/public_html` on `ssh timeweb` was emptied and re-created from live prod (`ssh od-root`, `~/public_html`): the whole file tree bar `wp-content/cache`, plus a full `obsheedelo_od` dump loaded into od-stage's own database (`cs16182_odstage` — its credentials are the only thing carried over). The §0 blockers are therefore **measured on stage now, not assumed**: REST answers **404** (B1), content is CMSMasters shortcodes (B2), ACF is absent (B3), and the theme is `welfare` on **WP 5.5.5** pinned by an active `wp-downgrade` (B10).
+
+- **Host: `https://stage.od.webtm.ru`** — that is what the commands below use. Its TLS certificate does not cover the name, so a browser warns and `curl` needs `-k` until the panel issues one. Web PHP on that vhost is **7.4.33**, the same family as prod's mod_php7, so the site itself renders; only WP-CLI needs the flags in §1.
+- **Repointed, and nothing else:** `WP_HOME`/`WP_SITEURL` in `wp-config.php`, the `.htaccess` canonical-host 301 (left alone it sends every stage request straight to prod), 266 `https://obshee-delo.ru` occurrences in the database, and the `sm_status` option (deleted — it held a prod sitemap URL and leaked it into the front page's HTML). The 197 posts referencing `общее-дело.рф` are prod's own outbound links and were left as they are.
+- **Parity, verified after the load:** 8404 posts / 163 pages / 17961 attachments / 367 MB database — identical to prod — `/?p=<id>` 301s to `/<id>/` and answers 200, a 2026 upload serves locally, and a 2016 one still 301s to the `obshee-delo.website.yandexcloud.net` bucket. The stage-only WooCommerce tables are gone.
+- **Rollback of the pre-sync stage:** `~/od-stage-pre-prod-20260820/` (database dump, old `wp-config.php`, old `.htaccess`) plus the older `~/od-stage/backup-od-stage-27.07.2025-55.tar`.
+
+---
+
 ## 1. Recon — read-only, do this before touching anything
 
-Always use the alias and the clearfy skip flag; without the flag WP-CLI output is corrupted by a redirect warning.
+Always use the alias and **both** skip flags. Without `--skip-plugins=clearfy-pro` the output is corrupted by a redirect warning; without `--skip-themes` any command that loads WordPress fatals, because timeweb's CLI PHP is 8.2 and prod's `welfare` theme dies there (`functions.php:754`) exactly as it does on prod — see [`wp-backend.md` §2](./wp-backend.md#2-stack-on-od-dev). When a command genuinely needs the theme loaded, run WP-CLI under the site's own PHP instead: `/opt/php7.4/bin/php /usr/local/bin/wp …`.
 
 ```bash
-ssh timeweb 'cd ~/od-stage/public_html && wp --skip-plugins=clearfy-pro core version'
+ssh timeweb 'cd ~/od-stage/public_html && wp --skip-plugins=clearfy-pro --skip-themes core version'
 ```
 
 **1.1 REST reachability.** From your machine, not the server:
 ```bash
-curl -sI https://<stage-host>/wp-json/wp/v2/posts | head -3   # expect 200, not 301/302 to /
+curl -sI https://stage.od.webtm.ru/wp-json/wp/v2/posts | head -3   # expect 200, not 301/302 to /
 ```
 
 **1.2 Plugins + whether ACF is already there.**
 ```bash
-ssh timeweb 'cd ~/od-stage/public_html && wp --skip-plugins=clearfy-pro plugin list --status=active --fields=name,version --format=csv'
+ssh timeweb 'cd ~/od-stage/public_html && wp --skip-plugins=clearfy-pro --skip-themes plugin list --status=active --fields=name,version --format=csv'
 ```
 
 **1.3 Taxonomy ids — do not assume they match od-dev.**
 ```bash
-ssh timeweb 'cd ~/od-stage/public_html && wp --skip-plugins=clearfy-pro term list category --fields=term_id,slug,name,parent,count --format=csv | grep -E "video|movies|mult|roliki|famous|actual|novosti|articles"'
+ssh timeweb 'cd ~/od-stage/public_html && wp --skip-plugins=clearfy-pro --skip-themes term list category --fields=term_id,slug,name,parent,count --format=csv | grep -E "video|movies|mult|roliki|famous|actual|novosti|articles"'
 ```
 Expected on od-dev: parent «Видео» `85`; children Фильмы `581`, Мультфильмы `580`, Ролики `86`, Известные люди `559`; sibling «Видео события» `52`. **Also the two news ids** — Новости `47`, Статьи `578` (count 19) — which drive the `/news/` chips and `/materials/articles/`. **Record the real numbers and their counts** — §4.3 needs the ids, and §5 gates 1–2 and 7 compare against the counts.
 
 **1.4 Film body format — the B2 check.** This decides how much of the film page survives:
 ```bash
-ssh timeweb 'cd ~/od-stage/public_html && wp --skip-plugins=clearfy-pro post list --post_type=post --format=csv --fields=ID --posts_per_page=5 \
+ssh timeweb 'cd ~/od-stage/public_html && wp --skip-plugins=clearfy-pro --skip-themes post list --post_type=post --format=csv --fields=ID --posts_per_page=5 \
   --tax_query='"'"'[{"taxonomy":"post_format","field":"slug","terms":"post-format-video"}]'"'"' '
 # then, for one of those ids:
-ssh timeweb 'cd ~/od-stage/public_html && wp --skip-plugins=clearfy-pro post get <ID> --field=post_content | grep -c "cmsms_\|wp:"'
+ssh timeweb 'cd ~/od-stage/public_html && wp --skip-plugins=clearfy-pro --skip-themes post get <ID> --field=post_content | grep -c "cmsms_\|wp:"'
 ```
 - **Gutenberg (`wp:` blocks)** → the film page renders exactly as on od-dev. Proceed.
 - **`[cmsms_*]` shortcodes** → the *body* renders as shortcode soup, but **the hero, download pills, share tiles, trailer and poster card all come from ACF**, which §3 populates. The realistic mitigation is to let the body degrade (or hide it) rather than to build a shortcode parser. **Raise this with Alexey before proceeding — it changes what the page looks like, not whether it works.**
 
 **1.5 Media origin.**
 ```bash
-ssh timeweb 'cd ~/od-stage/public_html && wp --skip-plugins=clearfy-pro option get upload_url_path'
-ssh timeweb 'cd ~/od-stage/public_html && wp --skip-plugins=clearfy-pro plugin list --format=csv | grep -i "offload\|s3\|yandex\|cloud"'
+ssh timeweb 'cd ~/od-stage/public_html && wp --skip-plugins=clearfy-pro --skip-themes option get upload_url_path'
+ssh timeweb 'cd ~/od-stage/public_html && wp --skip-plugins=clearfy-pro --skip-themes plugin list --format=csv | grep -i "offload\|s3\|yandex\|cloud"'
 ```
 
 **1.6 Film inventory baseline** — so §5 has something to compare against:
 ```bash
-curl -s "https://<stage-host>/wp-json/wp/v2/posts?format=video&per_page=1" -o /dev/null -D - | grep -i x-wp-total
+curl -s "https://stage.od.webtm.ru/wp-json/wp/v2/posts?format=video&per_page=1" -o /dev/null -D - | grep -i x-wp-total
 ```
 od-dev: 203 `format=video` posts, 99 in the four film sub-categories.
 
@@ -85,14 +96,14 @@ od-dev: 203 `format=video` posts, 99 in the four film sub-categories.
 
 **2.2 Install ACF free (B3).**
 ```bash
-ssh timeweb 'cd ~/od-stage/public_html && wp --skip-plugins=clearfy-pro plugin install advanced-custom-fields --activate'
+ssh timeweb 'cd ~/od-stage/public_html && wp --skip-plugins=clearfy-pro --skip-themes plugin install advanced-custom-fields --activate'
 ```
 
 **2.3 Create the field group, then migrate legacy download meta.** Both scripts live in the ops repo at `servers-agent/tasks/2026-06-04-od-dev-film-acf-recon/` and are idempotent. **Order matters, and only these two:**
 ```bash
 cd ~/Projects/servers-agent/tasks/2026-06-04-od-dev-film-acf-recon
-ssh timeweb 'cd ~/od-stage/public_html && wp eval-file - --url=https://<stage-host>' < setup-film-acf.php
-ssh timeweb 'cd ~/od-stage/public_html && wp eval-file - --url=https://<stage-host>' < migrate-download-slots.php
+ssh timeweb 'cd ~/od-stage/public_html && wp eval-file - --url=https://stage.od.webtm.ru' < setup-film-acf.php
+ssh timeweb 'cd ~/od-stage/public_html && wp eval-file - --url=https://stage.od.webtm.ru' < migrate-download-slots.php
 ```
 - `setup-film-acf.php` — 18 flat url/text fields, `show_in_rest`, location `post_format == video`. Safe to re-run: same field keys ⇒ existing postmeta survives.
 - `migrate-download-slots.php` — folds any legacy `download_full_*`/`download_short_*` meta into `download_{1..5}_{url,label}` with composed labels.
@@ -100,7 +111,7 @@ ssh timeweb 'cd ~/od-stage/public_html && wp eval-file - --url=https://<stage-ho
 
 **2.4 Gate.** REST must return all 18 keys:
 ```bash
-curl -s -u "$WP_USER:$WP_PASSWORD" "https://<stage-host>/wp-json/wp/v2/posts?format=video&per_page=1&_fields=acf" | head -c 600
+curl -s -u "$WP_USER:$WP_PASSWORD" "https://stage.od.webtm.ru/wp-json/wp/v2/posts?format=video&per_page=1&_fields=acf" | head -c 600
 ```
 
 **2.5 Install the revalidation mu-plugin (B4).** Without it an editor publishes and then waits out the hour; with it the page is gone from the cache before they can reload. Source and full reference: [`wp/mu-plugins/od-revalidate.php`](../wp/mu-plugins/od-revalidate.php) and [`wp-backend.md` §6.5](./wp-backend.md). It was installed and tested on od-dev on 2026-08-13; **prod differs in four ways that matter.**
@@ -492,7 +503,7 @@ Post detail lives at the bare **`/<id>`** since A8 — that is the *only* addres
 12. **No 404 on the live site's real URLs (A8) — the gate that proves the biggest change. Automated: `pnpm url:check`.**
     ```bash
     pnpm url:check                                       # against localhost:3000
-    pnpm url:check -- --base https://<stage-host>        # against a deploy
+    pnpm url:check -- --base https://stage.od.webtm.ru        # against a deploy
     pnpm url:check -- --top 500 --fail-under 95
     ```
     It replays the real entry URLs from the Yandex Metrica **«Страницы входа»** export (Отчёты → Стандартные отчёты → Содержание → Страницы входа → export; `--csv` to point at a specific file, otherwise the newest export under `~/Documents/od/ya.metrika/`), **ranked by the entry visits each URL actually earns**, and reports results weighted by traffic rather than by URL count. Flags: `--base`, `--csv`, `--top` (default 200), `--concurrency` (default 8), `--fail-under` (exit 1 below that coverage %). The headline number is **«Entry-traffic coverage»**, and failures are automatically grouped by section — no flag needed.
