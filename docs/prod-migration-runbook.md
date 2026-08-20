@@ -283,7 +283,21 @@ carry production's own ids either way. The one prerequisite is the migrator: the
 transform reads Gutenberg `<p>`s, so it must run **after** §2.7, and against
 un-migrated shortcodes it refuses the page — «unexpected input: no «История»
 paragraph», checked against production's stored body — rather than writing
-anything.
+anything. The hero is Kinescope, not the stored YouTube embed, and needs nothing
+of production's: a Kinescope id is the same asset on either install.
+
+**Two nav-menu edits are still owed on prod, and deliberately were not done
+early** (2026-08-20). Both were made on od-dev, because that is the menu this
+frontend reads, and both would take something away from the *live* site if made
+there now:
+
+| od-dev | prod, at cutover |
+| --- | --- |
+| «Написать отзыв» (item 27991) deleted — the footer's «Отзывы» column already links the page, so the nav entry was a third route to one Contact Form 7 form | same delete |
+| «Устав организации» (27988) retitled «Устав и документы», «Документы» (46567) deleted — the two are a tabbed pair on this side now | same, **and only after cutover**: prod draws no tab strip, so merging the items there leaves its readers with no link to `/about/docs/` at all |
+
+Item ids are prod's own — od-dev is a copy of it, so they matched when this was
+written; confirm with `wp menu item list 39` before deleting anything.
 
 **`/team/` and `/about/supervisory/` need `od-wp.php` to have run first.** Between
 them they are fourteen links to fourteen `profile` records (`OD_TEAM` and
