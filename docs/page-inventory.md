@@ -11,8 +11,8 @@ Sibling docs: [`wp-page-passthrough.md`](./wp-page-passthrough.md) is _how_ a pa
 |                                   | pages | how it renders                                                                                                         |
 | --------------------------------- | ----: | ---------------------------------------------------------------------------------------------------------------------- |
 | **Native route** shadows the page |     9 | a route under `src/app/` (or a `src/proxy.ts` 301) owns the URL, so `[...slug]` never sees the WP page at all          |
-| **WP page, redesigned**           |    34 | `[...slug]` → `modules/WpPage`, with the body rewritten by `od-pages.php` and drawn by this repo's CSS                 |
-| **WP page, passthrough**          |   119 | `[...slug]` → `modules/WpPage`, content exactly as the editor left it — correct URL, correct shell, un-redesigned body |
+| **WP page, redesigned**           |    35 | `[...slug]` → `modules/WpPage`, with the body rewritten by `od-pages.php` and drawn by this repo's CSS                 |
+| **WP page, passthrough**          |   118 | `[...slug]` → `modules/WpPage`, content exactly as the editor left it — correct URL, correct shell, un-redesigned body |
 | **A6 iframe**                     |     7 | on the opt-out list → `modules/Legacy/LegacyEmbed` over `WP_LEGACY_BASE`                                               |
 
 So **153 of 169 pages render natively**, and the iframe is down to seven paths from the twenty it launched with.
@@ -40,16 +40,17 @@ The `od_pages_registry()` entries — content rewritten by script, styled by the
 - **Programmes (4)** — `/projects/` · `/healthy-russia/` · `/healthy-youth/` · `/healthy-kids/` (D6e–D6g)
 - **Materials (14)** — `/materials/` · `metodichki` · `printed-products` + `books` `zakladki` `booklet` `disk` `autosticker` · `social-reklama` + `plakati` `billboards` `sticker` `led-board-roliki` `audio-roliki-social-reklama` (D8, D6h–D6m)
 - **«О нас» (16)** — `/about/` · `/team/` · `about/supervisory` · `nashi_partnery` · `ustav` · `docs` · `udostoverenie` · `activist-stories` · `experts-review` · `smi` · `reviews` + its five category children `letters` `school` `middle` `vuz` `mvd` (D3, D6p–D6w)
+- **Contacts (1)** — `/contacts/samarskaya/`, which is in this bucket for a **data** fix rather than a redesign: its coordinator `core/query` asked for `post_tag: [-1]` and listed nobody, and the entry repoints it at the `pl-categs` region (D4)
 
 The same registry also carries **15 `profile` records** (the coordinator behind `metodichki`, plus the fourteen team and supervisory members) — CPT records, not pages, so they are outside the 169.
 
-## 4. WP pages, passthrough (119)
+## 4. WP pages, passthrough (118)
 
 Right URL, right shell, un-redesigned body. Full list: `pnpm pages:inventory --list passthrough`.
 
 | group                 | pages | notes                                                                                                                                                                        |
 | --------------------- | ----: | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `/contacts/<region>/` |    74 | the regional directory. Biggest single group on the site, and the parent `/contacts/` is still on the iframe (D4)                                                            |
+| `/contacts/<region>/` |    73 | the regional directory. Biggest single group on the site, and the parent `/contacts/` is still on the iframe (D4). A 74th, `samarskaya`, is in §3 for a one-line data fix     |
 | `/get-involved/*`     |    14 | the parent and `/get-involved/join/` are on the iframe                                                                                                                       |
 | `/materials/*`        |    11 | the five `/materials/articles/<slug>/` children, `metodichka`, `ppcz-put-geroya`, `ppiz-zdorov-molodez`, `pppuiv-narkosm`, `pppuiv-ted-6`, `plakati/vmeste-sdelaem-luchshe/` |
 | legal / donation      |     8 | `/conf_politics/` `/rekvizit/` `/personal-data-usage-terms/` `/donation-service-terms/` `/paypal/` `/sms/` `/thank-you-for-your-donation/` `/sorry-donation-failure/`        |
@@ -57,7 +58,7 @@ Right URL, right shell, un-redesigned body. Full list: `pnpm pages:inventory --l
 | misc                  |     6 | `/faq/` (D5) `/sitemap/` `/socialnye-seti/` `/webinar/` `/khabarovskiy/` `/sp/` (hidden, see [`next-steps.md`](./next-steps.md))                                             |
 | **test pages**        |     4 | `/test/` `/test-slider/` `/test-page-gutenberg-profile/` `/тестовая-страница/` — published on od-dev and therefore in the sitemap. Unpublish before cutover                  |
 
-Gaps that hit all 119 at once, not any one page (all in [`next-steps.md`](./next-steps.md)): the breadcrumb starts at «Главная» rather than the real parent (D6b), `.wp-block-group h2` lowercases «Россия», icons carry no `aria-hidden`.
+Gaps that hit all 118 at once, not any one page (all in [`next-steps.md`](./next-steps.md)): the breadcrumb starts at «Главная» rather than the real parent (D6b), `.wp-block-group h2` lowercases «Россия», icons carry no `aria-hidden`.
 
 ## 5. A6 iframe (7)
 
@@ -82,8 +83,8 @@ Yandex Metrica, 2026-05-14 → 2026-08-13 (91 days), the exports under `~/Docume
 | bucket                         |           pageviews |        entry visits |
 | ------------------------------ | ------------------: | ------------------: |
 | native route                   | 48 355 (**82.1 %**) | 23 996 (**89.0 %**) |
-| WP page, redesigned            |  6 676 (**11.3 %**) |   1 700 (**6.3 %**) |
-| WP page, passthrough           |       2 111 (3.6 %) |         976 (3.6 %) |
+| WP page, redesigned            |  6 703 (**11.4 %**) |   1 715 (**6.4 %**) |
+| WP page, passthrough           |       2 084 (3.5 %) |         961 (3.6 %) |
 | **A6 iframe**                  |   **1 530 (2.6 %)** |     **210 (0.8 %)** |
 | no page — 404                  |         233 (0.4 %) |          60 (0.2 %) |
 | other (truncated rows, `wp-*`) |                  16 |                  16 |
@@ -106,5 +107,5 @@ The two metrics still rank differently, and still for the reason §7 gives: `/co
 Worth knowing before quoting a number from it:
 
 - **od-dev, not production.** Production's page set is authoritative for content and should match, but nobody has re-counted it there; the runbook's B5/B8 gates are where that happens.
-- **A registry entry means the script _can_ fix the page, not that it has run on production.** Applying workstream D to prod is one `wp eval-file` run — until then, prod's 34 are unredesigned content at redesigned URLs.
+- **A registry entry means the script _can_ fix the page, not that it has run on production.** Applying workstream D to prod is one `wp eval-file` run — until then, prod's 35 are unredesigned content at redesigned URLs.
 - **`SHADOWED` in the script is hand-maintained** — nine URLs, and the one thing in the file not derived. Add a route under `src/app/` and this list needs the same edit, or the page it shadows keeps counting as passthrough.

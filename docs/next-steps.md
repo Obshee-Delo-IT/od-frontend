@@ -400,19 +400,26 @@ source. It is the same rule the roles follow — the federal one and the regiona
 both go on the card. If the client ever prunes a contact, it is one line each in
 `od-pages.php`; nothing needs a code change to *show* it.
 
-## `/contacts/samarskaya/` lists no coordinators, and the term exists
+## ~~`/contacts/samarskaya/` lists no coordinators, and the term exists~~ — done 2026-08-20
 
-**Found 2026-08-18.** Page 21557's `core/query` block still carries the old
+**Found 2026-08-18.** Page 21557's `core/query` block still carried the old
 `taxQuery: {"post_tag": [-1]}` placeholder — the "match nothing" fallback from
 before [`wp-page-passthrough.md` §5a](./wp-page-passthrough.md) was fixed. It is
 **the one page of the 75 the re-migration could not touch**: its
-`nvp_content_copy` backup is empty, so `wp cmsms migrate` has no original
-shortcode to convert. Meanwhile the right term is there — `activity-samara`
-(`pl-categs` 532) with **8 profiles**.
+`nvp_content_copy` backup is empty, so `wp cmsms migrate` had no original
+shortcode to convert. Meanwhile the right term was there all along —
+`activity-samara` (`pl-categs` 532) with **8 profiles**.
 
-**What to do:** rewrite that one block's `taxQuery` to `{"pl-categs":[532]}`.
-Term ids are per-environment, so this belongs in `od-pages.php` resolving the term
-by slug at run time, not as a literal.
+**Fixed as a registry entry**, `od_pages_samarskaya_coordinators` in
+`wp/scripts/od-pages.php`, applied on od-dev: the page now renders its 8
+coordinators above the 12 «События» posts. The term id is resolved by the runner
+from the slug — `pl-categs` ids are per-environment, so a literal would have been
+wrong on the next install — which is what the new `taxonomy` key on a registry
+entry is for (`tag` used to mean `post_tag` and nothing else).
+
+**The four pages with the same placeholder are a different case** and were left
+alone; see the entry below. Production gets this with the rest of workstream D,
+in one `wp eval-file` run.
 
 ## Four regional contact pages point at the wrong region, and always did
 

@@ -1415,6 +1415,32 @@ od_test( 'od_pages_details closes the element it opens', false !== strpos( od_pa
 od_test( 'od_pages_icon_tasks marks a card with no icon rather than mislabelling it', false !== strpos( od_pages_icon_tasks( array( 'a', 'b' ), array( 'education' ) ), 'od-task od-task--none' ) );
 od_test( 'od_pages_goal_card still heads the programme card as it did', false !== strpos( od_pages_goal_card( 'x' ), '>Цель программы</h2>' ) && false !== strpos( od_pages_goal_card( 'x' ), '"className":"od-card od-card--goal"' ) );
 
+/* --------------------------------------- od_pages_samarskaya_coordinators */
+
+$samarskaya = file_get_contents( __DIR__ . '/fixtures/contacts-samarskaya.before.html' );
+
+od_test( 'samarskaya: the fixture really carries the "match nothing" placeholder', 1 === substr_count( $samarskaya, '"taxQuery":{"post_tag":[-1]}' ) );
+
+$repointed = od_pages_samarskaya_coordinators( $samarskaya, 532 );
+od_test( 'samarskaya: the coordinator query asks for the region', false !== strpos( $repointed, '"taxQuery":{"pl-categs":[532]}' ) );
+od_test( 'samarskaya: no placeholder left', false === strpos( $repointed, '"post_tag":[-1]' ) );
+/* The «События» query is the page's other block and is not this one's business. */
+od_test( 'samarskaya: the news query is untouched', false !== strpos( $repointed, '"taxQuery":{"category":[61]}' ) );
+od_test( 'samarskaya: nothing else moved', strlen( $samarskaya ) + strlen( '"pl-categs":[532]' ) - strlen( '"post_tag":[-1]' ) === strlen( $repointed ) );
+od_test_idempotent( 'od_pages_samarskaya_coordinators', function ( $content ) { return od_pages_samarskaya_coordinators( $content, 532 ); }, $samarskaya );
+
+/* Term ids are per-environment, so a page fixed on one install must not be
+   "already in shape" on another — the id has to come from the runner. */
+od_test( 'samarskaya: a different environment gets its own id', false !== strpos( od_pages_samarskaya_coordinators( $samarskaya, 7 ), '"pl-categs":[7]' ) );
+
+$threw = false;
+try {
+	od_pages_samarskaya_coordinators( '<!-- wp:paragraph --><p>Другая страница</p><!-- /wp:paragraph -->', 532 );
+} catch ( RuntimeException $e ) {
+	$threw = true;
+}
+od_test( 'samarskaya: refuses a page that is not the one', $threw );
+
 /* ------------------------------------------------------- the registry itself */
 
 foreach ( od_pages_registry() as $entry ) {

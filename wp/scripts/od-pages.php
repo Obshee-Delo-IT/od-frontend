@@ -4235,14 +4235,58 @@ function od_pages_logo_row(array $logos): string
 
 
 /**
+ * `/contacts/samarskaya/` — the one regional page whose coordinator list is
+ * empty for a reason nobody chose.
+ *
+ * Its `core/query` block still carries `taxQuery: {"post_tag": [-1]}`, the "match
+ * nothing" placeholder the shortcode→Gutenberg migration writes when it cannot
+ * read a region out of the original: page 21557 is the single one of the 75 whose
+ * `nvp_content_copy` backup is empty, so `wp cmsms migrate` had no shortcode to
+ * convert and left the placeholder standing. Meanwhile the term is right there —
+ * `activity-samara`, with 8 profiles tagged.
+ *
+ * The four pages that carry the *same* placeholder legitimately are not this
+ * case and are left alone: their originals asked for `архангельская-область` by
+ * copy-paste, and `pl-categs` has no term for Murmansk, Smolensk, Mordovia or
+ * Astrakhan to repoint them at (see `docs/next-steps.md`).
+ *
+ * The term id arrives from the runner, never from here: `pl-categs` ids are
+ * per-environment, which is the whole reason this is a registry entry and not a
+ * one-off `wp post update`.
+ *
+ * @param string $content The page's `post_content`.
+ * @param int    $termId  `activity-samara`, resolved by the runner.
+ * @return string Rewritten content, or `$content` unchanged if it is already fixed.
+ * @throws RuntimeException when the page does not carry exactly one placeholder.
+ */
+function od_pages_samarskaya_coordinators(string $content, int $termId): string
+{
+    $wanted = sprintf('"taxQuery":{"pl-categs":[%d]}', $termId);
+    if (strpos($content, $wanted) !== false) {
+        return $content; // Already repointed — leave the editor's copy alone.
+    }
+
+    $placeholder = '"taxQuery":{"post_tag":[-1]}';
+    $found = substr_count($content, $placeholder);
+    if ($found !== 1) {
+        throw new RuntimeException(sprintf('unexpected input: %d "match nothing" tax queries, expected 1', $found));
+    }
+
+    return str_replace($placeholder, $wanted, $content);
+}
+
+
+/**
  * Every record workstream D rewrites, newest last.
  *
  * `path` is resolved with `get_page_by_path()` — exact and hierarchy-aware.
  * `title` is the fallback for a record whose slug names somebody else (see the
- * constant above), and `post_type` defaults to `page`. `tag` is the `post_tag`
- * slug a transform's «Проекты программы» row queries — `wp/scripts/od-wp.php` is
- * what creates those tags. Term ids are per-environment, so the
- * runner resolves the slug and hands the transform the id.
+ * constant above), and `post_type` defaults to `page`. `tag` is the term slug a
+ * transform queries — a `post_tag` for a programme's «Проекты программы» row
+ * (`wp/scripts/od-wp.php` is what creates those), or a term in whatever
+ * `taxonomy` the entry names, which is how `/contacts/samarskaya/` reaches its
+ * `pl-categs` region. Term ids are per-environment, so the runner resolves the
+ * slug and hands the transform the id.
  *
  * `args` is passed on to the transform after those two, which is what lets one
  * function serve eleven records that differ only in their data (see `OD_TEAM`).
@@ -4257,7 +4301,7 @@ function od_pages_logo_row(array $logos): string
  * record by `path` where it matters on production; the slug is a valid address
  * even when it names the wrong person.
  *
- * @return array<int, array{label: string, fix: callable-string, path?: string, title?: string, post_type?: string, tag?: string, args?: array<int, mixed>}>
+ * @return array<int, array{label: string, fix: callable-string, path?: string, title?: string, post_type?: string, tag?: string, taxonomy?: string, args?: array<int, mixed>}>
  */
 function od_pages_registry(): array
 {
@@ -4440,6 +4484,13 @@ function od_pages_registry(): array
             'path' => 'about',
             'fix' => 'od_pages_about',
         ],
+        [
+            'label' => 'D4 · /contacts/samarskaya/ — the coordinator query the re-migration could not repair',
+            'path' => 'contacts/samarskaya',
+            'tag' => 'activity-samara',
+            'taxonomy' => 'pl-categs',
+            'fix' => 'od_pages_samarskaya_coordinators',
+        ],
     ];
 
     // One entry per person, because each is a record of its own — the lists are
@@ -4510,9 +4561,10 @@ foreach (od_pages_registry() as $entry) {
     // Resolved here rather than written into a transform: term ids are
     // per-environment. `wp/scripts/od-wp.php` is what creates them.
     $tagSlug = $entry['tag'] ?? '';
-    $filmTag = $tagSlug === '' ? null : get_term_by('slug', $tagSlug, 'post_tag');
+    $taxonomy = $entry['taxonomy'] ?? 'post_tag';
+    $filmTag = $tagSlug === '' ? null : get_term_by('slug', $tagSlug, $taxonomy);
     if ($tagSlug !== '' && !$filmTag) {
-        WP_CLI::warning(sprintf('%s: tag `%s` is missing — run `od-wp.php apply` first.', $entry['label'], $tagSlug));
+        WP_CLI::warning(sprintf('%s: term `%s` is missing from `%s` — run `od-wp.php apply` first.', $entry['label'], $tagSlug, $taxonomy));
         continue;
     }
 
