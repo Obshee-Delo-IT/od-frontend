@@ -1614,10 +1614,26 @@ od_test( 'branch card: a label that carries meaning keeps its line', (bool) preg
 od_test( 'branch card: seven person rows on the biggest regional page', 7 === substr_count( $samara, 'od-contact--person' ) / 2 );
 od_test_idempotent( 'od_pages_branch_card on samarskaya', 'od_pages_branch_card', file_get_contents( __DIR__ . '/fixtures/contacts-samarskaya.before.html' ) );
 
-/* A sweep runs over the whole subtree: `/contacts/sverdlovskaya/` has no
-   accordion at all, and one that has already been converted must not be
-   converted twice. */
-od_test( 'branch card: a page with no accordion is left alone', od_pages_branch_card( '<!-- wp:paragraph --><p>Текст</p><!-- /wp:paragraph -->' ) === '<!-- wp:paragraph --><p>Текст</p><!-- /wp:paragraph -->' );
+/* `/contacts/sverdlovskaya/` never had an accordion: its nine people are written
+   straight into the body as a centred legal name and two columns of «role: name /
+   тел. / e-mail» paragraphs. Without the fallback its spoiler on the index came
+   out holding nothing but a link, which is what sent someone looking. */
+$sverdlovsk = od_pages_branch_card( file_get_contents( __DIR__ . '/fixtures/contacts-sverdlovskaya.before.html' ) );
+od_test( 'branch card: a page with no accordion is read out of its body instead', od_has_block_class( $sverdlovsk, 'od-branch' ) );
+od_test( 'branch card: the centred legal name in an `<h2>` becomes the card title', str_contains( $sverdlovsk, '<p>Свердловское областное отделение Общероссийской' ) );
+od_test( 'branch card: eight person rows across the two columns', 8 === substr_count( $sverdlovsk, 'od-contact--person' ) / 2 );
+od_test( 'branch card: «Лектор» and «Член правления» count as roles', str_contains( $sverdlovsk, '<br>Соучредитель, член правления, лектор</span>' ) );
+/* The boundary: everything from the coordinator loop on is not the branch's text. */
+od_test( 'branch card: the query loops below it are untouched', 2 === substr_count( $sverdlovsk, '<!-- wp:query ' ) && str_contains( $sverdlovsk, 'id="news_section"' ) );
+od_test_idempotent( 'od_pages_branch_card on sverdlovskaya', 'od_pages_branch_card', file_get_contents( __DIR__ . '/fixtures/contacts-sverdlovskaya.before.html' ) );
+
+/* The fallback must not fire on a page that simply is not this case: a body with
+   no query block, or one whose opening paragraphs are prose rather than contacts,
+   comes back untouched rather than rewritten into a card. */
+od_test( 'branch card: a page with neither accordion nor query block is left alone', od_pages_branch_card( '<!-- wp:paragraph --><p>Текст</p><!-- /wp:paragraph -->' ) === '<!-- wp:paragraph --><p>Текст</p><!-- /wp:paragraph -->' );
+$prose = '<!-- wp:group --><div class="wp-block-group"><!-- wp:paragraph --><p>Отделение работает с 2011 года.</p><!-- /wp:paragraph --></div><!-- /wp:group -->'
+	. '<!-- wp:group --><div class="wp-block-group"><!-- wp:query {"queryId":1} --><div class="wp-block-query"></div><!-- /wp:query --></div><!-- /wp:group -->';
+od_test( 'branch card: an opening with no contact in it is not a card', od_pages_branch_card( $prose ) === $prose );
 od_test( 'branch card: a converted page is left alone', od_pages_branch_card( $card ) === $card );
 
 /* `od_tel_href()` reads the digits of whatever it is handed, so a line has to be

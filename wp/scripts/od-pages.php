@@ -4433,7 +4433,7 @@ function od_pages_coordinator_heading_level(string $content, int $_termId = 0): 
  * «Координатор отделения», «Руководитель», «Председатель правления».
  */
 const OD_BRANCH_ROLE = '(?:координатор|руководител|председател|представител|начальник|директор|помощник'
-    . '|заместител|секретар|куратор|специалист)';
+    . '|заместител|секретар|куратор|специалист|лектор|соучредител|член\s+правления|ответственн)';
 
 /**
  * The labels an editor typed in front of a contact — and, on their own, the empty
@@ -4489,13 +4489,61 @@ function od_pages_branch_card(string $content, int $_termId = 0): string
     }
 
     if (!preg_match('~<!--\s*wp:details\s*-->\s*(.*?)<!--\s*/wp:details\s*-->~s', $content, $found)) {
-        return $content; // No «Об отделении» block — `/contacts/sverdlovskaya/`.
+        return od_branch_card_from_body($content);
     }
 
     $blocks = od_branch_blocks(od_branch_lines($found[1]));
     $card   = $blocks === '' ? '' : rtrim(od_pages_group('od-branch', $blocks)) . "\n";
 
     return od_drop_empty_layout_groups(str_replace($found[0], $card, $content));
+}
+
+/**
+ * The card for the one page that never had an accordion to convert.
+ *
+ * `/contacts/sverdlovskaya/` writes its nine people straight into the body — a
+ * centred legal name, then two 50 % columns of «<strong>role:</strong> name /
+ * тел. / e-mail» paragraphs — so `od_pages_branch_card()` found no `wp:details`,
+ * returned the page untouched, and the index's spoiler for it came out holding
+ * nothing but a link. The lines are the same shape every other region's accordion
+ * holds; only the wrapper differs, so the same classifier reads them.
+ *
+ * **The boundary is the first `wp:query`.** Everything before the group that
+ * wraps it is the branch's own text; everything from there on is the coordinator
+ * loop, the separator and «События». Addressing it that way rather than by
+ * counting groups is what keeps this from depending on how many columns an editor
+ * split the contacts across.
+ *
+ * Returns `$content` unchanged unless the prefix reads as contacts — a page with
+ * no query block, or one whose opening is prose, is not this case and must not be
+ * rewritten into a card.
+ *
+ * @param string $content Stored `post_content`.
+ * @return string
+ */
+function od_branch_card_from_body(string $content): string
+{
+    $query = strpos($content, '<!-- wp:query');
+    if ($query === false) {
+        return $content;
+    }
+
+    $wrapper = strrpos(substr($content, 0, $query), '<!-- wp:group');
+    if ($wrapper === false) {
+        return $content;
+    }
+
+    // The legal name is an `<h2>` **inside** a paragraph block here — the
+    // migrator's doing — and `od_branch_lines()` reads paragraphs, so the
+    // headings become paragraphs before it looks.
+    $prefix = preg_replace('~<h([1-6])\b[^>]*>(.*?)</h\1>~si', '<p>$2</p>', substr($content, 0, $wrapper));
+    $blocks = od_branch_blocks(od_branch_lines($prefix));
+
+    if (strpos($blocks, 'od-contact') === false) {
+        return $content;
+    }
+
+    return od_drop_empty_layout_groups(rtrim(od_pages_group('od-branch', $blocks)) . "\n" . substr($content, $wrapper));
 }
 
 /**

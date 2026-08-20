@@ -1720,9 +1720,16 @@ h2:has(+ .od-tiles) {
  * rules above, which is the whole reason the shortcode lifts the card rather
  * than rebuilding it. What is new here is the pill, the ⊕/⊗ control and the link.
  * -------------------------------------------------------------------------- */
+/* `margin-bottom` on the list rather than `margin-top` on what follows it:
+   «Не нашел свой город?» ends the page under the accordion, and 75 pills running
+   flush into a heading read as the 76th. 60px is the gap this file already uses
+   between a block and the next thing (a card grid's pagination takes the same).
+   On the container because a `+ *` rule would sit below the `.od-branch` rules
+   it has nothing to do with, which is a `no-descending-specificity` error. */
 .od-regions {
   display: flex;
   flex-direction: column;
+  margin-bottom: 60px;
   gap: 10px;
 }
 
@@ -1819,6 +1826,7 @@ h2:has(+ .od-tiles) {
 .od-region__body > .od-region__link:first-child {
   margin-top: 0;
 }
+
 
 /* `/about/ustav/` — Figma `charter` (`706:3695`): a contents column and the
    charter beside it. Figma: nav 384 from x=103, text 814 from x=527 — 384 + 40
