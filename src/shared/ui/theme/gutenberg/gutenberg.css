@@ -805,14 +805,16 @@ h2:has(+ .od-cards, + .od-poster-cards) {
    the film posters do the same, and for the same reason: one link, one
    accessible name, no second anchor around the title.
 
+   **No underline until the pointer is on the card**, which is what Figma draws
+   and what the base `a` / `a:hover` pair at the top of this file already does —
+   so there is no rule here for it. The hover is the *card's*, not the link's,
+   for free: the stretched `::after` below is part of the anchor's box, so `a` is
+   in `:hover` whenever the pointer is anywhere in the card.
+
    Written with three classes, like `.od-card--flush` above: nothing here
    competes with the poster card's own link rules, but they end in `a` too and
    are declared earlier, so a shorter selector reads to stylelint as descending
    specificity. */
-.wp-block-columns.od-tiles .od-tile-link a {
-  text-decoration: underline;
-}
-
 .wp-block-columns.od-tiles .od-tile-link a::after {
   position: absolute;
   content: '';
@@ -904,12 +906,11 @@ h2:has(+ .od-tiles) {
   background-image: url('/figma/cards/direction-3.svg');
 }
 
-/* `/about/` — Figma `about` (`706:70`) draws seven of these; the four with a
-   `direction-*` file are the destinations the page links that the mock has no card
-   for (`od_pages_about()` says why they are still cards), and they borrow a drawing
-   the way «Плакаты Общего Дела» does above. «Отчеты»'s calendar goes to
-   «Документы»: the mock's own card points at a page that has been private since
-   2017. */
+/* `/about/` — Figma `about` (`706:70`) draws seven of these, and «СМИ о нас» is
+   the one card left over that it has no drawing for (`od_pages_about()` says why
+   the other four leftovers are not cards any more), so it borrows one the way
+   «Плакаты Общего Дела» does above. «Отчеты»'s calendar goes to «Документы»: the
+   mock's own card points at a page that has been private since 2017. */
 .od-tile--about-team::before {
   background-image: url('/figma/cards/about-team.svg');
 }
@@ -938,20 +939,13 @@ h2:has(+ .od-tiles) {
   background-image: url('/figma/cards/about-udostoverenie.svg');
 }
 
-.od-tile--about-supervisory::before {
-  background-image: url('/figma/cards/direction-4.svg');
-}
-
+/* The one card with no drawing of its own. `/materials/`'s «Статьи» tile —
+   press, and portrait at 200 × 200, so it stands as tall in the card's box as
+   the four exported above it. The landscape `direction-*` drawings it used to
+   borrow are 335 × 194 and came out half the height of their neighbours, which
+   is the whole reason not to borrow those here. */
 .od-tile--about-smi::before {
-  background-image: url('/figma/cards/direction-3.svg');
-}
-
-.od-tile--about-stats::before {
-  background-image: url('/figma/cards/direction-2.svg');
-}
-
-.od-tile--about-otziv::before {
-  background-image: url('/figma/cards/direction-5.svg');
+  background-image: url('/figma/cards/materials-articles.svg');
 }
 
 .od-tiles--wide .od-tile {
@@ -1833,9 +1827,15 @@ h2:has(+ .od-tiles) {
    split is not a percentage. */
 .wp-block-columns.od-lead {
   display: grid;
-  margin-bottom: 40px;
+  margin-bottom: 0;
   gap: 40px;
   grid-template-columns: 386px minmax(0, 1fr);
+}
+
+/* The gap under the lead belongs to the button below it (40px on both sides,
+   see `.od-more`), so the prose must not add its own paragraph margin to it. */
+.od-lead p:last-child {
+  margin-bottom: 0;
 }
 
 /* 22px on 130 %, and upper-cased **here**: the stored sentence is sentence-cased,
@@ -1885,9 +1885,22 @@ h2:has(+ .od-tiles) {
    The indent is on the summary alone, not on the `<details>`: Figma draws the
    button at x=526.44, the lead's second track, while everything it opens is the
    page's full width. Putting it here also keeps the button still when the read
-   opens. */
+   opens.
+
+   40px clear on both sides, in either state — the lead above it gives up its own
+   bottom margin for this, and the cards below had been sitting flush against the
+   button with nothing between them. */
+.od-more {
+  margin-block: 40px;
+}
+
+/* `flex` + `fit-content`, not `inline-flex`: as an inline-level box the button
+   sits on a line box and is baseline-aligned inside it, so the `font-size: 0`
+   the open state uses moved it 5px down. A block-level box has no line box to
+   be aligned in. */
 .od-more summary {
-  display: inline-flex;
+  display: flex;
+  width: fit-content;
   padding: 12px 24px;
   border-radius: var(--radius-full);
   margin-left: 426px;
@@ -1910,9 +1923,25 @@ h2:has(+ .od-tiles) {
 }
 
 /* Open, the read starts 40px under the button, the same gap the mock leaves
-   between its sections. */
+   between its sections — and the button reads «Свернуть», because a button that
+   still says «Узнать больше» over an opened read looks like it did nothing.
+
+   The label is here rather than in `post_content` because a `<details>` has no
+   way to swap its own summary and there is no script on a WordPress body to do
+   it: the stored text is the closed label, `font-size: 0` folds it away and
+   `::after` draws the open one. The `line-height` is restated because it
+   inherits as a number, so it would otherwise multiply the 0. The stored label
+   is what a screen reader announces in both states, which is the reason not to
+   push this any further — `<details>` announces expanded/collapsed itself. */
 .od-more[open] summary {
   margin-bottom: 40px;
+  font-size: 0;
+}
+
+.od-more[open] summary::after {
+  content: 'Свернуть';
+  font-size: var(--font-size-4);
+  line-height: 1.4;
 }
 
 /* «Задачи»: the goals' tile with an icon where the ordinal is, two to a row —
@@ -1979,6 +2008,14 @@ h2:has(+ .od-tiles) {
    lightbox is what a reader actually reads them in. */
 .wp-block-columns.od-figures--3 {
   grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+/* A scan is portrait and its track is 397 wide, so the image never fills it —
+   centre it, or three documents of three different widths line up on their left
+   edges and read as a mistake. */
+.od-figures--3 .wp-block-image {
+  display: flex;
+  justify-content: center;
 }
 
 /* stylelint-disable-next-line no-descending-specificity -- the `--logos` box

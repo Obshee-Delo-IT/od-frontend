@@ -470,21 +470,29 @@ Worth doing together with **B-VIDEO2**, which is blocked on the same kind of
 editorial input, and after it if capacity is short — B-VIDEO2 is a Tier 0
 blocker and this is not.
 
-## `/about/`: the four borrowed drawings, the private «Наши отчеты», and the missing H1
+## `/about/`: the statistics site, «СМИ о нас»'s borrowed drawing, the private «Наши отчеты», and the missing H1
 
-**Found 2026-08-19**, building `/about/` (D6w). Three loose ends, none of them
-blocking, all of them decisions the frame cannot settle on its own.
+**Found 2026-08-19**, building `/about/` (D6w), and revised **2026-08-20** on
+review. Four loose ends, none of them blocking, all of them decisions the frame
+cannot settle on its own.
 
-**The four borrowed card drawings sit smaller than their neighbours.** Figma
-`about` supplies seven illustrations; the page carries eleven cards, because four
-of the destinations it links have no card in the frame (Наблюдательный совет, СМИ
-о нас, the statistics site, «Оставь свой отзыв»). Those four borrow
-`direction-2/3/4/5.svg`, which are **335 × 194** where the exported seven are
-portrait (200 × 206). In the wide card's 200 × 230 `::before` box `contain` gives
-them 200 × 116 — the same width and half the height, so they read as lighter than
-the drawings beside them. The fix is four portrait drawings: either exports of
-frames elsewhere in the file, or four from the same stock family Design used.
-Ask Design for the set rather than cropping these.
+**The statistics card is out until the statistics site is rebuilt.** «Наша
+статистика» pointed off-site at `общее-дело.рф`'s statistics host
+(`xn--80a7adb.xn----9sbkcac6brh7h.xn--p1ai`), and the card came off the section
+index on 2026-08-20 because that site is dated enough that linking it from here
+undersells the organisation. The idea, and the reason this is written down: **give
+the statistics site a refresh, then put the card back** — it is one row in
+`OD_ABOUT_CARDS` plus a `::before` rule, and `direction-2.svg` is the drawing it
+had. Nothing else on this side needs to change.
+
+**«СМИ о нас» draws `/materials/`'s «Статьи» illustration.** It is the one card
+left with no drawing of its own: Figma `about` supplies seven, and the mock has no
+card for `/about/smi/`. The borrowed file is portrait (200 × 200), so it stands as
+tall in the card's 200 × 230 box as the four exported ones beside it — which is
+why it is that file and not one of the landscape `direction-*` drawings the four
+dropped cards used to borrow (**335 × 194**, and `contain` gave them 200 × 116,
+half the height of their neighbours). Ask Design for a drawing of its own; the
+size problem is fixed either way.
 
 **The mock's «Отчеты» card has no page to point at.** `reports` («Наши отчеты»,
 id 31658) is `private` and was last edited **2017-04-26**. Its calendar drawing

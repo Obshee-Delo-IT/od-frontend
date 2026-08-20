@@ -770,7 +770,7 @@ function od_pages_downloads(array $buttons, string $style = ''): string
  * YouTube video id → Kinescope video id, for every clip a materials page
  * embeds.
  *
- * **Matched by title, and every one of the twelve is an exact match** — the
+ * **Matched by title, and every one is an exact match** — the
  * YouTube oEmbed title and the Kinescope title are the same string, so this is
  * a verified mapping rather than an order-of-appearance guess.
  *
@@ -794,6 +794,8 @@ const OD_KINESCOPE_EMBEDS = [
     // `/materials/books/`
     'rCORvPx9cR4' => ['939be838-34ec-4e95-88bf-7f31244c3be2', 'Правда про алкоголь. История одного обмана'],
     'ZOqohiNifK0' => ['7bd4b8cb-6107-46a7-a7cc-d715d5c51bf1', 'Тайна природы женщины — фильм организации «Общее дело»'],
+    // `/about/` — the section's hero
+    'Qvw8NmwFE_4' => ['54cb9a3e-b852-4c61-938f-b0b77d05d192', 'Что такое ОБЩЕЕ ДЕЛО. Презентация организации'],
 ];
 
 /**
@@ -815,7 +817,10 @@ const OD_KINESCOPE_EMBEDS = [
  */
 function od_pages_kinescope(string $youtubeUrl): string
 {
-    if (!preg_match('~(?:youtu\.be/|v=)([A-Za-z0-9_-]{6,})~', $youtubeUrl, $found)) {
+    // Three shapes, because a stored embed url is whatever the editor pasted:
+    // `watch?v=`, the `youtu.be/` short link, and the `/embed/` player url
+    // `/about/` carries.
+    if (!preg_match('~(?:youtu\.be/|/embed/|v=)([A-Za-z0-9_-]{6,})~', $youtubeUrl, $found)) {
         throw new RuntimeException(sprintf('unexpected input: «%s» is not a YouTube url', $youtubeUrl));
     }
     if (!isset(OD_KINESCOPE_EMBEDS[$found[1]])) {
@@ -3764,16 +3769,21 @@ function od_pages_supervisory(string $content, int $_filmTagId = 0): string
 /**
  * The cards under the long read, in the order they are drawn.
  *
- * **Eleven, where the mock draws seven.** `about` shows four wide cards, the
- * partner strip and three portrait ones; the stored page carried twelve tiles.
- * Four of those the mock has no card for — the Наблюдательный совет, СМИ о нас,
- * the statistics site and «Оставь свой отзыв» — and this is the only page that
- * links to some of them, so they take the wide shape too and the row flows onto
- * two more lines. Dropping a card here would drop the destination, which a
- * redesign is not.
- *
+ * **Five, where the mock draws four and the stored page carried twelve tiles.**
  * Two of the twelve are not cards at all: «Видеопрезентация» is the page's own
  * hero embed, and «Нас поддерживают» is the partner strip that replaces it.
+ * Three more the mock has no card for were dropped on review (2026-08-20):
+ *
+ *  - **Наблюдательный совет** — `/team/` already carries the council, so the two
+ *    cards were one destination twice. The team card says so in its title now.
+ *  - **Наша статистика** — the statistics site it points at is old enough that
+ *    linking it from the section index sells the organisation short. The card
+ *    comes back when the site does (`docs/next-steps.md`).
+ *  - **Оставь свой отзыв** — the footer links it, and the page is a Contact
+ *    Form 7 form that is still on the A6 iframe.
+ *
+ * That leaves «СМИ о нас» as the one card with no frame, and it keeps the wide
+ * shape the four drawn ones take.
  *
  * `id` is the drawing, not the page — `gutenberg.css` pairs each with a file the
  * same way the `/materials/` tiles do. The mock's fourth card is «Отчеты», whose
@@ -3785,14 +3795,11 @@ function od_pages_supervisory(string $content, int $_filmTagId = 0): string
  * the first, and this side has no redirect for it at all.
  */
 const OD_ABOUT_CARDS = [
-    ['id' => 'about-team', 'title' => 'Команда', 'href' => '/team/'],
+    ['id' => 'about-team', 'title' => 'Команда и наблюдательный совет', 'href' => '/team/'],
     ['id' => 'about-experts', 'title' => 'Экспертные заключения', 'href' => '/about/experts-review/'],
     ['id' => 'about-docs', 'title' => 'Документы', 'href' => '/about/docs/'],
     ['id' => 'about-ustav', 'title' => 'Устав', 'href' => '/about/ustav/'],
-    ['id' => 'about-supervisory', 'title' => 'Наблюдательный совет', 'href' => '/about/supervisory/'],
     ['id' => 'about-smi', 'title' => 'СМИ о нас', 'href' => '/about/smi/'],
-    ['id' => 'about-stats', 'title' => 'Наша статистика', 'href' => 'http://xn--80a7adb.xn----9sbkcac6brh7h.xn--p1ai/'],
-    ['id' => 'about-otziv', 'title' => 'Оставь свой отзыв', 'href' => '/about/ostavit-otziv/'],
 ];
 
 /** The three the mock draws portrait, under the partner strip. */
@@ -3845,8 +3852,10 @@ const OD_ABOUT_LEAD_SPLIT = ', активно занимающаяся';
  * `core/details`, which is WordPress's own block and a native `<details>`: no
  * script (a WordPress body has none of its own — see `/about/ustav/`'s missing
  * scroll highlight), the text stays in the DOM for search, and an editor gets a
- * block they can open and type into. The summary stays visible when open, which
- * is the one thing the expanded frame does not draw.
+ * block they can open and type into. The summary stays visible when open and
+ * reads «Свернуть» there — neither is something the expanded frame draws, and
+ * the open label is `gutenberg.css`'s, since a `<details>` has no way to swap
+ * its own text.
  *
  * **What the stored page is.** One `wp:paragraph` block holding the whole read as
  * `<p><strong>Label</strong><br />…</p>` pairs — История, Миссия, Цели, Задачи,
@@ -3927,7 +3936,9 @@ function od_pages_about(string $content, int $_filmTagId = 0): string
         throw new RuntimeException('unexpected input: no video embed');
     }
 
-    $out = od_pages_embed($video[1]);
+    // Kinescope, not the stored YouTube frame: the same call every other page in
+    // this file makes, and the clip is on Kinescope under the same title.
+    $out = od_pages_kinescope($video[1]);
     $out .= od_pages_paragraph($presentation);
 
     $out .= od_pages_columns([

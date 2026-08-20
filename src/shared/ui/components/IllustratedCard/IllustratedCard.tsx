@@ -27,7 +27,10 @@ export const IllustratedCard: React.FC<IllustratedCardProps> = ({ title, href, I
     </div>
     <div className={css.body}>
       <h3 className={css.title}>{title}</h3>
-      <Link href={href} color="red" underline="always" size="3" aria-label={`${title} — подробнее`}>
+      {/* `underline="hover"`, and the hover is the whole card's: the link's
+          `::after` is stretched over it, so the anchor is in `:hover` wherever
+          in the card the pointer is. Figma draws it plain. */}
+      <Link href={href} color="red" underline="hover" size="3" aria-label={`${title} — подробнее`}>
         Подробнее
       </Link>
     </div>
