@@ -19,14 +19,15 @@
  * **Adding a task.** One function, called from the runner at the bottom, taking
  * `$apply` and doing nothing but logging when it is false. Whatever it needs to
  * know goes in a registry function above it, so the data can be read and tested
- * without WordPress. There are three today — {@see od_wp_tag_programme_films()},
- * {@see od_wp_rename_pages()} and {@see od_wp_create_profiles()} — and still no
- * framework between them, because three calls in a row is not a thing that needs
- * one.
+ * without WordPress. There are four today — {@see od_wp_tag_programme_films()},
+ * {@see od_wp_rename_pages()}, {@see od_wp_edit_menu()} and
+ * {@see od_wp_create_profiles()} — and still no framework between them, because
+ * four calls in a row is not a thing that needs one.
  *
  * House rules, same as `od-pages.php`: dry run by default, writing takes the
  * positional argument `apply`, everything is idempotent, and **posts are
- * addressed by slug**, never by id, because ids differ per environment. The
+ * addressed by slug**, never by id, because ids differ per environment — and a
+ * nav menu item, which has no slug, is addressed by the path it points at. The
  * slugs below are written in readable Cyrillic; WordPress stores them
  * percent-encoded, which is what `sanitize_title()` produces. Upload paths are
  * root-relative for the same reason — the origin is put back with `home_url()`
@@ -339,6 +340,128 @@ function od_wp_rename_pages(bool $apply): void
     }
 }
 
+/** The menu the site's header is built from — `wp menu list` calls it `primary`. */
+const OD_WP_MENU = 'main-navigation';
+
+/**
+ * The «main-navigation» edits, keyed by the **path** the item points at: a title
+ * to retitle it, `null` to delete it.
+ *
+ * Keyed by path rather than by id, per this file's house rule, and rather than by
+ * label, which is the other stable-looking key: the two installs disagree on the
+ * labels here (prod says «Документы и отчёты» where od-dev says «Документы») but
+ * the pages are the same pages, so their paths agree. What the items disagree on
+ * is the *origin* — several are still absolute against an old `.рф` domain — which
+ * is why only the path is compared ({@see od_wp_menu_path()}).
+ *
+ * What each one is for:
+ *
+ *  - **`/about/ostavit-otziv/`** — «Написать отзыв» goes. The footer's «Отзывы»
+ *    column already links the page, so the nav entry was a third route to one
+ *    Contact Form 7 form, and `/about/` stopped carrying a card for it too.
+ *  - **`/about/docs/` and `/about/ustav/`** — one item, «Устав и документы».
+ *    They are a tabbed pair on the frontend now
+ *    (`src/shared/config/pageSections.ts`), the way «Команда» and
+ *    «Наблюдательный совет» are, and a section with a tab strip gets one entry.
+ *
+ * **Order matters on production.** The merge leaves no link to `/about/docs/` for
+ * anything that doesn't draw the tab strip, and the old theme doesn't — so this
+ * runs in the cutover window, with the rest of workstream D, not before it.
+ *
+ * @return array<string, string|null> Path => the new title, or `null` to delete.
+ */
+function od_wp_menu_edits(): array
+{
+    return [
+        '/about/ostavit-otziv/' => null,
+        '/about/docs/'          => null,
+        '/about/ustav/'         => 'Устав и документы',
+    ];
+}
+
+/**
+ * The comparable part of a menu item's url: its path, with both slashes on.
+ *
+ * A menu item's url is whatever was typed into the admin — this menu holds
+ * absolute urls against three different origins — so the path is the only part
+ * that means the same thing on both installs. Pure, and tested.
+ */
+function od_wp_menu_path(string $url): string
+{
+    $path = trim((string) parse_url($url, PHP_URL_PATH), '/');
+
+    return $path === '' ? '/' : '/' . $path . '/';
+}
+
+/**
+ * Applies {@see od_wp_menu_edits()} to the header menu.
+ *
+ * Retitling goes through `$wpdb->update`, the same way {@see od_wp_rename_pages()}
+ * does and for the same reason; deleting goes through `wp_delete_post()`, which
+ * is what `wp menu item delete` calls — a nav menu item carries five postmeta
+ * keys and nothing else should be left holding them.
+ */
+function od_wp_edit_menu(bool $apply): void
+{
+    global $wpdb;
+
+    $menu = wp_get_nav_menu_object(OD_WP_MENU);
+    if (!$menu) {
+        WP_CLI::warning(sprintf('%s: no such menu', OD_WP_MENU));
+
+        return;
+    }
+
+    $items = wp_get_nav_menu_items($menu->term_id) ?: [];
+    $byPath = [];
+    foreach ($items as $item) {
+        $byPath[od_wp_menu_path($item->url)][] = $item;
+    }
+
+    foreach (od_wp_menu_edits() as $path => $title) {
+        $found = $byPath[$path] ?? [];
+
+        if ($found === []) {
+            // Which is the state this leaves behind, so it is a skip, not a
+            // warning: a second run reports every deletion this way.
+            WP_CLI::log(sprintf('%s: no item in %s, skipped', $path, OD_WP_MENU));
+            continue;
+        }
+
+        foreach ($found as $item) {
+            if ($title === null) {
+                WP_CLI::log(sprintf('%s (#%d): «%s» to be deleted', $path, $item->db_id, $item->title));
+
+                if ($apply && wp_delete_post($item->db_id, true)) {
+                    WP_CLI::success(sprintf('%s (#%d): deleted', $path, $item->db_id));
+                }
+
+                continue;
+            }
+
+            if ($item->title === $title) {
+                WP_CLI::log(sprintf('%s (#%d): already «%s», skipped', $path, $item->db_id, $title));
+                continue;
+            }
+
+            WP_CLI::log(sprintf('%s (#%d): «%s» -> «%s»', $path, $item->db_id, $item->title, $title));
+
+            if (!$apply) {
+                continue;
+            }
+
+            $written = $wpdb->update($wpdb->posts, ['post_title' => $title], ['ID' => $item->db_id], ['%s'], ['%d']);
+            if ($written === false) {
+                WP_CLI::warning(sprintf('%s (#%d): write failed', $path, $item->db_id));
+                continue;
+            }
+
+            clean_post_cache($item->db_id);
+            WP_CLI::success(sprintf('%s (#%d): retitled', $path, $item->db_id));
+        }
+    }
+}
+
 /**
  * The body a new `profile` starts with: two columns, the photograph in the first
  * and an empty paragraph block in the second.
@@ -481,4 +604,5 @@ WP_CLI::log($apply ? 'Applying changes.' : 'Dry run — pass `apply` to write.')
 
 od_wp_tag_programme_films($apply);
 od_wp_rename_pages($apply);
+od_wp_edit_menu($apply);
 od_wp_create_profiles($apply);

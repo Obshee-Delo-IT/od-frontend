@@ -6,10 +6,18 @@ describe('PAGE_SECTIONS', () => {
     expect(resolvePageSection('/team/')?.title).toBe('Команда');
   });
 
-  it('gives both halves of «Устав и документы» the section heading, not their own', () => {
-    expect(resolvePageSection('/about/ustav/')?.title).toBe('Устав и документы');
-    expect(resolvePageSection('/about/docs/')?.title).toBe('Устав и документы');
+  it('gives each half of «Устав и документы» its own heading, the way the pair above does', () => {
+    expect(resolvePageSection('/about/ustav/')?.title).toBe('Устав');
+    expect(resolvePageSection('/about/docs/')?.title).toBe('Документы');
     expect(resolvePageSection('/about/docs/')?.activeValue).toBe('docs');
+  });
+
+  it('the heading of a page and the tab that carries it agree', () => {
+    for (const section of Object.values(PAGE_SECTIONS)) {
+      const active = section.tabs.find((tab) => tab.value === section.activeValue);
+
+      expect(active?.label).toContain(section.title);
+    }
   });
 
   it('leaves every other page exactly as it was', () => {
