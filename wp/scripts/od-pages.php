@@ -3782,8 +3782,13 @@ function od_pages_supervisory(string $content, int $_filmTagId = 0): string
  *  - **Оставь свой отзыв** — the footer links it, and the page is a Contact
  *    Form 7 form that is still on the A6 iframe.
  *
+ * And «Устав» and «Документы» became **one card**, «Устав и документы» pointing
+ * at `/about/ustav/`: the two pages are one thing to a reader, so they are a
+ * tabbed pair now (`src/shared/config/pageSections.ts`) the way «Команда» and
+ * «Наблюдательный совет» are, and a section with a tab strip gets one card.
+ *
  * That leaves «СМИ о нас» as the one card with no frame, and it keeps the wide
- * shape the four drawn ones take.
+ * shape the drawn ones take.
  *
  * `id` is the drawing, not the page — `gutenberg.css` pairs each with a file the
  * same way the `/materials/` tiles do. The mock's fourth card is «Отчеты», whose
@@ -3797,8 +3802,7 @@ function od_pages_supervisory(string $content, int $_filmTagId = 0): string
 const OD_ABOUT_CARDS = [
     ['id' => 'about-team', 'title' => 'Команда и наблюдательный совет', 'href' => '/team/'],
     ['id' => 'about-experts', 'title' => 'Экспертные заключения', 'href' => '/about/experts-review/'],
-    ['id' => 'about-docs', 'title' => 'Документы', 'href' => '/about/docs/'],
-    ['id' => 'about-ustav', 'title' => 'Устав', 'href' => '/about/ustav/'],
+    ['id' => 'about-ustav', 'title' => 'Устав и документы', 'href' => '/about/ustav/'],
     ['id' => 'about-smi', 'title' => 'СМИ о нас', 'href' => '/about/smi/'],
 ];
 

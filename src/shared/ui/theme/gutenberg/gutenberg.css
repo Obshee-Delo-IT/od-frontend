@@ -909,18 +909,16 @@ h2:has(+ .od-tiles) {
 /* `/about/` — Figma `about` (`706:70`) draws seven of these, and «СМИ о нас» is
    the one card left over that it has no drawing for (`od_pages_about()` says why
    the other four leftovers are not cards any more), so it borrows one the way
-   «Плакаты Общего Дела» does above. «Отчеты»'s calendar goes to «Документы»: the
-   mock's own card points at a page that has been private since 2017. */
+   «Плакаты Общего Дела» does above. The mock's «Отчеты» calendar has no card at
+   all any more — «Документы» is a tab of «Устав и документы» now, and the page
+   that card pointed at has been private since 2017; the export is still
+   `public/figma/cards/about-docs.svg` if it comes back. */
 .od-tile--about-team::before {
   background-image: url('/figma/cards/about-team.svg');
 }
 
 .od-tile--about-experts::before {
   background-image: url('/figma/cards/about-experts.svg');
-}
-
-.od-tile--about-docs::before {
-  background-image: url('/figma/cards/about-docs.svg');
 }
 
 .od-tile--about-ustav::before {

@@ -3,7 +3,9 @@ import type { TabItem } from '@/shared/ui/components/Tabs';
 
 /**
  * The WordPress pages that are a **tabbed pair** rather than a page on their
- * own — Figma `team-1` (`706:1584`), D3.
+ * own — Figma `team-1` (`706:1584`), D3, and one more pair added 2026-08-20 by
+ * the same reasoning: «Устав» and «Документы» are one thing to a reader and were
+ * two cards, two menu items and two headings.
  *
  * `WpPage` draws every page the same way: the WP title as the H1 and
  * «Главная › <that title>» above it. Two pages need more than that, and neither
@@ -17,8 +19,17 @@ import type { TabItem } from '@/shared/ui/components/Tabs';
  *   организации», because in the mock that longer name is what the *tab* says.
  *   Repeating it in the heading above the tab that carries it reads as a stutter.
  *
- * So this is a table of two, not a mechanism. A page that is missing from it
+ * So this is a table of pairs, not a mechanism. A page that is missing from it
  * renders exactly as before.
+ *
+ * **The second pair, «Устав и документы», is a merge rather than a mock.** No
+ * frame draws it: `/about/ustav/` (charter) and `/about/docs/` (the documents
+ * template it shares with `/about/experts-review/`) are separate WordPress pages
+ * that a reader has no reason to tell apart, so they now share one card on
+ * `/about/`, one item in the WordPress menu and one heading, and the tab strip is
+ * what picks between them. **Both URLs stay** — each has its own search traffic
+ * and its own WP title, which is what `<title>` and the canonical keep; only the
+ * H1 and the trail are the section's.
  *
  * **The breadcrumbs are a deliberate superset of the mock**, which starts the
  * trail at «О нас». Every other page on this site starts at «Главная», and one
@@ -41,10 +52,18 @@ const ABOUT_TABS: TabItem[] = [
   { label: 'Наблюдательный совет', value: 'supervisory', href: '/about/supervisory/' },
 ];
 
+const DOCUMENT_TABS: TabItem[] = [
+  { label: 'Устав', value: 'ustav', href: '/about/ustav/' },
+  { label: 'Документы', value: 'docs', href: '/about/docs/' },
+];
+
 const ABOUT_CRUMBS: BreadcrumbItem[] = [
   { label: 'Главная', href: '/' },
   { label: 'О нас', href: '/about/' },
 ];
+
+/** Both pages of the second pair are «Устав и документы» — the tabs say which. */
+const DOCUMENTS_TITLE = 'Устав и документы';
 
 /** Keyed by the path the page is served at, trailing slash included. */
 export const PAGE_SECTIONS: Record<string, PageSection> = {
@@ -59,6 +78,18 @@ export const PAGE_SECTIONS: Record<string, PageSection> = {
     breadcrumbs: [...ABOUT_CRUMBS, { label: 'Наблюдательный совет' }],
     tabs: ABOUT_TABS,
     activeValue: 'supervisory',
+  },
+  '/about/ustav/': {
+    title: DOCUMENTS_TITLE,
+    breadcrumbs: [...ABOUT_CRUMBS, { label: DOCUMENTS_TITLE }],
+    tabs: DOCUMENT_TABS,
+    activeValue: 'ustav',
+  },
+  '/about/docs/': {
+    title: DOCUMENTS_TITLE,
+    breadcrumbs: [...ABOUT_CRUMBS, { label: DOCUMENTS_TITLE }],
+    tabs: DOCUMENT_TABS,
+    activeValue: 'docs',
   },
 };
 

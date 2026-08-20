@@ -1344,13 +1344,14 @@ od_test( 'about: the films are a list of twelve under their own lead', 12 === su
 od_test( 'about: a film keeps its whole sentence', false !== strpos( $read, '<li>«Тайна едкого дыма. Команда Познавалова» - мультфильм' ) );
 
 /* The cards. */
-od_test( 'about: eight cards — one wide row of five, one portrait row of three', 1 === substr_count( $built, '<!-- wp:columns {"className":"od-tiles od-tiles--wide"}' ) && 1 === substr_count( $built, '<!-- wp:columns {"className":"od-tiles"}' ) && 8 === substr_count( $built, '"className":"od-tile od-tile--about-' ) );
+od_test( 'about: seven cards — one wide row of four, one portrait row of three', 1 === substr_count( $built, '<!-- wp:columns {"className":"od-tiles od-tiles--wide"}' ) && 1 === substr_count( $built, '<!-- wp:columns {"className":"od-tiles"}' ) && 7 === substr_count( $built, '"className":"od-tile od-tile--about-' ) );
 
-foreach ( array( '/team/', '/about/experts-review/', '/about/docs/', '/about/ustav/', '/about/smi/', '/about/activist-stories/', '/about/reviews/', '/about/udostoverenie/', '/about/nashi_partnery/' ) as $href ) {
+foreach ( array( '/team/', '/about/experts-review/', '/about/ustav/', '/about/smi/', '/about/activist-stories/', '/about/reviews/', '/about/udostoverenie/', '/about/nashi_partnery/' ) as $href ) {
 	od_test( "about: «{$href}» is reachable from the page", false !== strpos( $built, sprintf( '<a href="%s">', $href ) ) );
 }
 
 od_test( 'about: the tile\'s stale /smi/ is written as the page\'s real address', false === strpos( $built, '<a href="/smi/">' ) );
+od_test( 'about: «Устав» and «Документы» are one card into the tabbed pair', false !== strpos( $built, '>Устав и документы</h3>' ) && false === strpos( $built, '<a href="/about/docs/">' ) );
 od_test( 'about: the council is the team card, not a second card of its own', false !== strpos( $built, '>Команда и наблюдательный совет</h3>' ) && false === strpos( $built, '/about/supervisory/' ) );
 od_test( 'about: the statistics site is not linked until it is rebuilt', false === strpos( $built, 'xn--80a7adb' ) );
 od_test( 'about: «Оставь свой отзыв» is left to the footer', false === strpos( $built, '/about/ostavit-otziv/' ) );

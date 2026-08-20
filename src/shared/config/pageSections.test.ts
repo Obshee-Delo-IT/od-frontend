@@ -6,6 +6,12 @@ describe('PAGE_SECTIONS', () => {
     expect(resolvePageSection('/team/')?.title).toBe('Команда');
   });
 
+  it('gives both halves of «Устав и документы» the section heading, not their own', () => {
+    expect(resolvePageSection('/about/ustav/')?.title).toBe('Устав и документы');
+    expect(resolvePageSection('/about/docs/')?.title).toBe('Устав и документы');
+    expect(resolvePageSection('/about/docs/')?.activeValue).toBe('docs');
+  });
+
   it('leaves every other page exactly as it was', () => {
     expect(resolvePageSection('/materials/metodichki/')).toBeNull();
     expect(resolvePageSection('/team')).toBeNull();
