@@ -40,39 +40,44 @@
   cursor: pointer;
 }
 
-/* Flat salmon silhouette, no per-region colouring — Figma `754:632`'s fill, and
-   the whole map is that one colour at rest. (The old page's `colorRegion` was
-   `rgba(209,77,66,.8)` over a white `borderColor`, a different design; its
-   `focusRegion` `#ae0a04` is `--red-8` and is kept.)
+/* Two fills and a white border, which is how the old page drew this and what it
+   said: jqvmap was configured `colorRegion` for a region, `selectRegion` grey for
+   one it had nothing for, `focusRegion` `#ae0a04` under the pointer, over a 1px
+   white `borderColor`. Figma draws the map as one merged silhouette instead — it
+   cannot show the difference, because a merged vector has no regions — so the
+   fill is the mock's and the structure is prod's.
 
-   **The stroke is the same colour as the fill on purpose.** Figma draws the map
-   as one merged vector; ours is 82 separate paths, and neighbours that share a
-   border do not share a pixel grid — anti-aliasing leaves a pale hairline along
-   every internal edge, which turns the mock's flat silhouette into a visible
-   region grid. Painting a hairline stroke in the fill colour closes the seam.
+   The border is a **white stroke on every region**, so the internal edges are the
+   subjects' own boundaries rather than the anti-aliasing seam they used to be:
+   82 separate paths never share a pixel grid, and what was a hairline artefact to
+   hide is the line this now draws on purpose.
 
-   `fill` and `stroke` both change on hover, and nothing else: SVG paints in
-   document order, so a *contrasting* border on an early region would be clipped
-   by the neighbours drawn after it, while a colour swap reads correctly whatever
-   the paint order. */
+   `non-scaling-stroke` because the border is a 1px line at every size — in
+   viewBox units it would be 0.5px at 1440 and 0.16px at 390, where it thinned
+   into nothing.
+
+   Only `fill` changes on hover. SVG paints in document order and has no
+   `z-index`, so a *contrasting* border on an early region would be clipped by the
+   neighbours drawn after it, while a fill swap reads correctly whatever the paint
+   order. */
 .region {
   fill: #f8aca0;
-  stroke: #f8aca0;
-
-  /* `non-scaling-stroke`, because the seam is an anti-aliasing artefact and is
-     one device pixel wide at every size — a stroke in viewBox units would be
-     0.5px at 1440 and 0.16px at 390, where the seams reopened as a visible
-     region grid. */
+  stroke: #fff;
   stroke-width: 1;
-  transition:
-    fill 150ms ease,
-    stroke 150ms ease;
+  transition: fill 150ms ease;
   vector-effect: non-scaling-stroke;
+}
+
+/* Grey, and not by decoration: no page answers for these twelve regions, so
+   there is nothing to click and the map should not pretend otherwise. Same
+   distinction prod's `selectRegion` made — see `next-steps.md` for the list and
+   the question it asks (a region with no branch, or a branch with no page?). */
+.unlinked {
+  fill: var(--gray-4);
 }
 
 .link:hover .region {
   fill: var(--red-8);
-  stroke: var(--red-8);
 }
 
 /* Keyboard focus needs to be visible without a pointer to follow, so it gets
@@ -90,6 +95,5 @@
 
   & .region {
     fill: var(--red-8);
-    stroke: var(--red-8);
   }
 }

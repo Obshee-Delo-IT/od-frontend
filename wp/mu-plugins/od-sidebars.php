@@ -26,8 +26,11 @@
  * would fight the admin.
  *
  * The `id` is what matters and it is not ours to rename — the frontend queries
- * that exact string. Everything else is cosmetic: the area only ever renders
- * through REST, so no `before_widget` markup is worth carrying.
+ * that exact string. **The wrappers matter too, and they are not cosmetic:**
+ * `Footer.module.css` lays the footer out with `.footer aside:nth-child(N)`, so
+ * a widget has to arrive wrapped in `<aside>` and not in WordPress's default
+ * `<li>`. These four strings are `welfare`'s, read back out of
+ * `/wp/v2/sidebars/sidebar_bottom` before the theme was deleted.
  *
  * PHP 7.0 syntax only: an mu-plugin loads on every request, including on hosts
  * still serving `mod_php7`.
@@ -41,9 +44,13 @@ add_action( 'widgets_init', 'od_register_footer_sidebar' );
 function od_register_footer_sidebar() {
 	register_sidebar(
 		array(
-			'id'          => 'sidebar_bottom',
-			'name'        => 'Подвал сайта',
-			'description' => 'Читается фронтендом через /wp/v2/widgets?sidebar=sidebar_bottom. Порядок виджетов здесь — порядок колонок в подвале.',
+			'id'            => 'sidebar_bottom',
+			'name'          => 'Подвал сайта',
+			'description'   => 'Читается фронтендом через /wp/v2/widgets?sidebar=sidebar_bottom. Порядок виджетов здесь — порядок колонок в подвале.',
+			'before_widget' => '<aside id="%1$s" class="widget %2$s">',
+			'after_widget'  => '</aside>',
+			'before_title'  => '<h3 class="widgettitle">',
+			'after_title'   => '</h3>',
 		)
 	);
 }

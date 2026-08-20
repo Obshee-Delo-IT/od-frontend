@@ -36,9 +36,10 @@ export const RussiaMap = () => (
             <path className={css.region} d={path} />
           </a>
         ) : (
-          /* No page answers for this region, so it is drawn and nothing more —
-             a link to a 404 is worse than a silhouette. */
-          <path key={code} className={css.region} d={path} />
+          /* No page answers for this region, so it is drawn, greyed and nothing
+             more — a link to a 404 is worse than a silhouette. The old page made
+             the same distinction with jqvmap's `selectRegion`. */
+          <path key={code} className={`${css.region} ${css.unlinked}`} d={path} />
         )
       )}
     </svg>

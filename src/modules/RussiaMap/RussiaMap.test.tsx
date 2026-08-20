@@ -114,6 +114,17 @@ describe('<RussiaMap />', () => {
     expect(screen.getByRole('link', { name: 'Амурская область' })).toHaveAttribute('href', '/contacts/amurskaya/');
   });
 
+  /* The map has to say which regions it can take you to: twelve have no page, and
+     a uniform silhouette would offer a click that does not exist. The old page
+     drew the same distinction with jqvmap's `selectRegion`. */
+  it('greys the regions with no page, and only those', () => {
+    const { container } = render(<RussiaMap />);
+
+    const unlinked = container.querySelectorAll('path.unlinked');
+    expect(unlinked).toHaveLength(RUSSIA_MAP_REGIONS.length - linked.length);
+    expect(container.querySelectorAll('a path.unlinked')).toHaveLength(0);
+  });
+
   it('draws every region, linked or not, and ships no script', () => {
     const { container } = render(<RussiaMap />);
 
