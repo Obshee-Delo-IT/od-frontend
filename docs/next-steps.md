@@ -439,6 +439,45 @@ source. It is the same rule the roles follow — the federal one and the regiona
 both go on the card. If the client ever prunes a contact, it is one line each in
 `od-pages.php`; nothing needs a code change to *show* it.
 
+## Eighteen branch cards state no way to reach anybody — and prod's page set is not od-dev's
+
+**Found 2026-08-20**, reading all 75 finished cards, and it turned into two
+findings.
+
+**The cards.** 19 of od-dev's regional bodies hold only the branch's legal name:
+the accordion they were built from says «Адрес офиса:», «тел.», «e-mail:» with
+nothing after them. That is the data, not the transform — checked against each
+page's pre-conversion revision. **But an empty card is not an empty page**:
+`/contacts/arkhangelskaya/` lists 8 coordinators and 50 events under its empty
+card, and every one of the 19 except `/contacts/evreiskaya-ao/` lists events.
+So only that one was drafted (`od_wp_draft_empty_branches()` in
+`wp/scripts/od-wp.php`, which requires no contact **and** no coordinator **and**
+no event), and the other 18 are a content gap: somebody has to fill in the
+telephone numbers, or the branch has none to give.
+
+The 18: Астраханская · Ивановская · Калужская · Курская · Мурманская ·
+Оренбургская · Орловская · Пензенская · Мордовия · Северная Осетия (which does
+name a coordinator, with no way to reach him) · Чечня · Чувашия · Рязанская ·
+Смоленская · Тюменская · Украина · Чукотский АО · Хабаровский край, plus
+Архангельская.
+
+**The page sets.** Counted on production the same day, read-only: the `/contacts/`
+subtree has **58 published children and 2 drafts** there against od-dev's 74, and
+the difference runs both ways — production publishes `rezan-oblast` and
+`smolenskaya-oblasti` (which od-dev 404s, and which [`page-inventory.md`](./page-inventory.md)
+had written off as slugs that never existed), while od-dev carries ~16 regional
+pages production has never had. Emptiness differs too: **5 empty cards on
+production**, and od-dev's `khakasiya` has contacts production's does not.
+
+**What to decide:** whether od-dev's extra pages are drafts of work in progress or
+stale copies. It matters for the cutover only in one direction — the launch runs
+against production's page set — so the safe reading is that anything measured on
+od-dev is the *shape* of the work, not the shipping list. Also worth knowing while
+working on prod: its CLI `php` is **5.6** (`wp` runs under it; `/usr/local/bin/php8.2`
+exists), and its WordPress is still 5.5.5, which cannot render a `core/query`
+block at all — so the coordinator loops and «События» that od-dev draws are
+invisible there until the core upgrade in the runbook.
+
 ## Twelve regions on the map have no page, and five pages have no region
 
 **Found 2026-08-20**, building the `/contacts/` map (D4). The map is generated

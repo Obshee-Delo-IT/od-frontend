@@ -6,16 +6,16 @@ Sibling docs: [`wp-page-passthrough.md`](./wp-page-passthrough.md) is _how_ a pa
 
 ## 1. The four buckets
 
-**169 published `wp/v2/pages`** (was 174; the four WooCommerce pages and `/materials/order-materials/` were deleted in WordPress on 2026-08-17).
+**168 published `wp/v2/pages`** (was 174; the four WooCommerce pages and `/materials/order-materials/` were deleted in WordPress on 2026-08-17, and `/contacts/evreiskaya-ao/` was drafted on 2026-08-20 — the one regional page with nothing on it).
 
 |                                   | pages | how it renders                                                                                                         |
 | --------------------------------- | ----: | ---------------------------------------------------------------------------------------------------------------------- |
 | **Native route** shadows the page |     9 | a route under `src/app/` (or a `src/proxy.ts` 301) owns the URL, so `[...slug]` never sees the WP page at all          |
-| **WP page, redesigned**           |   110 | `[...slug]` → `modules/WpPage`, with the body rewritten by `od-pages.php` and drawn by this repo's CSS                 |
+| **WP page, redesigned**           |   109 | `[...slug]` → `modules/WpPage`, with the body rewritten by `od-pages.php` and drawn by this repo's CSS                 |
 | **WP page, passthrough**          |    44 | `[...slug]` → `modules/WpPage`, content exactly as the editor left it — correct URL, correct shell, un-redesigned body |
 | **A6 iframe**                     |     6 | on the opt-out list → `modules/Legacy/LegacyEmbed` over `WP_LEGACY_BASE`                                               |
 
-So **154 of 169 pages render natively**, and the iframe is down to six paths from the twenty it launched with.
+So **153 of 168 pages render natively**, and the iframe is down to six paths from the twenty it launched with.
 
 ## 2. Native routes
 
@@ -33,14 +33,14 @@ Own code, built against Figma. These are not WP pages in the sense above — nin
 
 Plus `sitemap.xml`, `robots.txt`, `/health/`, `POST /api/revalidate/` and the internal `/legacy/*`. Workstreams D1 · D2 · D7 and the D3 profile subset are what built these.
 
-## 3. WP pages, redesigned (110)
+## 3. WP pages, redesigned (109)
 
 The `od_pages_registry()` entries — content rewritten by script, styled by the repo. Two kinds of entry count here: one that names a `path`, and a **`sweep` bounded by a `parent`**, which is how the whole `/contacts/` subtree arrived in this bucket on 2026-08-20. Grouped:
 
 - **Programmes (4)** — `/projects/` · `/healthy-russia/` · `/healthy-youth/` · `/healthy-kids/` (D6e–D6g)
 - **Materials (14)** — `/materials/` · `metodichki` · `printed-products` + `books` `zakladki` `booklet` `disk` `autosticker` · `social-reklama` + `plakati` `billboards` `sticker` `led-board-roliki` `audio-roliki-social-reklama` (D8, D6h–D6m)
 - **«О нас» (16)** — `/about/` · `/team/` · `about/supervisory` · `nashi_partnery` · `ustav` · `docs` · `udostoverenie` · `activist-stories` · `experts-review` · `smi` · `reviews` + its five category children `letters` `school` `middle` `vuz` `mvd` (D3, D6p–D6w)
-- **Contacts (76)** — the index and every `/contacts/<region>/` page plus `/khabarovskiy/`, the one regional page outside the tree. Their «Об отделении» `core/details` accordion is now the card Figma `contact-page` draws (`od_pages_branch_card`, a parent-bounded sweep), their coordinator cards are `PersonCard`s two per row, their «События» loop draws `/news/`'s cards with the site's own pagination, and their card titles are `h2` (F2). `/contacts/samarskaya/` additionally carries a **data** fix of its own: its coordinator `core/query` asked for `post_tag: [-1]` and listed nobody, so the entry repoints it at the `pl-categs` region (D4).
+- **Contacts (75)** — the index and every published `/contacts/<region>/` page plus `/khabarovskiy/`, the one regional page outside the tree. Their «Об отделении» `core/details` accordion is now the card Figma `contact-page` draws (`od_pages_branch_card`, a parent-bounded sweep), their coordinator cards are `PersonCard`s two per row, their «События» loop draws `/news/`'s cards with the site's own pagination, and their card titles are `h2` (F2). `/contacts/samarskaya/` additionally carries a **data** fix of its own: its coordinator `core/query` asked for `post_tag: [-1]` and listed nobody, so the entry repoints it at the `pl-categs` region (D4).
 
   **The index came off the iframe on 2026-08-20**, and its body is now 889 bytes: a clickable SVG map (`src/modules/RussiaMap/`, generated from the old jqvmap plugin's paths — 82 regions, 70 of them linked) above `[od_regions]`, which builds all 75 spoilers from the region pages themselves (`wp/mu-plugins/od-regions.php`). What it replaced was 50 hand-written `wp:details` blocks retyping what those pages already said, and the drift that always follows: 25 published regions had no spoiler at all, three linked to `общее-дело.рф`, and the map's own `switch` still pointed one region at a page deleted years ago
 
@@ -93,7 +93,9 @@ Yandex Metrica, 2026-05-14 → 2026-08-13 (91 days), the exports under `~/Docume
 
 The two metrics still rank differently, and still for the same reason: `/get-involved/` is a nav destination (7× views per entry), so the iframe's _look_ costs more than its search exposure implies. It is now most of what is left — 586 of the 933 views.
 
-**The 404 bucket is mostly noise** — Yandex adds `&search_source=…` to some referrer URLs, and those rows can't be matched to a path. The real dead URLs in it are few and known: `/contacts/rezan-oblast/` and `/contacts/smolenskaya-oblasti/` (typo'd region slugs that never existed, 8 entries), `/my-account/` and `/shop/` (deleted with the WooCommerce group), `/materials/order-materials/` (deleted with it), `/videos/`.
+**The 404 bucket is mostly noise** — Yandex adds `&search_source=…` to some referrer URLs, and those rows can't be matched to a path. The real dead URLs in it are `/my-account/` and `/shop/` (deleted with the WooCommerce group), `/materials/order-materials/` (deleted with it) and `/videos/`.
+
+⚠️ **Two of them are not dead, and this file said they were.** `/contacts/rezan-oblast/` and `/contacts/smolenskaya-oblasti/` were called «typo'd region slugs that never existed» — they are **published pages with content on production**, and 404 only on od-dev (checked 2026-08-20). The 8 entry visits they carry are real page visits. Anything measured against od-dev's page set inherits this: see §8.
 
 ## 7. What is left, by bucket
 
@@ -106,6 +108,6 @@ The two metrics still rank differently, and still for the same reason: `/get-inv
 
 Worth knowing before quoting a number from it:
 
-- **od-dev, not production.** Production's page set is authoritative for content and should match, but nobody has re-counted it there; the runbook's B5/B8 gates are where that happens.
+- **od-dev, not production — and the two page sets have diverged.** Counted on production 2026-08-20 (read-only `wp eval-file`): the `/contacts/` subtree holds **58 published children plus 2 drafts** against od-dev's 74, and the difference runs both ways. Production has `rezan-oblast` and `smolenskaya-oblasti`, which od-dev 404s; od-dev has ~16 regional pages production does not (`kalujskaya`, `chukotskiy-ao`, `orenburgskaya`, …). Emptiness diverges too: **5 branch cards are empty on production** (`arkhangelskaya`, `khakasiya`, `ryazanskaya`, `smolenskaya`, `khabarovskiy`) against 19 on od-dev, and od-dev's `khakasiya` has contacts production's does not. **The launch runs against production's set**, so any count here is od-dev's shape of the work, not the shipping page list; the runbook's B5/B8 gates are where the real one is taken.
 - **A registry entry means the script _can_ fix the page, not that it has run on production.** Applying workstream D to prod is one `wp eval-file` run — until then, prod's 109 are unredesigned content at redesigned URLs.
 - **`SHADOWED` in the script is hand-maintained** — nine URLs, and the one thing in the file not derived. Add a route under `src/app/` and this list needs the same edit, or the page it shadows keeps counting as passthrough.
