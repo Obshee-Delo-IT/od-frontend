@@ -1479,14 +1479,37 @@ try {
 }
 od_test( 'samarskaya: refuses a page that is not the one', $threw );
 
+/* --------------------------------- od_pages_coordinator_heading_level */
+
+$region = file_get_contents( __DIR__ . '/fixtures/contacts-samarskaya.before.html' );
+od_test( 'the regional fixture writes its card title at level 3', str_contains( $region, '<!-- wp:post-title {"isLink":true,"level":3} /-->' ) );
+
+$demoted = od_pages_coordinator_heading_level( $region );
+od_test( 'the card title becomes level 2', str_contains( $demoted, '<!-- wp:post-title {"isLink":true,"level":3} /-->' ) === false && str_contains( $demoted, '"level":2} /-->' ) );
+od_test( 'and the «События» heading it now sits level with is untouched', str_contains( $demoted, '<h2 id="news_section">События</h2>' ) );
+od_test_idempotent( 'od_pages_coordinator_heading_level', 'od_pages_coordinator_heading_level', $region );
+
+/* A sweep runs over a whole subtree, so a page of it with no query block has to
+   come back unchanged rather than raise. */
+od_test( 'a page with no card titles is left alone', od_pages_coordinator_heading_level( '<!-- wp:paragraph --><p>Текст</p><!-- /wp:paragraph -->' ) === '<!-- wp:paragraph --><p>Текст</p><!-- /wp:paragraph -->' );
+/* Only the post-title block: a `level` in any other block is somebody else's. */
+od_test( 'a level on another block is not touched', od_pages_coordinator_heading_level( '<!-- wp:heading {"level":3} --><h3>Раздел</h3><!-- /wp:heading -->' ) === '<!-- wp:heading {"level":3} --><h3>Раздел</h3><!-- /wp:heading -->' );
+
+/* The level change is only safe because the stylesheet holds the look: `h2`
+   inside a group is lowercased and a size larger than `h3`, and a coordinator
+   card must be neither. */
+$gutenberg = file_get_contents( __DIR__ . '/../../src/shared/ui/theme/gutenberg/gutenberg.css' );
+od_test( 'the stylesheet keeps a card title looking like one at level 2', str_contains( $gutenberg, '.wp-block-post-title.wp-block-post-title {' ) && str_contains( $gutenberg, 'text-transform: none;' ) );
+
 /* ------------------------------------------------------- the registry itself */
 
 foreach ( od_pages_registry() as $entry ) {
 	od_test( "{$entry['label']}: its transform exists", is_callable( $entry['fix'] ) );
 	od_test( "{$entry['label']}: the runner can find the record", isset( $entry['path'] ) || isset( $entry['title'] ) || ! empty( $entry['sweep'] ) );
-	// A sweep addresses a whole post type, so it must name one — `page` by
-	// default would put every published page through a profile transform.
-	od_test( "{$entry['label']}: a sweep names its post type", empty( $entry['sweep'] ) || isset( $entry['post_type'] ) );
+	// An *unbounded* sweep addresses a whole post type, so it must name one —
+	// `page` by default would put every published page through a profile
+	// transform. One bounded by `parent` is already scoped to a subtree.
+	od_test( "{$entry['label']}: a sweep names its post type or its parent", empty( $entry['sweep'] ) || isset( $entry['post_type'] ) || isset( $entry['parent'] ) );
 }
 
 od_test_summary();

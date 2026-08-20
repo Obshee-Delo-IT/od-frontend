@@ -191,12 +191,21 @@ us. Until then, the frontend is the preview.
 
 ---
 
-## `WpPage` breadcrumbs start at «Главная», the mocks start at the parent
+## ~~`WpPage` breadcrumbs start at «Главная», the mocks start at the parent~~ — done 2026-08-18
+
+**Closed with D6j** (`af2bfd0`), and this entry outlived it by two days —
+`fetchWpPage` requests `parent`, `fetchAncestors()` walks it outermost-first with
+a three-level cap, a level that fails to load ends the trail instead of failing
+the page, and `WpPage` renders «Главная › …ancestors › this page». A page in a
+tabbed section still names its own trail (`pageSections.ts`), which is what
+`/team/` needs, sitting at the WP root while belonging under «О нас».
+
+The description of the problem, kept because it is why the shape is what it is:
 
 **Found 2026-08-17**, redesigning `/materials/metodichki/`. Figma `handbooks`
-draws «Материалы › Методические пособия»; `WpPage` renders «Главная ›
-Методические пособия», because it builds the trail from two literals — the root
-and the page's own title. Every one of the ~150 native WP pages is the same, and
+draws «Материалы › Методические пособия»; `WpPage` rendered «Главная ›
+Методические пособия», because it built the trail from two literals — the root
+and the page's own title. Every one of the ~150 native WP pages was the same, and
 every mock in a section shows its parent.
 
 **Why it wasn't done with that page.** The data is there — page 27642's
@@ -474,10 +483,22 @@ default safe — svgr spreads the caller's props after its own.
   the row out and the empty heading is gone from every page. Fixed on this side
   rather than in the widget because the markup is an editor's and would come
   back on the next save.
-- `/contacts/<region>/` pages go `h1` → **`h3`** (the coordinator teaser's title)
-  → `h2` «События». The coordinator query block has no section heading of its own.
-  A skipped level on ~75 pages; fixable with one heading block per page, or by
-  dropping the teaser title's level.
+- ~~`/contacts/<region>/` pages go `h1` → **`h3`** (the coordinator teaser's title)
+  → `h2` «События».~~ **Done 2026-08-20** by dropping the level, not by adding a
+  heading: `od_pages_coordinator_heading_level` in `od-pages.php`, a `sweep`
+  scoped to the `/contacts/` subtree plus `/khabarovskiy/`, the one regional page
+  outside it. Measured before the fix: **71 of 169 published pages** went `h1` →
+  `h3` with no heading in between. A «Координаторы» heading block was the other
+  option and was dropped — it would put words on 74 pages no mock asks for.
+  **Two things came with it.** `gutenberg.css` sizes `h2` one step larger than
+  `h3` *and* lowercases every `h2` inside a group, so
+  `.wp-block-post-title.wp-block-post-title` there now pins a card title's size
+  and case at any level — verified in a browser at 1440 (28px,
+  `text-transform: none`). That rule also reaches the «События» cards on the same
+  pages, which were `h2` all along and *were* being lowercased («общее дело» в
+  самарской школе); they now read correctly and one size smaller. And
+  `/contacts/dnr/` still skips a level on its own — a literal `<h3>` branch name
+  under the `h1`, one page, untouched.
 
 ## The 25 «Истории активистов» clips are on YouTube, not Kinescope — upload them
 

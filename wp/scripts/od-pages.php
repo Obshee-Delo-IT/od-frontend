@@ -4352,6 +4352,38 @@ function od_pages_samarskaya_coordinators(string $content, int $termId): string
 
 
 /**
+ * The coordinator cards on a regional page as `h2`, not `h3`.
+ *
+ * `/contacts/<region>/` renders the page title as `h1` (`PageHeader`) and then
+ * the `core/query` of coordinators, whose `post-title` block is written at level
+ * 3 — a skipped heading level on **71 pages**, measured over od-dev's 169
+ * published pages 2026-08-20, and the largest single accessibility defect left in
+ * the passthrough set. The «События» query below it is already an `h2`.
+ *
+ * Level, not a heading block: adding a «Координаторы» section heading would put
+ * words on 74 pages that no mock asks for, and the cards are the page's own
+ * second level either way.
+ *
+ * The programme pages are deliberately out of scope — their card titles sit under
+ * «Проекты программы», where `h3` is correct — which is why this is registered
+ * against the `/contacts/` subtree and `/khabarovskiy/` rather than swept over
+ * every page.
+ *
+ * A page of the subtree with no query block is left alone rather than refused: a
+ * sweep addresses whatever is in the tree, and «no cards here» is not an error.
+ *
+ * **The visual is held by CSS, not by the level** — `gutenberg.css` sizes `h2`
+ * larger than `h3` and lowercases every `h2` inside a group, which on a person's
+ * name would read «иванов иван иванович». `.wp-block-post-title.wp-block-post-title`
+ * there keeps the size and the case the cards have today.
+ */
+function od_pages_coordinator_heading_level(string $content, int $_termId = 0): string
+{
+    return preg_replace('~(<!-- wp:post-title[^>]*?)"level":3~', '$1"level":2', $content);
+}
+
+
+/**
  * Every record workstream D rewrites, newest last.
  *
  * `path` is resolved with `get_page_by_path()` — exact and hierarchy-aware.
@@ -4365,9 +4397,10 @@ function od_pages_samarskaya_coordinators(string $content, int $termId): string
  *
  * `sweep` is the third way to address a record and the only one that is not one
  * record: with it the runner takes **every published record of `post_type`** and
- * runs the transform over each. For a transform that is idempotent by detection
- * that is the whole difference between fixing eleven profiles and fixing all of
- * them — see `od_pages_profile_contacts`.
+ * runs the transform over each, or every published **child of `parent`** when the
+ * entry names one. For a transform that is idempotent by detection that is the
+ * whole difference between fixing eleven profiles and fixing all of them — see
+ * `od_pages_profile_contacts`.
  *
  * `args` is passed on to the transform after those two, which is what lets one
  * function serve eleven records that differ only in their data (see `OD_TEAM`).
@@ -4382,7 +4415,7 @@ function od_pages_samarskaya_coordinators(string $content, int $termId): string
  * record by `path` where it matters on production; the slug is a valid address
  * even when it names the wrong person.
  *
- * @return array<int, array{label: string, fix: callable-string, path?: string, title?: string, post_type?: string, sweep?: bool, tag?: string, taxonomy?: string, args?: array<int, mixed>}>
+ * @return array<int, array{label: string, fix: callable-string, path?: string, title?: string, post_type?: string, sweep?: bool, parent?: string, tag?: string, taxonomy?: string, args?: array<int, mixed>}>
  */
 function od_pages_registry(): array
 {
@@ -4607,6 +4640,20 @@ function od_pages_registry(): array
         'fix' => 'od_pages_profile_contacts',
     ];
 
+    $registry[] = [
+        'label' => 'F2 · /contacts/<region>/ — the coordinator cards as h2, so the page does not skip a level',
+        'sweep' => true,
+        'parent' => 'contacts',
+        'fix' => 'od_pages_coordinator_heading_level',
+    ];
+
+    // The one regional page that is not under `/contacts/`.
+    $registry[] = [
+        'label' => 'F2 · /khabarovskiy/ — the same, for the regional page outside the tree',
+        'path' => 'khabarovskiy',
+        'fix' => 'od_pages_coordinator_heading_level',
+    ];
+
     return $registry;
 }
 
@@ -4627,16 +4674,29 @@ foreach (od_pages_registry() as $entry) {
     $postType = $entry['post_type'] ?? 'page';
 
     if (!empty($entry['sweep'])) {
-        // Every published record of the type, oldest id first so a re-run logs
-        // in the same order and two runs can be diffed.
-        $posts = get_posts([
+        // Every published record of the type — or every child of one page, which
+        // is how the `/contacts/` subtree is addressed without touching the rest
+        // of the tree. Oldest id first, so a re-run logs in the same order and
+        // two runs can be diffed.
+        $query = [
             'post_type' => $postType,
             'post_status' => 'publish',
             'numberposts' => -1,
             'orderby' => 'ID',
             'order' => 'ASC',
             'suppress_filters' => false,
-        ]);
+        ];
+
+        if (isset($entry['parent'])) {
+            $parent = get_page_by_path($entry['parent'], OBJECT, $postType);
+            if (!$parent) {
+                WP_CLI::warning(sprintf('%s: no %s at `%s` to sweep under', $entry['label'], $postType, $entry['parent']));
+                continue;
+            }
+            $query['post_parent'] = $parent->ID;
+        }
+
+        $posts = get_posts($query);
         WP_CLI::log(sprintf('%s: sweeping %d published %s records', $entry['label'], count($posts), $postType));
     } elseif (isset($entry['path'])) {
         $posts = array_filter([get_page_by_path($entry['path'], OBJECT, $postType)]);

@@ -278,6 +278,21 @@ th {
   }
 }
 
+/* A card title is a card title at whatever level the document needs it to be.
+   The regional `/contacts/<region>/` pages moved their coordinator titles from
+   `h3` to `h2` so the page stops going `h1` → `h3` (F2, `od-pages.php`), and
+   nothing about them should change for it: the rule above would read a person's
+   name as «иванов иван иванович», and the base `h2` rule is a size larger than
+   the base `h3`. Class doubled deliberately — (0,2,0) beats the (0,1,1) of
+   `.wp-block-group h2` above, which a single class would tie with and lose to on
+   source order. The per-section rules further down are later still, so a
+   redesigned page's own card sizing keeps winning. */
+.wp-block-post-title.wp-block-post-title {
+  font-size: var(--font-size-7);
+  line-height: 120%;
+  text-transform: none;
+}
+
 /* Paragraphs in columns are paragraphs: the base `p` rule above already gives
    them this size, and the muted colour this rule used to add (from #62) was
    also beating a page's own CSS — a WP body that colours a column, as the

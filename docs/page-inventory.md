@@ -58,7 +58,7 @@ Right URL, right shell, un-redesigned body. Full list: `pnpm pages:inventory --l
 | misc                  |     6 | `/faq/` (D5) `/sitemap/` `/socialnye-seti/` `/webinar/` `/khabarovskiy/` `/sp/` (hidden, see [`next-steps.md`](./next-steps.md))                                             |
 | **test pages**        |     4 | `/test/` `/test-slider/` `/test-page-gutenberg-profile/` `/тестовая-страница/` — published on od-dev and therefore in the sitemap. Unpublish before cutover                  |
 
-Gaps that hit all 118 at once, not any one page (all in [`next-steps.md`](./next-steps.md)): the breadcrumb starts at «Главная» rather than the real parent (D6b), `.wp-block-group h2` lowercases «Россия», icons carry no `aria-hidden`.
+Gaps that hit many of them at once rather than any one page (all in [`next-steps.md`](./next-steps.md)). Closed since this file was written: the breadcrumb now names the real parents (2026-08-18), icons are `aria-hidden` app-wide and the coordinator cards on the 75 regional pages no longer skip a heading level (2026-08-20). **Still open:** `.wp-block-group h2` lowercases «Россия» wherever a kept heading holds a proper noun past the first word, and `/contacts/dnr/` skips a level with a literal `<h3>`.
 
 ## 5. A6 iframe (7)
 
