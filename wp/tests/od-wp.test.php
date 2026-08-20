@@ -62,6 +62,29 @@ foreach ($titles as $path => $title) {
 // page (D6g/D6h), so these two are what the mocks and the nav say.
 od_test('/projects/ carries the nav\'s own label', ($titles['projects'] ?? null) === 'Программы');
 od_test('/materials/ likewise', ($titles['materials'] ?? null) === 'Материалы');
+/* ------------------------------------------------------- the nav-menu edits */
+
+$edits = od_wp_menu_edits();
+od_test('at least one menu edit is registered', $edits !== []);
+
+foreach ($edits as $path => $title) {
+    // The key is compared against `od_wp_menu_path()`'s output, so it has to be
+    // in that form or it silently matches nothing and the run reports a skip.
+    od_test($path . ': the key is a path with both slashes', od_wp_menu_path($path) === $path);
+    od_test($path . ': deletes are null, retitles are a trimmed non-empty string', $title === null || (is_string($title) && trim($title) !== '' && $title === trim($title)));
+}
+
+od_test('«Написать отзыв» is deleted — the footer links the page', array_key_exists('/about/ostavit-otziv/', $edits) && $edits['/about/ostavit-otziv/'] === null);
+od_test('«Устав и документы» is one item: /about/docs/ goes, /about/ustav/ is retitled', array_key_exists('/about/docs/', $edits) && $edits['/about/docs/'] === null && ($edits['/about/ustav/'] ?? null) === 'Устав и документы');
+
+// The urls in this menu carry three different origins, one of them a `.рф`
+// domain — only the path is the same on both installs.
+od_test('od_wp_menu_path takes the path off an absolute url', '/about/docs/' === od_wp_menu_path('https://obshee-delo.ru/about/docs/'));
+od_test('od_wp_menu_path ignores the origin, punycode included', '/about/ostavit-otziv/' === od_wp_menu_path('https://xn----9sbkcac6brh7h.xn--p1ai/about/ostavit-otziv/'));
+od_test('od_wp_menu_path puts a missing trailing slash back', '/about/ustav/' === od_wp_menu_path('/about/ustav'));
+od_test('od_wp_menu_path drops the query and the fragment', '/team/' === od_wp_menu_path('https://obshee-delo.ru/team/?x=1#top'));
+od_test('od_wp_menu_path leaves the root as one slash, not two', '/' === od_wp_menu_path('https://obshee-delo.ru/'));
+
 /* ------------------------------------------------- the records to be created */
 
 $profiles = od_wp_profiles();

@@ -26,10 +26,16 @@ import type { TabItem } from '@/shared/ui/components/Tabs';
  * frame draws it: `/about/ustav/` (charter) and `/about/docs/` (the documents
  * template it shares with `/about/experts-review/`) are separate WordPress pages
  * that a reader has no reason to tell apart, so they now share one card on
- * `/about/`, one item in the WordPress menu and one heading, and the tab strip is
- * what picks between them. **Both URLs stay** — each has its own search traffic
- * and its own WP title, which is what `<title>` and the canonical keep; only the
- * H1 and the trail are the section's.
+ * `/about/` and one item in the WordPress menu, and the tab strip is what picks
+ * between them. **Both URLs stay** — each has its own search traffic, and
+ * `<title>` and the canonical keep each page's own WP title.
+ *
+ * The H1 and the last crumb follow the tab, exactly as they do on the first pair:
+ * «УСТАВ» on one, «ДОКУМЕНТЫ» on the other, so the page says which of the two the
+ * reader is on and «Устав и документы» stays the name of the way in — the card
+ * and the menu item. Both are short forms of the WP titles («Устав организации»,
+ * and «Документы и отчёты» on production), which is the same reason `/team/` has
+ * one.
  *
  * **The breadcrumbs are a deliberate superset of the mock**, which starts the
  * trail at «О нас». Every other page on this site starts at «Главная», and one
@@ -62,9 +68,6 @@ const ABOUT_CRUMBS: BreadcrumbItem[] = [
   { label: 'О нас', href: '/about/' },
 ];
 
-/** Both pages of the second pair are «Устав и документы» — the tabs say which. */
-const DOCUMENTS_TITLE = 'Устав и документы';
-
 /** Keyed by the path the page is served at, trailing slash included. */
 export const PAGE_SECTIONS: Record<string, PageSection> = {
   '/team/': {
@@ -80,14 +83,14 @@ export const PAGE_SECTIONS: Record<string, PageSection> = {
     activeValue: 'supervisory',
   },
   '/about/ustav/': {
-    title: DOCUMENTS_TITLE,
-    breadcrumbs: [...ABOUT_CRUMBS, { label: DOCUMENTS_TITLE }],
+    title: 'Устав',
+    breadcrumbs: [...ABOUT_CRUMBS, { label: 'Устав' }],
     tabs: DOCUMENT_TABS,
     activeValue: 'ustav',
   },
   '/about/docs/': {
-    title: DOCUMENTS_TITLE,
-    breadcrumbs: [...ABOUT_CRUMBS, { label: DOCUMENTS_TITLE }],
+    title: 'Документы',
+    breadcrumbs: [...ABOUT_CRUMBS, { label: 'Документы' }],
     tabs: DOCUMENT_TABS,
     activeValue: 'docs',
   },

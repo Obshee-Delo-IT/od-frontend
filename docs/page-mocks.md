@@ -74,7 +74,7 @@ The largest section after `Материалы`. Covers an "About" landing plus 6
 | Charter ✅ `/about/ustav/`, 2026-08-19 | `charter` (`706:3695`) | `charter-mob` (`1261:6901`) |
 | Certificate ✅ `/about/udostoverenie/`, 2026-08-19 | `Certificate` (`760:1662`) | `Certificate-mob` (`1261:7220`) |
 
-**`/about/ustav/` and `/about/docs/` are one section, «Устав и документы», since 2026-08-20** — one card on `/about/`, one WordPress menu item, one H1, and a tab strip between them (`pageSections.ts`, the same shape `/team/` and `/about/supervisory/` use). No frame draws it; both bodies are unchanged and both URLs still answer.
+**`/about/ustav/` and `/about/docs/` are one section, «Устав и документы», since 2026-08-20** — one card on `/about/`, one WordPress menu item, and a tab strip between them, each page keeping its own H1 (`pageSections.ts`, the same shape `/team/` and `/about/supervisory/` use). No frame draws it; both bodies are unchanged and both URLs still answer.
 
 Plus 9 `Status` workflow badges and 2 `_Carousel Button Base` instances.
 
