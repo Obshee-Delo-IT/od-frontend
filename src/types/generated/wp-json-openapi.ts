@@ -122,75 +122,6 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  '/author_avatar/blocks/v1': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get: {
-      parameters: {
-        query?: {
-          namespace?: unknown;
-          context?: unknown;
-        };
-        header?: never;
-        path?: never;
-        cookie?: never;
-      };
-      requestBody?: never;
-      responses: {
-        /** @description OK */
-        200: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content?: never;
-        };
-      };
-    };
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/author_avatar/blocks/v1/data': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get: {
-      parameters: {
-        query?: never;
-        header?: never;
-        path?: never;
-        cookie?: never;
-      };
-      requestBody?: never;
-      responses: {
-        /** @description OK */
-        200: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content?: never;
-        };
-      };
-    };
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
   '/contact-form-7/v1': {
     parameters: {
       query?: never;
@@ -423,43 +354,6 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  '/contact-form-7/v1/contact-forms/{id}/feedback/schema': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get: {
-      parameters: {
-        query?: never;
-        header?: never;
-        path: {
-          id: unknown;
-        };
-        cookie?: never;
-      };
-      requestBody?: never;
-      responses: {
-        /** @description OK */
-        200: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['Contact Form 7 SWV'];
-          };
-        };
-      };
-    };
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
   '/contact-form-7/v1/contact-forms/{id}/refill': {
     parameters: {
       query?: never;
@@ -600,164 +494,6 @@ export interface paths {
     options?: never;
     head?: never;
     patch?: never;
-    trace?: never;
-  };
-  '/wp/v2/plugins/{plugin}': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get: {
-      parameters: {
-        query?: {
-          /** @description Рамки в которых сделан запрос, определяют поля в ответе. */
-          context?: 'view' | 'embed' | 'edit';
-        };
-        header?: never;
-        path: {
-          plugin: unknown;
-        };
-        cookie?: never;
-      };
-      requestBody?: never;
-      responses: {
-        /** @description OK */
-        200: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['plugin'];
-          };
-        };
-      };
-    };
-    put: {
-      parameters: {
-        query?: never;
-        header?: never;
-        path: {
-          plugin: unknown;
-        };
-        cookie?: never;
-      };
-      requestBody?: {
-        content: {
-          'application/x-www-form-urlencoded': {
-            /**
-             * @description Статус активации плагина.
-             * @enum {string}
-             */
-            status?: 'inactive' | 'active';
-          };
-        };
-      };
-      responses: {
-        /** @description OK */
-        200: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['plugin'];
-          };
-        };
-      };
-    };
-    post: {
-      parameters: {
-        query?: never;
-        header?: never;
-        path: {
-          plugin: unknown;
-        };
-        cookie?: never;
-      };
-      requestBody?: {
-        content: {
-          'application/x-www-form-urlencoded': {
-            /**
-             * @description Статус активации плагина.
-             * @enum {string}
-             */
-            status?: 'inactive' | 'active';
-          };
-        };
-      };
-      responses: {
-        /** @description OK */
-        200: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['plugin'];
-          };
-        };
-      };
-    };
-    delete: {
-      parameters: {
-        query?: never;
-        header?: never;
-        path: {
-          plugin: unknown;
-        };
-        cookie?: never;
-      };
-      requestBody?: {
-        content: {
-          'application/x-www-form-urlencoded': Record<string, never>;
-        };
-      };
-      responses: {
-        /** @description OK */
-        200: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['plugin'];
-          };
-        };
-      };
-    };
-    options?: never;
-    head?: never;
-    patch: {
-      parameters: {
-        query?: never;
-        header?: never;
-        path: {
-          plugin: unknown;
-        };
-        cookie?: never;
-      };
-      requestBody?: {
-        content: {
-          'application/x-www-form-urlencoded': {
-            /**
-             * @description Статус активации плагина.
-             * @enum {string}
-             */
-            status?: 'inactive' | 'active';
-          };
-        };
-      };
-      responses: {
-        /** @description OK */
-        200: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['plugin'];
-          };
-        };
-      };
-    };
     trace?: never;
   };
   '/wp/v2/posts': {
@@ -1006,6 +742,11 @@ export interface paths {
             meta?: {
               /** @default false */
               _acf_changed?: boolean;
+              /**
+               * @description Portrait cover for a programme card: the printable плакат, else the featured image.
+               * @default
+               */
+              od_card_cover?: string;
               /** @default  */
               footnotes?: string;
             };
@@ -1177,6 +918,11 @@ export interface paths {
             meta?: {
               /** @default false */
               _acf_changed?: boolean;
+              /**
+               * @description Portrait cover for a programme card: the printable плакат, else the featured image.
+               * @default
+               */
+              od_card_cover?: string;
               /** @default  */
               footnotes?: string;
             };
@@ -1305,6 +1051,11 @@ export interface paths {
             meta?: {
               /** @default false */
               _acf_changed?: boolean;
+              /**
+               * @description Portrait cover for a programme card: the printable плакат, else the featured image.
+               * @default
+               */
+              od_card_cover?: string;
               /** @default  */
               footnotes?: string;
             };
@@ -1468,6 +1219,11 @@ export interface paths {
             meta?: {
               /** @default false */
               _acf_changed?: boolean;
+              /**
+               * @description Portrait cover for a programme card: the printable плакат, else the featured image.
+               * @default
+               */
+              od_card_cover?: string;
               /** @default  */
               footnotes?: string;
             };
@@ -1659,7 +1415,7 @@ export interface paths {
             [name: string]: unknown;
           };
           content: {
-            'application/json': components['schemas']['post-revision'][];
+            'application/json': components['schemas']['post-revision'];
           };
         };
       };
@@ -1768,6 +1524,11 @@ export interface paths {
             meta?: {
               /** @default false */
               _acf_changed?: boolean;
+              /**
+               * @description Portrait cover for a programme card: the printable плакат, else the featured image.
+               * @default
+               */
+              od_card_cover?: string;
               /** @default  */
               footnotes?: string;
             };
@@ -2611,7 +2372,7 @@ export interface paths {
             [name: string]: unknown;
           };
           content: {
-            'application/json': components['schemas']['page-revision'][];
+            'application/json': components['schemas']['page-revision'];
           };
         };
       };
@@ -2838,9 +2599,9 @@ export interface paths {
           slug?: unknown;
           /** @description Ограничить выборку до записей с одним или несколькими установленными статусами. */
           status?: unknown;
-          /** @description Ограничить выборку до вложений определенного типа медиа. */
-          media_type?: 'image' | 'video' | 'text' | 'application' | 'audio';
-          /** @description Ограничить выборку до вложений определенного MIME типа. */
+          /** @description Ограничить выборку до вложений определенного типа или типов мультимедиа. */
+          media_type?: unknown;
+          /** @description Ограничить выборку до вложений определенного MIME типа или типов MIME. */
           mime_type?: unknown;
         };
         header?: never;
@@ -2944,6 +2705,21 @@ export interface paths {
             };
             /** @description ID для ассоциированых записей для вложения. */
             post?: number;
+            /**
+             * @description Нужно ли генерировать дополнительные размеры изображений.
+             * @default true
+             */
+            generate_sub_sizes?: boolean;
+            /**
+             * @description Нужно ли конвертировать форматы изображений.
+             * @default true
+             */
+            convert_format?: boolean;
+            /**
+             * Format: uri
+             * @description URL-адрес внешнего изображения для загрузки в медиатеку вместо загрузки файла.
+             */
+            url?: string;
           };
         };
       };
@@ -3411,6 +3187,23 @@ export interface paths {
             modifiers?: (
               | {
                   /**
+                   * @description Перевернуть тип.
+                   * @enum {string}
+                   */
+                  type?: 'flip';
+                  /** @description Перевернуть аргументы. */
+                  args?: {
+                    /** @description Направление переворота. */
+                    flip?: {
+                      /** @description Переворот горизонтально? */
+                      horizontal?: boolean;
+                      /** @description Переворот вертикально? */
+                      vertical?: boolean;
+                    };
+                  };
+                }
+              | {
+                  /**
                    * @description Тип вращения.
                    * @enum {string}
                    */
@@ -3450,6 +3243,31 @@ export interface paths {
             width?: number;
             /** @description В процентах от размера изображения, высота изображения для кадрирования. УСТАРЕЛО: используйте модификаторы (`modifiers`). */
             height?: number;
+            /** @description Подпись вложения. */
+            caption?: {
+              /** @description Подпись для вложения, как она существует в базе данных. */
+              raw?: string;
+              /** @description HTML подпись для вложения, преобразованная для показа. */
+              rendered?: string;
+            };
+            /** @description Описание вложения. */
+            description?: {
+              /** @description Описание для объекта как оно существует в базе данных. */
+              raw?: string;
+              /** @description HTML описание для объекта преобразованное для показа. */
+              rendered?: string;
+            };
+            /** @description Название записи. */
+            title?: {
+              /** @description Название записи как оно существует в базе данных. */
+              raw?: string;
+              /** @description HTML название записи, преобразованное для показа. */
+              rendered?: string;
+            };
+            /** @description ID для ассоциированых записей для вложения. */
+            post?: number;
+            /** @description Альтернативный текст для показа когда вложение не отображается. */
+            alt_text?: string;
           };
         };
       };
@@ -3460,6 +3278,113 @@ export interface paths {
             [name: string]: unknown;
           };
           content?: never;
+        };
+      };
+    };
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/wp/v2/media/{id}/sideload': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post: {
+      parameters: {
+        query?: never;
+        header?: never;
+        path: {
+          /** @description Уникальный идентификатор для вложения. */
+          id: unknown;
+        };
+        cookie?: never;
+      };
+      requestBody?: {
+        content: {
+          'application/x-www-form-urlencoded': {
+            /** @description Размер изображения. Может быть одним именем размера или массивом имён размеров, чтобы зарегистрировать один и тот же файл сразу для нескольких размеров. */
+            image_size: string | string[];
+            /**
+             * @description Нужно ли конвертировать форматы изображений.
+             * @default true
+             */
+            convert_format?: boolean;
+          };
+        };
+      };
+      responses: {
+        /** @description OK */
+        200: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            'application/json': components['schemas']['attachment'];
+          };
+        };
+      };
+    };
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/wp/v2/media/{id}/finalize': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post: {
+      parameters: {
+        query?: never;
+        header?: never;
+        path: {
+          /** @description Уникальный идентификатор для вложения. */
+          id: unknown;
+        };
+        cookie?: never;
+      };
+      requestBody?: {
+        content: {
+          'application/x-www-form-urlencoded': {
+            /**
+             * @description Массив метаданных подразмера, собранных из ответов при загрузке.
+             * @default []
+             */
+            sub_sizes?: {
+              /** @description Имя размера или массив имен размеров, если один файл зарегистрирован в нескольких размерах с совпадающими размерами. */
+              image_size?: string | string[];
+              width?: number;
+              height?: number;
+              file?: string;
+              mime_type?: string;
+              filesize?: number;
+              original_image?: string;
+            }[];
+          };
+        };
+      };
+      responses: {
+        /** @description OK */
+        200: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            'application/json': components['schemas']['attachment'];
+          };
         };
       };
     };
@@ -4046,7 +3971,7 @@ export interface paths {
             [name: string]: unknown;
           };
           content: {
-            'application/json': components['schemas']['nav_menu_item-revision'][];
+            'application/json': components['schemas']['nav_menu_item-revision'];
           };
         };
       };
@@ -4915,7 +4840,7 @@ export interface paths {
             [name: string]: unknown;
           };
           content: {
-            'application/json': components['schemas']['wp_block-revision'][];
+            'application/json': components['schemas']['wp_block-revision'];
           };
         };
       };
@@ -5229,7 +5154,7 @@ export interface paths {
             [name: string]: unknown;
           };
           content: {
-            'application/json': components['schemas']['wp_template'][];
+            'application/json': components['schemas']['wp_template'];
           };
         };
       };
@@ -5961,7 +5886,7 @@ export interface paths {
             [name: string]: unknown;
           };
           content: {
-            'application/json': components['schemas']['wp_template_part'][];
+            'application/json': components['schemas']['wp_template_part'];
           };
         };
       };
@@ -6715,7 +6640,7 @@ export interface paths {
         query?: never;
         header?: never;
         path: {
-          /** @description Id  шаблона */
+          /** @description ID конфигурации глобальных стилей. */
           id: unknown;
         };
         cookie?: never;
@@ -7477,7 +7402,7 @@ export interface paths {
             [name: string]: unknown;
           };
           content: {
-            'application/json': components['schemas']['wp_navigation-revision'][];
+            'application/json': components['schemas']['wp_navigation-revision'];
           };
         };
       };
@@ -8107,7 +8032,7 @@ export interface paths {
             [name: string]: unknown;
           };
           content: {
-            'application/json': components['schemas']['leyka_campaign'];
+            'application/json': components['schemas']['leyka_campaign'][];
           };
         };
       };
@@ -8548,7 +8473,7 @@ export interface paths {
             [name: string]: unknown;
           };
           content: {
-            'application/json': components['schemas']['leyka_campaign-revision'];
+            'application/json': components['schemas']['leyka_campaign-revision'][];
           };
         };
       };
@@ -8802,1004 +8727,6 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  '/wp/v2/project': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get: {
-      parameters: {
-        query?: {
-          /** @description Рамки в которых сделан запрос, определяют поля в ответе. */
-          context?: 'view' | 'embed' | 'edit';
-          /** @description Текущая страница коллекции. */
-          page?: unknown;
-          /** @description Максимальное число объектов возвращаемое в выборке. */
-          per_page?: unknown;
-          /** @description Ограничить результаты до совпадающих со строкой. */
-          search?: unknown;
-          /** @description Ограничить ответ записями опубликованными после заданной ISO8601 совместимой даты. */
-          after?: unknown;
-          /** @description Ограничить ответ записями изменёнными после заданной ISO8601 совместимой даты. */
-          modified_after?: unknown;
-          /** @description Ограничить выборку записями определенных авторов. */
-          author?: unknown;
-          /** @description Убедиться что выборка исключает записи назначенные определенным авторам. */
-          author_exclude?: unknown;
-          /** @description Ограничить ответ записями опубликованными до заданной ISO8601 совместимой даты. */
-          before?: unknown;
-          /** @description Ограничить ответ записями изменёнными до заданной ISO8601 совместимой даты. */
-          modified_before?: unknown;
-          /** @description Убедиться что выборка исключает определенные ID. */
-          exclude?: unknown;
-          /** @description Ограничить выборку до определенных ID. */
-          include?: unknown;
-          /** @description Ограничить выборку до записей с определенным значением menu_order. */
-          menu_order?: unknown;
-          /** @description Как интерпретировать вводимые данные поиска. */
-          search_semantics?: 'exact';
-          /** @description Сдвиг выборки на определенное число объектов. */
-          offset?: unknown;
-          /** @description Упорядочить сортировку атрибута по возрастанию или убыванию. */
-          order?: 'asc' | 'desc';
-          /** @description Сортировать коллекцию по атрибуту записи. */
-          orderby?:
-            | 'author'
-            | 'date'
-            | 'id'
-            | 'include'
-            | 'modified'
-            | 'parent'
-            | 'relevance'
-            | 'slug'
-            | 'include_slugs'
-            | 'title'
-            | 'menu_order';
-          /** @description Массив имен столбцов для поиска. */
-          search_columns?: unknown;
-          /** @description Ограничить выборку до записей с одним или несколькими установленными конкретными ярлыками. */
-          slug?: unknown;
-          /** @description Ограничить выборку до записей с одним или несколькими установленными статусами. */
-          status?: unknown;
-          /** @description Ограничить набор результатов элементами, которым назначен один или несколько заданных форматов. */
-          format?: unknown;
-        };
-        header?: never;
-        path?: never;
-        cookie?: never;
-      };
-      requestBody?: never;
-      responses: {
-        /** @description OK */
-        200: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['project'];
-          };
-        };
-      };
-    };
-    put?: never;
-    post: {
-      parameters: {
-        query?: never;
-        header?: never;
-        path?: never;
-        cookie?: never;
-      };
-      requestBody?: {
-        content: {
-          'application/x-www-form-urlencoded': {
-            /**
-             * Format: date-time
-             * @description Дата публикации записи (по часовому поясу сайта).
-             */
-            date?: string | null;
-            /**
-             * Format: date-time
-             * @description Дата публикации записи, по GMT.
-             */
-            date_gmt?: string | null;
-            /** @description Буквенно-цифровой идентификатор для записи, уникальный для ее типа. */
-            slug?: string;
-            /**
-             * @description Именованный статус записи.
-             * @enum {string}
-             */
-            status?:
-              | 'publish'
-              | 'future'
-              | 'draft'
-              | 'pending'
-              | 'private'
-              | 'submitted'
-              | 'funded'
-              | 'refunded'
-              | 'failed'
-              | 'acf-disabled';
-            /** @description Пароль для защиты содержания и отрывка. */
-            password?: string;
-            /** @description Название записи. */
-            title?: {
-              /** @description Название записи как оно существует в базе данных. */
-              raw?: string;
-              /** @description HTML название записи, преобразованное для показа. */
-              rendered?: string;
-            };
-            /** @description Содержимое записи. */
-            content?: {
-              /** @description Содержимое записи как оно существует в базе данных. */
-              raw?: string;
-              /** @description HTML содержимое записи преобразованное для показа. */
-              rendered?: string;
-              /** @description Версия формата блоков содержимого используемая записью. */
-              block_version?: number;
-              /** @description Защищено ли содержимое паролем. */
-              protected?: boolean;
-            };
-            /** @description ID автора записи. */
-            author?: number;
-            /** @description Отрывок записи. */
-            excerpt?: {
-              /** @description Заголовок из записи в том виде, в котором он существует в базе данных. */
-              raw?: string;
-              /** @description HTML отрывок записи, преобразованный для показа. */
-              rendered?: string;
-              /** @description Защищать ли паролем отрывок. */
-              protected?: boolean;
-            };
-            /** @description ID избранного изображения записи. */
-            featured_media?: number;
-            /**
-             * @description Открыты ли комментарии для записи.
-             * @enum {string}
-             */
-            comment_status?: 'open' | 'closed';
-            /**
-             * @description Принимает ли запись уведомления.
-             * @enum {string}
-             */
-            ping_status?: 'open' | 'closed';
-            /** @description Порядок записи по отношению к другим записям. */
-            menu_order?: number;
-            /**
-             * @description Формат записи.
-             * @enum {string}
-             */
-            format?:
-              | 'standard'
-              | 'aside'
-              | 'chat'
-              | 'gallery'
-              | 'link'
-              | 'image'
-              | 'quote'
-              | 'status'
-              | 'video'
-              | 'audio';
-            /** @description Мета поля. */
-            meta?: {
-              /** @default false */
-              _acf_changed?: boolean;
-              /** @default  */
-              footnotes?: string;
-            };
-            /** @description Файл темы используемый для показа записи. */
-            template?: string;
-          };
-        };
-      };
-      responses: {
-        /** @description OK */
-        200: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['project'];
-          };
-        };
-      };
-    };
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/wp/v2/project/{id}': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get: {
-      parameters: {
-        query?: {
-          /** @description Рамки в которых сделан запрос, определяют поля в ответе. */
-          context?: 'view' | 'embed' | 'edit';
-          /** @description Переопределить длину отрывка по умолчанию. */
-          excerpt_length?: unknown;
-          /** @description Пароль для записи, если она защищена паролем. */
-          password?: unknown;
-        };
-        header?: never;
-        path: {
-          /** @description Уникальный идентификатор записи. */
-          id: unknown;
-        };
-        cookie?: never;
-      };
-      requestBody?: never;
-      responses: {
-        /** @description OK */
-        200: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['project'];
-          };
-        };
-      };
-    };
-    put: {
-      parameters: {
-        query?: never;
-        header?: never;
-        path: {
-          /** @description Уникальный идентификатор записи. */
-          id: unknown;
-        };
-        cookie?: never;
-      };
-      requestBody?: {
-        content: {
-          'application/x-www-form-urlencoded': {
-            /**
-             * Format: date-time
-             * @description Дата публикации записи (по часовому поясу сайта).
-             */
-            date?: string | null;
-            /**
-             * Format: date-time
-             * @description Дата публикации записи, по GMT.
-             */
-            date_gmt?: string | null;
-            /** @description Буквенно-цифровой идентификатор для записи, уникальный для ее типа. */
-            slug?: string;
-            /**
-             * @description Именованный статус записи.
-             * @enum {string}
-             */
-            status?:
-              | 'publish'
-              | 'future'
-              | 'draft'
-              | 'pending'
-              | 'private'
-              | 'submitted'
-              | 'funded'
-              | 'refunded'
-              | 'failed'
-              | 'acf-disabled';
-            /** @description Пароль для защиты содержания и отрывка. */
-            password?: string;
-            /** @description Название записи. */
-            title?: {
-              /** @description Название записи как оно существует в базе данных. */
-              raw?: string;
-              /** @description HTML название записи, преобразованное для показа. */
-              rendered?: string;
-            };
-            /** @description Содержимое записи. */
-            content?: {
-              /** @description Содержимое записи как оно существует в базе данных. */
-              raw?: string;
-              /** @description HTML содержимое записи преобразованное для показа. */
-              rendered?: string;
-              /** @description Версия формата блоков содержимого используемая записью. */
-              block_version?: number;
-              /** @description Защищено ли содержимое паролем. */
-              protected?: boolean;
-            };
-            /** @description ID автора записи. */
-            author?: number;
-            /** @description Отрывок записи. */
-            excerpt?: {
-              /** @description Заголовок из записи в том виде, в котором он существует в базе данных. */
-              raw?: string;
-              /** @description HTML отрывок записи, преобразованный для показа. */
-              rendered?: string;
-              /** @description Защищать ли паролем отрывок. */
-              protected?: boolean;
-            };
-            /** @description ID избранного изображения записи. */
-            featured_media?: number;
-            /**
-             * @description Открыты ли комментарии для записи.
-             * @enum {string}
-             */
-            comment_status?: 'open' | 'closed';
-            /**
-             * @description Принимает ли запись уведомления.
-             * @enum {string}
-             */
-            ping_status?: 'open' | 'closed';
-            /** @description Порядок записи по отношению к другим записям. */
-            menu_order?: number;
-            /**
-             * @description Формат записи.
-             * @enum {string}
-             */
-            format?:
-              | 'standard'
-              | 'aside'
-              | 'chat'
-              | 'gallery'
-              | 'link'
-              | 'image'
-              | 'quote'
-              | 'status'
-              | 'video'
-              | 'audio';
-            /** @description Мета поля. */
-            meta?: {
-              /** @default false */
-              _acf_changed?: boolean;
-              /** @default  */
-              footnotes?: string;
-            };
-            /** @description Файл темы используемый для показа записи. */
-            template?: string;
-          };
-        };
-      };
-      responses: {
-        /** @description OK */
-        200: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['project'];
-          };
-        };
-      };
-    };
-    post: {
-      parameters: {
-        query?: never;
-        header?: never;
-        path: {
-          /** @description Уникальный идентификатор записи. */
-          id: unknown;
-        };
-        cookie?: never;
-      };
-      requestBody?: {
-        content: {
-          'application/x-www-form-urlencoded': {
-            /**
-             * Format: date-time
-             * @description Дата публикации записи (по часовому поясу сайта).
-             */
-            date?: string | null;
-            /**
-             * Format: date-time
-             * @description Дата публикации записи, по GMT.
-             */
-            date_gmt?: string | null;
-            /** @description Буквенно-цифровой идентификатор для записи, уникальный для ее типа. */
-            slug?: string;
-            /**
-             * @description Именованный статус записи.
-             * @enum {string}
-             */
-            status?:
-              | 'publish'
-              | 'future'
-              | 'draft'
-              | 'pending'
-              | 'private'
-              | 'submitted'
-              | 'funded'
-              | 'refunded'
-              | 'failed'
-              | 'acf-disabled';
-            /** @description Пароль для защиты содержания и отрывка. */
-            password?: string;
-            /** @description Название записи. */
-            title?: {
-              /** @description Название записи как оно существует в базе данных. */
-              raw?: string;
-              /** @description HTML название записи, преобразованное для показа. */
-              rendered?: string;
-            };
-            /** @description Содержимое записи. */
-            content?: {
-              /** @description Содержимое записи как оно существует в базе данных. */
-              raw?: string;
-              /** @description HTML содержимое записи преобразованное для показа. */
-              rendered?: string;
-              /** @description Версия формата блоков содержимого используемая записью. */
-              block_version?: number;
-              /** @description Защищено ли содержимое паролем. */
-              protected?: boolean;
-            };
-            /** @description ID автора записи. */
-            author?: number;
-            /** @description Отрывок записи. */
-            excerpt?: {
-              /** @description Заголовок из записи в том виде, в котором он существует в базе данных. */
-              raw?: string;
-              /** @description HTML отрывок записи, преобразованный для показа. */
-              rendered?: string;
-              /** @description Защищать ли паролем отрывок. */
-              protected?: boolean;
-            };
-            /** @description ID избранного изображения записи. */
-            featured_media?: number;
-            /**
-             * @description Открыты ли комментарии для записи.
-             * @enum {string}
-             */
-            comment_status?: 'open' | 'closed';
-            /**
-             * @description Принимает ли запись уведомления.
-             * @enum {string}
-             */
-            ping_status?: 'open' | 'closed';
-            /** @description Порядок записи по отношению к другим записям. */
-            menu_order?: number;
-            /**
-             * @description Формат записи.
-             * @enum {string}
-             */
-            format?:
-              | 'standard'
-              | 'aside'
-              | 'chat'
-              | 'gallery'
-              | 'link'
-              | 'image'
-              | 'quote'
-              | 'status'
-              | 'video'
-              | 'audio';
-            /** @description Мета поля. */
-            meta?: {
-              /** @default false */
-              _acf_changed?: boolean;
-              /** @default  */
-              footnotes?: string;
-            };
-            /** @description Файл темы используемый для показа записи. */
-            template?: string;
-          };
-        };
-      };
-      responses: {
-        /** @description OK */
-        200: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['project'];
-          };
-        };
-      };
-    };
-    delete: {
-      parameters: {
-        query?: never;
-        header?: never;
-        path: {
-          /** @description Уникальный идентификатор записи. */
-          id: unknown;
-        };
-        cookie?: never;
-      };
-      requestBody?: {
-        content: {
-          'application/x-www-form-urlencoded': {
-            /**
-             * @description Игнорировать ли перемещение в корзину и принудительно удалять.
-             * @default false
-             */
-            force?: boolean;
-          };
-        };
-      };
-      responses: {
-        /** @description OK */
-        200: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['project'];
-          };
-        };
-      };
-    };
-    options?: never;
-    head?: never;
-    patch: {
-      parameters: {
-        query?: never;
-        header?: never;
-        path: {
-          /** @description Уникальный идентификатор записи. */
-          id: unknown;
-        };
-        cookie?: never;
-      };
-      requestBody?: {
-        content: {
-          'application/x-www-form-urlencoded': {
-            /**
-             * Format: date-time
-             * @description Дата публикации записи (по часовому поясу сайта).
-             */
-            date?: string | null;
-            /**
-             * Format: date-time
-             * @description Дата публикации записи, по GMT.
-             */
-            date_gmt?: string | null;
-            /** @description Буквенно-цифровой идентификатор для записи, уникальный для ее типа. */
-            slug?: string;
-            /**
-             * @description Именованный статус записи.
-             * @enum {string}
-             */
-            status?:
-              | 'publish'
-              | 'future'
-              | 'draft'
-              | 'pending'
-              | 'private'
-              | 'submitted'
-              | 'funded'
-              | 'refunded'
-              | 'failed'
-              | 'acf-disabled';
-            /** @description Пароль для защиты содержания и отрывка. */
-            password?: string;
-            /** @description Название записи. */
-            title?: {
-              /** @description Название записи как оно существует в базе данных. */
-              raw?: string;
-              /** @description HTML название записи, преобразованное для показа. */
-              rendered?: string;
-            };
-            /** @description Содержимое записи. */
-            content?: {
-              /** @description Содержимое записи как оно существует в базе данных. */
-              raw?: string;
-              /** @description HTML содержимое записи преобразованное для показа. */
-              rendered?: string;
-              /** @description Версия формата блоков содержимого используемая записью. */
-              block_version?: number;
-              /** @description Защищено ли содержимое паролем. */
-              protected?: boolean;
-            };
-            /** @description ID автора записи. */
-            author?: number;
-            /** @description Отрывок записи. */
-            excerpt?: {
-              /** @description Заголовок из записи в том виде, в котором он существует в базе данных. */
-              raw?: string;
-              /** @description HTML отрывок записи, преобразованный для показа. */
-              rendered?: string;
-              /** @description Защищать ли паролем отрывок. */
-              protected?: boolean;
-            };
-            /** @description ID избранного изображения записи. */
-            featured_media?: number;
-            /**
-             * @description Открыты ли комментарии для записи.
-             * @enum {string}
-             */
-            comment_status?: 'open' | 'closed';
-            /**
-             * @description Принимает ли запись уведомления.
-             * @enum {string}
-             */
-            ping_status?: 'open' | 'closed';
-            /** @description Порядок записи по отношению к другим записям. */
-            menu_order?: number;
-            /**
-             * @description Формат записи.
-             * @enum {string}
-             */
-            format?:
-              | 'standard'
-              | 'aside'
-              | 'chat'
-              | 'gallery'
-              | 'link'
-              | 'image'
-              | 'quote'
-              | 'status'
-              | 'video'
-              | 'audio';
-            /** @description Мета поля. */
-            meta?: {
-              /** @default false */
-              _acf_changed?: boolean;
-              /** @default  */
-              footnotes?: string;
-            };
-            /** @description Файл темы используемый для показа записи. */
-            template?: string;
-          };
-        };
-      };
-      responses: {
-        /** @description OK */
-        200: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['project'];
-          };
-        };
-      };
-    };
-    trace?: never;
-  };
-  '/wp/v2/project/{parent}/revisions': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get: {
-      parameters: {
-        query?: {
-          /** @description Рамки в которых сделан запрос, определяют поля в ответе. */
-          context?: 'view' | 'embed' | 'edit';
-          /** @description Текущая страница коллекции. */
-          page?: unknown;
-          /** @description Максимальное число объектов возвращаемое в выборке. */
-          per_page?: unknown;
-          /** @description Ограничить результаты до совпадающих со строкой. */
-          search?: unknown;
-          /** @description Убедиться что выборка исключает определенные ID. */
-          exclude?: unknown;
-          /** @description Ограничить выборку до определенных ID. */
-          include?: unknown;
-          /** @description Сдвиг выборки на определенное число объектов. */
-          offset?: unknown;
-          /** @description Упорядочить сортировку атрибута по возрастанию или убыванию. */
-          order?: 'asc' | 'desc';
-          /** @description Сортировать коллекцию по атрибуту объекта. */
-          orderby?: 'date' | 'id' | 'include' | 'relevance' | 'slug' | 'include_slugs' | 'title';
-        };
-        header?: never;
-        path: {
-          /** @description ID родителя редакции. */
-          parent: unknown;
-        };
-        cookie?: never;
-      };
-      requestBody?: never;
-      responses: {
-        /** @description OK */
-        200: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['project-revision'];
-          };
-        };
-      };
-    };
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/wp/v2/project/{parent}/revisions/{id}': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get: {
-      parameters: {
-        query?: {
-          /** @description Рамки в которых сделан запрос, определяют поля в ответе. */
-          context?: 'view' | 'embed' | 'edit';
-        };
-        header?: never;
-        path: {
-          /** @description ID родителя редакции. */
-          parent: unknown;
-          /** @description Уникальный идентификатор редакции. */
-          id: unknown;
-        };
-        cookie?: never;
-      };
-      requestBody?: never;
-      responses: {
-        /** @description OK */
-        200: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['project-revision'];
-          };
-        };
-      };
-    };
-    put?: never;
-    post?: never;
-    delete: {
-      parameters: {
-        query?: never;
-        header?: never;
-        path: {
-          /** @description ID родителя редакции. */
-          parent: unknown;
-          /** @description Уникальный идентификатор редакции. */
-          id: unknown;
-        };
-        cookie?: never;
-      };
-      requestBody?: {
-        content: {
-          'application/x-www-form-urlencoded': {
-            /**
-             * @description Должно быть истинно, так как редакции не поддерживают перемещение в корзину.
-             * @default false
-             */
-            force?: boolean;
-          };
-        };
-      };
-      responses: {
-        /** @description OK */
-        200: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['project-revision'];
-          };
-        };
-      };
-    };
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/wp/v2/project/{id}/autosaves': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get: {
-      parameters: {
-        query?: {
-          /** @description ID родителя редакции автосохранения. */
-          parent?: unknown;
-          /** @description Рамки в которых сделан запрос, определяют поля в ответе. */
-          context?: 'view' | 'embed' | 'edit';
-        };
-        header?: never;
-        path: {
-          id: unknown;
-        };
-        cookie?: never;
-      };
-      requestBody?: never;
-      responses: {
-        /** @description OK */
-        200: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['project-revision'];
-          };
-        };
-      };
-    };
-    put?: never;
-    post: {
-      parameters: {
-        query?: never;
-        header?: never;
-        path: {
-          id: unknown;
-        };
-        cookie?: never;
-      };
-      requestBody?: {
-        content: {
-          'application/x-www-form-urlencoded': {
-            /** @description ID родителя редакции автосохранения. */
-            parent?: number;
-            /**
-             * Format: date-time
-             * @description Дата публикации записи (по часовому поясу сайта).
-             */
-            date?: string | null;
-            /**
-             * Format: date-time
-             * @description Дата публикации записи, по GMT.
-             */
-            date_gmt?: string | null;
-            /** @description Буквенно-цифровой идентификатор для записи, уникальный для ее типа. */
-            slug?: string;
-            /**
-             * @description Именованный статус записи.
-             * @enum {string}
-             */
-            status?:
-              | 'publish'
-              | 'future'
-              | 'draft'
-              | 'pending'
-              | 'private'
-              | 'submitted'
-              | 'funded'
-              | 'refunded'
-              | 'failed'
-              | 'acf-disabled';
-            /** @description Пароль для защиты содержания и отрывка. */
-            password?: string;
-            /** @description Название записи. */
-            title?: {
-              /** @description Название записи как оно существует в базе данных. */
-              raw?: string;
-              /** @description HTML название записи, преобразованное для показа. */
-              rendered?: string;
-            };
-            /** @description Содержимое записи. */
-            content?: {
-              /** @description Содержимое записи как оно существует в базе данных. */
-              raw?: string;
-              /** @description HTML содержимое записи преобразованное для показа. */
-              rendered?: string;
-              /** @description Версия формата блоков содержимого используемая записью. */
-              block_version?: number;
-              /** @description Защищено ли содержимое паролем. */
-              protected?: boolean;
-            };
-            /** @description ID автора записи. */
-            author?: number;
-            /** @description Отрывок записи. */
-            excerpt?: {
-              /** @description Заголовок из записи в том виде, в котором он существует в базе данных. */
-              raw?: string;
-              /** @description HTML отрывок записи, преобразованный для показа. */
-              rendered?: string;
-              /** @description Защищать ли паролем отрывок. */
-              protected?: boolean;
-            };
-            /** @description ID избранного изображения записи. */
-            featured_media?: number;
-            /**
-             * @description Открыты ли комментарии для записи.
-             * @enum {string}
-             */
-            comment_status?: 'open' | 'closed';
-            /**
-             * @description Принимает ли запись уведомления.
-             * @enum {string}
-             */
-            ping_status?: 'open' | 'closed';
-            /** @description Порядок записи по отношению к другим записям. */
-            menu_order?: number;
-            /**
-             * @description Формат записи.
-             * @enum {string}
-             */
-            format?:
-              | 'standard'
-              | 'aside'
-              | 'chat'
-              | 'gallery'
-              | 'link'
-              | 'image'
-              | 'quote'
-              | 'status'
-              | 'video'
-              | 'audio';
-            /** @description Мета поля. */
-            meta?: {
-              /** @default false */
-              _acf_changed?: boolean;
-              /** @default  */
-              footnotes?: string;
-            };
-            /** @description Файл темы используемый для показа записи. */
-            template?: string;
-          };
-        };
-      };
-      responses: {
-        /** @description OK */
-        200: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['project-revision'];
-          };
-        };
-      };
-    };
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/wp/v2/project/{parent}/autosaves/{id}': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get: {
-      parameters: {
-        query?: {
-          /** @description Рамки в которых сделан запрос, определяют поля в ответе. */
-          context?: 'view' | 'embed' | 'edit';
-        };
-        header?: never;
-        path: {
-          /** @description ID родителя редакции автосохранения. */
-          parent: unknown;
-          /** @description ID редакции автосохранения. */
-          id: unknown;
-        };
-        cookie?: never;
-      };
-      requestBody?: never;
-      responses: {
-        /** @description OK */
-        200: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['project-revision'];
-          };
-        };
-      };
-    };
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
   '/wp/v2/profile': {
     parameters: {
       query?: never;
@@ -9885,6 +8812,42 @@ export interface paths {
                  */
                 terms?: number[];
               };
+          /** @description Ограничить выборку до объектов с установленным указанным элементом в таксономии pl-categs. */
+          'pl-categs'?:
+            | number[]
+            | {
+                /**
+                 * @description ID элементов.
+                 * @default []
+                 */
+                terms?: number[];
+                /**
+                 * @description Разрешить включать дочерние элементы в ограничение списка результатов.
+                 * @default false
+                 */
+                include_children?: boolean;
+                /**
+                 * @description Принадлежность элементов ко всем или любому из указанных терминов.
+                 * @default OR
+                 * @enum {string}
+                 */
+                operator?: 'AND' | 'OR';
+              };
+          /** @description Ограничить выборку до объектов с установленным указанным элементом в таксономии pl-categs. */
+          'pl-categs_exclude'?:
+            | number[]
+            | {
+                /**
+                 * @description ID элементов.
+                 * @default []
+                 */
+                terms?: number[];
+                /**
+                 * @description Разрешить включать дочерние элементы в ограничение списка результатов.
+                 * @default false
+                 */
+                include_children?: boolean;
+              };
         };
         header?: never;
         path?: never;
@@ -9898,7 +8861,7 @@ export interface paths {
             [name: string]: unknown;
           };
           content: {
-            'application/json': components['schemas']['profile'];
+            'application/json': components['schemas']['profile'][];
           };
         };
       };
@@ -9990,13 +8953,13 @@ export interface paths {
               _acf_changed?: boolean;
               /** @default  */
               cmsms_profile_subtitle?: string;
-              /** @default  */
-              footnotes?: string;
             };
             /** @description Файл темы используемый для показа записи. */
             template?: string;
             /** @description Элементы назначенные объекту в таксономии post_tag. */
             tags?: number[];
+            /** @description Элементы назначенные объекту в таксономии pl-categs. */
+            'pl-categs'?: number[];
           };
         };
       };
@@ -10144,13 +9107,13 @@ export interface paths {
               _acf_changed?: boolean;
               /** @default  */
               cmsms_profile_subtitle?: string;
-              /** @default  */
-              footnotes?: string;
             };
             /** @description Файл темы используемый для показа записи. */
             template?: string;
             /** @description Элементы назначенные объекту в таксономии post_tag. */
             tags?: number[];
+            /** @description Элементы назначенные объекту в таксономии pl-categs. */
+            'pl-categs'?: number[];
           };
         };
       };
@@ -10255,13 +9218,13 @@ export interface paths {
               _acf_changed?: boolean;
               /** @default  */
               cmsms_profile_subtitle?: string;
-              /** @default  */
-              footnotes?: string;
             };
             /** @description Файл темы используемый для показа записи. */
             template?: string;
             /** @description Элементы назначенные объекту в таксономии post_tag. */
             tags?: number[];
+            /** @description Элементы назначенные объекту в таксономии pl-categs. */
+            'pl-categs'?: number[];
           };
         };
       };
@@ -10401,13 +9364,13 @@ export interface paths {
               _acf_changed?: boolean;
               /** @default  */
               cmsms_profile_subtitle?: string;
-              /** @default  */
-              footnotes?: string;
             };
             /** @description Файл темы используемый для показа записи. */
             template?: string;
             /** @description Элементы назначенные объекту в таксономии post_tag. */
             tags?: number[];
+            /** @description Элементы назначенные объекту в таксономии pl-categs. */
+            'pl-categs'?: number[];
           };
         };
       };
@@ -10469,7 +9432,7 @@ export interface paths {
             [name: string]: unknown;
           };
           content: {
-            'application/json': components['schemas']['profile-revision'];
+            'application/json': components['schemas']['profile-revision'][];
           };
         };
       };
@@ -10684,13 +9647,13 @@ export interface paths {
               _acf_changed?: boolean;
               /** @default  */
               cmsms_profile_subtitle?: string;
-              /** @default  */
-              footnotes?: string;
             };
             /** @description Файл темы используемый для показа записи. */
             template?: string;
             /** @description Элементы назначенные объекту в таксономии post_tag. */
             tags?: number[];
+            /** @description Элементы назначенные объекту в таксономии pl-categs. */
+            'pl-categs'?: number[];
           };
         };
       };
@@ -10780,7 +9743,7 @@ export interface paths {
             [name: string]: unknown;
           };
           content: {
-            'application/json': components['schemas']['type'];
+            'application/json': components['schemas']['type'][];
           };
         };
       };
@@ -10859,7 +9822,7 @@ export interface paths {
             [name: string]: unknown;
           };
           content: {
-            'application/json': components['schemas']['status'];
+            'application/json': components['schemas']['status'][];
           };
         };
       };
@@ -10940,7 +9903,7 @@ export interface paths {
             [name: string]: unknown;
           };
           content: {
-            'application/json': components['schemas']['taxonomy'];
+            'application/json': components['schemas']['taxonomy'][];
           };
         };
       };
@@ -12098,6 +11061,284 @@ export interface paths {
     };
     trace?: never;
   };
+  '/wp/v2/pl-categs': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: {
+      parameters: {
+        query?: {
+          /** @description Рамки в которых сделан запрос, определяют поля в ответе. */
+          context?: 'view' | 'embed' | 'edit';
+          /** @description Текущая страница коллекции. */
+          page?: unknown;
+          /** @description Максимальное число объектов возвращаемое в выборке. */
+          per_page?: unknown;
+          /** @description Ограничить результаты до совпадающих со строкой. */
+          search?: unknown;
+          /** @description Убедиться что выборка исключает определенные ID. */
+          exclude?: unknown;
+          /** @description Ограничить выборку до определенных ID. */
+          include?: unknown;
+          /** @description Упорядочить сортировку атрибута по возрастанию или убыванию. */
+          order?: 'asc' | 'desc';
+          /** @description Сортировать коллекцию по атрибутам элемента. */
+          orderby?: 'id' | 'include' | 'name' | 'slug' | 'include_slugs' | 'term_group' | 'description' | 'count';
+          /** @description Скрывать ли элементы не назначенные ни одной записи. */
+          hide_empty?: unknown;
+          /** @description Ограничить выборку элементами назначенными определенному родителю. */
+          parent?: unknown;
+          /** @description Ограничить выборку элементами назначенными определенной записи. */
+          post?: unknown;
+          /** @description Ограничить выборку элементами с одним или более специальными ярлыками. */
+          slug?: unknown;
+        };
+        header?: never;
+        path?: never;
+        cookie?: never;
+      };
+      requestBody?: never;
+      responses: {
+        /** @description OK */
+        200: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            'application/json': components['schemas']['pl-categs'][];
+          };
+        };
+      };
+    };
+    put?: never;
+    post: {
+      parameters: {
+        query?: never;
+        header?: never;
+        path?: never;
+        cookie?: never;
+      };
+      requestBody?: {
+        content: {
+          'application/x-www-form-urlencoded': {
+            /** @description HTML описание элемента. */
+            description?: string;
+            /** @description HTML название элемента. */
+            name: string;
+            /** @description Буквенно-цифровой идентификатор элемента уникальный для его типа. */
+            slug?: string;
+            /** @description ID элемента родителя. */
+            parent?: number;
+            /** @description Мета поля. */
+            meta?: Record<string, never>;
+          };
+        };
+      };
+      responses: {
+        /** @description OK */
+        200: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            'application/json': components['schemas']['pl-categs'];
+          };
+        };
+      };
+    };
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/wp/v2/pl-categs/{id}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: {
+      parameters: {
+        query?: {
+          /** @description Рамки в которых сделан запрос, определяют поля в ответе. */
+          context?: 'view' | 'embed' | 'edit';
+        };
+        header?: never;
+        path: {
+          /** @description Уникальный идентификатор элемента. */
+          id: unknown;
+        };
+        cookie?: never;
+      };
+      requestBody?: never;
+      responses: {
+        /** @description OK */
+        200: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            'application/json': components['schemas']['pl-categs'];
+          };
+        };
+      };
+    };
+    put: {
+      parameters: {
+        query?: never;
+        header?: never;
+        path: {
+          /** @description Уникальный идентификатор элемента. */
+          id: unknown;
+        };
+        cookie?: never;
+      };
+      requestBody?: {
+        content: {
+          'application/x-www-form-urlencoded': {
+            /** @description HTML описание элемента. */
+            description?: string;
+            /** @description HTML название элемента. */
+            name?: string;
+            /** @description Буквенно-цифровой идентификатор элемента уникальный для его типа. */
+            slug?: string;
+            /** @description ID элемента родителя. */
+            parent?: number;
+            /** @description Мета поля. */
+            meta?: Record<string, never>;
+          };
+        };
+      };
+      responses: {
+        /** @description OK */
+        200: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            'application/json': components['schemas']['pl-categs'];
+          };
+        };
+      };
+    };
+    post: {
+      parameters: {
+        query?: never;
+        header?: never;
+        path: {
+          /** @description Уникальный идентификатор элемента. */
+          id: unknown;
+        };
+        cookie?: never;
+      };
+      requestBody?: {
+        content: {
+          'application/x-www-form-urlencoded': {
+            /** @description HTML описание элемента. */
+            description?: string;
+            /** @description HTML название элемента. */
+            name?: string;
+            /** @description Буквенно-цифровой идентификатор элемента уникальный для его типа. */
+            slug?: string;
+            /** @description ID элемента родителя. */
+            parent?: number;
+            /** @description Мета поля. */
+            meta?: Record<string, never>;
+          };
+        };
+      };
+      responses: {
+        /** @description OK */
+        200: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            'application/json': components['schemas']['pl-categs'];
+          };
+        };
+      };
+    };
+    delete: {
+      parameters: {
+        query?: never;
+        header?: never;
+        path: {
+          /** @description Уникальный идентификатор элемента. */
+          id: unknown;
+        };
+        cookie?: never;
+      };
+      requestBody?: {
+        content: {
+          'application/x-www-form-urlencoded': {
+            /**
+             * @description Должно быть истинно, так как элементы не поддерживают перемещение в корзину.
+             * @default false
+             */
+            force?: boolean;
+          };
+        };
+      };
+      responses: {
+        /** @description OK */
+        200: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            'application/json': components['schemas']['pl-categs'];
+          };
+        };
+      };
+    };
+    options?: never;
+    head?: never;
+    patch: {
+      parameters: {
+        query?: never;
+        header?: never;
+        path: {
+          /** @description Уникальный идентификатор элемента. */
+          id: unknown;
+        };
+        cookie?: never;
+      };
+      requestBody?: {
+        content: {
+          'application/x-www-form-urlencoded': {
+            /** @description HTML описание элемента. */
+            description?: string;
+            /** @description HTML название элемента. */
+            name?: string;
+            /** @description Буквенно-цифровой идентификатор элемента уникальный для его типа. */
+            slug?: string;
+            /** @description ID элемента родителя. */
+            parent?: number;
+            /** @description Мета поля. */
+            meta?: Record<string, never>;
+          };
+        };
+      };
+      responses: {
+        /** @description OK */
+        200: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            'application/json': components['schemas']['pl-categs'];
+          };
+        };
+      };
+    };
+    trace?: never;
+  };
   '/wp/v2/users': {
     parameters: {
       query?: never;
@@ -12852,11 +12093,8 @@ export interface paths {
       requestBody?: {
         content: {
           'application/x-www-form-urlencoded': {
-            /**
-             * Format: uuid
-             * @description UUID предоставляемый приложением для уникальной идентификации. Рекомендуется использовать UUID v5 с пространством имен URL или DNS.
-             */
-            app_id?: string;
+            /** @description UUID предоставляемый приложением для уникальной идентификации. Рекомендуется использовать UUID v5 с пространством имен URL или DNS. */
+            app_id?: string & (string | '');
             /** @description Название пароля приложения. */
             name: string;
           };
@@ -12987,11 +12225,8 @@ export interface paths {
       requestBody?: {
         content: {
           'application/x-www-form-urlencoded': {
-            /**
-             * Format: uuid
-             * @description UUID предоставляемый приложением для уникальной идентификации. Рекомендуется использовать UUID v5 с пространством имен URL или DNS.
-             */
-            app_id?: string;
+            /** @description UUID предоставляемый приложением для уникальной идентификации. Рекомендуется использовать UUID v5 с пространством имен URL или DNS. */
+            app_id?: string & (string | '');
             /** @description Название пароля приложения. */
             name?: string;
           };
@@ -13022,11 +12257,8 @@ export interface paths {
       requestBody?: {
         content: {
           'application/x-www-form-urlencoded': {
-            /**
-             * Format: uuid
-             * @description UUID предоставляемый приложением для уникальной идентификации. Рекомендуется использовать UUID v5 с пространством имен URL или DNS.
-             */
-            app_id?: string;
+            /** @description UUID предоставляемый приложением для уникальной идентификации. Рекомендуется использовать UUID v5 с пространством имен URL или DNS. */
+            app_id?: string & (string | '');
             /** @description Название пароля приложения. */
             name?: string;
           };
@@ -13082,11 +12314,8 @@ export interface paths {
       requestBody?: {
         content: {
           'application/x-www-form-urlencoded': {
-            /**
-             * Format: uuid
-             * @description UUID предоставляемый приложением для уникальной идентификации. Рекомендуется использовать UUID v5 с пространством имен URL или DNS.
-             */
-            app_id?: string;
+            /** @description UUID предоставляемый приложением для уникальной идентификации. Рекомендуется использовать UUID v5 с пространством имен URL или DNS. */
+            app_id?: string & (string | '');
             /** @description Название пароля приложения. */
             name?: string;
           };
@@ -13236,7 +12465,14 @@ export interface paths {
             /** @description Состояние комментария. */
             status?: string;
             /** @description Мета поля. */
-            meta?: Record<string, never>;
+            meta?: {
+              /**
+               * @description Статус решения заметки
+               * @default
+               * @enum {string}
+               */
+              _wp_note_status?: 'resolved' | 'reopen';
+            };
           };
         };
       };
@@ -13351,7 +12587,14 @@ export interface paths {
             /** @description Состояние комментария. */
             status?: string;
             /** @description Мета поля. */
-            meta?: Record<string, never>;
+            meta?: {
+              /**
+               * @description Статус решения заметки
+               * @default
+               * @enum {string}
+               */
+              _wp_note_status?: 'resolved' | 'reopen';
+            };
           };
         };
       };
@@ -13425,7 +12668,14 @@ export interface paths {
             /** @description Состояние комментария. */
             status?: string;
             /** @description Мета поля. */
-            meta?: Record<string, never>;
+            meta?: {
+              /**
+               * @description Статус решения заметки
+               * @default
+               * @enum {string}
+               */
+              _wp_note_status?: 'resolved' | 'reopen';
+            };
           };
         };
       };
@@ -13536,7 +12786,14 @@ export interface paths {
             /** @description Состояние комментария. */
             status?: string;
             /** @description Мета поля. */
-            meta?: Record<string, never>;
+            meta?: {
+              /**
+               * @description Статус решения заметки
+               * @default
+               * @enum {string}
+               */
+              _wp_note_status?: 'resolved' | 'reopen';
+            };
           };
         };
       };
@@ -13753,7 +13010,7 @@ export interface paths {
             [name: string]: unknown;
           };
           content: {
-            'application/json': components['schemas']['block-type'];
+            'application/json': components['schemas']['block-type'][];
           };
         };
       };
@@ -14286,6 +13543,164 @@ export interface paths {
     options?: never;
     head?: never;
     patch?: never;
+    trace?: never;
+  };
+  '/wp/v2/plugins/{plugin}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: {
+      parameters: {
+        query?: {
+          /** @description Рамки в которых сделан запрос, определяют поля в ответе. */
+          context?: 'view' | 'embed' | 'edit';
+        };
+        header?: never;
+        path: {
+          plugin: unknown;
+        };
+        cookie?: never;
+      };
+      requestBody?: never;
+      responses: {
+        /** @description OK */
+        200: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            'application/json': components['schemas']['plugin'];
+          };
+        };
+      };
+    };
+    put: {
+      parameters: {
+        query?: never;
+        header?: never;
+        path: {
+          plugin: unknown;
+        };
+        cookie?: never;
+      };
+      requestBody?: {
+        content: {
+          'application/x-www-form-urlencoded': {
+            /**
+             * @description Статус активации плагина.
+             * @enum {string}
+             */
+            status?: 'inactive' | 'active';
+          };
+        };
+      };
+      responses: {
+        /** @description OK */
+        200: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            'application/json': components['schemas']['plugin'];
+          };
+        };
+      };
+    };
+    post: {
+      parameters: {
+        query?: never;
+        header?: never;
+        path: {
+          plugin: unknown;
+        };
+        cookie?: never;
+      };
+      requestBody?: {
+        content: {
+          'application/x-www-form-urlencoded': {
+            /**
+             * @description Статус активации плагина.
+             * @enum {string}
+             */
+            status?: 'inactive' | 'active';
+          };
+        };
+      };
+      responses: {
+        /** @description OK */
+        200: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            'application/json': components['schemas']['plugin'];
+          };
+        };
+      };
+    };
+    delete: {
+      parameters: {
+        query?: never;
+        header?: never;
+        path: {
+          plugin: unknown;
+        };
+        cookie?: never;
+      };
+      requestBody?: {
+        content: {
+          'application/x-www-form-urlencoded': Record<string, never>;
+        };
+      };
+      responses: {
+        /** @description OK */
+        200: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            'application/json': components['schemas']['plugin'];
+          };
+        };
+      };
+    };
+    options?: never;
+    head?: never;
+    patch: {
+      parameters: {
+        query?: never;
+        header?: never;
+        path: {
+          plugin: unknown;
+        };
+        cookie?: never;
+      };
+      requestBody?: {
+        content: {
+          'application/x-www-form-urlencoded': {
+            /**
+             * @description Статус активации плагина.
+             * @enum {string}
+             */
+            status?: 'inactive' | 'active';
+          };
+        };
+      };
+      responses: {
+        /** @description OK */
+        200: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            'application/json': components['schemas']['plugin'];
+          };
+        };
+      };
+    };
     trace?: never;
   };
   '/wp/v2/sidebars': {
@@ -15102,7 +14517,7 @@ export interface paths {
             [name: string]: unknown;
           };
           content: {
-            'application/json': components['schemas']['menu-location'];
+            'application/json': components['schemas']['menu-location'][];
           };
         };
       };
@@ -15226,6 +14641,265 @@ export interface paths {
           };
           content: {
             'application/json': components['schemas']['font-collection'];
+          };
+        };
+      };
+    };
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/wp/v2/icons': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: {
+      parameters: {
+        query?: {
+          /** @description Рамки в которых сделан запрос, определяют поля в ответе. */
+          context?: 'view' | 'embed' | 'edit';
+          /** @description Текущая страница коллекции. */
+          page?: unknown;
+          /** @description Максимальное число объектов возвращаемое в выборке. */
+          per_page?: unknown;
+          /** @description Ограничить результаты до совпадающих со строкой. */
+          search?: unknown;
+          /** @description Ограничить результаты значками, принадлежащими данному фрагменту коллекции. */
+          collection?: unknown;
+        };
+        header?: never;
+        path?: never;
+        cookie?: never;
+      };
+      requestBody?: never;
+      responses: {
+        /** @description OK */
+        200: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            'application/json': components['schemas']['icon'][];
+          };
+        };
+      };
+    };
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/wp/v2/icons/{collection}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: {
+      parameters: {
+        query?: {
+          /** @description Рамки в которых сделан запрос, определяют поля в ответе. */
+          context?: 'view' | 'embed' | 'edit';
+          /** @description Текущая страница коллекции. */
+          page?: unknown;
+          /** @description Максимальное число объектов возвращаемое в выборке. */
+          per_page?: unknown;
+          /** @description Ограничить результаты до совпадающих со строкой. */
+          search?: unknown;
+        };
+        header?: never;
+        path: {
+          /** @description Ограничить результаты значками, принадлежащими данному фрагменту коллекции. */
+          collection: unknown;
+        };
+        cookie?: never;
+      };
+      requestBody?: never;
+      responses: {
+        /** @description OK */
+        200: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            'application/json': components['schemas']['icon'][];
+          };
+        };
+      };
+    };
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/wp/v2/icons/{name}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: {
+      parameters: {
+        query?: {
+          /** @description Рамки в которых сделан запрос, определяют поля в ответе. */
+          context?: 'view' | 'embed' | 'edit';
+        };
+        header?: never;
+        path: {
+          /** @description Название значка. */
+          name: unknown;
+        };
+        cookie?: never;
+      };
+      requestBody?: never;
+      responses: {
+        /** @description OK */
+        200: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            'application/json': components['schemas']['icon'];
+          };
+        };
+      };
+    };
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/wp/v2/icon-collections': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: {
+      parameters: {
+        query?: {
+          /** @description Рамки в которых сделан запрос, определяют поля в ответе. */
+          context?: 'view' | 'embed' | 'edit';
+          /** @description Текущая страница коллекции. */
+          page?: unknown;
+          /** @description Максимальное число объектов возвращаемое в выборке. */
+          per_page?: unknown;
+          /** @description Ограничить результаты до совпадающих со строкой. */
+          search?: unknown;
+        };
+        header?: never;
+        path?: never;
+        cookie?: never;
+      };
+      requestBody?: never;
+      responses: {
+        /** @description OK */
+        200: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            'application/json': components['schemas']['icon-collection'][];
+          };
+        };
+      };
+    };
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/wp/v2/icon-collections/{slug}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: {
+      parameters: {
+        query?: {
+          /** @description Рамки в которых сделан запрос, определяют поля в ответе. */
+          context?: 'view' | 'embed' | 'edit';
+        };
+        header?: never;
+        path: {
+          /** @description Ярлык коллекции значков. */
+          slug: unknown;
+        };
+        cookie?: never;
+      };
+      requestBody?: never;
+      responses: {
+        /** @description OK */
+        200: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            'application/json': components['schemas']['icon-collection'];
+          };
+        };
+      };
+    };
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/wp/v2/view-config': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: {
+      parameters: {
+        query: {
+          /** @description Тип сущности. */
+          kind: unknown;
+          /** @description Название сущности. */
+          name: unknown;
+        };
+        header?: never;
+        path?: never;
+        cookie?: never;
+      };
+      requestBody?: never;
+      responses: {
+        /** @description OK */
+        200: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            'application/json': components['schemas']['view-config'];
           };
         };
       };
@@ -15655,52 +15329,383 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/wp-abilities/v1': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: {
+      parameters: {
+        query?: {
+          namespace?: unknown;
+          context?: unknown;
+        };
+        header?: never;
+        path?: never;
+        cookie?: never;
+      };
+      requestBody?: never;
+      responses: {
+        /** @description OK */
+        200: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content?: never;
+        };
+      };
+    };
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/wp-abilities/v1/categories': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: {
+      parameters: {
+        query?: {
+          /** @description Рамки в которых сделан запрос, определяют поля в ответе. */
+          context?: 'view' | 'embed' | 'edit';
+          /** @description Текущая страница коллекции. */
+          page?: unknown;
+          /** @description Максимальное число объектов возвращаемое в выборке. */
+          per_page?: unknown;
+        };
+        header?: never;
+        path?: never;
+        cookie?: never;
+      };
+      requestBody?: never;
+      responses: {
+        /** @description OK */
+        200: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            'application/json': components['schemas']['ability-category'][];
+          };
+        };
+      };
+    };
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/wp-abilities/v1/categories/{slug}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: {
+      parameters: {
+        query?: never;
+        header?: never;
+        path: {
+          /** @description Уникальный идентификатор категории возможностей. */
+          slug: unknown;
+        };
+        cookie?: never;
+      };
+      requestBody?: never;
+      responses: {
+        /** @description OK */
+        200: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            'application/json': components['schemas']['ability-category'];
+          };
+        };
+      };
+    };
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/wp-abilities/v1/abilities/{name}/run': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: {
+      parameters: {
+        query?: {
+          /** @description Параметры ввода для исполнения возможности. */
+          input?: unknown;
+        };
+        header?: never;
+        path: {
+          /** @description Уникальный идентификатор категории. */
+          name: unknown;
+        };
+        cookie?: never;
+      };
+      requestBody?: never;
+      responses: {
+        /** @description OK */
+        200: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            'application/json': components['schemas']['ability-execution'];
+          };
+        };
+      };
+    };
+    put: {
+      parameters: {
+        query?: never;
+        header?: never;
+        path: {
+          /** @description Уникальный идентификатор категории. */
+          name: unknown;
+        };
+        cookie?: never;
+      };
+      requestBody?: {
+        content: {
+          'application/x-www-form-urlencoded': {
+            /** @description Параметры ввода для исполнения возможности. */
+            input?: number | boolean | string | unknown[] | Record<string, never> | null;
+          };
+        };
+      };
+      responses: {
+        /** @description OK */
+        200: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            'application/json': components['schemas']['ability-execution'];
+          };
+        };
+      };
+    };
+    post: {
+      parameters: {
+        query?: never;
+        header?: never;
+        path: {
+          /** @description Уникальный идентификатор категории. */
+          name: unknown;
+        };
+        cookie?: never;
+      };
+      requestBody?: {
+        content: {
+          'application/x-www-form-urlencoded': {
+            /** @description Параметры ввода для исполнения возможности. */
+            input?: number | boolean | string | unknown[] | Record<string, never> | null;
+          };
+        };
+      };
+      responses: {
+        /** @description OK */
+        200: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            'application/json': components['schemas']['ability-execution'];
+          };
+        };
+      };
+    };
+    delete: {
+      parameters: {
+        query?: never;
+        header?: never;
+        path: {
+          /** @description Уникальный идентификатор категории. */
+          name: unknown;
+        };
+        cookie?: never;
+      };
+      requestBody?: {
+        content: {
+          'application/x-www-form-urlencoded': {
+            /** @description Параметры ввода для исполнения возможности. */
+            input?: number | boolean | string | unknown[] | Record<string, never> | null;
+          };
+        };
+      };
+      responses: {
+        /** @description OK */
+        200: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            'application/json': components['schemas']['ability-execution'];
+          };
+        };
+      };
+    };
+    options?: never;
+    head?: never;
+    patch: {
+      parameters: {
+        query?: never;
+        header?: never;
+        path: {
+          /** @description Уникальный идентификатор категории. */
+          name: unknown;
+        };
+        cookie?: never;
+      };
+      requestBody?: {
+        content: {
+          'application/x-www-form-urlencoded': {
+            /** @description Параметры ввода для исполнения возможности. */
+            input?: number | boolean | string | unknown[] | Record<string, never> | null;
+          };
+        };
+      };
+      responses: {
+        /** @description OK */
+        200: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            'application/json': components['schemas']['ability-execution'];
+          };
+        };
+      };
+    };
+    trace?: never;
+  };
+  '/wp-abilities/v1/abilities': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: {
+      parameters: {
+        query?: {
+          /** @description Рамки в которых сделан запрос, определяют поля в ответе. */
+          context?: 'view' | 'embed' | 'edit';
+          /** @description Текущая страница коллекции. */
+          page?: unknown;
+          /** @description Максимальное число объектов возвращаемое в выборке. */
+          per_page?: unknown;
+          /** @description Ограничение результата возможностями в определенной категории. */
+          category?: unknown;
+          /** @description Ограничить результаты возможностями в определенном пространстве имен. */
+          namespace?: unknown;
+          /** @description Ограничить результаты возможностями, соответствующими всем заданным метаполям. */
+          meta?: {
+            /** @description Ограничить результаты возможностями, соответствующими заданным поведенческим аннотациям. */
+            annotations?: {
+              /** @description Не изменяет ли возможность свое окружение. */
+              readonly?: boolean | null;
+              /** @description Может ли возможность выполнять деструктивные обновления своего окружения. */
+              destructive?: boolean | null;
+              /** @description Имеют ли повторные вызовы с одними и теми же аргументами дополнительный эффект. */
+              idempotent?: boolean | null;
+            } & {
+              [key: string]: unknown;
+            };
+          } & {
+            [key: string]: unknown;
+          };
+        };
+        header?: never;
+        path?: never;
+        cookie?: never;
+      };
+      requestBody?: never;
+      responses: {
+        /** @description OK */
+        200: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            'application/json': components['schemas']['ability'][];
+          };
+        };
+      };
+    };
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/wp-abilities/v1/abilities/{name}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: {
+      parameters: {
+        query?: never;
+        header?: never;
+        path: {
+          /** @description Уникальный идентификатор категории. */
+          name: unknown;
+        };
+        cookie?: never;
+      };
+      requestBody?: never;
+      responses: {
+        /** @description OK */
+        200: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content: {
+            'application/json': components['schemas']['ability'];
+          };
+        };
+      };
+    };
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
 }
 export type webhooks = Record<string, never>;
 export interface components {
   schemas: {
-    /**
-     * Contact Form 7 SWV
-     * @description Contact Form 7 SWV meta-schema
-     */
-    'Contact Form 7 SWV': {
-      version?: string;
-      locale?: string;
-      rules?: {
-        /** @enum {string} */
-        rule:
-          | 'required'
-          | 'requiredfile'
-          | 'email'
-          | 'url'
-          | 'tel'
-          | 'number'
-          | 'date'
-          | 'time'
-          | 'file'
-          | 'enum'
-          | 'dayofweek'
-          | 'minitems'
-          | 'maxitems'
-          | 'minlength'
-          | 'maxlength'
-          | 'minnumber'
-          | 'maxnumber'
-          | 'mindate'
-          | 'maxdate'
-          | 'minfilesize'
-          | 'maxfilesize'
-          | 'stepnumber'
-          | 'all'
-          | 'any';
-        field?: string;
-        error?: string;
-        accept?: string[];
-        base?: string;
-        interval?: number;
-        threshold?: string;
-      }[];
-    };
     /** post */
     post: {
       /**
@@ -15814,6 +15819,11 @@ export interface components {
       meta?: {
         /** @default false */
         _acf_changed: boolean;
+        /**
+         * @description Portrait cover for a programme card: the printable плакат, else the featured image.
+         * @default
+         */
+        od_card_cover: string;
         /** @default  */
         footnotes: string;
       };
@@ -15861,7 +15871,7 @@ export interface components {
       modified_gmt?: string;
       /** @description ID родителя редакции. */
       parent?: number;
-      /** @description Буквенно-цифровой идентификатор записи уникальный для её типа. */
+      /** @description Буквенно-цифровой идентификатор редакции, уникальный для её типа. */
       slug?: string;
       /** @description Название записи. */
       title?: {
@@ -15894,6 +15904,11 @@ export interface components {
       meta?: {
         /** @default false */
         _acf_changed: boolean;
+        /**
+         * @description Portrait cover for a programme card: the printable плакат, else the featured image.
+         * @default
+         */
+        od_card_cover: string;
         /** @default  */
         footnotes: string;
       };
@@ -16056,7 +16071,7 @@ export interface components {
       modified_gmt?: string;
       /** @description ID родителя редакции. */
       parent?: number;
-      /** @description Буквенно-цифровой идентификатор записи уникальный для её типа. */
+      /** @description Буквенно-цифровой идентификатор редакции, уникальный для её типа. */
       slug?: string;
       /** @description Название записи. */
       title?: {
@@ -16221,6 +16236,29 @@ export interface components {
       source_url?: string;
       /** @description Список отсутствующих размеров изображений для вложения. */
       missing_image_sizes?: string[];
+      /** @description Название исходного файла вложения. */
+      filename?: string;
+      /** @description Размер файла вложения в байтах. */
+      filesize?: number | null;
+      /** @description Значение ориентации EXIF. Значения 1–8 соответствуют спецификации EXIF, где 1 означает, что вращение не требуется. */
+      exif_orientation?: number;
+      /** @description Качество кодирования (1–100) из фильтра wp_editor_set_quality, определяемое по выходному типу MIME. Значение «по умолчанию» применяется к полноразмерному изображению; В разделе «размеры» перечислены переопределения для каждого зарегистрированного размера, в которых отфильтрованное значение отличается от «по умолчанию». */
+      image_quality?: {
+        default?: number;
+        sizes?: {
+          thumbnail?: number;
+          medium?: number;
+          medium_large?: number;
+          large?: number;
+          '1536x1536'?: number;
+          '2048x2048'?: number;
+          'post-thumbnail'?: number;
+        };
+      };
+      /** @description Выходной тип MIME, в который должно быть преобразовано это изображение, на основе фильтра image_editor_output_format. Null если конверсия не требуется. */
+      image_output_format?: string | null;
+      /** @description Определяет, использовать ли последовательное/чересстрочное кодирование при сохранении этого изображения. */
+      image_save_progressive?: boolean;
     };
     /** nav_menu_item */
     nav_menu_item: {
@@ -16337,7 +16375,7 @@ export interface components {
       modified_gmt?: string;
       /** @description ID родителя редакции. */
       parent?: number;
-      /** @description Буквенно-цифровой идентификатор записи уникальный для её типа. */
+      /** @description Буквенно-цифровой идентификатор редакции, уникальный для её типа. */
       slug?: string;
       /** @description Название для объекта. */
       title?:
@@ -16491,7 +16529,7 @@ export interface components {
       modified_gmt?: string;
       /** @description ID родителя редакции. */
       parent?: number;
-      /** @description Буквенно-цифровой идентификатор записи уникальный для её типа. */
+      /** @description Буквенно-цифровой идентификатор редакции, уникальный для её типа. */
       slug?: string;
       /** @description Название записи. */
       title?: {
@@ -16596,14 +16634,14 @@ export interface components {
       /** @description ID записи. */
       wp_id?: number;
       /** @description Файл темы существует */
-      has_theme_file?: Record<string, never>;
+      has_theme_file?: boolean;
       /** @description ID автора шаблона. */
       author?: number;
       /**
        * Format: date-time
        * @description Дата последнего изменения шаблона в часовом поясе сайта.
        */
-      modified?: string;
+      modified?: string | null;
       /** @description Человекочитаемый текст для автора. */
       author_text?: string;
       /**
@@ -16611,8 +16649,13 @@ export interface components {
        * @enum {string}
        */
       original_source?: 'theme' | 'plugin' | 'site' | 'user';
+      /**
+       * Format: date-time
+       * @description Дата публикации шаблона в часовом поясе сайта.
+       */
+      date?: string | null;
       /** @description Является ли шаблон пользовательским. */
-      is_custom?: Record<string, never>;
+      is_custom?: boolean;
       /** @description Плагин, который зарегистрировал шаблон. */
       plugin?: string;
     };
@@ -16678,14 +16721,14 @@ export interface components {
       /** @description ID записи. */
       wp_id?: number;
       /** @description Файл темы существует */
-      has_theme_file?: Record<string, never>;
+      has_theme_file?: boolean;
       /** @description ID автора шаблона. */
       author?: number;
       /**
        * Format: date-time
        * @description Дата последнего изменения шаблона в часовом поясе сайта.
        */
-      modified?: string;
+      modified?: string | null;
       /** @description Человекочитаемый текст для автора. */
       author_text?: string;
       /**
@@ -16693,6 +16736,11 @@ export interface components {
        * @enum {string}
        */
       original_source?: 'theme' | 'plugin' | 'site' | 'user';
+      /**
+       * Format: date-time
+       * @description Дата публикации шаблона в часовом поясе сайта.
+       */
+      date?: string | null;
       /** @description Где предполагается использовать часть шаблона ( шапка, подвал и т.д.) */
       area?: string;
     };
@@ -16711,7 +16759,7 @@ export interface components {
        */
       date_gmt?: string;
       /** @description ID конфигурации глобальных стилей. */
-      id?: string;
+      id?: number;
       /**
        * Format: date-time
        * @description Дата последнего изменения редакции, по времени часового пояса сайта.
@@ -16732,7 +16780,7 @@ export interface components {
     /** wp_global_styles */
     wp_global_styles: {
       /** @description ID конфигурации глобальных стилей. */
-      id?: string;
+      id?: number;
       /** @description Глобальные стили. */
       styles?: Record<string, never>;
       /** @description Общие настройки. */
@@ -16863,7 +16911,7 @@ export interface components {
       modified_gmt?: string;
       /** @description ID родителя редакции. */
       parent?: number;
-      /** @description Буквенно-цифровой идентификатор записи уникальный для её типа. */
+      /** @description Буквенно-цифровой идентификатор редакции, уникальный для её типа. */
       slug?: string;
       /** @description Название записи. */
       title?: {
@@ -17107,7 +17155,7 @@ export interface components {
       modified_gmt?: string;
       /** @description ID родителя редакции. */
       parent?: number;
-      /** @description Буквенно-цифровой идентификатор записи уникальный для её типа. */
+      /** @description Буквенно-цифровой идентификатор редакции, уникальный для её типа. */
       slug?: string;
       /** @description Название записи. */
       title?: {
@@ -17131,204 +17179,6 @@ export interface components {
       meta?: {
         /** @default false */
         _acf_changed: boolean;
-      };
-      /**
-       * Format: uri
-       * @description Ссылка для предварительного просмотра записи.
-       */
-      preview_link?: string;
-    };
-    /** project */
-    project: {
-      /**
-       * Format: date-time
-       * @description Дата публикации записи (по часовому поясу сайта).
-       */
-      date?: string | null;
-      /**
-       * Format: date-time
-       * @description Дата публикации записи, по GMT.
-       */
-      date_gmt?: string | null;
-      /** @description Глобальный уникальный идентификатор записи. */
-      guid?: {
-        /** @description GUID для записи в том виде, в котором он существует в базе данных. */
-        raw?: string;
-        /** @description GUID для записи, преобразованный для показа. */
-        rendered?: string;
-      };
-      /** @description Уникальный идентификатор записи. */
-      id?: number;
-      /**
-       * Format: uri
-       * @description URL записи.
-       */
-      link?: string;
-      /**
-       * Format: date-time
-       * @description Дата последнего изменения записи (по часовому поясу сайта).
-       */
-      modified?: string;
-      /**
-       * Format: date-time
-       * @description Дата последнего изменения записи (в формате GMT).
-       */
-      modified_gmt?: string;
-      /** @description Буквенно-цифровой идентификатор для записи, уникальный для ее типа. */
-      slug?: string;
-      /**
-       * @description Именованный статус записи.
-       * @enum {string}
-       */
-      status?:
-        | 'publish'
-        | 'future'
-        | 'draft'
-        | 'pending'
-        | 'private'
-        | 'submitted'
-        | 'funded'
-        | 'refunded'
-        | 'failed'
-        | 'acf-disabled';
-      /** @description Тип записи. */
-      type?: string;
-      /** @description Пароль для защиты содержания и отрывка. */
-      password?: string;
-      /** @description Шаблон постоянных ссылок для записи. */
-      permalink_template?: string;
-      /** @description Ярлык автоматически создан из заголовка записи. */
-      generated_slug?: string;
-      /** @description Массив имён классов для элемента контейнера записи. */
-      class_list?: string[];
-      /** @description Название записи. */
-      title?: {
-        /** @description Название записи как оно существует в базе данных. */
-        raw?: string;
-        /** @description HTML название записи, преобразованное для показа. */
-        rendered?: string;
-      };
-      /** @description Содержимое записи. */
-      content?: {
-        /** @description Содержимое записи как оно существует в базе данных. */
-        raw?: string;
-        /** @description HTML содержимое записи преобразованное для показа. */
-        rendered?: string;
-        /** @description Версия формата блоков содержимого используемая записью. */
-        block_version?: number;
-        /** @description Защищено ли содержимое паролем. */
-        protected?: boolean;
-      };
-      /** @description ID автора записи. */
-      author?: number;
-      /** @description Отрывок записи. */
-      excerpt?: {
-        /** @description Заголовок из записи в том виде, в котором он существует в базе данных. */
-        raw?: string;
-        /** @description HTML отрывок записи, преобразованный для показа. */
-        rendered?: string;
-        /** @description Защищать ли паролем отрывок. */
-        protected?: boolean;
-      };
-      /** @description ID избранного изображения записи. */
-      featured_media?: number;
-      /**
-       * @description Открыты ли комментарии для записи.
-       * @enum {string}
-       */
-      comment_status?: 'open' | 'closed';
-      /**
-       * @description Принимает ли запись уведомления.
-       * @enum {string}
-       */
-      ping_status?: 'open' | 'closed';
-      /** @description Порядок записи по отношению к другим записям. */
-      menu_order?: number;
-      /**
-       * @description Формат записи.
-       * @enum {string}
-       */
-      format?: 'standard' | 'aside' | 'chat' | 'gallery' | 'link' | 'image' | 'quote' | 'status' | 'video' | 'audio';
-      /** @description Мета поля. */
-      meta?: {
-        /** @default false */
-        _acf_changed: boolean;
-        /** @default  */
-        footnotes: string;
-      };
-      /** @description Файл темы используемый для показа записи. */
-      template?: string;
-    };
-    /** project-revision */
-    'project-revision': {
-      /** @description ID автора редакции. */
-      author?: number;
-      /**
-       * Format: date-time
-       * @description Дата публикации записи, по времени часового пояса сайта.
-       */
-      date?: string;
-      /**
-       * Format: date-time
-       * @description Время публикации редакции, по GMT.
-       */
-      date_gmt?: string;
-      /** @description Глобальный уникальный идентификатор записи. */
-      guid?: {
-        /** @description GUID для записи в том виде, в котором он существует в базе данных. */
-        raw?: string;
-        /** @description GUID для записи, преобразованный для показа. */
-        rendered?: string;
-      };
-      /** @description Уникальный идентификатор редакции. */
-      id?: number;
-      /**
-       * Format: date-time
-       * @description Дата последнего изменения редакции, по времени часового пояса сайта.
-       */
-      modified?: string;
-      /**
-       * Format: date-time
-       * @description Дата последнего изменения редакции, по GMT.
-       */
-      modified_gmt?: string;
-      /** @description ID родителя редакции. */
-      parent?: number;
-      /** @description Буквенно-цифровой идентификатор записи уникальный для её типа. */
-      slug?: string;
-      /** @description Название записи. */
-      title?: {
-        /** @description Название записи как оно существует в базе данных. */
-        raw?: string;
-        /** @description HTML название записи, преобразованное для показа. */
-        rendered?: string;
-      };
-      /** @description Содержимое записи. */
-      content?: {
-        /** @description Содержимое записи как оно существует в базе данных. */
-        raw?: string;
-        /** @description HTML содержимое записи преобразованное для показа. */
-        rendered?: string;
-        /** @description Версия формата блоков содержимого используемая записью. */
-        block_version?: number;
-        /** @description Защищено ли содержимое паролем. */
-        protected?: boolean;
-      };
-      /** @description Отрывок записи. */
-      excerpt?: {
-        /** @description Заголовок из записи в том виде, в котором он существует в базе данных. */
-        raw?: string;
-        /** @description HTML отрывок записи, преобразованный для показа. */
-        rendered?: string;
-        /** @description Защищать ли паролем отрывок. */
-        protected?: boolean;
-      };
-      /** @description Мета поля. */
-      meta?: {
-        /** @default false */
-        _acf_changed: boolean;
-        /** @default  */
-        footnotes: string;
       };
       /**
        * Format: uri
@@ -17446,13 +17296,13 @@ export interface components {
         _acf_changed: boolean;
         /** @default  */
         cmsms_profile_subtitle: string;
-        /** @default  */
-        footnotes: string;
       };
       /** @description Файл темы используемый для показа записи. */
       template?: string;
       /** @description Элементы назначенные объекту в таксономии post_tag. */
       tags?: number[];
+      /** @description Элементы назначенные объекту в таксономии pl-categs. */
+      'pl-categs'?: number[];
     };
     /** profile-revision */
     'profile-revision': {
@@ -17489,7 +17339,7 @@ export interface components {
       modified_gmt?: string;
       /** @description ID родителя редакции. */
       parent?: number;
-      /** @description Буквенно-цифровой идентификатор записи уникальный для её типа. */
+      /** @description Буквенно-цифровой идентификатор редакции, уникальный для её типа. */
       slug?: string;
       /** @description Название записи. */
       title?: {
@@ -17524,8 +17374,6 @@ export interface components {
         _acf_changed: boolean;
         /** @default  */
         cmsms_profile_subtitle: string;
-        /** @default  */
-        footnotes: string;
       };
       /**
        * Format: uri
@@ -17727,6 +17575,33 @@ export interface components {
       /** @description Мета поля. */
       meta?: Record<string, never>;
     };
+    /** pl-categs */
+    'pl-categs': {
+      /** @description Уникальный идентификатор элемента. */
+      id?: number;
+      /** @description Число опубликованных записей элемента. */
+      count?: number;
+      /** @description HTML описание элемента. */
+      description?: string;
+      /**
+       * Format: uri
+       * @description URL элемента.
+       */
+      link?: string;
+      /** @description HTML название элемента. */
+      name?: string;
+      /** @description Буквенно-цифровой идентификатор элемента уникальный для его типа. */
+      slug?: string;
+      /**
+       * @description Тип атрибуции элемента.
+       * @enum {string}
+       */
+      taxonomy?: 'pl-categs';
+      /** @description ID элемента родителя. */
+      parent?: number;
+      /** @description Мета поля. */
+      meta?: Record<string, never>;
+    };
     /** user */
     user: {
       /** @description Уникальный идентификатор пользователя. */
@@ -17799,11 +17674,8 @@ export interface components {
        * @description Уникальный идентификатор для пароля приложения.
        */
       uuid?: string;
-      /**
-       * Format: uuid
-       * @description UUID предоставляемый приложением для уникальной идентификации. Рекомендуется использовать UUID v5 с пространством имен URL или DNS.
-       */
-      app_id?: string;
+      /** @description UUID предоставляемый приложением для уникальной идентификации. Рекомендуется использовать UUID v5 с пространством имен URL или DNS. */
+      app_id?: string & (string | '');
       /** @description Название пароля приложения. */
       name?: string;
       /** @description Создаваемый пароль. Доступен после добавления приложения. */
@@ -17883,10 +17755,20 @@ export interface components {
       post: number;
       /** @description Состояние комментария. */
       status?: string;
-      /** @description Тип комментария. */
-      type?: string;
+      /**
+       * @description Тип комментария.
+       * @default comment
+       */
+      type: string;
       /** @description Мета поля. */
-      meta?: Record<string, never>;
+      meta?: {
+        /**
+         * @description Статус решения заметки
+         * @default
+         * @enum {string}
+         */
+        _wp_note_status: 'resolved' | 'reopen';
+      };
     };
     /** search-result */
     'search-result': {
@@ -17908,7 +17790,7 @@ export interface components {
        * @description Подтип объекта.
        * @enum {string}
        */
-      subtype?: 'post' | 'page' | 'leyka_campaign' | 'project' | 'profile' | 'category' | 'post_tag';
+      subtype?: 'post' | 'page' | 'leyka_campaign' | 'profile' | 'category' | 'post_tag' | 'pl-categs';
     };
     /** rendered-block */
     'rendered-block': {
@@ -18845,6 +18727,596 @@ export interface components {
       /** @description Рубрики коллекции шрифтов. */
       categories?: unknown[];
     };
+    /** icon */
+    icon: {
+      /** @description Название значка. */
+      name?: string;
+      /** @description Ярлык значка. */
+      label?: string;
+      /** @description Содержимое значка (разметка SVG). */
+      content?: string;
+      /** @description Ярлык коллекции, к которой принадлежит этот значок. */
+      collection?: string;
+    };
+    /** icon-collection */
+    'icon-collection': {
+      /** @description Ярлык коллекции значков. */
+      slug?: string;
+      /** @description Этикетка коллекции значков. */
+      label?: string;
+      /** @description Описание коллекции иконок. */
+      description?: string;
+    };
+    /** view-config */
+    'view-config': {
+      /** @description Тип сущности. */
+      kind?: string;
+      /** @description Название сущности. */
+      name?: string;
+      /** @description Версия схемы конфигурации. */
+      version?: number;
+      /** @description Конфигурация представления по умолчанию. */
+      default_view?: {
+        type?: string;
+        layout?: {
+          styles?: {
+            [key: string]: {
+              width?: string | number;
+              maxWidth?: string | number;
+              minWidth?: string | number;
+              /** @enum {string} */
+              align?: 'start' | 'center' | 'end';
+            };
+          };
+          /** @enum {string} */
+          density?: 'compact' | 'balanced' | 'comfortable';
+          enableMoving?: boolean;
+          badgeFields?: string[];
+          previewSize?: number;
+        };
+        filters?: {
+          field?: string;
+          /** @enum {string} */
+          operator?:
+            | 'is'
+            | 'isNot'
+            | 'isAny'
+            | 'isNone'
+            | 'isAll'
+            | 'isNotAll'
+            | 'lessThan'
+            | 'greaterThan'
+            | 'lessThanOrEqual'
+            | 'greaterThanOrEqual'
+            | 'before'
+            | 'after';
+          value?: unknown;
+          isLocked?: boolean;
+        }[];
+        sort?: {
+          field?: string;
+          /** @enum {string} */
+          direction?: 'asc' | 'desc';
+        };
+        perPage?: number;
+        fields?: string[];
+        titleField?: string;
+        mediaField?: string;
+        descriptionField?: string;
+        showTitle?: boolean;
+        showMedia?: boolean;
+        showDescription?: boolean;
+        showLevels?: boolean;
+        groupBy?: {
+          field?: string;
+          /** @enum {string} */
+          direction?: 'asc' | 'desc';
+          /** @default true */
+          showLabel: boolean;
+        };
+        infiniteScrollEnabled?: boolean;
+      };
+      /** @description Конфигурации макетов по умолчанию. */
+      default_layouts?: {
+        table?: {
+          filters?: {
+            field?: string;
+            /** @enum {string} */
+            operator?:
+              | 'is'
+              | 'isNot'
+              | 'isAny'
+              | 'isNone'
+              | 'isAll'
+              | 'isNotAll'
+              | 'lessThan'
+              | 'greaterThan'
+              | 'lessThanOrEqual'
+              | 'greaterThanOrEqual'
+              | 'before'
+              | 'after';
+            value?: unknown;
+            isLocked?: boolean;
+          }[];
+          sort?: {
+            field?: string;
+            /** @enum {string} */
+            direction?: 'asc' | 'desc';
+          };
+          perPage?: number;
+          fields?: string[];
+          titleField?: string;
+          mediaField?: string;
+          descriptionField?: string;
+          showTitle?: boolean;
+          showMedia?: boolean;
+          showDescription?: boolean;
+          showLevels?: boolean;
+          groupBy?: {
+            field?: string;
+            /** @enum {string} */
+            direction?: 'asc' | 'desc';
+            /** @default true */
+            showLabel: boolean;
+          };
+          infiniteScrollEnabled?: boolean;
+          layout?: {
+            styles?: {
+              [key: string]: {
+                width?: string | number;
+                maxWidth?: string | number;
+                minWidth?: string | number;
+                /** @enum {string} */
+                align?: 'start' | 'center' | 'end';
+              };
+            };
+            /** @enum {string} */
+            density?: 'compact' | 'balanced' | 'comfortable';
+            enableMoving?: boolean;
+          };
+        };
+        list?: {
+          filters?: {
+            field?: string;
+            /** @enum {string} */
+            operator?:
+              | 'is'
+              | 'isNot'
+              | 'isAny'
+              | 'isNone'
+              | 'isAll'
+              | 'isNotAll'
+              | 'lessThan'
+              | 'greaterThan'
+              | 'lessThanOrEqual'
+              | 'greaterThanOrEqual'
+              | 'before'
+              | 'after';
+            value?: unknown;
+            isLocked?: boolean;
+          }[];
+          sort?: {
+            field?: string;
+            /** @enum {string} */
+            direction?: 'asc' | 'desc';
+          };
+          perPage?: number;
+          fields?: string[];
+          titleField?: string;
+          mediaField?: string;
+          descriptionField?: string;
+          showTitle?: boolean;
+          showMedia?: boolean;
+          showDescription?: boolean;
+          showLevels?: boolean;
+          groupBy?: {
+            field?: string;
+            /** @enum {string} */
+            direction?: 'asc' | 'desc';
+            /** @default true */
+            showLabel: boolean;
+          };
+          infiniteScrollEnabled?: boolean;
+          layout?: {
+            /** @enum {string} */
+            density?: 'compact' | 'balanced' | 'comfortable';
+          };
+        };
+        grid?: {
+          filters?: {
+            field?: string;
+            /** @enum {string} */
+            operator?:
+              | 'is'
+              | 'isNot'
+              | 'isAny'
+              | 'isNone'
+              | 'isAll'
+              | 'isNotAll'
+              | 'lessThan'
+              | 'greaterThan'
+              | 'lessThanOrEqual'
+              | 'greaterThanOrEqual'
+              | 'before'
+              | 'after';
+            value?: unknown;
+            isLocked?: boolean;
+          }[];
+          sort?: {
+            field?: string;
+            /** @enum {string} */
+            direction?: 'asc' | 'desc';
+          };
+          perPage?: number;
+          fields?: string[];
+          titleField?: string;
+          mediaField?: string;
+          descriptionField?: string;
+          showTitle?: boolean;
+          showMedia?: boolean;
+          showDescription?: boolean;
+          showLevels?: boolean;
+          groupBy?: {
+            field?: string;
+            /** @enum {string} */
+            direction?: 'asc' | 'desc';
+            /** @default true */
+            showLabel: boolean;
+          };
+          infiniteScrollEnabled?: boolean;
+          layout?: {
+            badgeFields?: string[];
+            previewSize?: number;
+            /** @enum {string} */
+            density?: 'compact' | 'balanced' | 'comfortable';
+          };
+        };
+        activity?: {
+          filters?: {
+            field?: string;
+            /** @enum {string} */
+            operator?:
+              | 'is'
+              | 'isNot'
+              | 'isAny'
+              | 'isNone'
+              | 'isAll'
+              | 'isNotAll'
+              | 'lessThan'
+              | 'greaterThan'
+              | 'lessThanOrEqual'
+              | 'greaterThanOrEqual'
+              | 'before'
+              | 'after';
+            value?: unknown;
+            isLocked?: boolean;
+          }[];
+          sort?: {
+            field?: string;
+            /** @enum {string} */
+            direction?: 'asc' | 'desc';
+          };
+          perPage?: number;
+          fields?: string[];
+          titleField?: string;
+          mediaField?: string;
+          descriptionField?: string;
+          showTitle?: boolean;
+          showMedia?: boolean;
+          showDescription?: boolean;
+          showLevels?: boolean;
+          groupBy?: {
+            field?: string;
+            /** @enum {string} */
+            direction?: 'asc' | 'desc';
+            /** @default true */
+            showLabel: boolean;
+          };
+          infiniteScrollEnabled?: boolean;
+          layout?: {
+            /** @enum {string} */
+            density?: 'compact' | 'balanced' | 'comfortable';
+          };
+        };
+        pickerGrid?: {
+          filters?: {
+            field?: string;
+            /** @enum {string} */
+            operator?:
+              | 'is'
+              | 'isNot'
+              | 'isAny'
+              | 'isNone'
+              | 'isAll'
+              | 'isNotAll'
+              | 'lessThan'
+              | 'greaterThan'
+              | 'lessThanOrEqual'
+              | 'greaterThanOrEqual'
+              | 'before'
+              | 'after';
+            value?: unknown;
+            isLocked?: boolean;
+          }[];
+          sort?: {
+            field?: string;
+            /** @enum {string} */
+            direction?: 'asc' | 'desc';
+          };
+          perPage?: number;
+          fields?: string[];
+          titleField?: string;
+          mediaField?: string;
+          descriptionField?: string;
+          showTitle?: boolean;
+          showMedia?: boolean;
+          showDescription?: boolean;
+          showLevels?: boolean;
+          groupBy?: {
+            field?: string;
+            /** @enum {string} */
+            direction?: 'asc' | 'desc';
+            /** @default true */
+            showLabel: boolean;
+          };
+          infiniteScrollEnabled?: boolean;
+          layout?: {
+            badgeFields?: string[];
+            previewSize?: number;
+            /** @enum {string} */
+            density?: 'compact' | 'balanced' | 'comfortable';
+          };
+        };
+        pickerTable?: {
+          filters?: {
+            field?: string;
+            /** @enum {string} */
+            operator?:
+              | 'is'
+              | 'isNot'
+              | 'isAny'
+              | 'isNone'
+              | 'isAll'
+              | 'isNotAll'
+              | 'lessThan'
+              | 'greaterThan'
+              | 'lessThanOrEqual'
+              | 'greaterThanOrEqual'
+              | 'before'
+              | 'after';
+            value?: unknown;
+            isLocked?: boolean;
+          }[];
+          sort?: {
+            field?: string;
+            /** @enum {string} */
+            direction?: 'asc' | 'desc';
+          };
+          perPage?: number;
+          fields?: string[];
+          titleField?: string;
+          mediaField?: string;
+          descriptionField?: string;
+          showTitle?: boolean;
+          showMedia?: boolean;
+          showDescription?: boolean;
+          showLevels?: boolean;
+          groupBy?: {
+            field?: string;
+            /** @enum {string} */
+            direction?: 'asc' | 'desc';
+            /** @default true */
+            showLabel: boolean;
+          };
+          infiniteScrollEnabled?: boolean;
+          layout?: {
+            styles?: {
+              [key: string]: {
+                width?: string | number;
+                maxWidth?: string | number;
+                minWidth?: string | number;
+                /** @enum {string} */
+                align?: 'start' | 'center' | 'end';
+              };
+            };
+            /** @enum {string} */
+            density?: 'compact' | 'balanced' | 'comfortable';
+            enableMoving?: boolean;
+          };
+        };
+      };
+      /** @description Список представлений по умолчанию. */
+      view_list?: {
+        title?: string;
+        slug?: string;
+        view?: {
+          type?: string;
+          layout?: {
+            styles?: {
+              [key: string]: {
+                width?: string | number;
+                maxWidth?: string | number;
+                minWidth?: string | number;
+                /** @enum {string} */
+                align?: 'start' | 'center' | 'end';
+              };
+            };
+            /** @enum {string} */
+            density?: 'compact' | 'balanced' | 'comfortable';
+            enableMoving?: boolean;
+            badgeFields?: string[];
+            previewSize?: number;
+          };
+          filters?: {
+            field?: string;
+            /** @enum {string} */
+            operator?:
+              | 'is'
+              | 'isNot'
+              | 'isAny'
+              | 'isNone'
+              | 'isAll'
+              | 'isNotAll'
+              | 'lessThan'
+              | 'greaterThan'
+              | 'lessThanOrEqual'
+              | 'greaterThanOrEqual'
+              | 'before'
+              | 'after';
+            value?: unknown;
+            isLocked?: boolean;
+          }[];
+          sort?: {
+            field?: string;
+            /** @enum {string} */
+            direction?: 'asc' | 'desc';
+          };
+          perPage?: number;
+          fields?: string[];
+          titleField?: string;
+          mediaField?: string;
+          descriptionField?: string;
+          showTitle?: boolean;
+          showMedia?: boolean;
+          showDescription?: boolean;
+          showLevels?: boolean;
+          groupBy?: {
+            field?: string;
+            /** @enum {string} */
+            direction?: 'asc' | 'desc';
+            /** @default true */
+            showLabel: boolean;
+          };
+          infiniteScrollEnabled?: boolean;
+        };
+      }[];
+      /** @description Конфигурация формы по умолчанию. */
+      form?: {
+        layout?:
+          | {
+              /** @enum {string} */
+              type?: 'regular';
+              /** @enum {string} */
+              labelPosition?: 'top' | 'side' | 'none';
+            }
+          | {
+              /** @enum {string} */
+              type?: 'panel';
+              /** @enum {string} */
+              labelPosition?: 'top' | 'side' | 'none';
+              openAs?:
+                | ('dropdown' | 'modal')
+                | {
+                    /** @enum {string} */
+                    type?: 'dropdown' | 'modal';
+                    applyLabel?: string;
+                    cancelLabel?: string;
+                  };
+              summary?: string | string[];
+              /** @enum {string} */
+              editVisibility?: 'always' | 'on-hover';
+            }
+          | {
+              /** @enum {string} */
+              type?: 'card';
+              withHeader?: boolean;
+              isOpened?: boolean;
+              isCollapsible?: boolean;
+              summary?:
+                | string
+                | (
+                    | string
+                    | {
+                        id?: string;
+                        /** @enum {string} */
+                        visibility?: 'always' | 'when-collapsed';
+                      }
+                  )[];
+            }
+          | {
+              /** @enum {string} */
+              type?: 'row';
+              /** @enum {string} */
+              alignment?: 'start' | 'center' | 'end';
+              styles?: {
+                [key: string]: {
+                  flex?: string | number;
+                };
+              };
+            }
+          | {
+              /** @enum {string} */
+              type?: 'details';
+              summary?: string;
+            };
+        fields?: (
+          | string
+          | {
+              id?: string;
+              label?: string;
+              description?: string;
+              layout?:
+                | {
+                    /** @enum {string} */
+                    type?: 'regular';
+                    /** @enum {string} */
+                    labelPosition?: 'top' | 'side' | 'none';
+                  }
+                | {
+                    /** @enum {string} */
+                    type?: 'panel';
+                    /** @enum {string} */
+                    labelPosition?: 'top' | 'side' | 'none';
+                    openAs?:
+                      | ('dropdown' | 'modal')
+                      | {
+                          /** @enum {string} */
+                          type?: 'dropdown' | 'modal';
+                          applyLabel?: string;
+                          cancelLabel?: string;
+                        };
+                    summary?: string | string[];
+                    /** @enum {string} */
+                    editVisibility?: 'always' | 'on-hover';
+                  }
+                | {
+                    /** @enum {string} */
+                    type?: 'card';
+                    withHeader?: boolean;
+                    isOpened?: boolean;
+                    isCollapsible?: boolean;
+                    summary?:
+                      | string
+                      | (
+                          | string
+                          | {
+                              id?: string;
+                              /** @enum {string} */
+                              visibility?: 'always' | 'when-collapsed';
+                            }
+                        )[];
+                  }
+                | {
+                    /** @enum {string} */
+                    type?: 'row';
+                    /** @enum {string} */
+                    alignment?: 'start' | 'center' | 'end';
+                    styles?: {
+                      [key: string]: {
+                        flex?: string | number;
+                      };
+                    };
+                  }
+                | {
+                    /** @enum {string} */
+                    type?: 'details';
+                    summary?: string;
+                  };
+              children?: (string | Record<string, never>)[];
+            }
+        )[];
+      };
+    };
     /** wp-site-health-test */
     'wp-site-health-test': {
       /** @description Название запущенного теста. */
@@ -18871,6 +19343,51 @@ export interface components {
     'navigation-fallback': {
       /** @description Уникальный идентификатор для меню навигации. */
       id?: number;
+    };
+    /** ability-category */
+    'ability-category': {
+      /** @description Уникальный идентификатор категории возможностей. */
+      slug?: string;
+      /** @description Отображение ярлыка категории. */
+      label?: string;
+      /** @description Описание категории. */
+      description?: string;
+      /** @description Мета информация для категории. */
+      meta?: Record<string, never>;
+    };
+    /** ability-execution */
+    'ability-execution': {
+      /** @description Результат исполнения возможности. */
+      result?: number | boolean | string | unknown[] | Record<string, never> | null;
+    };
+    /** ability */
+    ability: {
+      /** @description Уникальный идентификатор категории. */
+      name?: string;
+      /** @description Ярлык отображения для возможности. */
+      label?: string;
+      /** @description Описание возможности. */
+      description?: string;
+      /** @description Категория, к которой принадлежит возможность. */
+      category?: string;
+      /** @description Схема JSON для ввода возможности. */
+      input_schema?: Record<string, never>;
+      /** @description Схема JSON для вывода возможности. */
+      output_schema?: Record<string, never>;
+      /** @description Мета информация о возможности. */
+      meta?: {
+        /** @description Поведенческие аннотации возможности. */
+        annotations?: {
+          /** @description Может ли возможность выполнять деструктивные обновления своего окружения. */
+          destructive?: boolean | null;
+          /** @description Имеют ли повторные вызовы с одними и теми же аргументами дополнительный эффект. */
+          idempotent?: boolean | null;
+        } & {
+          [key: string]: unknown;
+        };
+        /** @description Предполагается ли, что эта возможность будет доступна таким клиентам, как REST API, MCP или агенты ИИ. По умолчанию установлено значение false, но отдельные настройки канала, такие как show_in_rest, могут переопределить его. */
+        public?: boolean;
+      };
     };
   };
   responses: never;

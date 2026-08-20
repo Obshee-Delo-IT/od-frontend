@@ -12,7 +12,7 @@
     "prepare": "husky",
     "type-check": "tsc --noEmit",
     "lint:styles": "stylelint \"**/*.css\" --fix --mw 0",
-    "generate:types": "openapi-typescript",
+    "generate:types": "node scripts/generate-wp-types.mjs",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
