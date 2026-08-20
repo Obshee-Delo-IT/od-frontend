@@ -1,6 +1,6 @@
 # Page inventory — what is redesigned, what is passed through, what is on the iframe
 
-**Measured 2026-08-20** against od-dev, and regenerable: `pnpm pages:inventory`. The script (`scripts/page-inventory.mjs`) derives every bucket from the code rather than from a list kept by hand — the page set from `/wp/v2/pages`, the redesigned set from `od_pages_registry()` in `wp/scripts/od-pages.php`, the iframe set from `src/shared/config/legacyEmbedPages.ts` — so a table here can be re-run instead of trusted. It exists because the numbers this file replaces had gone stale by roughly an order of magnitude (§6).
+**Measured 2026-08-20** against od-dev, with **the same census re-run against the prod clone on 2026-08-21 in §1a** — read that one for what production actually holds. Regenerable either way: `pnpm pages:inventory`, pointed by `WP_BASE`. The script (`scripts/page-inventory.mjs`) derives every bucket from the code rather than from a list kept by hand — the page set from `/wp/v2/pages`, the redesigned set from `od_pages_registry()` in `wp/scripts/od-pages.php`, the iframe set from `src/shared/config/legacyEmbedPages.ts` — so a table here can be re-run instead of trusted. It exists because the numbers this file replaces had gone stale by roughly an order of magnitude (§6).
 
 Sibling docs: [`wp-page-passthrough.md`](./wp-page-passthrough.md) is _how_ a page reaches the browser, [`wp-page-redesign.md`](./wp-page-redesign.md) is _how to change one_, [`implementation-plan.md`](./implementation-plan.md) is what is still open. This file is only the census.
 
@@ -16,6 +16,31 @@ Sibling docs: [`wp-page-passthrough.md`](./wp-page-passthrough.md) is _how_ a pa
 | **A6 iframe**                     |     6 | on the opt-out list → `modules/Legacy/LegacyEmbed` over `WP_LEGACY_BASE`                                               |
 
 So **153 of 168 pages render natively**, and the iframe is down to six paths from the twenty it launched with.
+
+## 1a. The same census against the prod clone (2026-08-21)
+
+Run against od-stage after workstream D was applied there ([`prod-migration-runbook.md` §0.6](./prod-migration-runbook.md) item 8). **This is the row that matters for launch** — §1 above measures the design instance, and od-dev holds pages production does not.
+
+**148 published pages**, twenty fewer than od-dev, and the difference is almost entirely regional: production has **57** published children of `/contacts/` where od-dev has 75.
+
+|                                   | pages | od-dev |
+| --------------------------------- | ----: | -----: |
+| **Native route** shadows the page |     9 |      9 |
+| **WP page, redesigned**           |    93 |    109 |
+| **WP page, passthrough**          |    40 |     44 |
+| **A6 iframe**                     |     6 |      6 |
+
+So **142 of 148 render natively**, and the traffic that lands on them is what the buckets are for:
+
+| bucket | pageviews | entry visits |
+| --- | ---: | ---: |
+| native route | 82.1 % | 89.0 % |
+| WP page, redesigned | 13.7 % | 8.2 % |
+| WP page, passthrough | 2.1 % | 1.8 % |
+| A6 iframe | 1.6 % | 0.5 % |
+| **no page — 404** | **0.5 %** | **0.4 %** |
+
+**The 404 bucket is the one to read.** Its largest entries are `/sms/` (46 entry visits — a page that has never existed on production, and `https://obshee-delo.ru/sms/` 404s today too) and **eighteen regional URLs** that draw 1–5 visits each: `/contacts/tyumenskaya/`, `/contacts/kalujskaya/`, `/contacts/chuvashiya/`, `/contacts/orenburgskaya/`, `/contacts/penzenskaya/` and the rest. They are not something this project lost — **the live site links them from its own map and 404s on them**, because the old theme's `switch` has 63 cases and production's page for each was deleted at some point. `pnpm map:generate` now greys them instead: 52 linked regions, 30 drawn but not clickable. Chechnya is the same story one step further along — its page is in production's trash, and `CODE_ALIASES` treats a missing alias target as «no page» rather than an error, because an alias is a note about a name and not a promise that the page is there.
 
 ## 2. Native routes
 

@@ -222,11 +222,24 @@ const main = async () => {
   const pages = await fetchRegionPages(env);
   const { regions, used } = buildRegions(vectorMap, cases, pages);
 
-  const linked = regions.filter(({ href }) => href);
-  const dead = linked.filter(({ href }) => !pages.has(href));
-  if (dead.length > 0) {
-    throw new Error(`${dead.length} href(s) match no published page: ${dead.map(({ href }) => href).join(', ')}`);
+  const dead = regions.filter(({ href }) => href && !pages.has(href));
+
+  // An alias is a hint for a name matching cannot reach, not a promise that the
+  // page is there: production keeps Chechnya in the trash where od-dev publishes
+  // it. So an alias with no page greys its region like any other unlinked one —
+  // out loud, because the alias is then only a note about a name.
+  const aliases = new Set(Object.values(CODE_ALIASES));
+  for (const region of dead.filter(({ href }) => aliases.has(href))) {
+    console.log(`alias ${region.code} → ${region.href}: no published page, greyed`);
+    region.href = '';
   }
+
+  const fatal = dead.filter(({ href }) => href && !aliases.has(href));
+  if (fatal.length > 0) {
+    throw new Error(`${fatal.length} href(s) match no published page: ${fatal.map(({ href }) => href).join(', ')}`);
+  }
+
+  const linked = regions.filter(({ href }) => href);
 
   const file = serialise(vectorMap, regions);
   const pathBytes = regions.reduce((sum, { path: d }) => sum + Buffer.byteLength(d), 0);
