@@ -35,9 +35,11 @@ Status legend: `[ ]` not started · `[~]` partial or blocked · `[x]` done.
 
 ## Launch priority
 
-Measured, not guessed — the derivation is [notes §7](./implementation-notes.md#7-research--traffic-yandex-metrica-91-days). Two numbers drive everything below:
+Measured, not guessed — the derivation is [notes §7](./implementation-notes.md#7-research--traffic-yandex-metrica-91-days), the current census [`page-inventory.md`](./page-inventory.md). What drives everything below:
 
-> **Built routes cover 85.1 % of entry visits and 77.2 % of pageviews.** The A6 fallback carries the rest: **13.5 % of entries, 20.0 % of views.**
+> **Re-measured 2026-08-20** ([`page-inventory.md` §6](./page-inventory.md#6-traffic-re-measured), `pnpm pages:inventory`): natively-rendered URLs carry **98.9 % of entry visits and 97.0 % of pageviews** — native routes 89.0 / 82.1 %, redesigned WP pages 6.3 / 11.3 %, un-redesigned WP pages 3.6 / 3.6 %. **The A6 fallback is down to 7 paths, 0.8 % of entries and 2.6 % of views.**
+>
+> *Historical, and what the tiering below was priced off:* on 2026-08-13, before D3 and D6 moved ~150 pages off the iframe, built routes covered 85.1 % of entries and 77.2 % of views, and the fallback carried **13.5 % of entries, 20.0 % of views**.
 
 Rank by **entry visits** first — that's what search sends, and what the iframe degrades. Then re-read by **pageviews**, because under A6 the body is the old design and a heavily-browsed page shows a visible seam. The two rank differently often enough that ignoring the second one gets the order wrong.
 
@@ -52,7 +54,7 @@ Rank by **entry visits** first — that's what search sends, and what the iframe
 
 **Tier 3 — fallback at launch, redesign after prod.** `/about/*` · `/get-involved/*` · `/healthy-*` · `/team/` · `/actual/` · the other 10 `/materials/` sub-pages. (`/projects/` was on this list and is now rendered from WordPress — D6's index shipped 2026-08-15 as a native route and moved into the WP page itself on 2026-08-18, D6g.) ~2 800 views, ~1 100 entries. **Order these by views, not entries** — everything here is low-entry by construction, so the question is how many people will *see* an iframe. That put `/about/` first (1 036 views, the most-viewed page behind the fallback), and it is ✅ built as of 2026-08-19 (D6w); `/projects/` (794) came second and has since been built natively; then `/get-involved/` (586), with `/team/` (326, ✅ D3) and `/actual/` (134) genuinely last.
 
-**Tier 4 — leave on the fallback indefinitely.** `/faq/` (70 views — **D5 drops to last**) · `/sitemap/` · `/sp/` · `/sms/` · `/rekvizit/` · `/my-account/` · `/campaign/` · `/pl-categs/` · WP account/preview URLs. Under 0.5 % of the site combined.
+**Tier 4 — leave un-redesigned indefinitely.** `/faq/` (70 views — **D5 drops to last**) · `/sitemap/` · `/sp/` · `/sms/` · `/rekvizit/` · `/campaign/` · `/pl-categs/` · WP account/preview URLs. Under 0.5 % of the site combined. Note none of these is on the *iframe* any more — they are WordPress pages rendered natively without a redesign, which is a different and much cheaper kind of debt (`/my-account/` was on this list and was deleted in WordPress on 2026-08-17).
 
 **Do not build, redirect instead** — done in A8's `src/proxy.ts`: the whole `/category/*` family and `/page/N/` home pagination. Still open: the `?s=` search URLs (→ B7).
 

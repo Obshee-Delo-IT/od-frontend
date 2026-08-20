@@ -24,6 +24,7 @@
     "film:remap": "node scripts/remap-worksheet.mjs",
     "film:kinescope": "node --env-file=.env scripts/match-kinescope.mjs",
     "url:check": "node scripts/check-legacy-urls.mjs",
+    "pages:inventory": "node --env-file=.env scripts/page-inventory.mjs",
     "legacy:sweep": "node scripts/legacy-sweep.mjs"
   },
   "lint-staged": {

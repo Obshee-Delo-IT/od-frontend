@@ -418,7 +418,7 @@ Verified against the fetchers 2026-08-13. Everything goes through the single `op
 ### 6.2 Available but unused — relevant to upcoming work
 
 - ~~`GET /wp/v2/profile?slug=…`~~ — **now consumed** by `fetchProfile`, see §6.1. `GET /wp/v2/profile` (139 published, list form) and `GET /wp/v2/profile/{id}` are still unused; `/profile/[slug]` itself (D3) is unbuilt. ⚠️ **not** `/wp/v2/pl-categs`, which 404s — the cmsms taxonomies aren't in REST (§3.2). What D3 can actually read is inventoried in §3.5
-- `GET /wp/v2/pages` (**174** published) — generic pages (about, FAQ, contacts, materials landing — depending on how content is organised). Also the denominator for the A6 fallback.
+- `GET /wp/v2/pages` (**169** published, re-counted 2026-08-20 — the five WooCommerce/order pages deleted on 2026-08-17 came out of the 174) — generic pages (about, FAQ, contacts, materials landing — depending on how content is organised). Also the denominator for the A6 fallback.
 - ~~`GET /wp/v2/search`~~ — **now consumed**, see §6.1. Fetcher only; the results page and the header input are still to build (B7 UI, gated on C9)
 - `GET /wp/v2/settings` — site metadata (`.description` is the line under the logo)
 - `GET /wp/v2/sidebars/{id}` — the explicit widget-id list, if we ever want a separate cache key (the footer itself already uses `/widgets` — see §6.1)

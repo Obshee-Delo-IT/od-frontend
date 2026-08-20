@@ -60,6 +60,7 @@ Next.js 16 (App Router) поверх WordPress REST API. Документаци�
 | `pnpm test:e2e`             | Playwright. `test:e2e:ui` — в UI-режиме. Нужен запущенный дев-сервер                                                                               |
 | `pnpm generate:types`       | перегенерировать типы WP API из OpenAPI-схемы                                                                                                      |
 | `pnpm url:check`            | проверить, что реальные адреса старого сайта не отдают 404 (по выгрузке «Страницы входа» из Яндекс.Метрики). `-- --base https://…` — против деплоя |
+| `pnpm pages:inventory`      | сколько страниц WP заредизайнено, сколько отдаётся как есть, сколько осталось на A6-iframe — плюс доля трафика каждой группы. `-- --list passthrough` — полный список |
 
 Перед пушем прогоняются те же проверки, что и в CI: `pnpm lint && pnpm type-check && pnpm test && pnpm build`. На закоммиченных файлах husky + lint-staged дополнительно гоняют `eslint --fix` и `prettier`.
 

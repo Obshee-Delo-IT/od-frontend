@@ -1194,7 +1194,7 @@ The redesign replaces an existing site. Facts harvested from a live read, used t
 - **Section label drift.** Live site calls the section **«ПРОГРАММЫ»** (`/projects/`); the Figma section is **«проекты»**. Figma's own canonical `header-v2` nav spells it «ПРОГРАММЫ», agreeing with the live site.
 - **External / sibling properties** — links into them, not implementations of them: **`общее-дело.рф`** (punycode `xn----9sbkcac6brh7h.xn--p1ai`, alt domain, already allowlisted in `images.remotePatterns`), **`pro.obshee-delo.ru`** («ОБЩЕЕДЕЛО-ПРО» — *not* `od-pro.ru`, which prod's nav links to but which serves a separate contest landing; see C9), **`помоги.общее-дело.рф`** (donations), **`статы.общее-дело.рф`** (statistics dashboard), **`reformal.ru/od1`** (suggest-an-idea form).
 - **Pages the live site has that Figma doesn't mock** — worth raising with Design: `/about/smi/`, `/about/nashi_partnery/`, `/about/experts-review/`, `/about/reviews/`, `/about/ostavit-otziv/`, `/sp/`, `/sitemap/`.
-- **174 published `wp/v2/pages`** (re-confirmed 2026-08-13) — regional pages (~40), programmes, materials, legal, team, plus a long tail. This is what A6 exists for.
+- **174 published `wp/v2/pages`** (re-confirmed 2026-08-13; **169** on 2026-08-20) — regional pages (74 `/contacts/<region>/`), programmes, materials, legal, team, plus a long tail. This is what A6 exists for; where each one is served from now is [`page-inventory.md`](./page-inventory.md).
 
 ---
 
@@ -1217,6 +1217,8 @@ They rank differently, and the gap is big enough to change decisions:
 | **A6 fallback** | **11 829 (20.0 %)** | **3 645 (13.5 %)** |
 
 So the SEO exposure is 13.5 % but the *visible* exposure is 20.0 % — one pageview in five.
+
+**Re-measured 2026-08-20, and the table above is now historical.** D3 and D6 did not move traffic, they moved *pages*: ~150 of them came off the iframe onto native rendering at the same URLs. The same two exports, re-binned by `pnpm pages:inventory`, put natively-rendered URLs at **97.0 % of views and 98.9 % of entries**, and the A6 iframe at **2.6 % / 0.8 %** over its remaining seven paths. Keep the 2026-08-13 numbers for reading the launch tiering, which was priced off them; use [`page-inventory.md`](./page-inventory.md) for anything current.
 
 **`v/e` (views ÷ entries) is the tell.** High = a nav destination reached by clicking; low = a search landing. `/news/` is 21×, `/projects/` 9.3×, `/materials/` index 8.8×, `/contacts/` and `/get-involved/` 7.0×, `/about/` 4.5×, `/profile/*` **1.6×** — the lowest on the site.
 
