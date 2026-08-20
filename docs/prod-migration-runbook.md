@@ -42,10 +42,14 @@ Related: [`implementation-plan.md`](./implementation-plan.md) (task state) · [`
 5. **Rollback becomes trivial, and that is the point of the model.** Every gate in §5 runs before the domain moves. If something is wrong afterwards, the domain moves back to an install that was never modified. Compare the in-place version of this plan, where the return path was a database snapshot taken before 5669 bodies were rewritten.
 6. **Ids settle once.** The clone carries prod's own post and category ids, so §1.3's numbers, `filmCategories.ts` (B5) and `film:remap` (B4) are resolved against the clone and stay correct through the swap. There is no per-tier id dance after cutover.
 
-**Two things this model introduces that in-place did not.**
+**The content gap: an editorial pause, agreed by hand — decided 2026-08-20.** Edits between the clone and the swap would not reach the new install, so editors simply stop during that window. The site is not edited often and the pause is arranged as a process, so **nothing has to be locked technically** — no read-only mode, no plugin, no capability change. Which also means the prep runs **once**, on **one** clone: re-clone-and-re-prep is a fallback if something goes badly wrong, not the plan, so nothing in §2 has to be built for repeatability. (It happens to be repeatable anyway — `wp cmsms backup` skips rows that already carry `nvp_content_copy`, `migrate` skips content that already matches, and workstream D's scripts are idempotent.)
 
-- **The content gap.** Editors keep working on the old install between the clone and the swap, and those edits are not in the new one. Two ways out, and the second is better: freeze editing for the whole prep, or **script the prep** so a *fresh* clone can be re-prepped shortly before cutover and the freeze shrinks to that window. Favour scripting — §0.6 is already a list of commands with a gate after each, and the two expensive steps are re-run-safe by construction (`wp cmsms backup` skips rows that already have a `nvp_content_copy`; `migrate` compares against current content and skips what matches). Workstream D's `od-pages.php` / `od-wp.php` are idempotent for the same reason.
-- **Where the new install lives — the one open decision.** Prod is on **BeGet** (`ssh od-root`), od-stage is on **Timeweb**. Building the replacement as a sibling on BeGet makes cutover a vhost plus DNS change and leaves mail, cron, TLS and the `.htaccess` 301s that send 2009–2023 uploads to the Yandex bucket exactly where they are. Building it on Timeweb means the swap is also a **host migration**, with all of that to redo, and both installs' `.htaccess` upload rules to re-verify. **Recommend BeGet**, and note that od-stage on Timeweb then remains what it is now — the rehearsal, not the article.
+⚠ **The pause is as long as clone → cutover, so keep that window mechanical.** It is not just §2: everything between the clone and the DNS change sits inside it, verification included. So settle on **od-stage** everything that does not need the fresh clone — §1.3's category ids, the `generate:types` diff, ACF and the film worksheet, workstream D's scripts, the frontend build and §5's gates — because od-stage already carries prod's own content and ids and answers the same questions. What should be left for the new install is the §2 pass, the film data import against real ids, and a re-run of the gates. od-stage's whole value is making that window short.
+
+**Where the new install lives: BeGet, beside prod — decided 2026-08-20.** So the swap is a vhost plus DNS change, and mail, cron, TLS and the `.htaccess` 301s that send 2009–2023 uploads to the Yandex bucket all stay where they are. od-stage on Timeweb stays what it is now: the rehearsal, not the article. Two practical consequences:
+
+- **The clone is server-side.** Same account, so prod's tree and database never leave the host — `cp -a` and a `mysqldump | mysql` between the two, not the 5 MB/s stream through a local machine that od-stage's copy needed.
+- **Check the account boundary before assuming that.** `od-root` is a **per-site subaccount** whose home *is* the site directory, with no access to the account's other sites or their databases ([`wp-backend.md` §1](./wp-backend.md#1-access)). Creating the sibling site, and getting a shell that can see both, is a panel action and may come with different credentials. Establish that first — it is the one thing that could turn a same-host clone back into a stream.
 
 ---
 
@@ -661,17 +665,17 @@ Post detail lives at the bare **`/<id>`** since A8 — that is the *only* addres
 
 ## 5.5 Cutover — what actually moves
 
-Under §0.4 this is the whole of "going live", and it happens only after every §5 gate is green against the temporary host.
+Under §0.4 this is the whole of "going live", and it happens only after every §5 gate is green against the new install. Both installs are on **BeGet** (§0.4), so nothing below is a host migration — it is a vhost change, a few config edits and one DNS record.
 
 **First, a naming point that decides work later.** Three hostnames exist after cutover, not two, and the apex is not WordPress:
 
-| host | serves | env var |
-| --- | --- | --- |
-| `obshee-delo.ru` | the **Next frontend** on the Beget VPS (§4.6) | `SITE_URL` |
-| a stable subdomain — pick `wp.obshee-delo.ru`, not `new.…` | the **new WordPress install** | `WP_BASE` |
-| `frozen.obshee-delo.ru` | the **old install**, untouched | `WP_LEGACY_BASE` |
+| host | serves | where | env var |
+| --- | --- | --- | --- |
+| `obshee-delo.ru` | the **Next frontend** | the Beget VPS + Coolify (§4.6) | `SITE_URL` |
+| a stable subdomain — pick `wp.obshee-delo.ru`, not `new.…` | the **new WordPress install** | BeGet shared, new site | `WP_BASE` |
+| `frozen.obshee-delo.ru` | the **old install**, untouched | BeGet shared, `~/public_html` today | `WP_LEGACY_BASE` |
 
-**Give the new install its permanent hostname on day one.** `new.…` looks harmless and isn't: `WP_BASE` is baked into `images.remotePatterns` at **build** time, it is what a database-wide search-replace writes into 8 500 bodies, and it is the origin `resolveMediaUrl` probes. Renaming it after the fact means another search-replace, another rebuild and a re-verification of every image. This is exactly the cost od-stage paid going from `stage.od.webtm.ru` to `od.webtm.ru` (§0.5), for a much smaller install.
+**Give the new install its permanent hostname on day one.** `new.…` looks harmless and isn't: `WP_BASE` is baked into `images.remotePatterns` at **build** time, it is what a database-wide search-replace writes into 8 500 bodies, and it is the origin `resolveMediaUrl` probes. Renaming it after the fact means another search-replace, another rebuild and a re-verification of every image. This is exactly the cost od-stage paid going from `stage.od.webtm.ru` to `od.webtm.ru` (§0.5), for a much smaller install. If the new install is given `wp.obshee-delo.ru` from the moment it is cloned, steps 1–4 below are the *only* time its host is ever written.
 
 **On the new install** — the same four edits §0.5 records doing twice, so they are known:
 
