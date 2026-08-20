@@ -426,24 +426,34 @@ at. 20 of the 72 terms have zero profiles.
 **What to do:** a content question for the coordinators, not a code fix — either
 those four regions have contacts to tag or the pages should stop implying they do.
 
-## Icons carry no `aria-hidden`, app-wide
+## ~~Icons carry no `aria-hidden`, app-wide~~ — done 2026-08-20
 
-**Found 2026-08-18.** The `@svgr/webpack` wrappers in
-`src/shared/ui/components/Icons/index.tsx` pass no `aria-hidden`, so every
-decorative glyph is an anonymous `img` node in the accessibility tree. `PersonCard`
-now sets it at the call site, which is the local fix; the general one is
-`svgProps: { 'aria-hidden': 'true' }` in the loader config, one line — but it
-would also hide the icons that *are* the accessible name of their control, so each
-icon-only button needs an `aria-label` checked first. Worth doing as its own pass
-over the ~25 icons.
+**Found 2026-08-18, closed with the one line it was always going to be:**
+`svgProps: { 'aria-hidden': 'true' }` in the svgr loader options in
+`next.config.ts`, mirrored in `vitest.config.ts` so a test sees the rendered
+attribute. It covers the components in `Icons/index.tsx` *and* the three that
+import an SVG straight from `assets/icons/` (`Accordion`, `ButtonGroupItem`,
+`Breadcrumbs`), which a change to the wrappers would have missed.
+
+**The precondition was checked first, and it held:** every icon-only control on
+the site already carries its own `aria-label` — `Carousel`'s two `IconButton`s,
+`Pagination`'s prev/next links, the header's search and menu buttons, and the
+footer's three social links (`renderFooterWidget` supplies theirs). So nothing
+lost an accessible name. `Icons.test.tsx` asserts the default and asserts that
+`aria-hidden={false}` at a call site still wins, which is what makes an app-wide
+default safe — svgr spreads the caller's props after its own.
 
 ## Two footer/heading semantics gaps outside D8
 
 **Found 2026-08-18** while auditing `/materials/metodichki/` in a production build:
 
-- The footer's social row is a `<h2 class="wp-block-heading">` **with no text**,
-  wrapping three icon links — an empty heading in the a11y tree. Global, comes
-  from the WordPress footer widget.
+- ~~The footer's social row is a `<h2 class="wp-block-heading">` **with no text**,
+  wrapping three icon links — an empty heading in the a11y tree.~~ **Done
+  2026-08-20**, in `renderFooterWidget`: a heading with no text of its own is
+  rendered as a `div` carrying the same class, so `Footer.module.css` still lays
+  the row out and the empty heading is gone from every page. Fixed on this side
+  rather than in the widget because the markup is an editor's and would come
+  back on the next save.
 - `/contacts/<region>/` pages go `h1` → **`h3`** (the coordinator teaser's title)
   → `h2` «События». The coordinator query block has no section heading of its own.
   A skipped level on ~75 pages; fixable with one heading block per page, or by

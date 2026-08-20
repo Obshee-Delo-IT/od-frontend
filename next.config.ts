@@ -26,7 +26,15 @@ const nextConfig: NextConfig = {
             loader: '@svgr/webpack',
             // Shared with the test pipeline — see svgo.config.ts for why each
             // plugin is there.
-            options: { svgoConfig },
+            //
+            // Every icon on this site is decorative: each icon-only control
+            // (Carousel, Pagination, the header's search and menu buttons, the
+            // footer's social links) carries its own `aria-label`, so hiding the
+            // glyph app-wide removes ~25 anonymous `img` nodes from the
+            // accessibility tree and takes no accessible name with it. A call
+            // site that ever needs the opposite passes `aria-hidden={false}` —
+            // svgr spreads props after these.
+            options: { svgoConfig, svgProps: { 'aria-hidden': 'true' } },
           },
         ],
         as: '*.js',

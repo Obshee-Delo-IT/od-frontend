@@ -37,6 +37,14 @@ describe('renderFooterWidget', () => {
     expect(screen.getByRole('link', { name: 'ВКонтакте' })).toHaveClass('social');
   });
 
+  it('demotes the textless social heading, keeping the class the layout needs', () => {
+    const { container } = render(<>{renderFooterWidget(SOCIAL_WIDGET)}</>);
+
+    expect(screen.queryByRole('heading')).not.toBeInTheDocument();
+    expect(container.querySelector('div.wp-block-heading')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'ВКонтакте' })).toBeInTheDocument();
+  });
+
   it('leaves ordinary widget markup alone', () => {
     render(
       <>

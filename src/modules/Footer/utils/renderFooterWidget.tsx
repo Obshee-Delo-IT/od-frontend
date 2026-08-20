@@ -1,8 +1,15 @@
-import parse, { Element } from 'html-react-parser';
+import parse, { domToReact, Element } from 'html-react-parser';
 import { ReactNode } from 'react';
 import { OdnoklassnikiIcon, VkIcon, YoutubeIcon } from '@/shared/ui/components/Icons';
+import type { DOMNode, HTMLReactParserOptions } from 'html-react-parser';
 
 const isElement = (node: unknown): node is Element => node instanceof Element;
+
+/** Whether anything under this node would be read out — markup-only children don't count. */
+const hasText = (node: Element): boolean =>
+  node.children.some((child) =>
+    isElement(child) ? hasText(child) : child.type === 'text' && child.data.trim() !== ''
+  );
 
 /**
  * The social row in the `sidebar_bottom` widget is three empty anchors carrying
@@ -33,13 +40,26 @@ const socialFor = (className = '') =>
 
 /**
  * Render one footer widget's `rendered` HTML, with the social anchors replaced
- * by real icons. Everything else — headings, link lists, the legal copy — is
- * WordPress's markup, unchanged, and styled by `Footer.module.css`.
+ * by real icons and a textless heading demoted to a `div`. Everything else —
+ * headings with text, link lists, the legal copy — is WordPress's markup,
+ * unchanged, and styled by `Footer.module.css`.
  */
-export const renderFooterWidget = (html: string, linkClassName?: string): ReactNode =>
-  parse(html, {
+export const renderFooterWidget = (html: string, linkClassName?: string): ReactNode => {
+  const options: HTMLReactParserOptions = {
     replace: (domNode) => {
-      if (!isElement(domNode) || domNode.name !== 'a') {
+      if (!isElement(domNode)) {
+        return domNode;
+      }
+
+      /* The social row above is an `<h2>` with no text of its own, so it lands
+         in the accessibility tree as an empty heading — a real defect on every
+         page, since the footer is global. Rendered as a `div` carrying the same
+         class, which is what `Footer.module.css` lays the row out by. */
+      if (/^h[1-6]$/.test(domNode.name) && !hasText(domNode)) {
+        return <div className={domNode.attribs.class}>{domToReact(domNode.children as DOMNode[], options)}</div>;
+      }
+
+      if (domNode.name !== 'a') {
         return domNode;
       }
 
@@ -60,4 +80,7 @@ export const renderFooterWidget = (html: string, linkClassName?: string): ReactN
         </a>
       );
     },
-  });
+  };
+
+  return parse(html, options);
+};

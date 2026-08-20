@@ -10,7 +10,9 @@ export default defineConfig({
       // vite-plugin-svgr runs no svgo at all and a test sees the raw Figma
       // markup (ids like `clip0_838_1531`). Passing the app's config would
       // read as coverage it doesn't have — see svgo.config.ts.
-      svgrOptions: { exportType: 'default' },
+      // `svgProps` mirrors next.config.ts — the decorative-icon default is a
+      // rendered attribute, so a test that asserts on it has to see it too.
+      svgrOptions: { exportType: 'default', svgProps: { 'aria-hidden': 'true' } },
     }),
     react(),
   ],
