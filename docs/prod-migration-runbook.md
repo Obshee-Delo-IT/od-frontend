@@ -31,8 +31,8 @@ Related: [`implementation-plan.md`](./implementation-plan.md) (task state) · [`
 
 `~/od-stage/public_html` on `ssh timeweb` was emptied and re-created from live prod (`ssh od-root`, `~/public_html`): the whole file tree bar `wp-content/cache`, plus a full `obsheedelo_od` dump loaded into od-stage's own database (`cs16182_odstage` — its credentials are the only thing carried over). The §0 blockers are therefore **measured on stage now, not assumed**: REST answers **404** (B1), content is CMSMasters shortcodes (B2), ACF is absent (B3), and the theme is `welfare` on **WP 5.5.5** pinned by an active `wp-downgrade` (B10).
 
-- **Host: `https://stage.od.webtm.ru`** — that is what the commands below use. Its TLS certificate does not cover the name, so a browser warns and `curl` needs `-k` until the panel issues one. Web PHP on that vhost is **7.4.33**, the same family as prod's mod_php7, so the site itself renders; only WP-CLI needs the flags in §1.
-- **Repointed, and nothing else:** `WP_HOME`/`WP_SITEURL` in `wp-config.php`, the `.htaccess` canonical-host 301 (left alone it sends every stage request straight to prod), 266 `https://obshee-delo.ru` occurrences in the database, and the `sm_status` option (deleted — it held a prod sitemap URL and leaked it into the front page's HTML). The 197 posts referencing `общее-дело.рф` are prod's own outbound links and were left as they are.
+- **Host: `https://od.webtm.ru`** — that is what the commands below use, and its certificate is valid. It started life at `stage.od.webtm.ru`, which no certificate covered: timeweb's wildcard is `*.webtm.ru`, and a wildcard matches **one** label, not two. Both names still resolve and the old one 301s to this one. Web PHP on the vhost is **7.4.33**, the same family as prod's mod_php7, so the site renders; only WP-CLI needs the flags in §1.
+- **Repointed, and nothing else:** `WP_HOME`/`WP_SITEURL` in `wp-config.php`, the `.htaccess` canonical-host 301 (left alone it sends every stage request straight to prod), 266 `https://obshee-delo.ru` occurrences in the database, and the `sm_status` option (deleted — it held a prod sitemap URL and leaked it into the front page's HTML). The 197 posts referencing `общее-дело.рф` are prod's own outbound links and were left as they are, as are the `@obshee-delo.ru` mail addresses in `widget_text` and the Leyka/WooCommerce options — those are the only prod-host strings left in `wp_options`, and none of them is a link. One row did need a hand: prod's own `siteurl`/`home` **options** still say `https://cs16182.tmweb.ru` from before the BeGet move — harmless there because `wp-config.php`'s `WP_HOME`/`WP_SITEURL` override them, but on stage they were set to the real host so nothing reading the option directly is misled.
 - **Parity, verified after the load:** 8404 posts / 163 pages / 17961 attachments / 367 MB database — identical to prod — `/?p=<id>` 301s to `/<id>/` and answers 200, a 2026 upload serves locally, and a 2016 one still 301s to the `obshee-delo.website.yandexcloud.net` bucket. The stage-only WooCommerce tables are gone.
 - **Rollback of the pre-sync stage:** `~/od-stage-pre-prod-20260820/` (database dump, old `wp-config.php`, old `.htaccess`) plus the older `~/od-stage/backup-od-stage-27.07.2025-55.tar`.
 
@@ -48,7 +48,7 @@ ssh timeweb 'cd ~/od-stage/public_html && wp --skip-plugins=clearfy-pro --skip-t
 
 **1.1 REST reachability.** From your machine, not the server:
 ```bash
-curl -sI https://stage.od.webtm.ru/wp-json/wp/v2/posts | head -3   # expect 200, not 301/302 to /
+curl -sI https://od.webtm.ru/wp-json/wp/v2/posts | head -3   # expect 200, not 301/302 to /
 ```
 
 **1.2 Plugins + whether ACF is already there.**
@@ -80,7 +80,7 @@ ssh timeweb 'cd ~/od-stage/public_html && wp --skip-plugins=clearfy-pro --skip-t
 
 **1.6 Film inventory baseline** — so §5 has something to compare against:
 ```bash
-curl -s "https://stage.od.webtm.ru/wp-json/wp/v2/posts?format=video&per_page=1" -o /dev/null -D - | grep -i x-wp-total
+curl -s "https://od.webtm.ru/wp-json/wp/v2/posts?format=video&per_page=1" -o /dev/null -D - | grep -i x-wp-total
 ```
 od-dev: 203 `format=video` posts, 99 in the four film sub-categories.
 
@@ -102,8 +102,8 @@ ssh timeweb 'cd ~/od-stage/public_html && wp --skip-plugins=clearfy-pro --skip-t
 **2.3 Create the field group, then migrate legacy download meta.** Both scripts live in the ops repo at `servers-agent/tasks/2026-06-04-od-dev-film-acf-recon/` and are idempotent. **Order matters, and only these two:**
 ```bash
 cd ~/Projects/servers-agent/tasks/2026-06-04-od-dev-film-acf-recon
-ssh timeweb 'cd ~/od-stage/public_html && wp eval-file - --url=https://stage.od.webtm.ru' < setup-film-acf.php
-ssh timeweb 'cd ~/od-stage/public_html && wp eval-file - --url=https://stage.od.webtm.ru' < migrate-download-slots.php
+ssh timeweb 'cd ~/od-stage/public_html && wp eval-file - --url=https://od.webtm.ru' < setup-film-acf.php
+ssh timeweb 'cd ~/od-stage/public_html && wp eval-file - --url=https://od.webtm.ru' < migrate-download-slots.php
 ```
 - `setup-film-acf.php` — 18 flat url/text fields, `show_in_rest`, location `post_format == video`. Safe to re-run: same field keys ⇒ existing postmeta survives.
 - `migrate-download-slots.php` — folds any legacy `download_full_*`/`download_short_*` meta into `download_{1..5}_{url,label}` with composed labels.
@@ -111,7 +111,7 @@ ssh timeweb 'cd ~/od-stage/public_html && wp eval-file - --url=https://stage.od.
 
 **2.4 Gate.** REST must return all 18 keys:
 ```bash
-curl -s -u "$WP_USER:$WP_PASSWORD" "https://stage.od.webtm.ru/wp-json/wp/v2/posts?format=video&per_page=1&_fields=acf" | head -c 600
+curl -s -u "$WP_USER:$WP_PASSWORD" "https://od.webtm.ru/wp-json/wp/v2/posts?format=video&per_page=1&_fields=acf" | head -c 600
 ```
 
 **2.5 Install the revalidation mu-plugin (B4).** Without it an editor publishes and then waits out the hour; with it the page is gone from the cache before they can reload. Source and full reference: [`wp/mu-plugins/od-revalidate.php`](../wp/mu-plugins/od-revalidate.php) and [`wp-backend.md` §6.5](./wp-backend.md). It was installed and tested on od-dev on 2026-08-13; **prod differs in four ways that matter.**
@@ -503,7 +503,7 @@ Post detail lives at the bare **`/<id>`** since A8 — that is the *only* addres
 12. **No 404 on the live site's real URLs (A8) — the gate that proves the biggest change. Automated: `pnpm url:check`.**
     ```bash
     pnpm url:check                                       # against localhost:3000
-    pnpm url:check -- --base https://stage.od.webtm.ru        # against a deploy
+    pnpm url:check -- --base https://od.webtm.ru        # against a deploy
     pnpm url:check -- --top 500 --fail-under 95
     ```
     It replays the real entry URLs from the Yandex Metrica **«Страницы входа»** export (Отчёты → Стандартные отчёты → Содержание → Страницы входа → export; `--csv` to point at a specific file, otherwise the newest export under `~/Documents/od/ya.metrika/`), **ranked by the entry visits each URL actually earns**, and reports results weighted by traffic rather than by URL count. Flags: `--base`, `--csv`, `--top` (default 200), `--concurrency` (default 8), `--fail-under` (exit 1 below that coverage %). The headline number is **«Entry-traffic coverage»**, and failures are automatically grouped by section — no flag needed.
