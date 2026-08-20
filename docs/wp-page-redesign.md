@@ -44,7 +44,7 @@ Five files, split by lifetime:
 
 ### Tests
 
-`wp/tests/od-pages.test.php`, no PHPUnit and no composer — run it with `php wp/tests/od-pages.test.php` (exit 0 / exit 1, 824 assertions today; `od-wp.test.php` adds 130 and `od-revalidate.test.php` 13, all three on `wp/tests/harness.php`). It covers the pure transforms only, and **every transform gets the idempotency case**: `f(f(x)) === f(x)`. Fixtures are real `post_content` captured from od-dev into `wp/tests/fixtures/` — recapture them rather than editing them by hand.
+`wp/tests/od-pages.test.php`, no PHPUnit and no composer — run it with `php wp/tests/od-pages.test.php` (exit 0 / exit 1, 824 assertions today; `od-wp.test.php` adds 137 and `od-revalidate.test.php` 13, all three on `wp/tests/harness.php`). It covers the pure transforms only, and **every transform gets the idempotency case**: `f(f(x)) === f(x)`. Fixtures are real `post_content` captured from od-dev into `wp/tests/fixtures/` — recapture them rather than editing them by hand.
 
 **Not PHP's `assert()`, despite what this section used to say.** `zend.assertions` is `-1` on the dev machine and on both servers, which compiles `assert()` out of the file entirely: the tests would have printed nothing and exited 0 no matter what the transforms did. A one-line `od_test()` helper — an `if` and an `exit(1)` — cannot be switched off by an ini setting.
 

@@ -67,15 +67,34 @@ od_test('/materials/ likewise', ($titles['materials'] ?? null) === 'Матери
 $edits = od_wp_menu_edits();
 od_test('at least one menu edit is registered', $edits !== []);
 
-foreach ($edits as $path => $title) {
-    // The key is compared against `od_wp_menu_path()`'s output, so it has to be
-    // in that form or it silently matches nothing and the run reports a skip.
-    od_test($path . ': the key is a path with both slashes', od_wp_menu_path($path) === $path);
-    od_test($path . ': deletes are null, retitles are a trimmed non-empty string', $title === null || (is_string($title) && trim($title) !== '' && $title === trim($title)));
+$byPath = [];
+$byTitle = [];
+foreach ($edits as $edit) {
+    $key = $edit['path'] ?? $edit['title'] ?? '(none)';
+
+    // Exactly one matcher: a row with both would match two different items, and
+    // a row with neither matches every item in the menu.
+    od_test($key . ': one matcher, path or title', isset($edit['path']) !== isset($edit['title']));
+
+    if (isset($edit['path'])) {
+        // The path is compared against `od_wp_menu_path()`'s output, so it has to
+        // be in that form or it silently matches nothing and the run skips.
+        od_test($key . ': the path has both slashes on', od_wp_menu_path($edit['path']) === $edit['path']);
+        od_test($key . ': a path matcher is not a bare origin — that is «/», which is ГЛАВНАЯ', $edit['path'] !== '/');
+        $byPath[$edit['path']] = $edit;
+    } else {
+        od_test($key . ': the title is trimmed and non-empty', trim($edit['title']) === $edit['title'] && $edit['title'] !== '');
+        $byTitle[$edit['title']] = $edit;
+    }
+
+    if (isset($edit['rename'])) {
+        od_test($key . ': the new title is trimmed and non-empty', trim($edit['rename']) === $edit['rename'] && $edit['rename'] !== '');
+    }
 }
 
-od_test('«Написать отзыв» is deleted — the footer links the page', array_key_exists('/about/ostavit-otziv/', $edits) && $edits['/about/ostavit-otziv/'] === null);
-od_test('«Устав и документы» is one item: /about/docs/ goes, /about/ustav/ is retitled', array_key_exists('/about/docs/', $edits) && $edits['/about/docs/'] === null && ($edits['/about/ustav/'] ?? null) === 'Устав и документы');
+od_test('«Написать отзыв» is deleted — the footer links the page', isset($byPath['/about/ostavit-otziv/']) && !isset($byPath['/about/ostavit-otziv/']['rename']));
+od_test('«Устав и документы» is one item: /about/docs/ goes, /about/ustav/ is retitled', isset($byPath['/about/docs/']) && !isset($byPath['/about/docs/']['rename']) && ($byPath['/about/ustav/']['rename'] ?? null) === 'Устав и документы');
+od_test('«Наша статистика» is matched by label, its url being a bare domain', isset($byTitle['Наша статистика']) && !isset($byTitle['Наша статистика']['rename']));
 
 // The urls in this menu carry three different origins, one of them a `.рф`
 // domain — only the path is the same on both installs.
