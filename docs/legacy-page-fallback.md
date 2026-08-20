@@ -53,7 +53,7 @@ A probe of od-dev found **174 published `wp/v2/pages`** (re-confirmed 2026-08-13
 
 The old design's look is produced by the theme, not the page body:
 
-- **Prod (`obshee-delo.ru`) and stage (`stage.od.webtm.ru`) render through the `welfare` theme with ~30 combined CSS bundles + ~55 inline scripts per page.** `clearfy-pro` concatenates the CSS site-wide, so "just the CSS this page needs" can't be cleanly isolated.
+- **Prod (`obshee-delo.ru`) and stage (`od.webtm.ru`) render through the `welfare` theme with ~30 combined CSS bundles + ~55 inline scripts per page.** `clearfy-pro` concatenates the CSS site-wide, so "just the CSS this page needs" can't be cleanly isolated.
 - **REST is disabled on prod and stage** (`/wp-json/…` redirects to home — a clearfy feature). Only **od-dev** truly serves REST.
 - **The stored content is CMSMasters page-builder shortcodes, not Gutenberg.** Read via WP-CLI on od-stage, the same page IDs differ sharply between environments:
 

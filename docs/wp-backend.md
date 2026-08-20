@@ -14,7 +14,7 @@ The Timeweb instances:
 | Instance | Path on server | URL | Status |
 | --- | --- | --- | --- |
 | **od-dev** | `~/od-dev/public_html/` | `https://od-dev.tmweb.ru` (matches `redocly.yml`) | The instance this repo points at via `WP_BASE`. **The only one we write to** — REST is on, content is migrated to Gutenberg, ACF is installed. |
-| **od-stage** | `~/od-stage/public_html/` | `https://stage.od.webtm.ru` (probed for the A6 research — confirm it's the same install as this directory) | Staging. **REST disabled** (clearfy-pro), content is cmsms shortcodes. Read-only so far; it is the rehearsal target for [`prod-migration-runbook.md`](./prod-migration-runbook.md). |
+| **od-stage** | `~/od-stage/public_html/` | `https://od.webtm.ru` (confirmed same install as this directory; the older `stage.od.webtm.ru` 301s to it, and only this name is covered by timeweb's `*.webtm.ru` certificate) | Staging, and **writable since 2026-08-20**, when it was wiped and re-synced from live prod — WP 5.5.5, `welfare`, prod's plugin set, **REST disabled** (clearfy-pro), content is cmsms shortcodes. WP-CLI there needs `--skip-themes`. It is the rehearsal target for [`prod-migration-runbook.md`](./prod-migration-runbook.md) — see its §0.5. |
 | **od-test** | `~/od-test/public_html/` | unknown — confirm with the org | Test. Never probed; unclear how it differs from od-dev. |
 | ~~**prod**~~ **prod's stale twin** | `~/public_html/` — the account's default root, *not* `~/obshee-delo.ru/`, which holds only verification files | serves `общее-дело.рф`, as 301s to the live host | ⚠ **Not the live site.** A full copy — same siteurl, same WP 5.5.5, DB `cs16182_delo` — so writes here are invisible. Useful as a read-only reference; never as the edit target. |
 
