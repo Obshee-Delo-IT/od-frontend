@@ -1,3 +1,4 @@
+import { CONTACTS_INDEX_PATH, RussiaMap } from '@/modules/RussiaMap';
 import { resolvePageSection } from '@/shared/config/pageSections';
 import { canonicalUrl, SITE_NAME } from '@/shared/config/site';
 import { paginatedPath, parsePost, resolveContentHtml, resolveQueryPagination } from '@/shared/lib/wpContent';
@@ -92,6 +93,12 @@ export const WpPage = async ({ page, path }: WpPageProps) => {
         }
         tabs={section && <Tabs items={section.tabs} activeValue={section.activeValue} aria-label="Разделы «О нас»" />}
       />
+
+      {/* The one page whose mock puts something of ours *above* the WP body: the
+          `/contacts/` index opens with the clickable map, and the body is the
+          regional accordion below it (Figma `contact`, `754:587`). Static
+          markup, so the route stays statically generatable. */}
+      {path === CONTACTS_INDEX_PATH && <RussiaMap />}
 
       <ImagePreviewClient>
         <GutenbergProvider as="section">{parsed.body}</GutenbergProvider>

@@ -12,3 +12,8 @@ src/shared/legacy/__fixtures__/*.html
 # Prettier's table reflow pads every column to the widest cell, which turns a
 # reviewable spec diff into a wall of whitespace.
 openspec/
+
+# The generated jqvmap region table (D4): 82 SVG `d` strings, 150 KiB, one region
+# per line. Prettier would explode each into a five-line object literal and still
+# not wrap the paths. Regenerate with `pnpm map:generate`, never reformat.
+src/modules/RussiaMap/regions.generated.ts

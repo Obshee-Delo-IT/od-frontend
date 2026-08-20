@@ -1634,6 +1634,125 @@ od_test( 'branch social: the label drops the scheme the glyph makes redundant', 
    above has: without these two classes the transform writes markup nothing draws. */
 od_test( 'the stylesheet draws the card the transform writes', str_contains( $gutenberg, '.od-branch {' ) && str_contains( $gutenberg, '.od-contact--person' ) );
 
+/* ---------------------------------------------------- od_pages_contacts */
+
+$contacts_before = file_get_contents( __DIR__ . '/fixtures/contacts.before.html' );
+
+/* What the fixture really is, so a re-capture that lost half the page is
+   visible rather than silently making the assertions below pass. */
+od_test( 'contacts: the fixture carries the 50 hand-written spoilers', 50 === substr_count( $contacts_before, '<!-- wp:details' ) );
+od_test( 'contacts: and the jqvmap furniture', 3 === substr_count( $contacts_before, '<!-- wp:html' ) && str_contains( $contacts_before, 'jquery.vmap.russia.js' ) );
+od_test( 'contacts: and the dead MailPoet form', str_contains( $contacts_before, '[wysija_form' ) );
+
+$contacts = od_pages_contacts( $contacts_before );
+
+od_test( 'contacts: the accordion is one shortcode block now', 1 === substr_count( $contacts, "<!-- wp:shortcode -->\n[od_regions]\n<!-- /wp:shortcode -->" ) );
+od_test( 'contacts: and not one of the 50 spoilers is left', str_contains( $contacts, 'wp:details' ) === false && str_contains( $contacts, '<summary>' ) === false );
+od_test( 'contacts: nor any of the 49 hand-typed links', str_contains( $contacts, 'cmsms_button' ) === false );
+/* Three of those pointed at `общее-дело.рф`; the shortcode reads `get_permalink()`. */
+od_test( 'contacts: nor the three that left this site', str_contains( $contacts, 'xn----9sbkcac6brh7h' ) === false && str_contains( $contacts, 'общее-дело.рф' ) === false );
+
+/* The map plumbing: jQuery 1.7.2 from googleapis, two plugin scripts, the
+   stylesheet, the `vectorMap()` call and the `#vmap` rule. */
+od_test( 'contacts: no script survives', str_contains( $contacts, '<script' ) === false && str_contains( $contacts, 'googleapis' ) === false );
+od_test( 'contacts: no jqvmap stylesheet or rule', str_contains( $contacts, 'vmap' ) === false && str_contains( $contacts, '<style' ) === false );
+od_test( 'contacts: and no wp:html escape hatch at all', str_contains( $contacts, 'wp:html' ) === false );
+
+/* The dead MailPoet form: the plugin is still active on od-dev, so this one
+   really expands — into a form whose JS is the old theme's. */
+od_test( 'contacts: the MailPoet form is gone', str_contains( $contacts, 'wysija' ) === false );
+od_test( 'contacts: and the heading that introduces it', str_contains( $contacts, 'Хотите быть в курсе' ) === false );
+
+/* The one thing on the page that is neither dead nor duplicated. */
+od_test( 'contacts: «Не нашел свой город?» stays', str_contains( $contacts, '<h2 class="wp-block-heading has-text-align-left">Не нашел свой город?</h2>' ) );
+od_test( 'contacts: with the paragraph under it', str_contains( $contacts, 'Присоединяйся к команде Общего дела.' ) && str_contains( $contacts, 'mailto:web@obshee-delo.ru' ) );
+/* And in that order: the shortcode takes the first spoiler's place, so the call
+   to action stays below the accordion rather than above it. */
+od_test( 'contacts: below the accordion, where it was', strpos( $contacts, '[od_regions]' ) < strpos( $contacts, 'Не нашел свой город?' ) );
+
+/* Nothing but those two blocks and the shortcode is left: every wrapper the
+   emptied blocks were in goes with them. */
+od_test( 'contacts: one group survives, not seven', 1 === substr_count( $contacts, '<!-- wp:group' ) );
+od_test( 'contacts: and the page is 1 % of its former size', strlen( $contacts ) < 1000 && strlen( $contacts_before ) > 100000 );
+
+od_test_idempotent( 'od_pages_contacts', 'od_pages_contacts', $contacts_before );
+od_test( 'contacts: a converted page is left alone', od_pages_contacts( $contacts ) === $contacts );
+
+/*
+ * …with one exception, and it is why the guard sweeps instead of returning early.
+ * The live body carried one `<!-- wp:paragraph /-->` this fixture does not — a
+ * paragraph block whose text an editor deleted — and a column holding one is not
+ * whitespace, so the first `apply` converted the page and left the group around
+ * it standing as an empty `<div>`. The sweep clears it on the next run, and the
+ * run after that changes nothing.
+ */
+$residue = $contacts
+	. '<!-- wp:group {"layout":{"type":"constrained"}} --><div class="wp-block-group"><!-- wp:columns --><div class="wp-block-columns">'
+	. '<!-- wp:column {"width":"100%"} --><div class="wp-block-column" style="flex-basis:100%"><!-- wp:paragraph /--></div><!-- /wp:column -->'
+	. '</div><!-- /wp:columns --></div><!-- /wp:group -->';
+od_test( 'contacts: a group left holding an emptied paragraph is swept on the next run', $contacts === od_pages_contacts( $residue ) );
+// All three spellings of «a paragraph block with nothing in it», because they are
+// what one page looks like at three moments in its life: the editor writes the
+// void form, `wp_update_post()` rewrites it as the paired one on save, and the
+// CMSMasters migrator wrote `&nbsp;` between the tags. Matching one and missing
+// the others is exactly how `/contacts/` kept an empty group through its first
+// conversion — the transform ran, the residue stayed, and the next run called the
+// page already in shape.
+foreach (
+	array(
+		'void, as the editor writes it' => '<!-- wp:paragraph /-->',
+		'paired, as `wp_update_post()` rewrites it' => '<!-- wp:paragraph --><!-- /wp:paragraph -->',
+		'paired around an `&nbsp;`, as the migrator wrote it' => '<!-- wp:paragraph --><p>&nbsp;</p><!-- /wp:paragraph -->',
+	) as $spelling => $inner
+) {
+	od_test(
+		"empty layout groups: a column holding one emptied paragraph ({$spelling}) counts as empty",
+		'' === od_drop_empty_layout_groups(
+			'<!-- wp:group {"layout":{"type":"constrained"}} --><div class="wp-block-group"><!-- wp:columns --><div class="wp-block-columns">'
+				. '<!-- wp:column {"width":"100%"} --><div class="wp-block-column" style="flex-basis:100%">' . $inner . '</div><!-- /wp:column -->'
+				. '</div><!-- /wp:columns --></div><!-- /wp:group -->'
+		)
+	);
+}
+
+/* A whole-page transform refuses an input it does not recognise, rather than
+   quietly emptying it. */
+$refused = false;
+try {
+	od_pages_contacts( '<!-- wp:paragraph --><p>Текст</p><!-- /wp:paragraph -->' );
+} catch ( RuntimeException $e ) {
+	$refused = true;
+}
+od_test( 'contacts: a page with no accordion is refused, not emptied', $refused );
+
+/* The same coupling the branch card has: the shortcode's markup is drawn by
+   `gutenberg.css`, and the mu-plugin is what emits it. */
+od_test( 'the stylesheet draws the accordion the shortcode writes', str_contains( $gutenberg, '.od-region {' ) && str_contains( $gutenberg, '.od-region__body' ) );
+od_test( 'and the shortcode is registered by the mu-plugin', str_contains( file_get_contents( __DIR__ . '/../mu-plugins/od-regions.php' ), "add_shortcode('od_regions'" ) );
+
+/* The multi-column case the trailing MailPoet row made necessary. */
+od_test(
+	'empty layout groups: a two-column row with both halves emptied goes too',
+	'' === od_drop_empty_layout_groups(
+		'<!-- wp:group {"layout":{"type":"constrained"}} --><div class="wp-block-group"><!-- wp:columns --><div class="wp-block-columns">'
+			. '<!-- wp:column {"width":"50%"} --><div class="wp-block-column" style="flex-basis:50%"></div><!-- /wp:column -->'
+			. '<!-- wp:column {"width":"50%"} --><div class="wp-block-column" style="flex-basis:50%"></div><!-- /wp:column -->'
+			. '</div><!-- /wp:columns --></div><!-- /wp:group -->'
+	)
+);
+od_test(
+	'empty layout groups: a row with one half still holding something stays',
+	str_contains(
+		od_drop_empty_layout_groups(
+			'<!-- wp:group {"layout":{"type":"constrained"}} --><div class="wp-block-group"><!-- wp:columns --><div class="wp-block-columns">'
+				. '<!-- wp:column {"width":"50%"} --><div class="wp-block-column" style="flex-basis:50%"><!-- wp:paragraph --><p>Текст</p><!-- /wp:paragraph --></div><!-- /wp:column -->'
+				. '<!-- wp:column {"width":"50%"} --><div class="wp-block-column" style="flex-basis:50%"></div><!-- /wp:column -->'
+				. '</div><!-- /wp:columns --></div><!-- /wp:group -->'
+		),
+		'<p>Текст</p>'
+	)
+);
+
 /* ------------------------------------------------------- the registry itself */
 
 foreach ( od_pages_registry() as $entry ) {
@@ -1643,6 +1762,49 @@ foreach ( od_pages_registry() as $entry ) {
 	// `page` by default would put every published page through a profile
 	// transform. One bounded by `parent` is already scoped to a subtree.
 	od_test( "{$entry['label']}: a sweep names its post type or its parent", empty( $entry['sweep'] ) || isset( $entry['post_type'] ) || isset( $entry['parent'] ) );
+}
+
+/*
+ * Two records written as one array literal is a **silent** loss: PHP keeps the
+ * last value for a duplicated key, so the earlier entry's path and transform
+ * vanish and the runner reports nothing missing. That is what happened to
+ * `/materials/autosticker/`, which sat merged into the `/team/` record from D6m
+ * until 2026-08-20 and was never once transformed while the docs counted it as
+ * redesigned. A count is the only thing that catches it.
+ */
+$records = array_map(
+	function ( $entry ) {
+		return implode(
+			'|',
+			array( $entry['fix'], $entry['path'] ?? '', $entry['title'] ?? '', $entry['parent'] ?? '', $entry['post_type'] ?? '' )
+		);
+	},
+	od_pages_registry()
+);
+// One page can hold several records — `/khabarovskiy/` has three, a card, its
+// news loop and its heading levels — so it is the *pair* that has to be unique,
+// not the address.
+od_test( 'the registry: no record is written twice', count( $records ) === count( array_unique( $records ) ) );
+od_test( 'the registry: labels name one record each', count( $records ) === count( array_unique( array_column( od_pages_registry(), 'label' ) ) ) );
+
+/*
+ * Every transform this file defines is registered — the assertion that catches a
+ * record lost to a **merged array literal**. Two entries written as one literal
+ * duplicate the `label`/`path`/`fix` keys, PHP keeps the last of each, and the
+ * earlier entry disappears leaving a registry that is merely one record shorter:
+ * nothing is malformed, nothing warns, and a count of the registry against
+ * itself proves nothing. `/materials/autosticker/` sat that way from D6m until
+ * 2026-08-20 and was never transformed while the docs counted it as redesigned.
+ *
+ * A page transform is recognised by its signature — `(string $content, int $x)`,
+ * the pair the runner calls every `fix` with — which is what tells one from the
+ * dozens of pure helpers in the same file.
+ */
+preg_match_all( '~function (od_pages_\w+)\(string \$content, int ~', file_get_contents( __DIR__ . '/../scripts/od-pages.php' ), $defined );
+$registered = array_column( od_pages_registry(), 'fix' );
+od_test( 'the registry: the file defines at least the transforms we know of', count( $defined[1] ) >= 34 );
+foreach ( $defined[1] as $transform ) {
+	od_test( "the registry: {$transform}() is registered", in_array( $transform, $registered, true ) );
 }
 
 od_test_summary();

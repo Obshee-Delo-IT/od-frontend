@@ -11,11 +11,11 @@ Sibling docs: [`wp-page-passthrough.md`](./wp-page-passthrough.md) is _how_ a pa
 |                                   | pages | how it renders                                                                                                         |
 | --------------------------------- | ----: | ---------------------------------------------------------------------------------------------------------------------- |
 | **Native route** shadows the page |     9 | a route under `src/app/` (or a `src/proxy.ts` 301) owns the URL, so `[...slug]` never sees the WP page at all          |
-| **WP page, redesigned**           |   109 | `[...slug]` → `modules/WpPage`, with the body rewritten by `od-pages.php` and drawn by this repo's CSS                 |
+| **WP page, redesigned**           |   110 | `[...slug]` → `modules/WpPage`, with the body rewritten by `od-pages.php` and drawn by this repo's CSS                 |
 | **WP page, passthrough**          |    44 | `[...slug]` → `modules/WpPage`, content exactly as the editor left it — correct URL, correct shell, un-redesigned body |
-| **A6 iframe**                     |     7 | on the opt-out list → `modules/Legacy/LegacyEmbed` over `WP_LEGACY_BASE`                                               |
+| **A6 iframe**                     |     6 | on the opt-out list → `modules/Legacy/LegacyEmbed` over `WP_LEGACY_BASE`                                               |
 
-So **153 of 169 pages render natively**, and the iframe is down to seven paths from the twenty it launched with.
+So **154 of 169 pages render natively**, and the iframe is down to six paths from the twenty it launched with.
 
 ## 2. Native routes
 
@@ -33,14 +33,16 @@ Own code, built against Figma. These are not WP pages in the sense above — nin
 
 Plus `sitemap.xml`, `robots.txt`, `/health/`, `POST /api/revalidate/` and the internal `/legacy/*`. Workstreams D1 · D2 · D7 and the D3 profile subset are what built these.
 
-## 3. WP pages, redesigned (109)
+## 3. WP pages, redesigned (110)
 
 The `od_pages_registry()` entries — content rewritten by script, styled by the repo. Two kinds of entry count here: one that names a `path`, and a **`sweep` bounded by a `parent`**, which is how the whole `/contacts/` subtree arrived in this bucket on 2026-08-20. Grouped:
 
 - **Programmes (4)** — `/projects/` · `/healthy-russia/` · `/healthy-youth/` · `/healthy-kids/` (D6e–D6g)
 - **Materials (14)** — `/materials/` · `metodichki` · `printed-products` + `books` `zakladki` `booklet` `disk` `autosticker` · `social-reklama` + `plakati` `billboards` `sticker` `led-board-roliki` `audio-roliki-social-reklama` (D8, D6h–D6m)
 - **«О нас» (16)** — `/about/` · `/team/` · `about/supervisory` · `nashi_partnery` · `ustav` · `docs` · `udostoverenie` · `activist-stories` · `experts-review` · `smi` · `reviews` + its five category children `letters` `school` `middle` `vuz` `mvd` (D3, D6p–D6w)
-- **Contacts (75)** — every `/contacts/<region>/` page plus `/khabarovskiy/`, the one regional page outside the tree. Their «Об отделении» `core/details` accordion is now the card Figma `contact-page` draws (`od_pages_branch_card`, a parent-bounded sweep), their coordinator cards are `PersonCard`s two per row, their «События» loop draws `/news/`'s cards with the site's own pagination, and their card titles are `h2` (F2). `/contacts/samarskaya/` additionally carries a **data** fix of its own: its coordinator `core/query` asked for `post_tag: [-1]` and listed nobody, so the entry repoints it at the `pl-categs` region (D4)
+- **Contacts (76)** — the index and every `/contacts/<region>/` page plus `/khabarovskiy/`, the one regional page outside the tree. Their «Об отделении» `core/details` accordion is now the card Figma `contact-page` draws (`od_pages_branch_card`, a parent-bounded sweep), their coordinator cards are `PersonCard`s two per row, their «События» loop draws `/news/`'s cards with the site's own pagination, and their card titles are `h2` (F2). `/contacts/samarskaya/` additionally carries a **data** fix of its own: its coordinator `core/query` asked for `post_tag: [-1]` and listed nobody, so the entry repoints it at the `pl-categs` region (D4).
+
+  **The index came off the iframe on 2026-08-20**, and its body is now 889 bytes: a clickable SVG map (`src/modules/RussiaMap/`, generated from the old jqvmap plugin's paths — 82 regions, 70 of them linked) above `[od_regions]`, which builds all 75 spoilers from the region pages themselves (`wp/mu-plugins/od-regions.php`). What it replaced was 50 hand-written `wp:details` blocks retyping what those pages already said, and the drift that always follows: 25 published regions had no spoiler at all, three linked to `общее-дело.рф`, and the map's own `switch` still pointed one region at a page deleted years ago
 
 The same registry also carries **15 `profile` records** (the coordinator behind `metodichki`, plus the fourteen team and supervisory members) — CPT records, not pages, so they are outside the 169.
 
@@ -59,13 +61,12 @@ Right URL, right shell, un-redesigned body. Full list: `pnpm pages:inventory --l
 
 Gaps that hit many of them at once rather than any one page (all in [`next-steps.md`](./next-steps.md)). Closed since this file was written: the breadcrumb now names the real parents (2026-08-18), icons are `aria-hidden` app-wide, and the 75 regional pages' coordinator cards stopped skipping a heading level and grew a branch card, which moved them into §3 (2026-08-20). The heading-case rule that lowercased «Россия» is gone the same day, replaced by `resolveHeadingCase` in the content pipeline. **Still open:** `/contacts/dnr/` skips a level with a literal `<h3>`.
 
-## 5. A6 iframe (7)
+## 5. A6 iframe (6)
 
 `src/shared/config/legacyEmbedPages.ts`, each with the reason it is still there:
 
 | path                             | why                                                            | traffic (views / entries) |
 | -------------------------------- | -------------------------------------------------------------- | ------------------------: |
-| `/contacts/`                     | `[cmsms_*]` residue; D4 is the native replacement, Tier 2      |                  597 / 85 |
 | `/get-involved/`                 | same, and the section index carries the old tile grid          |                  586 / 84 |
 | `/actual/` (+ its `page/N/`)     | archive listing under the old theme                            |                  281 / 24 |
 | `/about/ostavit-otziv/`          | a Contact Form 7 form — nothing on this side renders one (§B6) |                   54 / 10 |
@@ -82,21 +83,21 @@ Yandex Metrica, 2026-05-14 → 2026-08-13 (91 days), the exports under `~/Docume
 | bucket                         |           pageviews |        entry visits |
 | ------------------------------ | ------------------: | ------------------: |
 | native route                   | 48 355 (**82.1 %**) | 23 996 (**89.0 %**) |
-| WP page, redesigned            |  7 491 (**12.7 %**) |   2 151 (**8.0 %**) |
+| WP page, redesigned            |  8 088 (**13.7 %**) |   2 236 (**8.3 %**) |
 | WP page, passthrough           |       1 296 (2.2 %) |         525 (1.9 %) |
-| **A6 iframe**                  |   **1 530 (2.6 %)** |     **210 (0.8 %)** |
+| **A6 iframe**                  |     **933 (1.6 %)** |     **125 (0.5 %)** |
 | no page — 404                  |         233 (0.4 %) |          60 (0.2 %) |
 | other (truncated rows, `wp-*`) |                  16 |                  16 |
 
-**This corrects the figure the other docs carried.** On 2026-08-13 the fallback was measured at **20.0 % of pageviews and 13.5 % of entries** ([`implementation-notes.md` §7](./implementation-notes.md#7-research--traffic-yandex-metrica-91-days)). Workstreams D3 and D6 did not move traffic — they moved _pages_, and with them 97.0 % of views and 98.9 % of entries onto natively-rendered URLs. The iframe's visible exposure is now **2.6 % of pageviews**, an eighth of what it was, and its SEO exposure **0.8 % of entries**. The old numbers are not wrong for their date; they are simply about a different set of pages, and the launch tiering that was priced off them should be re-read against this table.
+**This corrects the figure the other docs carried.** On 2026-08-13 the fallback was measured at **20.0 % of pageviews and 13.5 % of entries** ([`implementation-notes.md` §7](./implementation-notes.md#7-research--traffic-yandex-metrica-91-days)). Workstreams D3 and D6 did not move traffic — they moved _pages_, and with them 97.0 % of views and 98.9 % of entries onto natively-rendered URLs. The iframe's visible exposure is now **1.6 % of pageviews**, a twelfth of what it was, and its SEO exposure **0.5 % of entries** — the 2026-08-20 numbers, after D4 took `/contacts/` (597 views / 85 entries) off the list. The old numbers are not wrong for their date; they are simply about a different set of pages, and the launch tiering that was priced off them should be re-read against this table.
 
-The two metrics still rank differently, and still for the reason §7 gives: `/contacts/` and `/get-involved/` are nav destinations (7× views per entry), so the iframe's _look_ costs more than its search exposure implies.
+The two metrics still rank differently, and still for the same reason: `/get-involved/` is a nav destination (7× views per entry), so the iframe's _look_ costs more than its search exposure implies. It is now most of what is left — 586 of the 933 views.
 
 **The 404 bucket is mostly noise** — Yandex adds `&search_source=…` to some referrer URLs, and those rows can't be matched to a path. The real dead URLs in it are few and known: `/contacts/rezan-oblast/` and `/contacts/smolenskaya-oblasti/` (typo'd region slugs that never existed, 8 entries), `/my-account/` and `/shop/` (deleted with the WooCommerce group), `/materials/order-materials/` (deleted with it), `/videos/`.
 
 ## 7. What is left, by bucket
 
-- **New native route:** D4 `/contacts/` (Tier 2 — the index itself, which is what is left on the iframe now that its 74 regional children are redesigned) · D5 `/faq/` (Tier 4) · D9 volunteer page (scope unconfirmed with Design).
+- **New native route:** D5 `/faq/` (Tier 4) · D9 volunteer page (scope unconfirmed with Design). D4 closed on 2026-08-20 — the index was the last of it.
 - **Redesign an existing passthrough page:** the two long-form `article` templates are the only unbuilt mocks in D8, and D6's `article` (`778:1766`) + `article-mob` are the same shape. The `/projects/` wide-card variant (598×280) is still unbuilt.
 - **Blocked on something else:** `/about/ostavit-otziv/` needs B6 (form handling) before it can come off the iframe.
 - **Housekeeping:** unpublish the four test pages; decide what `/about/департаменты/` and `/about/написать-письмо-в-общее-дело/` are for.
