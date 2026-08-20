@@ -1,5 +1,6 @@
 import { resolveContentAssets } from './resolveContentAssets';
 import { resolveContentLinks } from './resolveContentLinks';
+import { resolveHeadingCase } from './resolveHeadingCase';
 
 /**
  * The full rewrite pass over a WordPress body — every URL WordPress rendered
@@ -12,6 +13,10 @@ import { resolveContentLinks } from './resolveContentLinks';
  *
  * Pass `eagerFirstImage` for a body that is the page's main content — it is the
  * one whose first image is the LCP candidate. See {@link resolveContentAssets}.
+ *
+ * {@link resolveHeadingCase} rides along because it is the same kind of pass —
+ * a fact about WordPress's own output that every body needs fixing, in one place
+ * rather than per route.
  */
 export const resolveContentHtml = async (html?: string | null, eagerFirstImage = false): Promise<string> =>
-  resolveContentLinks(await resolveContentAssets(html, eagerFirstImage));
+  resolveHeadingCase(resolveContentLinks(await resolveContentAssets(html, eagerFirstImage)));

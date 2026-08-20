@@ -223,22 +223,39 @@ route already.
 
 ---
 
-## `.wp-block-group h2` lowercases «Россия»
+## ~~`.wp-block-group h2` lowercases «Россия»~~ — done 2026-08-20
 
-**Found 2026-08-17.** `gutenberg.css` has
+**Found 2026-08-17.** `gutenberg.css` had
 `.wp-block-group h2 { text-transform: lowercase }` with a `::first-letter`
-override, which sentence-cases the all-caps headings WordPress content is full
-of. It also lowercases every *proper noun* after the first word:
-`/materials/metodichki/` rendered «Здоровая россия — общее дело» until those
-three headings were removed for the mock, and any page that keeps a heading with
-a place or a name in it will do the same.
+override, which sentence-cased the all-caps headings WordPress content is full
+of — and lowercased every *proper noun* after the first word with them.
 
-**The real fix is content, not CSS** — sentence-case the headings in WordPress
-(an `od-pages.php` transform can do a page at a time) and delete the rule. Until
-then, check every heading a redesigned page keeps.
+**Measured before fixing it**, which is what the entry was waiting for:
 
-**Scale unmeasured.** Worth counting the headings that hold a capitalised word
-past the first before deciding whether this is a sweep or a handful.
+| | all-caps (what the rule was for) | a capitalised word past the first (what it broke) |
+| --- | ---: | ---: |
+| 169 published **pages** | 8 headings | **26 headings on 16 pages** |
+| 600 sampled **posts** | 50 headings | **0** |
+
+And the eight all-caps page headings are all on `/тестовая-страница/` and on the
+`/video/` page a native route shadows — so **on pages the rule protected nothing
+at all**, while «Здоровая Россия — ОБЩЕЕ ДЕЛО!» rendered «Здоровая россия —
+общее дело!» on a page anyone can read. On posts the opposite: it is the only
+thing standing between the reader and 8 % of bodies shouting.
+
+**So the fix was neither "delete the rule" nor "sentence-case the content".** The
+distinction the rule cannot make — *does this text carry casing information at
+all?* — is one line of code and no lines of CSS:
+`resolveHeadingCase` in the content pipeline lowercases a heading only when its
+text has **no lowercase letter**, and leaves every other heading exactly as
+authored. It sits in `resolveContentHtml` with the asset and link passes, so it
+covers pages, posts, films and the footer alike, and needs nothing run against
+production. The CSS rule is deleted.
+
+Verified in a browser at 1440: `/healthy-russia/` now reads «Здоровая Россия —
+ОБЩЕЕ ДЕЛО!», post 72880 still reads «Елена колесникова в новом созыве…».
+Entities and markup are held out of the casing pass — `&laquo;` must not become
+`&Laquo;`, and a heading that opens with a link must not capitalise its `a`.
 
 ---
 

@@ -481,6 +481,7 @@ The resolution pipeline (all under `src/shared/api/`, applied at fetch/render ti
 | `mediaUrl.ts` → `resolveMediaUrl` | full-size **and** CDN-when-the-object-exists (cached HEAD, 200-only), else WP origin. Used by `fetchFilms` / `fetchLatestNews` |
 | `shared/lib/wpContent/resolveContentAssets.ts` | runs every body `<img>`, `<audio>` and media `<a href>` through `resolveMediaUrl` and strips `srcset` / `sizes` |
 | `shared/lib/wpContent/resolveContentLinks.ts` | makes WordPress-origin `<a>` hrefs root-relative (D6c), leaving the `wp-content` / `wp-admin` / … trees absolute — those files exist only on the WordPress host |
+| `shared/lib/wpContent/resolveHeadingCase.ts` | sentence-cases a heading whose text has **no lowercase letter**, and only that one — the case distinction `.wp-block-group h2 { text-transform: lowercase }` could not make (2026-08-20) |
 | `shared/lib/wpContent/resolveContentHtml.ts` | the two above, composed. **The pipeline's entry point**, ahead of `parsePost` — use it rather than either half |
 
 `next/image` then resizes the full-size source and caches the result (`images.minimumCacheTTL` = 1 day; re-uploads get a new filename → new cache key, and expiry is served stale-while-revalidate). Two images stay low-quality for reasons outside the frontend: one source is missing from the bucket entirely, and a featured-news post's only image is a 599×599 original.

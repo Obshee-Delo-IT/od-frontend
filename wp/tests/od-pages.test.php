@@ -1495,11 +1495,11 @@ od_test( 'a page with no card titles is left alone', od_pages_coordinator_headin
 /* Only the post-title block: a `level` in any other block is somebody else's. */
 od_test( 'a level on another block is not touched', od_pages_coordinator_heading_level( '<!-- wp:heading {"level":3} --><h3>Раздел</h3><!-- /wp:heading -->' ) === '<!-- wp:heading {"level":3} --><h3>Раздел</h3><!-- /wp:heading -->' );
 
-/* The level change is only safe because the stylesheet holds the look: `h2`
-   inside a group is lowercased and a size larger than `h3`, and a coordinator
-   card must be neither. */
+/* The level change is only safe because the stylesheet holds the look: the base
+   `h2` rule is a size larger than the base `h3`, and a card title should not
+   grow for being promoted. */
 $gutenberg = file_get_contents( __DIR__ . '/../../src/shared/ui/theme/gutenberg/gutenberg.css' );
-od_test( 'the stylesheet keeps a card title looking like one at level 2', str_contains( $gutenberg, '.wp-block-post-title.wp-block-post-title {' ) && str_contains( $gutenberg, 'text-transform: none;' ) );
+od_test( 'the stylesheet keeps a card title looking like one at level 2', (bool) preg_match( '~\.wp-block-post-title \{\s*font-size~', $gutenberg ) );
 
 /* ------------------------------------------------------- the registry itself */
 
