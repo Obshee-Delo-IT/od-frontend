@@ -99,6 +99,12 @@ Fixed in `gutenberg.css` with the parity rule:
 
 **Then the captions came back grey.** The page colours the *column* (`.redcapt`); our `.wp-block-columns p { color: var(--gray-7) }` matched the paragraph itself, and an inherited value always loses to a rule matching the element. The rule is deleted — its `font-size` only duplicated the base `p` rule, so colour was all it did, and a page's own styling should win inside its own body.
 
+**Every grid query loop came out one card per row.** WordPress prints a block's `layout` support as a **per-container** rule in the *page's* `<style>` — `wp-container-core-post-template-is-layout-b954fd2f { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)) }` — and a REST `content.rendered` carries the container class without the rule. `gutenberg.css` had `display: grid` (WordPress's own layout CSS, copied in) and no template, so every loop stacked at full width: on the 74 regional `/contacts/<region>/` pages that was coordinator photos 1240px wide apiece, and the «События» teasers under them the same, which is why the page looked nothing like Figma `contact-page` (754:675) — `/contacts/amurskaya/` was **9 257px** tall against the mock's 1 963.
+
+Fixed on the semantic class the loop writes itself, `columns-N`, mapped to a `--od-loop-columns` custom property, with a `--mobile` override to one column — WordPress's grid layout has no breakpoint at all. Nothing else on the site changed: `.od-post-cards` and the programme carousels set their own columns in later, equally specific rules.
+
+**A coordinator list can only be a query, so the card had to come from the loop.** Those 74 pages pick their people with a `pl-categs` query, so no page body names them and the `/profile/…`-link convention (§`profileLinks.ts`) has nothing to match. `parsePost` now also swaps a **query card** — the `<li class="wp-block-post">`, not the anchor, because a teaser renders the same href twice — for the `PersonCard` its link addresses, and `resolveProfileEmbeds` reads a card as asking for the portrait variant, no marker class needed. That is what draws the coordinators as the mock's card, contacts included, which is also what today's `od_pages_profile_contacts` sweep was for: 122 of 142 records now link at least one contact.
+
 ### Why the positioning rule is safe, and why it is a rule rather than a page edit
 
 Checked before shipping it:

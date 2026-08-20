@@ -45,6 +45,36 @@ const soleEmbedHref = (node: Element, embeds: Map<string, ReactNode>): string | 
   return href && embeds.has(href) ? href : null;
 };
 
+/** Every descendant href, in document order — a query card wraps its link twice. */
+const hrefsIn = (node: Element): string[] =>
+  (node.children as DOMNode[]).flatMap((child) => {
+    if (!isElement(child)) {
+      return [];
+    }
+    const own = child.tagName === 'a' && child.attribs.href ? [child.attribs.href] : [];
+    return [...own, ...hrefsIn(child)];
+  });
+
+/**
+ * The href a **query card** addresses, when an embed is waiting for it.
+ *
+ * The card, not the anchor: a `wp:query` teaser renders the same link twice (the
+ * featured image's `<figure>` and the title), so swapping anchors would draw the
+ * person twice and leave the other half of the teaser behind. `<li>` in,
+ * `<li>` out — the list markup stays valid.
+ *
+ * This is what draws the coordinators on the 74 regional `/contacts/<region>/`
+ * pages, whose list is a query over `pl-categs` and therefore names nobody in
+ * the body. Figma `contact-page` (754:675) draws each of them as the card.
+ */
+const cardEmbedHref = (node: Element, embeds: Map<string, ReactNode>): string | null => {
+  if (node.tagName !== 'li' || !(node.attribs.class ?? '').split(/\s+/).includes('wp-block-post')) {
+    return null;
+  }
+
+  return hrefsIn(node).find((href) => embeds.has(href)) ?? null;
+};
+
 const findCarouselOrGallery = (children: DOMNode[]) => {
   const carousel = children.find(
     (child) => isElement(child) && child.attribs.class?.includes('wp-block-cb-carousel-v2')
@@ -77,9 +107,11 @@ interface ParsePostOptions {
    * `profile` records a page links (see `profileLinks.ts`); a body with
    * no such link, or a page that passes nothing, parses exactly as before.
    *
-   * Only a link **alone in its own `<p>`** is swapped — see
+   * Two shapes are swapped and no others: a link **alone in its own `<p>`** (see
    * {@link soleEmbedHref} for why the paragraph is part of the contract and not
-   * an implementation detail.
+   * an implementation detail), and a **query card** whose link points at one
+   * (see {@link cardEmbedHref}) — the case a page cannot express in its own
+   * body, because the loop picks the records at render time.
    *
    * A `Map`, not an object: the keys are content, and `'__proto__' in {}` is
    * `true`.
@@ -104,6 +136,13 @@ export const parsePost = (data = '', { liftHeader = true, embeds }: ParsePostOpt
         const embedded = soleEmbedHref(domNode, embeds);
         if (embedded) {
           return <>{embeds.get(embedded)}</>;
+        }
+
+        const card = cardEmbedHref(domNode, embeds);
+        if (card) {
+          // `od-person` is what tells the loop's own grid to stand down — see
+          // `gutenberg.css`. A `<li>` because the parent is still a `<ul>`.
+          return <li className="od-person">{embeds.get(card)}</li>;
         }
       }
 

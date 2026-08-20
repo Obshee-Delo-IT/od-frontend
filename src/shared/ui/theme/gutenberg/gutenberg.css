@@ -270,6 +270,58 @@ th {
   gap: 1.25em;
 }
 
+/* **The column count of a query loop is missing from the payload we render.**
+   `display: grid` above is WordPress's own layout-support CSS, but the
+   `grid-template-columns` that goes with it is printed *per container* into the
+   page's `<style>` (`wp-container-core-post-template-is-layout-b954fd2f { …
+   repeat(4, minmax(0, 1fr)) }`) — and a REST `content.rendered` carries the
+   class without the rule. So every grid loop arrived as one full-width column:
+   on the 74 regional `/contacts/<region>/` pages that is the coordinator cards
+   at 1240 wide apiece and the «События» teasers below them, which is what made
+   the page look nothing like Figma `contact-page` (754:675).
+
+   The count is in the markup as `columns-N`, which post-template writes itself,
+   so the rule can live here. Below `--mobile` they stack — WordPress's own
+   grid layout has no breakpoint at all, and four coordinator photos across a
+   phone is not a layout. */
+.wp-block-post-template.is-layout-grid {
+  grid-template-columns: repeat(var(--od-loop-columns, 3), minmax(0, 1fr));
+}
+
+.wp-block-post-template.columns-1 {
+  --od-loop-columns: 1;
+}
+
+.wp-block-post-template.columns-2 {
+  --od-loop-columns: 2;
+}
+
+.wp-block-post-template.columns-4 {
+  --od-loop-columns: 4;
+}
+
+.wp-block-post-template.columns-5 {
+  --od-loop-columns: 5;
+}
+
+.wp-block-post-template.columns-6 {
+  --od-loop-columns: 6;
+}
+
+@media (--mobile) {
+  .wp-block-post-template.is-layout-grid {
+    --od-loop-columns: 1;
+  }
+}
+
+/* A loop whose cards were replaced by `PersonCard` is a stack, not a grid:
+   Figma `contact-page` draws one coordinator per row, photo left and contacts
+   right, at the full 1240. See `parsePost`'s card embeds. */
+.wp-block-post-template.is-layout-grid:has(> .od-person) {
+  --od-loop-columns: 1;
+  gap: 20px;
+}
+
 /* A card title is a card title at whatever level the document needs it to be.
    The regional `/contacts/<region>/` pages moved their coordinator titles from
    `h3` to `h2` so the page stops going `h1` → `h3` (F2, `od-pages.php`), and the

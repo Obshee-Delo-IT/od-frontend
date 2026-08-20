@@ -34,6 +34,44 @@ const PROFILE_HREF = /\bhref=["'](\/profile\/[^"'\s]+)["']/gi;
  */
 const MAX_PROFILES_PER_PAGE = 16;
 
+/** `<li …>…</li>` — one item of a list, non-greedy because a card holds no nested list. */
+const LIST_ITEM = /<li\b([^>]*)>([\s\S]*?)<\/li>/gi;
+const CLASS_ATTR = /\bclass=["']([^"']*)["']/i;
+
+/**
+ * The classes are compared whole, not as substrings: `wp-block-post-title` and
+ * `wp-block-post-featured-image` both *contain* `wp-block-post`, and only the
+ * `<li>` is the card.
+ */
+const isPostCard = (attrs: string): boolean =>
+  (attrs.match(CLASS_ATTR)?.[1] ?? '').split(/\s+/).includes('wp-block-post');
+
+/**
+ * The `/profile/…` hrefs that a `wp:query` **card** addresses, as opposed to the
+ * ones a paragraph links.
+ *
+ * Two things read this. `parsePost` swaps the whole card for the person's card —
+ * the `<li>` and not the anchor, because a query teaser renders the same href
+ * twice (once in the featured image's `<figure>`, once in the title) and
+ * replacing anchors would draw the card twice. And `resolveProfileEmbeds` gives
+ * those cards a **photo** without needing a marker class: a teaser that already
+ * showed a featured image is asking for the portrait variant.
+ *
+ * This is the 74 regional `/contacts/<region>/` pages: their coordinator list is
+ * a query over `pl-categs`, so no page body can name the people it shows.
+ */
+export const collectQueryCardProfileHrefs = (html?: string | null): Set<string> => {
+  if (!html) {
+    return new Set();
+  }
+
+  const hrefs = [...html.matchAll(LIST_ITEM)]
+    .filter(([, attrs]) => isPostCard(attrs))
+    .flatMap(([, , inner]) => [...inner.matchAll(PROFILE_HREF)].map(([, href]) => href));
+
+  return new Set(hrefs);
+};
+
 export const collectProfileHrefs = (html?: string | null): string[] => {
   if (!html) {
     return [];

@@ -58,21 +58,46 @@ describe('parsePost', () => {
 
     /**
      * A `wp:query` teaser renders the same post link twice — once inside the
-     * featured image's `<figure>`, once inside the title's `<h3>` — and both are
-     * sole-child anchors. `/contacts/kalmykiya/` and `/contacts/novosibirskaya/`
-     * are shaped exactly like this and would each have drawn the card twice.
+     * featured image's `<figure>`, once inside the title's `<h3>` — so the card
+     * is swapped at the `<li>`, **once**, and never at an anchor. The regional
+     * `/contacts/<region>/` pages are shaped exactly like this: their
+     * coordinators come out of a `pl-categs` query, so no page body names them.
      */
-    it('ignores a sole-child link that is not in a paragraph — the wp:query teaser case', () => {
+    it('swaps a wp:query card for the card its link names, exactly once', () => {
       const teaser = `<li class="wp-block-post">
         <figure class="wp-block-post-featured-image"><a href="/profile/ryazanov/"><img src="/p.jpg" alt=""/></a></figure>
         <h3 class="wp-block-post-title"><a href="/profile/ryazanov/">Андрей Рязанов</a></h3>
       </li>`;
       const { body } = parsePost(teaser, { liftHeader: false, embeds });
 
-      const { container } = render(<div>{body}</div>);
+      const { container } = render(<ul>{body}</ul>);
+      expect(screen.getAllByText('карточка')).toHaveLength(1);
+      // Both halves of the teaser go with it — image link and title link alike.
+      expect(screen.queryAllByRole('link')).toHaveLength(0);
+      // The list item survives as a list item, and marked for the grid override.
+      expect(container.querySelectorAll('li.od-person')).toHaveLength(1);
+    });
+
+    it('leaves a query card whose link has no embed waiting alone', () => {
+      const teaser = `<li class="wp-block-post">
+        <h3 class="wp-block-post-title"><a href="/profile/someone-else/">Кто-то</a></h3>
+      </li>`;
+      const { body } = parsePost(teaser, { liftHeader: false, embeds });
+
+      render(<ul>{body}</ul>);
+      expect(screen.getByRole('link', { name: 'Кто-то' })).toBeInTheDocument();
+    });
+
+    /** `wp-block-post-title` contains `wp-block-post`; only the `<li>` is a card. */
+    it('does not read a title wrapper as the card', () => {
+      const { body } = parsePost('<h3 class="wp-block-post-title"><a href="/profile/ryazanov/">А</a></h3>', {
+        liftHeader: false,
+        embeds,
+      });
+
+      render(<div>{body}</div>);
+      expect(screen.getByRole('link', { name: 'А' })).toBeInTheDocument();
       expect(screen.queryByText('карточка')).toBeNull();
-      expect(container.querySelectorAll('article')).toHaveLength(0);
-      expect(screen.getAllByRole('link')).toHaveLength(2);
     });
 
     it('is not fooled by a content href that names an Object.prototype key', () => {

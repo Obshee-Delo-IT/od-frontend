@@ -1,6 +1,6 @@
 import { ReactNode } from 'react';
 import { cachedFetchProfile } from '@/shared/api/fetchProfile';
-import { collectProfileHrefs, profileSlug } from '@/shared/lib/wpContent';
+import { collectProfileHrefs, collectQueryCardProfileHrefs, profileSlug } from '@/shared/lib/wpContent';
 import { PersonCard } from '@/shared/ui/components/PersonCard';
 
 /**
@@ -40,7 +40,10 @@ export const resolveProfileEmbeds = async (html: string): Promise<Map<string, Re
     return new Map();
   }
 
-  const withPhoto = TEAM_GRID.test(html);
+  const teamGrid = TEAM_GRID.test(html);
+  /* A query card asked for the portrait by rendering a featured image — there is
+     no marker class to read on the 74 regional pages, and none is needed. */
+  const fromCard = collectQueryCardProfileHrefs(html);
 
   const resolved = await Promise.all(
     hrefs.map(async (href) => ({ href, profile: await cachedFetchProfile(profileSlug(href)) }))
@@ -57,7 +60,7 @@ export const resolveProfileEmbeds = async (html: string): Promise<Map<string, Re
           key={href}
           name={profile.name}
           subtitle={profile.subtitle}
-          photo={withPhoto ? profile.photo : null}
+          photo={teamGrid || fromCard.has(href) ? profile.photo : null}
           contacts={profile.contacts}
         />,
       ]);
