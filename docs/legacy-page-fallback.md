@@ -40,6 +40,16 @@ Five things below were measured wrong or turned out differently, and each cost r
    proxy strips the chrome itself, so nothing waited on WP-side work. Pointing it at the frozen copy later is
    one environment variable. **It must not be left pointing at `obshee-delo.ru` after cutover** — this app
    becomes that host, and the fallback would proxy itself; the app warns about exactly that at boot.
+6. **The frozen copy no longer has to be *built*** (added 2026-08-20). The cutover is a domain swap, not an
+   in-place migration ([`prod-migration-runbook.md` §0.4](./prod-migration-runbook.md)): a fresh install is
+   cloned from prod and the apex moves to the frontend in front of it, while **the old install stays exactly
+   as it is** and takes a subdomain. So this document's "frozen copy (welfare + cmsms)" box is not something to
+   stand up — it is today's production, left alone. Three consequences: it keeps `welfare` and cmsms for free,
+   so it must be **kept on PHP 7** (welfare fatals on 8.x); it needs its `WP_HOME`/`WP_SITEURL`, its
+   `.htaccess` canonical-host 301 and a database search-replace repointed at the subdomain, or it 301s every
+   request back at the apex — which is the very loop point 5 warns about, from the other side; and §7's
+   "add a chromeless `embed` template (+ enable REST)" step is moot, since the proxy strips chrome itself and
+   the frozen copy needs no REST at all. Mechanics: [runbook §5.5](./prod-migration-runbook.md).
 
 ## 1. Why a fallback at all
 

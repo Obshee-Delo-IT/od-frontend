@@ -1,10 +1,12 @@
 # Production migration runbook
 
-Everything needed to move the Next.js redesign from **od-dev** to **od-stage** and then **production** (`obshee-delo.ru`), in execution order, with the verification gate for each step.
+Everything needed to put the Next.js redesign live at **`obshee-delo.ru`**, in execution order, with the verification gate for each step.
+
+> **The cutover is a domain swap, not a migration in place — decided 2026-08-20.** See §0.4. It collapses several of the blockers below and makes the whole of §2 a *single* procedure, the one already rehearsed end to end on od-stage. Read §0.4 before anything else here; wherever an older paragraph says "on prod, do X", §0.4 is what overrides it.
 
 > ⚠ **Prod lives on BeGet: `ssh od-root`, `~/public_html`.** Not Timeweb — `obshee-delo.ru` resolves to `45.130.41.70` (`ssl.dream.beget.com`), while `ssh timeweb ~/public_html` is a full *copy* of the same site that now serves only `общее-дело.рф` as 301s, so edits there are invisible. Established 2026-08-15, after a round of edits landed on the copy. The prod commands below have been repointed at `od-root`; the prod *measurements* (§2.5's PHP/mod_php notes, the plugin inventory, the WP Rocket behaviour) were taken on the twin and are marked where they matter. Two tells if you're unsure which install you're on: `dig +short obshee-delo.ru` against the host's IPs, and a request with a unique query string that never shows up in the copy's `~/access_log`.
 
-> **Read this first.** Every step below has been executed **only against od-dev**. **od-stage was wiped and re-synced from live prod on 2026-08-20** (§0.5) and then taken headless the same day (§0.6), so B1, B2 and B10 now have a proven procedure rather than a plan — read §0.6 before §1, because it supersedes the skip-flag ritual below and corrects §2.1. Prod has, three times and narrowly: 2026-08-13's F6 privacy page + cookie notice (on Timeweb, before the copy diverged), and 2026-08-15's deletion of three dead nav/footer links (on BeGet — [`next-steps.md`](./next-steps.md)). Everything else in this runbook is unexecuted. Prod facts in §0 come from a **read-only probe** recorded in [`legacy-page-fallback.md` §2](./legacy-page-fallback.md). Treat them as *expected*, and re-verify in §1 before acting. Run the whole runbook on **od-stage first** — it exists precisely so prod isn't the rehearsal.
+> **Read this first.** Every step below has been executed **only against od-dev and od-stage**. **od-stage was wiped and re-synced from live prod on 2026-08-20** (§0.5) and then taken headless the same day (§0.6), so B1, B2 and B10 now have a proven procedure rather than a plan — read §0.6 before §1, because it supersedes the skip-flag ritual below and corrects §2.1. Prod has, three times and narrowly: 2026-08-13's F6 privacy page + cookie notice (on Timeweb, before the copy diverged), and 2026-08-15's deletion of three dead nav/footer links (on BeGet — [`next-steps.md`](./next-steps.md)). Everything else in this runbook is unexecuted. Prod facts in §0 come from a **read-only probe** recorded in [`legacy-page-fallback.md` §2](./legacy-page-fallback.md). Treat them as *expected*, and re-verify in §1 before acting. **Under §0.4's model prod is never the target of §2 at all** — it is only ever the source of a clone and, after cutover, the frozen copy.
 
 Related: [`implementation-plan.md`](./implementation-plan.md) (task state) · [`wp-backend.md`](./wp-backend.md) (hosting, access, plugins) · [`legacy-page-fallback.md`](./legacy-page-fallback.md) (un-redesigned pages).
 
@@ -14,16 +16,36 @@ Related: [`implementation-plan.md`](./implementation-plan.md) (task state) · [`
 
 | # | Blocker | Why it stops the migration | Owner |
 |---|---|---|---|
-| **B1** | **REST is disabled on prod.** **Closed on stage 2026-08-20 (§0.6) — and it was never one switch.** `clearfy_option.disable_json_rest_api = 'on'` is only half; `welfare/functions.php:729–748` kills REST outright with `rest_enabled → false` and `remove_action('parse_request','rest_api_loaded')`, unconditionally at theme load, with no option to flip. Deactivating clearfy alone left stage still answering **404**. | The entire app is REST-only (`httpClient.ts` → `WP_BASE/wp-json`). Zero pages render. **This is the single largest blocker** — but see §2.1: it no longer needs anyone's admin login. | ~~WP admin~~ **us, over SSH** |
+| **B1** | **REST is disabled on prod.** **Closed on stage 2026-08-20 (§0.6), and under §0.4 it never has to be touched on prod at all** — the clone is what gets opened. **It was never one switch.** `clearfy_option.disable_json_rest_api = 'on'` is only half; `welfare/functions.php:729–748` kills REST outright with `rest_enabled → false` and `remove_action('parse_request','rest_api_loaded')`, unconditionally at theme load, with no option to flip. Deactivating clearfy alone left stage still answering **404**. | The entire app is REST-only (`httpClient.ts` → `WP_BASE/wp-json`). Zero pages render. **This is the single largest blocker** — but see §2.1: it no longer needs anyone's admin login. | ~~WP admin~~ **us, over SSH** |
 | **B2** | ~~unverified for posts~~ — **measured and closed on stage 2026-08-20 (§0.6).** Prod holds shortcodes in **everything**: 5393 posts, 144 pages, 132 profiles, zero Gutenberg blocks anywhere. The migrator converted all of it; 10 occurrences on 10 pages remain. | If film/news bodies are `[cmsms_*]`, then `parsePost`, `GutenbergProvider`, `extractFilmPoster` and `absolutizeWpMedia` all degrade to raw shortcode text. See §1.4 — this is the highest-risk unknown. | verify in §1 |
 | **B3** | **ACF is not installed on prod/stage.** Still open — §0.6's open list item 2. | No `group_film_meta` ⇒ no `acf` object in REST ⇒ every film affordance disappears. | §2.2 |
-| **B4** | **Post ids are per-environment.** | The worksheet we filled holds od-dev ids; importing it into prod would write to unrelated posts. Mitigated by `pnpm film:remap` (§3.2). | §3 |
+| **B4** | **Post ids are per-environment.** | The worksheet we filled holds od-dev ids; importing it into the new install would write to unrelated posts. Mitigated by `pnpm film:remap` (§3.2). Under §0.4 the clone carries **prod's** ids, so this is resolved once and stays resolved through the swap. | §3 |
 | **B5** | **Category ids may differ.** `581/580/86/559` are hardcoded — since 2026-08-13 in **one** file, `src/shared/config/filmCategories.ts`. | A wrong id silently empties the catalogue and the related-films strip — it answers 200, so only a count check catches it. | §1.3 + §4.3 |
 | **B6** | **Media offload origin unconfirmed for prod.** | `WP_MEDIA_CDN` defaults to the od-dev bucket; a different prod bucket breaks every image. | §1.5 + §4.1 |
 | ~~B7~~ | ~~Hosting/deploy target undecided~~ — **decided: Beget VPS + Coolify, images built in GitHub Actions → GHCR.** | Remaining work is the CI push step (§4.7), not a decision. | §4 |
 | **B8** | **7 native routes, plus 109 WordPress pages redesigned by `od-pages.php` and 44 passed through un-redesigned** — the census is [`page-inventory.md`](./page-inventory.md) (re-measured 2026-08-20). | Launching without the A6 legacy fallback means every page WordPress does not answer for 404s. **Launch gate, not a migration step** — see §6. The seven paths still on the iframe are **0.8 % of entry traffic and 2.6 % of pageviews** — down from 13.5 / 20.0 % before D3 and D6, so this is no longer the launch risk it was priced as. | A6 |
-| **B10** | **Prod runs WordPress 5.5.5**, pinned by an active `wp-downgrade`. **Closed on stage 2026-08-20 (§0.6):** 5.5.5 → **7.1**, and the migrated bodies verifiably render `is-layout-flex`. | `cmsms-gutenberg-upgrade` emits `wp:query`, `wp:details` and `wp:group`, and the layout classes `gutenberg.css` keys on (`is-layout-flex`) are emitted by core **5.9+**. On 5.5.5 the query blocks render **empty** — that is the news feed on ~80 regional `/contacts/*` pages — and every `wp:columns` stacks. It fails quietly: the page answers 200 with content missing. **Must happen before the migrator runs.** | §2.7 |
+| **B10** | **Prod runs WordPress 5.5.5**, pinned by an active `wp-downgrade`. **Closed on stage 2026-08-20 (§0.6):** 5.5.5 → **7.1**, and the migrated bodies verifiably render `is-layout-flex`. Under §0.4 prod's own core is never upgraded — the clone's is, which also removes prod's `mod_php7` minor as a constraint (§2.7). | `cmsms-gutenberg-upgrade` emits `wp:query`, `wp:details` and `wp:group`, and the layout classes `gutenberg.css` keys on (`is-layout-flex`) are emitted by core **5.9+**. On 5.5.5 the query blocks render **empty** — that is the news feed on ~80 regional `/contacts/*` pages — and every `wp:columns` stacks. It fails quietly: the page answers 200 with content missing. **Must happen before the migrator runs.** | §2.7 |
 | ~~B9~~ | ~~The redesigned routes don't match live URLs.~~ — **FIXED 2026-08-13 (A8).** `/<id>` is served directly by `app/[...slug]/page.tsx` and the four film categories by `app/video/[segment]/page.tsx`; `src/proxy.ts` (driven by `resolveLegacyUrl` in `src/shared/config/legacyRedirects.ts`) redirects the rest — the **whole** `/category/*` family, `/video/short/` and every `/page/N/` shape — in **a single 301 each**; `trailingSlash: true` matches the live URL form. F4's sitemap/robots/canonicals shipped alongside, so nothing we advertise redirects. | Was **59 % of all site entries**. Now a **verification** concern rather than a build one — gate 12 in §5 is what proves it, and it is scriptable. | verify in §5 |
+
+---
+
+## 0.4 The cutover model — build the replacement, then move the domain
+
+**Decided 2026-08-20.** Prod is not migrated in place. A **new WordPress install** is cloned from live prod, prepped headless exactly as od-stage was (§0.6), and served at its own hostname — **which should be the permanent one from the start**, `wp.obshee-delo.ru` rather than `new.…`, for the reason §5.5 gives. The frontend is pointed at it and verified there. At cutover the **apex** moves to the frontend in front of it. The old install keeps its files, its database, its theme and its plugins, and simply stops being `obshee-delo.ru`.
+
+**Six things follow, and they are why this is worth stating before the steps.**
+
+1. **§2 is one procedure, not two.** Everything in it runs against an install that nobody is reading yet, so there is no window to protect: delete `welfare`, deactivate cmsms, prune, upgrade core, convert. The clone/prod fork an earlier draft of §2.1 carried is void — and so is the mu-plugin that was going to restore REST without removing the theme. Nothing needs it.
+2. **B1 and B10 stop being prod blockers.** Prod's core is never upgraded, its `clearfy-pro` is never touched, its theme never deleted. Both are properties of the *clone*, resolved once during prep and never again. What survives of B1 is a narrower decision: the new install's REST is public once it holds the prod domain — see §2.1's warning, which still applies to *it*.
+3. **Prod's PHP version stops blocking anything, and the constraint inverts.** We never run WP 7.1's `php >= 7.4` check against prod, so its `mod_php7` minor is irrelevant. The new install's PHP is a thing we *choose* — od-stage is on 8.2.32 and that is the target. But the old install must **stay on PHP 7**: `welfare/functions.php:754` fatals under PHP 8 (§2.7), and the old install is what the A6 fallback renders. Moving it to 8.x after cutover would kill the frozen copy.
+4. **The A6 frozen copy costs nothing now.** It is the old install, given a subdomain instead of the apex. No capture step, no separate snapshot to keep in sync, and it keeps `welfare` + cmsms because we never touched them. Four edits are needed at cutover, listed in §5.5 and already documented in §0.5 from doing them twice: `WP_HOME`/`WP_SITEURL`, the `.htaccess` canonical-host 301, a database search-replace, and the `siteurl`/`home` option rows the defines mask. Skip the second and every request to the frozen copy 301s straight back at the apex. It also wants `noindex`, which `app/legacy/[...slug]/route.ts` already sends on our side.
+5. **Rollback becomes trivial, and that is the point of the model.** Every gate in §5 runs before the domain moves. If something is wrong afterwards, the domain moves back to an install that was never modified. Compare the in-place version of this plan, where the return path was a database snapshot taken before 5669 bodies were rewritten.
+6. **Ids settle once.** The clone carries prod's own post and category ids, so §1.3's numbers, `filmCategories.ts` (B5) and `film:remap` (B4) are resolved against the clone and stay correct through the swap. There is no per-tier id dance after cutover.
+
+**Two things this model introduces that in-place did not.**
+
+- **The content gap.** Editors keep working on the old install between the clone and the swap, and those edits are not in the new one. Two ways out, and the second is better: freeze editing for the whole prep, or **script the prep** so a *fresh* clone can be re-prepped shortly before cutover and the freeze shrinks to that window. Favour scripting — §0.6 is already a list of commands with a gate after each, and the two expensive steps are re-run-safe by construction (`wp cmsms backup` skips rows that already have a `nvp_content_copy`; `migrate` compares against current content and skips what matches). Workstream D's `od-pages.php` / `od-wp.php` are idempotent for the same reason.
+- **Where the new install lives — the one open decision.** Prod is on **BeGet** (`ssh od-root`), od-stage is on **Timeweb**. Building the replacement as a sibling on BeGet makes cutover a vhost plus DNS change and leaves mail, cron, TLS and the `.htaccess` 301s that send 2009–2023 uploads to the Yandex bucket exactly where they are. Building it on Timeweb means the swap is also a **host migration**, with all of that to redo, and both installs' `.htaccess` upload rules to re-verify. **Recommend BeGet**, and note that od-stage on Timeweb then remains what it is now — the rehearsal, not the article.
 
 ---
 
@@ -40,7 +62,7 @@ Related: [`implementation-plan.md`](./implementation-plan.md) (task state) · [`
 
 ## 0.6 od-stage headless prep — executed 2026-08-20
 
-§0.5 left od-stage a byte-faithful copy of prod: WP 5.5.5, `welfare`, 21 active plugins, REST 404, every body in CMSMasters shortcodes. It is now **headless-ready**, and the sequence below is the one prod has to follow. **B1, B2 and B10 are closed as a procedure, proven on a real prod clone — not on prod**, which is untouched.
+§0.5 left od-stage a byte-faithful copy of prod: WP 5.5.5, `welfare`, 21 active plugins, REST 404, every body in CMSMasters shortcodes. It is now **headless-ready**, and the sequence below is the one **the new install** has to follow (§0.4 — prod itself never runs it). **B1, B2 and B10 are closed as a procedure, proven on a real prod clone.**
 
 **Backups.** `~/backups/<NN-slug>/` on `ssh timeweb`, one per step, written by `~/od-backup.sh <slug> [--full]`: `db.sql.gz` + `files.tar.gz` + `MANIFEST.txt` (timestamp, core version, active theme, active plugins). Each snapshot is taken **before** the step it is named for, so `NN` restores the state that step started from; `07-migrated` is the good end state. Only `00-baseline` is `--full` (whole tree, 1.3 GB) — the later tars carry `wp-config.php`, `.htaccess` and `wp-content/{plugins,themes,mu-plugins}` only, because uploads never changed. The script refuses to overwrite an existing slug and runs WP-CLI under PHP 7.4, so it works on both sides of step 05.
 
@@ -58,7 +80,7 @@ Related: [`implementation-plan.md`](./implementation-plan.md) (task state) · [`
 
 **07 · the good state. B2 closed.** 5393 posts, 144 pages and 132 profiles are core Gutenberg, and rendered REST content carries `is-layout-flex` / `is-layout-constrained` / `is-layout-grid` — so B10's silent-empty-`wp:query` failure mode is gone with it, verified rather than reasoned. Residual `[cmsms_` is **10 occurrences across 10 pages**: `[cmsms_sidebar]` ×8, `[cmsms_selected_products]` ×1, `[cmsms_contact_form]` ×1. The `counter` / `stat` / `quote` / `icon_list` tags that look like gaps in the migrator's 26-tag coverage are **all** inside `content_template`, a dead CPT — as are the other orphans (`product` 6, `leyka_campaign` 3, `campaign` 1, `tribe_*` 4).
 
-> **`00-baseline` is now the frozen-copy seed.** It is the only complete un-migrated prod clone we hold — full tree *including* `welfare` and `cmsms-content-composer`, plus a matching un-migrated dump. That is exactly what `frozen.obshee-delo.ru` has to serve for A6, and it needs both of those to render. Don't delete it when tidying.
+> **`00-baseline` is a complete un-migrated prod clone** — full tree *including* `welfare` and `cmsms-content-composer`, plus a matching dump. Keep it: it is the cheapest way to rehearse anything that needs prod's original stack (§2.1's mu-plugin idea, for one), and it is a second copy of what the A6 frozen copy will be. It is **not** the frozen copy itself — under §0.4 that is the old prod install, kept running (§5.5).
 
 ### Still open on od-stage, in order
 
@@ -72,7 +94,7 @@ Related: [`implementation-plan.md`](./implementation-plan.md) (task state) · [`
 8. **Workstream D scripts** — `wp/scripts/od-pages.php` and `od-wp.php`, dry-run then apply; afterwards `pnpm pages:inventory` measures **stage**, not od-dev.
 9. **Frontend smoke** — `WP_BASE=https://od.webtm.ru`, `SITE_URL` set to the stage origin (leaving it at the prod default makes stage advertise prod's canonicals), `pnpm build && pnpm start`, then §5's gates and `pnpm url:check`.
 10. **Hygiene, last.** Drop `nvp_content_copy` (8565 rows — it *is* the migration rollback, so only after gate 9 passes), then the `cmsms_%`-except-`cmsms_profile_subtitle` meta sweep from [`wp-backend.md` §4.4 step 8](./wp-backend.md), the orphan `wp_wysija_*` / WooCommerce / `tribe_*` tables, and the three-line `WP_DEBUG` block this prep added at the top of `wp-config.php`.
-11. ~~**PHP floor.**~~ **Done 2026-08-20** — stage's vhost moved from 7.4.33 to **8.2.32 (`apache2handler`)**, so web and CLI now match and the whole stack is what prod should end up on. Gates re-run clean. **Prod's PHP is still the open dependency**, and it is now two-sided: below 7.4 the core upgrade cannot happen there at all, and at 8.x `welfare` fatals on load (§2.7) — so on prod the PHP move and the theme deletion have to land in the same window.
+11. ~~**PHP floor.**~~ **Done 2026-08-20** — stage's vhost moved from 7.4.33 to **8.2.32 (`apache2handler`)**, so web and CLI now match and the whole stack is what prod should end up on. Gates re-run clean. **Under §0.4 prod's own PHP stopped being a dependency** — its core is never upgraded, so the 7.4 floor never applies to it. What replaces that concern is the opposite one: the old install has to be **kept** on PHP 7 after cutover, because `welfare` fatals under 8.x and it is what the A6 frozen copy renders (§2.7).
 12. **Decisions this prep deliberately did not take.** Whether `leyka` stays on this WP or moves to `помоги.общее-дело.рф`; whether prod's REST goes public or gets path-allowlisted (§2.1's warning still stands — stage is not the same risk); whether `contact-form-7` 5.4.2 is updated or dropped for the Next form (it throws PHP 8.2 deprecations on every load today, as does `leyka` 3.30.3).
 
 ---
@@ -133,7 +155,7 @@ od-dev: 203 `format=video` posts, 99 in the four film sub-categories.
 >
 > | # | do this | why here |
 > |---|---|---|
-> | 1 | Capture the A6 frozen copy | It needs `welfare` + cmsms to render, and both are about to go. Once the theme is deleted there is no second chance. |
+> | 1 | Clone live prod into the new install | The source, and the point of no return for *this* copy — but prod itself is untouched, so a bad prep is answered by cloning again. The A6 frozen copy needs no capture step under §0.4: it is the old install, kept as it is. |
 > | 2 | `wp cmsms backup` | Free, and it is the per-post rollback for everything after it. |
 > | 3 | Core upgrade (**§2.7** first half) | Must precede the conversion — 5.5.5 renders the migrator's `wp:query` as an empty div, at 200. |
 > | 4 | `wp cmsms migrate` (**§2.7** second half) | Needs the shortcode text still present, nothing else; the migrator is pure regex over raw `post_content` and does not need cmsms loaded. |
@@ -144,7 +166,7 @@ od-dev: 203 `format=video` posts, 99 in the four film sub-categories.
 > | 9 | ACF and the film group (**§2.2–2.4**) | Independent of all of the above; last only because nothing else waits on it. |
 > | 10 | `od-revalidate.php` (**§2.5**), page fixes (**§2.8**) | Both want the final content in place. |
 >
-> **The clone path and the prod path diverge at step 6, and only there.** On od-stage the site did not have to keep serving, so the theme was simply deleted and the ugly window between steps 6 and 7 — bodies rendering as literal `[cmsms_…]` text under a stock theme — cost nothing. **Prod is public throughout,** so it cannot take that window: there, open REST *without* removing the theme (§2.1), and let the theme deletion fall inside the cutover window itself.
+> **This runs against the new install, never against live prod (§0.4).** Which is what makes it one procedure: nobody is reading the target, so the window between steps 6 and 7 — bodies rendering as literal `[cmsms_…]` text under a stock theme — costs nothing, exactly as it cost nothing on od-stage. Steps 1 and 2 are the ones with no second chance; the rest are re-runnable on a fresh clone, which is how §0.4 proposes to close the content gap.
 
 
 **2.1 Enable REST (B1). There are two switches, and the one this step was written about is the lesser of them.** Established on od-stage 2026-08-20 (§0.6): deactivating `clearfy-pro` left REST answering **404**.
@@ -166,23 +188,9 @@ remove_action( 'rest_api_init', 'wp_oembed_register_route' );
 
 `remove_action('parse_request', 'rest_api_loaded')` is the decisive line — without it `/wp-json/*` never routes, whatever clearfy says. `rest_enabled` has been a no-op since 4.7 and is a red herring.
 
-**Three ways to lift switch B. Which one is right depends on whether the site has to keep serving.**
+**Lifting switch B: delete the theme.** `wp theme activate twentytwentyone && wp theme delete welfare` — what od-stage did, and under §0.4 there is nothing to weigh it against, because the install nobody is reading yet does not need `welfare` to render anything. It retires switch B permanently and it **forces §2.6 step 4 in the same window** (see the order table above), leaving bodies as literal shortcode text until the conversion lands.
 
-1. **Delete the theme** — what od-stage did: `wp theme activate twentytwentyone && wp theme delete welfare`. Simplest, and it retires switch B permanently. **It also forces §2.6 step 4 in the same window** (see the order table above), and it leaves the site rendering stock-theme shortcode text until the conversion lands. Right for a clone, wrong for a live prod.
-2. **An mu-plugin that re-adds what the theme removed** — leaves `welfare` rendering prod exactly as it does today, and rolls back with `rm`. The theme's removals run when `functions.php` is included, which is *before* `after_setup_theme` fires, so re-adding there wins:
-   ```php
-   <?php // wp-content/mu-plugins/od-rest-on.php — PHP 7.0 syntax, mu-plugins load on every request
-   add_action('after_setup_theme', 'od_rest_on', 99);
-   function od_rest_on() {
-       remove_filter('rest_enabled', '__return_false');
-       add_action('parse_request', 'rest_api_loaded');
-       add_action('init', 'rest_api_init');
-       add_action('rest_api_init', 'rest_api_default_filters', 10, 1);
-       add_filter('rest_authentication_errors', 'rest_cookie_check_errors', 100);
-   }
-   ```
-   **Not yet run against prod's stack** — od-stage could not rehearse it, because by the time it was known the theme was already gone and `welfare` cannot even load under stage's PHP 8.2 (see §2.7). Try it on a throwaway clone before the prod window, not in it.
-3. **Edit `functions.php`** and comment the block out. Works, and it is the most obvious reading of the file — but it is a live edit to a file a theme update would overwrite, and it has no `rm`-shaped rollback. Prefer 2.
+> Two subtler ways to lift switch B were worked out while this looked like an in-place change to a live site — commenting the block out of `functions.php`, or an mu-plugin re-adding the removed hooks at `after_setup_theme` (which fires *after* the theme's `functions.php` is included, so it would win). **Neither is needed now.** Recorded here only so nobody re-derives them: if a live install ever has to keep `welfare` *and* answer REST, the mu-plugin is the one to build, since it rolls back with `rm`.
 
 Re-run §1.1 to confirm, and check **both** switches are off before concluding the endpoint is closed for a reason.
 
@@ -259,7 +267,7 @@ ssh od-root 'cd ~/public_html && wp --skip-plugins --skip-themes eval "
 
 **The order is the whole instruction.** Prod's content is still CMSMasters shortcodes, so the plugin that renders them has to outlive the conversion:
 
-⚠️ **Unless the theme goes first, in which case cmsms cannot outlive anything.** Measured on od-stage 2026-08-20: `cmsms_divpdel()` is defined in **`welfare`**, not in the plugin, so with the theme deleted every `the_content` over a cmsms body throws `Call to undefined function cmsms_divpdel()` at `cmsms-content-composer/inc/shortcodes.php:222` — and REST 500s on the first `content.rendered` it tries. Deactivating the plugin is then not a choice but the fix: with no shortcode handler registered the bodies degrade to literal `[cmsms_…]` text, which is ugly and answers 200. **This is why the order table above puts the theme deletion and the cmsms deactivation in the same window,** and why on prod the theme is not deleted before cutover at all (§2.1).
+⚠️ **Unless the theme goes first, in which case cmsms cannot outlive anything.** Measured on od-stage 2026-08-20: `cmsms_divpdel()` is defined in **`welfare`**, not in the plugin, so with the theme deleted every `the_content` over a cmsms body throws `Call to undefined function cmsms_divpdel()` at `cmsms-content-composer/inc/shortcodes.php:222` — and REST 500s on the first `content.rendered` it tries. Deactivating the plugin is then not a choice but the fix: with no shortcode handler registered the bodies degrade to literal `[cmsms_…]` text, which is ugly and answers 200. **This is why the order table above puts the theme deletion and the cmsms deactivation in the same window.** On a target nobody is reading yet (§0.4) that window is free; it was the reason the in-place version of this plan could not delete the theme at all.
 
 1. **Convert the content first** — the `wp cmsms migrate` pass this runbook already schedules. A shortcode whose plugin is gone renders as its own source text, so anything unconverted becomes visible bracket soup. od-dev needed four extra branches for `[cmsms_table]`, `[cmsms_audios]`, `[cmsms_tabs]` and `[cmsms_slider]`, which are now in the migrator — re-check after the pass with:
    ```bash
@@ -341,11 +349,11 @@ ssh od-root 'cd ~/public_html && wp --skip-plugins --skip-themes core version'
 - **5.5.5 → 7.1 in one hop**, `--locale=ru_RU`, and `core update-db` was a no-op (already at db 61833). No intermediate version needed.
 - **PHP floor: WP 7.1 wants ≥ 7.4.** Read it from the API rather than guessing: `curl -s 'https://api.wordpress.org/core/version-check/1.7/?version=5.5.5&locale=ru_RU'` and look at `offers[].php_version`. **This is the one item that can block prod outright** — prod is `mod_php7` of unread minor, and if it is below 7.4 the upgrade cannot happen there at all until the host moves it.
 - **The upgrade is what makes WP-CLI ordinary again.** Before it, timeweb's 8.2 CLI could not load the site at all, and `--skip-themes` was hiding the reason: it is not only the theme that fatals under PHP 8, it is **WP 5.5.5 itself** — `_wp_sidebars_changed` at `wp-includes/widgets.php:1265`, reached from `after_switch_theme`. Anything that switches a theme on 5.5.5 has to run under `/opt/php7.4/bin/php /usr/local/bin/wp`, not behind a flag. After the upgrade, plain `wp` works: no `--skip-plugins`, no `--skip-themes`.
-- **`welfare` cannot survive PHP 8**, and the reason is not the one [`wp-backend.md` §2](./wp-backend.md#2-stack-on-od-dev) used to give. `functions.php:754` reads `remove_action( ‘woocommerce_after_shop_loop_item’, … )` — **typographic** quotes, pasted from a word processor — so the arguments are undefined constants. PHP 7 makes that a warning and carries on with the string; PHP 8 makes it a fatal `Error`. That is the whole difference between prod serving fine today and the same file dying the moment its host moves to 8.x. It also means **moving prod's PHP to 8 and keeping `welfare` are mutually exclusive**, so on prod the two have to happen in the cutover window together.
+- **`welfare` cannot survive PHP 8**, and the reason is not the one [`wp-backend.md` §2](./wp-backend.md#2-stack-on-od-dev) used to give. `functions.php:754` reads `remove_action( ‘woocommerce_after_shop_loop_item’, … )` — **typographic** quotes, pasted from a word processor — so the arguments are undefined constants. PHP 7 makes that a warning and carries on with the string; PHP 8 makes it a fatal `Error`. That is the whole difference between prod serving fine today and the same file dying the moment its host moves to 8.x. Under §0.4 this is a constraint on the **old** install, and it points the other way from what it used to: the new install goes to 8.2 with no `welfare` in it, and the old one must be **left on PHP 7 forever**, because it is what the A6 fallback renders. Whoever tidies the account's PHP versions after cutover has to know that.
 
 **Verified after the upgrade, on od-stage** (site PHP moved to **8.2.32, apache2handler**, 2026-08-20): `/`, `/<id>/`, `/wp-admin/` and every REST route used by the app answer, and the migrated bodies carry `is-layout-flex` / `is-layout-constrained` / `is-layout-grid` in `content.rendered` — which is the B10 check, done by observation rather than by reasoning about core versions.
 
-⚠ **Take the DB snapshot through the BeGet panel first** (§7), and expect the *old theme* to be the risk here, not core: prod still renders its own pages with CMSMasters, whose newest release predates WP 6. That is acceptable only because the theme is on the way out — but the A6 frozen copy must be **captured before the upgrade**, or the fallback inherits whatever the upgrade breaks in the old theme. Prod's site PHP is 7.x (`mod_php7`), so also check the minimum PHP of the core version being installed before starting.
+⚠ **Under §0.4 this runs on the clone, and two worries an earlier draft had here are void.** The old theme is not a risk, because it is deleted before core is upgraded rather than left to meet WP 7 — and the A6 frozen copy needs no capture, because it *is* the untouched old install. What remains is the `~/backups/` snapshot for the step itself (§7) and the PHP floor of the core version being installed, which is now a property of the new install's vhost rather than something prod imposes.
 
 Then run the content conversion — [`wp-page-passthrough.md` §6](./wp-page-passthrough.md#6-running-the-migrator) — `wp cmsms backup` first, since it is what makes the rest reversible, and only then `wp cmsms migrate`.
 
@@ -651,11 +659,42 @@ Post detail lives at the bare **`/<id>`** since A8 — that is the *only* addres
 
 ---
 
+## 5.5 Cutover — what actually moves
+
+Under §0.4 this is the whole of "going live", and it happens only after every §5 gate is green against the temporary host.
+
+**First, a naming point that decides work later.** Three hostnames exist after cutover, not two, and the apex is not WordPress:
+
+| host | serves | env var |
+| --- | --- | --- |
+| `obshee-delo.ru` | the **Next frontend** on the Beget VPS (§4.6) | `SITE_URL` |
+| a stable subdomain — pick `wp.obshee-delo.ru`, not `new.…` | the **new WordPress install** | `WP_BASE` |
+| `frozen.obshee-delo.ru` | the **old install**, untouched | `WP_LEGACY_BASE` |
+
+**Give the new install its permanent hostname on day one.** `new.…` looks harmless and isn't: `WP_BASE` is baked into `images.remotePatterns` at **build** time, it is what a database-wide search-replace writes into 8 500 bodies, and it is the origin `resolveMediaUrl` probes. Renaming it after the fact means another search-replace, another rebuild and a re-verification of every image. This is exactly the cost od-stage paid going from `stage.od.webtm.ru` to `od.webtm.ru` (§0.5), for a much smaller install.
+
+**On the new install** — the same four edits §0.5 records doing twice, so they are known:
+
+1. `WP_HOME` / `WP_SITEURL` in `wp-config.php` → its permanent hostname.
+2. The `.htaccess` canonical-host 301 → the same. Left pointing anywhere else it sends every request away, and this is the one that bites hardest because it fires before WordPress loads.
+3. `wp search-replace <temp-host> <permanent-host> --all-tables --precise --skip-columns=guid`.
+4. **Read the `siteurl` / `home` option rows directly.** The `wp-config.php` defines mask whatever is in them, so a stale value is invisible until something reads the option — on od-stage those rows still held `https://cs16182.tmweb.ru` from a host move years earlier, inherited straight from prod's dump. Set them explicitly.
+
+**On the old install** — the same four, pointed at `frozen.obshee-delo.ru`. Until step 2 is done there, the frozen copy 301s every request to the apex, which is now the frontend, which fetches the frozen copy: a loop. `src/shared/legacy/legacyOrigin.ts` warns when `WP_LEGACY_BASE` is the site's own origin, but nothing warns about this direction. **And leave that install on PHP 7** — see §2.7.
+
+**On the frontend** (§4.1; all read at module load, so restart — `REVALIDATE_SECRET` is the one exception): `SITE_URL` → the apex, `WP_BASE` → the new install, `WP_LEGACY_BASE` → the frozen copy, and a fresh application password for the new install. Then set `OD_REVALIDATE_URL` on the new install and leave the old one's unset — one WP install notifies one frontend (§4.8).
+
+**Get the certificate for the apex and `www` onto the frontend's vhost *before* the DNS change,** not after. A wildcard is not automatically enough: `*.obshee-delo.ru` covers the subdomains above but **not the apex**, and it covers exactly one label, which is the trap §0.5 already walked into once with `stage.od.webtm.ru`.
+
+**Then, and only then, move DNS.** Everything above is reversible by moving it back; the DNS change is the first step that the public sees.
+
+---
+
 ## 6. Launch gate — beyond this runbook
 
 Migrating the data and pointing the app at prod is **not** launch. Still required:
 
-- ~~**A6 legacy-page fallback.**~~ **Done 2026-08-14.** The ~170 pages are served at their live URLs through `app/legacy/[...slug]/route.ts` inside the layout's shell; gate 12 went from 83.7 % to **98.8 %** entry-traffic coverage, and a sweep over all 172 pages in the legacy sitemap found no page losing a script, keeping its chrome or leaking a link (`pnpm legacy:sweep`). It did **not** need the frozen copy: `WP_LEGACY_BASE` points at live prod and the proxy strips the chrome itself. **Three operational leaves:** set `WP_LEGACY_BASE` per tier (§4.1) and confirm the container's outbound HTTPS to it; point it at the frozen copy once that exists, because after cutover this app *is* `obshee-delo.ru` and the fallback would proxy itself; and the tiering in [`implementation-plan.md`](./implementation-plan.md#launch-priority) still stands for which pages deserve a native route rather than an iframe (Materials index + `plakati`/`zakladki`/`metodichki`, `/contacts/`, `/profile/[slug]`) — the pages still on the iframe are **7**, carrying 0.8 % of entry traffic and 2.6 % of pageviews (re-measured 2026-08-20 — [`page-inventory.md`](./page-inventory.md); it was 13.5 / 20.0 % over ~170 pages when this was written).
+- ~~**A6 legacy-page fallback.**~~ **Done 2026-08-14.** The ~170 pages are served at their live URLs through `app/legacy/[...slug]/route.ts` inside the layout's shell; gate 12 went from 83.7 % to **98.8 %** entry-traffic coverage, and a sweep over all 172 pages in the legacy sitemap found no page losing a script, keeping its chrome or leaking a link (`pnpm legacy:sweep`). It did **not** need the frozen copy: `WP_LEGACY_BASE` points at live prod and the proxy strips the chrome itself. **Three operational leaves:** set `WP_LEGACY_BASE` per tier (§4.1) and confirm the container's outbound HTTPS to it; point it at the frozen copy at cutover, because after cutover this app *is* `obshee-delo.ru` and the fallback would proxy itself — **under §0.4 the frozen copy is simply the old install on a subdomain**, so this leaf is now two `wp-config.php` lines and an `.htaccess` edit (§5.5), not a capture-and-maintain job; and the tiering in [`implementation-plan.md`](./implementation-plan.md#launch-priority) still stands for which pages deserve a native route rather than an iframe (Materials index + `plakati`/`zakladki`/`metodichki`, `/contacts/`, `/profile/[slug]`) — the pages still on the iframe are **7**, carrying 0.8 % of entry traffic and 2.6 % of pageviews (re-measured 2026-08-20 — [`page-inventory.md`](./page-inventory.md); it was 13.5 / 20.0 % over ~170 pages when this was written).
 - ~~**A8 URL compatibility.**~~ **Done 2026-08-13** (`1bd016d`, `f0ac6a9`, `cbfc8d5`, `908b292`, `ea290ac`) — `/<id>` and `/video/<segment>/` are served natively, the proxy redirects the whole `/category/*` family plus the `/video/short/` and `/page/N/` shapes at one 301 each, and gate 12 measured **84.2 %** entry-traffic coverage locally with no shape failures. **Two loose ends, both operational:** re-run gate 12 against a real deploy (od-dev lacks recent posts, so five `/<id>` rows can only settle on prod), and set `SITE_URL` per tier (§4.1).
 - ~~**F4 SEO baseline**~~ — **the URL-facing half is done** (`ea290ac`): `sitemap.xml` (8 248 URLs), `robots.txt`, `metadataBase` and self-referential canonicals on every route, per-page OG on the indexes. **Still open before launch: JSON-LD** (`NewsArticle` / `VideoObject` / `Organization`) and an OG image fallback.
 - **A4 Yandex Metrica + consent banner** — the counter is **34478865** (read off prod's live tag). ~~**F6** 152-FZ privacy page~~ ✅ **done on prod 2026-08-13**, not ported into the repo: `/conf_politics/` is Tier 4, so the A6 fallback serves prod's own page and prod is where the text was corrected (notes §5). The СМИ registration line and 12+ badge come from od-dev widget `block-27` and are already rendered by C9's footer — but **two hrefs in that widget break on this origin**, see F6 in the plan. **A2 is decided** — Beget VPS + Coolify — but the deploy half of **A3** (docker build + push to GHCR, incl. the Dockerfile build-args in §4.7) is still open.
@@ -666,15 +705,17 @@ Migrating the data and pointing the app at prod is **not** launch. Still require
 
 ## 7. Rollback
 
-Nothing here is destructive, but in order of blast radius:
+**Under §0.4 the outer rollback is the DNS record.** Everything in §2 through §5 happens on an install nobody is reading, and the old one is never modified — so up to the moment DNS moves there is nothing to roll back, and after it there is one thing: point the apex back. That is the reason the model was chosen, and it makes the list below about *inner* steps only.
+
+Inner rollbacks, in order of blast radius:
 
 - **Frontend** — redeploy the previous image, or repoint `WP_BASE` back at od-dev. No WP state involved.
 - **ACF values** — the importer only ever *fills* empty fields, so a bad import adds rather than destroys. To revert a specific film, put `-` in the offending cells and re-import (that's the explicit clear token). Keep the pre-import `film:export` sheet — it **is** your backup of prior values.
 - **Cover uploads** — `film:covers` only touches posts with no featured image. To undo, unset `featured_media` and delete the `film-cover-<id>.jpg` attachments.
 - **ACF field group** — deactivating the ACF plugin hides the fields from REST but leaves postmeta intact; re-activating restores everything.
-- **Before starting on prod**, take a DB snapshot through the **BeGet** panel (prod's host — not Timeweb's, which holds the stale copy) — the migration writes postmeta across ~30 posts and uploads ~23 attachments.
+- **Before starting on the new install**, take a DB snapshot through its host's panel as well as the `~/backups/` one below — belt and braces, and the panel's is the only one that survives losing the account's filesystem. (This line used to say "before starting on prod"; under §0.4 prod is the source, not the target, and needs no snapshot for our sake.)
 
-**For the §2 preparation pass specifically, the panel snapshot is not enough** — that pass rewrites 5669 bodies, deletes 22 plugins and replaces core, and a single before-snapshot gives you one all-or-nothing return point across the lot. What od-stage used instead, and what prod should reuse (`~/od-backup.sh <slug> [--full]`, installed on `ssh timeweb`):
+**For the §2 preparation pass specifically, one snapshot is not enough** — that pass rewrites 5669 bodies, deletes 22 plugins and replaces core, and a single before-snapshot gives you one all-or-nothing return point across the lot. (The cheapest recovery of all is available too, and worth remembering before debugging a broken prep: **clone prod again.** It is untouched.) What od-stage used instead, and what prod should reuse (`~/od-backup.sh <slug> [--full]`, installed on `ssh timeweb`):
 
 - One `~/backups/<NN-slug>/` per step, taken **before** the step it is named for, so `NN` restores the state that step started from. Each holds `db.sql.gz`, `files.tar.gz` and a `MANIFEST.txt` recording timestamp, core version, active theme and active plugins — the manifest is the part that makes a directory readable six weeks later.
 - `--full` (whole tree) only for the baseline. The later tars carry `wp-config.php`, `.htaccess` and `wp-content/{plugins,themes,mu-plugins}` only: uploads are the bulk of the site and no step in §2 touches them. On od-stage that was 1.3 GB once and ~30 MB per step after.
