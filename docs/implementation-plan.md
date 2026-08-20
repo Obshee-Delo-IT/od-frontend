@@ -156,7 +156,7 @@ What the section leaves behind, tracked with the pages that need it rather than 
 ## Workstream F — Quality & polish
 
 - [~] **F1. Testing.** 44 spec files / 197 cases; CI gate done. **Left:** golden-path E2E for `/news`, `/video` and a film page, and a decision on whether E2E belongs in CI (it needs a running WP, so probably a scheduled job).
-- [ ] **F2. Accessibility audit.** WCAG 2.1 AA once the design system stabilises. Radix gives a baseline; Carousel, header nav and forms need explicit review.
+- [~] **F2. Accessibility audit.** WCAG 2.1 AA once the design system stabilises. Radix gives a baseline; Carousel, header nav and forms need explicit review. **Four app-wide gaps closed 2026-08-20** ([notes §5](./implementation-notes.md)): decorative icons are `aria-hidden` in the svgr loader, the footer's textless `<h2>` is a `div`, the 71 pages that went `h1` → `h3` (the regional coordinator cards) no longer skip a level, and heading case moved from a blanket `text-transform` to `resolveHeadingCase`. **Left, and it needs Design:** 33 pages still open at `h3`, ten of them our own card grids where the title is a card and not a section.
 - [ ] **F3. Core Web Vitals budget.** Targets (LCP ≤ 2.5s, INP ≤ 200ms, CLS ≤ 0.1) wired to CI as a gate.
 - [~] **F4. SEO.** Sitemap/robots/canonicals shipped. **Left:** JSON-LD (`NewsArticle` per post, `VideoObject` per film, `Organization` site-wide) and an OG image fallback for pages without a featured image.
 - [ ] **F5. Russian-specific polish.** Verify Cyrillic font fallbacks on Windows / older Android. Confirm typographic conventions (em-dashes, non-breaking spaces, `«…»` quotes — confirmed by the live privacy policy).

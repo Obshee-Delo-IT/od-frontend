@@ -1130,6 +1130,35 @@ Rationale worth keeping: AI-first development thrives on fast feedback — cheap
 
 **CI gate is done** (A3). **Playwright is wired but thin:** `playwright.config.ts` + `pnpm test:e2e` exist with a single `e2e/home.spec.ts`; it is **not** in CI.
 
+### F2. Accessibility and heading semantics — the app-wide passes, 2026-08-20
+
+Four gaps [`next-steps.md`](./next-steps.md) had been carrying, none of them owned by a page, all closed in one afternoon. Each is here because the fix is a *place* choice, and each landed somewhere different.
+
+**Decorative icons, in the loader.** `svgProps: { 'aria-hidden': 'true' }` in the `@svgr/webpack` options in `next.config.ts`, mirrored in `vitest.config.ts` so a test sees the attribute. The loader rather than the wrappers in `Icons/index.tsx`, because `Accordion`, `ButtonGroupItem` and `Breadcrumbs` import their SVG directly and a change to the wrappers would have missed them. The precondition was checked first and held: every icon-only control already carries its own `aria-label`, so nothing lost an accessible name. `Icons.test.tsx` also pins that `aria-hidden={false}` at a call site still wins — svgr spreads the caller's props after its own, which is what makes an app-wide default safe rather than a trap.
+
+**The footer's empty heading, on this side.** The `sidebar_bottom` social row is an `<h2 class="wp-block-heading">` holding three icon links and no text — an empty heading in the tree, on every page. `renderFooterWidget` now renders a textless heading as a `div` with the same class, so `Footer.module.css` lays the row out unchanged. Fixed here and not in the widget because the markup is an editor's and would come back on the next save.
+
+**The regional pages' skipped level, in the content.** 71 of 169 published pages went `h1` → `h3`: the `/contacts/<region>/` coordinator cards are a `core/query` whose `post-title` is written at level 3, while the «События» query below is already `h2`. `od_pages_coordinator_heading_level` drops the level instead of adding a «Координаторы» heading, which would have put words on 74 pages no mock asks for. It runs as a **`sweep` scoped to a `parent`** — the second new registry shape of the day — with `/khabarovskiy/` (the regional page outside the tree) as its own entry, and the programme pages deliberately excluded, their card titles being `h3` under «Проекты программы» correctly. `.wp-block-post-title` in `gutenberg.css` keeps a card title's size when it is promoted, since the base `h2` rule is a step larger than the base `h3`.
+
+**Heading case, in the pipeline.** `.wp-block-group h2 { text-transform: lowercase }` was a `text-transform` standing in for a decision that needs the text, and measuring it inverted the case for keeping it:
+
+| | all-caps (what the rule was for) | a capitalised word past the first (what it broke) |
+| --- | ---: | ---: |
+| 169 published pages | 8 headings | **26 headings on 16 pages** |
+| 600 sampled posts | **50 headings** | 0 |
+
+Both of the page-side all-caps headings' pages are unreachable (`/тестовая-страница/` and the `/video/` page a native route shadows), so on pages the rule protected nothing while «Здоровая Россия — ОБЩЕЕ ДЕЛО!» rendered «Здоровая россия — общее дело!». On posts it is the only thing between the reader and 8 % of bodies shouting. So neither recorded option — delete the rule, or sentence-case the content — was right: `resolveHeadingCase` lowercases a heading **only when its text has no lowercase letter**, and joins the asset and link passes inside `resolveContentHtml`, covering pages, posts, films and the footer with nothing to run against production. Markup and entities are held out of the casing pass (`&laquo;` must not become `&Laquo;`; a heading opening with a link must not capitalise its `a`).
+
+**What the same audit found and did not fix: 33 pages open at `h3`** — and ten of them are ours, the card grids on `/materials/*`, `/projects/` and `/about/activist-stories/`, where the titles are cards rather than sections. Making those `h2` changes their size, and adding a section heading adds words the mocks do not have, so it is a question for Design rather than a sweep. `/contacts/dnr/` is the one passthrough page left with its own literal `<h3>` under the `h1`.
+
+### D3. Every `profile` record's contacts, linked — 2026-08-20
+
+`parseProfileBody` reads anchors only, by scheme and host — deliberately, since nothing in these bodies guarantees word order or a label like «Телефон:». The cost was that an editor who typed a number as plain text got a card with **no phone row**, and 75 of the 142 published records did exactly that. `od_pages_profile_contacts` closes it in the content: the phone half that shipped with D3's eleven team records, plus `od_mailto_links` and `od_social_links`, all three through one `od_replace_unlinked` walk so a pattern only ever sees text a reader sees — never an attribute, never the inside of an existing anchor. Both new patterns are ASCII-only, because `\w` under `/u` matches Cyrillic and would link «напишите@нам.рф» and any Russian sentence with an @ in it.
+
+It is the registry's first **`sweep`**: every published record of a post type rather than one named record. Safe here because the transform is idempotent by *detection* — «is this record done?» is a question about the record — and not safe for a whole-page transform, which refuses an input it does not recognise, so 142 of those would be 142 warnings.
+
+Applied on od-dev, and predicted exactly by a local run over all 142 bodies first: 90 records rewritten, phone rows **32 → 106**, e-mail 108 → 113, social 44 → 45, records showing at least one contact 113 → 122, plain-text phones **75 → 1**. The frontend did not change. This is also the answer to `wp-backend.md` §3.1's first "what to do instead": no ACF fields, no second copy of a number the body already holds.
+
 ### F4. SEO — the URL-facing half, 2026-08-13 (`ea290ac`)
 
 It shipped with A8 because a URL layer nothing advertises is only half a migration — and because the live site's `sitemap.xml` comes from a WP plugin that stops answering the moment the frontend takes the domain, removing the discovery path for the whole archive at exactly the moment the URL set changes.
