@@ -358,33 +358,46 @@ od-dev. Its other post types were not re-registered — deliberately, they are d
 re-registers and D3 reads. Worth doing before a prod dump/restore, not before
 launch.
 
-## Linkify the contacts inside `profile` bodies — the other 128
+## ~~Linkify the contacts inside `profile` bodies — the other 128~~ — done 2026-08-20
 
-**Eleven are done** (D3, 2026-08-18): the transform exists as
-`od_canonical_tel_links()` in `od-pages.php`, and the `/team/` records run through
-it. It links plain-text numbers, rewrites existing `tel:` hrefs to one spelling,
-and groups a label stored as a bare run of digits. What is left is the *sweep* —
-the same function over the whole post type instead of eleven named entries.
+**Eleven were done with D3** (2026-08-18): `od_canonical_tel_links()` in
+`od-pages.php`, over the `/team/` records only. **The sweep is now done too** —
+`od_pages_profile_contacts()` over the whole post type, which is what the new
+`sweep` registry key is for (see [`wp-page-redesign.md`](./wp-page-redesign.md)).
+Two halves were added beside the phone one: `od_mailto_links()` and
+`od_social_links()`, and all three now go through one `od_replace_unlinked()`
+walk, so a pattern only ever sees text a reader sees — never an attribute, never
+the inside of an existing anchor.
 
-**Measured 2026-08-18.** Of 139 published records, **82 hold a phone number typed
-as plain text** outside any anchor and 5 an e-mail, against 24 that link the phone
-with `tel:`. `parseProfileBody` reads anchors only — by design, see
-`src/shared/api/profileCard.ts` — so those records render a card with no phone
-row. 30 records show no contact at all; 109 show at least one.
+**Measured on od-dev, before and after the apply** (142 published records, not the
+139 of 2026-08-18):
 
-**What to do:** one pure transform in the `wp/scripts/od-pages.php` mould over the
-`profile` post type — plain-text phones, e-mails and bare `vk.com`/`t.me` URLs
-into anchors, idempotent by detection (skip anything already inside an `<a>`).
-Formats seen in the data: `89185700050`, `тел.: +79062755758`, `+79030913733`,
-`тел. 8(987)839-53-53`, `e-mail: x@y.ru`. Expected effect: card contact coverage
-109/139 → ~137/139, **with no frontend change**. This is the alternative to
-backfilling ACF fields — see [`wp-backend.md` §3.1](./wp-backend.md), "Fields for
-`profile`: a pattern, not ACF".
+| | before | after |
+| --- | ---: | ---: |
+| records whose card shows a **phone** row | 32 | **106** |
+| … an **e-mail** row | 108 | 113 |
+| … a **social** row | 44 | 45 |
+| records showing at least one contact | 113 | **122** |
+| records with a phone typed as plain text | 75 | **1** |
 
-Note `od-pages.php` currently resolves a target by path or title, one record per
-entry; a sweep over a whole post type needs a third resolver kind (~10 lines).
-E-mails and bare `vk.com`/`t.me` URLs are still unhandled — `od_canonical_tel_links()`
-is phones only.
+90 of the 142 records changed; a third run reports no change at all. The frontend
+did not change — `parseProfileBody` still reads anchors only, by scheme and host,
+which is the point: the fix belongs in the content, and this is the alternative to
+backfilling ACF fields ([`wp-backend.md` §3.1](./wp-backend.md)).
+
+**Why «at least one contact» only moves 113 → 122.** Most records with a
+plain-text phone already showed an *e-mail* row, so they gain the phone rather
+than their first row; the 20 that still show nothing hold no contact anywhere in
+the body, which is a content question and not this one.
+
+**The one number still unlinked** is record 64752's: `тел.: 8 (914) <span
+class="wmi-callto">255-87-86</span>` — a webmail artifact splits it across a tag,
+and a pattern that spanned markup would be a pattern that links things it should
+not. One record of 142; leave it to whoever unwraps those spans.
+
+**E-mail and social patterns are ASCII-only on purpose.** `\w` under `/u` matches
+Cyrillic, so the obvious pattern turns «напишите@нам.рф» — and any Russian
+sentence with an @ in it — into a link. Both are asserted.
 
 ## ~~Three team cards show a contact the team page does not~~ — decided 2026-08-19
 

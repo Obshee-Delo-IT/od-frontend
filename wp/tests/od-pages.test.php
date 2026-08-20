@@ -919,6 +919,44 @@ od_test(
     od_canonical_tel_links('<img alt="8-925-190-66-99" />') === '<img alt="8-925-190-66-99" />'
 );
 
+/* ---------------------------------------- od_pages_profile_contacts (sweep) */
+
+$kotov     = file_get_contents( __DIR__ . '/fixtures/profile-kotov.html' );
+$romanusha = file_get_contents( __DIR__ . '/fixtures/profile-romanusha.html' );
+
+od_test( 'the sweep fixture types its phone and its e-mail as plain text', str_contains( $kotov, 'тел. +7 (963) 032-98-86' ) && str_contains( $kotov, 'e-mail: vvkotof@mail.ru' ) );
+
+$swept = od_pages_profile_contacts( $kotov );
+od_test( 'the phone becomes a link, label as typed', str_contains( $swept, 'тел. <a href="tel:+79630329886">+7 (963) 032-98-86</a> (Telegram, Whatsup)' ) );
+od_test( 'the e-mail becomes a mailto', str_contains( $swept, '<a href="mailto:vvkotof@mail.ru">vvkotof@mail.ru</a>' ) );
+/* The record's photo is `…5d98c0aa-70e7-48f0-a8b3-2c569068839f-300x257.jpg`, which
+   reads like an address to any pattern loose enough to catch a real one. */
+od_test( 'and a filename inside an attribute is never seen', 2 === substr_count( $swept, '5d98c0aa-70e7-48f0-a8b3-2c569068839f-300x257.jpg' ) && !str_contains( $swept, 'mailto:2c569068839f' ) );
+od_test_idempotent( 'od_pages_profile_contacts (kotov)', 'od_pages_profile_contacts', $kotov );
+
+$swept = od_pages_profile_contacts( $romanusha );
+od_test( 'a bare run of digits is linked and grouped', str_contains( $swept, '<a href="tel:+79185700050">+7 918 570-00-50</a>' ) );
+od_test( 'a VK URL becomes a link, text as typed', str_contains( $swept, '<a href="https://vk.com/romanusha">https://vk.com/romanusha</a>' ) );
+od_test_idempotent( 'od_pages_profile_contacts (romanusha)', 'od_pages_profile_contacts', $romanusha );
+
+/* --------------------------------------------------------- od_mailto_links */
+
+od_test( 'an address already linked is not linked twice', od_mailto_links( '<p><a href="mailto:a@b.ru">a@b.ru</a></p>' ) === '<p><a href="mailto:a@b.ru">a@b.ru</a></p>' );
+od_test( 'an address inside an attribute is never seen', od_mailto_links( '<img alt="a@b.ru" />' ) === '<img alt="a@b.ru" />' );
+/* `\w` under `/u` matches Cyrillic, so a pattern written that way would link
+   this. Every address in these records is ASCII, and the pattern says so. */
+od_test( 'a Cyrillic pseudo-address is left as text', od_mailto_links( '<p>напишите@нам.рф</p>' ) === '<p>напишите@нам.рф</p>' );
+
+/* --------------------------------------------------------- od_social_links */
+
+od_test( 'a scheme-less VK URL still gets an absolute href', od_social_links( '<p>vk.com/id123</p>' ) === '<p><a href="https://vk.com/id123">vk.com/id123</a></p>' );
+od_test( 'a Telegram URL too', od_social_links( '<p>t.me/obshee_delo</p>' ) === '<p><a href="https://t.me/obshee_delo">t.me/obshee_delo</a></p>' );
+od_test( 'a trailing full stop stays outside the link', od_social_links( '<p>Мы тут: vk.com/odsamara.</p>' ) === '<p>Мы тут: <a href="https://vk.com/odsamara">vk.com/odsamara</a>.</p>' );
+od_test( 'a URL that is already a link is left alone', od_social_links( '<p><a href="https://vk.com/x">https://vk.com/x</a></p>' ) === '<p><a href="https://vk.com/x">https://vk.com/x</a></p>' );
+/* `parseProfileBody` reads the host, not a substring, so a link *about* VK on
+   another domain is not a contact — and this must not manufacture one either. */
+od_test( 'a lookalike host is not a social link', od_social_links( '<p>notvk.com.evil.ru/x</p>' ) === '<p>notvk.com.evil.ru/x</p>' );
+
 /* ------------------------------------------------------ od_pages_profile_team */
 
 $kasatikovMember = null;
@@ -1445,7 +1483,10 @@ od_test( 'samarskaya: refuses a page that is not the one', $threw );
 
 foreach ( od_pages_registry() as $entry ) {
 	od_test( "{$entry['label']}: its transform exists", is_callable( $entry['fix'] ) );
-	od_test( "{$entry['label']}: the runner can find the record", isset( $entry['path'] ) || isset( $entry['title'] ) );
+	od_test( "{$entry['label']}: the runner can find the record", isset( $entry['path'] ) || isset( $entry['title'] ) || ! empty( $entry['sweep'] ) );
+	// A sweep addresses a whole post type, so it must name one — `page` by
+	// default would put every published page through a profile transform.
+	od_test( "{$entry['label']}: a sweep names its post type", empty( $entry['sweep'] ) || isset( $entry['post_type'] ) );
 }
 
 od_test_summary();

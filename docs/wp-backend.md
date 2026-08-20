@@ -130,7 +130,7 @@ Two consequences already in §4.4's ordering, restated here because this is wher
 
 #### Fields for `profile`: a pattern, not ACF (decided 2026-08-18)
 
-The question this settles is whether the card's fields should become real fields. **They should not.** Measured over all 139 published records:
+The question this settles is whether the card's fields should become real fields. **They should not.** Measured over all 139 published records (142 by 2026-08-20; the linkify pass in item 1 below has since moved the two plain-text rows to nearly zero):
 
 | | records |
 | --- | --- |
@@ -150,7 +150,7 @@ Second, **ACF here is the free tier** (6.8.3, one field group — `group_film_me
 
 **What to do instead**, in the order it pays off:
 
-1. **Linkify the bodies once** — plain-text phones, e-mails and bare `vk.com`/`t.me` URLs into anchors. A pure transform in the `wp/scripts/od-pages.php` mould, idempotent by detection (skip anything already inside an `<a>`), ~30 lines with the existing test harness. Raises card coverage from 109/139 to ~137/139 **with no frontend change at all**.
+1. ~~**Linkify the bodies once**~~ — **done 2026-08-20.** `od_pages_profile_contacts()` in `wp/scripts/od-pages.php`, a `sweep` registry entry over the whole post type: plain-text phones, e-mails and bare `vk.com`/`t.me` URLs into anchors, idempotent by detection, **no frontend change at all**. Applied on od-dev — 90 of 142 records rewritten, phone rows 32 → 106, records showing at least one contact 113 → 122, plain-text phones 75 → 1. The «~137/139» estimate above was optimistic in the wrong dimension: most records with a plain-text phone already showed an e-mail row, so the win is the *phone* row, not the first row. Numbers and the one record still unlinked are in [`next-steps.md`](./next-steps.md).
 2. **A block pattern for new records** — the shape editors insert: photo column, bolded role, one linked contact per line. `register_block_pattern()` needs a plugin to live in, but an *unsynced* pattern needs no PHP whatsoever: it is a `wp_block` post, so `wp/patterns/profile.html` plus one `wp post create` keeps it repo-tracked and code-free. The block editor is reachable — Classic Editor is active but with `classic-editor-replace = no-replace`, so both editors are available and patterns appear in the inserter.
 3. **Nothing else.** No fields, no custom block, no `single-profile.php`.
 

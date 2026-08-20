@@ -3435,25 +3435,100 @@ function od_canonical_tel_links(string $content): string
         $content
     );
 
+    return od_replace_unlinked(
+        $content,
+        '~(?<![\d\-])(?:\+7|8)[\s\-()]*\d[\d\s\-()]{7,}\d~u',
+        static function (array $m): string {
+            $href = od_tel_href($m[0]);
+
+            return $href === '' ? $m[0] : '<a href="' . $href . '">' . od_tel_label($m[0]) . '</a>';
+        }
+    );
+}
+
+/**
+ * `$pattern` replaced in the body's **visible, unlinked** text only.
+ *
+ * The split keeps whole anchors and every tag as delimiters, so the callback
+ * only ever sees text a reader sees and a link never nests: a contact already
+ * linked is left alone, and one that appears inside an attribute — an
+ * `/uploads/…5d98c0aa-70e7-48f0-a8b3-2c569068839f-300x257.jpg` reads like an
+ * e-mail to any pattern loose enough to catch real ones — is never seen.
+ */
+function od_replace_unlinked(string $content, string $pattern, callable $callback): string
+{
     $parts = preg_split('~(<a\b[^>]*>.*?</a>|<[^>]+>)~si', $content, -1, PREG_SPLIT_DELIM_CAPTURE);
 
     foreach ($parts as $i => $part) {
-        if ($i % 2 === 1 || (!str_contains($part, '7') && !str_contains($part, '8'))) {
-            continue;
+        if ($i % 2 === 0) {
+            $parts[$i] = preg_replace_callback($pattern, $callback, $part);
         }
-
-        $parts[$i] = preg_replace_callback(
-            '~(?<![\d\-])(?:\+7|8)[\s\-()]*\d[\d\s\-()]{7,}\d~u',
-            static function (array $m): string {
-                $href = od_tel_href($m[0]);
-
-                return $href === '' ? $m[0] : '<a href="' . $href . '">' . od_tel_label($m[0]) . '</a>';
-            },
-            $part
-        );
     }
 
     return implode('', $parts);
+}
+
+/**
+ * Plain-text e-mail addresses as `mailto:` links.
+ *
+ * ASCII-only on purpose: `\w` under `/u` matches Cyrillic, so a pattern written
+ * that way turns «слово@слово.рф» in a sentence — and worse, anything with an @
+ * in it — into a link. Every address in these records is ASCII.
+ */
+function od_mailto_links(string $content): string
+{
+    return od_replace_unlinked(
+        $content,
+        '~[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*\.[A-Za-z]{2,}~',
+        static function (array $m): string {
+            return '<a href="mailto:' . $m[0] . '">' . $m[0] . '</a>';
+        }
+    );
+}
+
+/**
+ * Bare `vk.com` / `t.me` URLs as links, scheme or no scheme.
+ *
+ * The href is always absolute — a record that typed `vk.com/x` without one would
+ * otherwise link to a path on this site. The **text** is left exactly as typed:
+ * `parseProfileBody` trims the scheme for the card itself
+ * (`src/shared/api/profileCard.ts`), so shortening it here would be the same
+ * decision made twice, in the place that cannot be tested against a mock.
+ */
+function od_social_links(string $content): string
+{
+    return od_replace_unlinked(
+        $content,
+        '~(?:https?://)?(?:(?:www|m)\.)?(?:vk\.(?:com|ru)|t\.me)/[A-Za-z0-9_.\-/?=&%#]*[A-Za-z0-9_\-/]~i',
+        static function (array $m): string {
+            $href = preg_match('~^https?://~i', $m[0]) ? $m[0] : 'https://' . $m[0];
+
+            return '<a href="' . $href . '">' . $m[0] . '</a>';
+        }
+    );
+}
+
+/**
+ * Every contact in a `profile` body as a link — the sweep over the whole post
+ * type, which is the alternative to backfilling ACF fields
+ * ([`wp-backend.md` §3.1](../../docs/wp-backend.md)).
+ *
+ * `parseProfileBody` reads **anchors only**, by URL scheme and host — a
+ * deliberate choice, since nothing in these bodies guarantees word order or a
+ * label like «Телефон:». The consequence is that an editor who typed a number as
+ * plain text got a card with no contact row at all, and 75 of the 142 published
+ * records did exactly that. This closes the gap from the content side, where it
+ * belongs, and the frontend does not change.
+ *
+ * Idempotent by detection rather than by a marker: each half only ever looks at
+ * text outside an anchor, so a second run finds its own output already linked.
+ *
+ * @param string $content The record's `post_content`.
+ * @param int    $_termId Unused — the runner passes the term id to every transform.
+ */
+function od_pages_profile_contacts(string $content, int $_termId = 0): string
+{
+    return od_social_links(od_mailto_links(od_canonical_tel_links($content)));
 }
 
 /**
@@ -4288,6 +4363,12 @@ function od_pages_samarskaya_coordinators(string $content, int $termId): string
  * `pl-categs` region. Term ids are per-environment, so the runner resolves the
  * slug and hands the transform the id.
  *
+ * `sweep` is the third way to address a record and the only one that is not one
+ * record: with it the runner takes **every published record of `post_type`** and
+ * runs the transform over each. For a transform that is idempotent by detection
+ * that is the whole difference between fixing eleven profiles and fixing all of
+ * them — see `od_pages_profile_contacts`.
+ *
  * `args` is passed on to the transform after those two, which is what lets one
  * function serve eleven records that differ only in their data (see `OD_TEAM`).
  * `attachment` is a media slug the runner resolves to `['id', 'src']` and
@@ -4301,7 +4382,7 @@ function od_pages_samarskaya_coordinators(string $content, int $termId): string
  * record by `path` where it matters on production; the slug is a valid address
  * even when it names the wrong person.
  *
- * @return array<int, array{label: string, fix: callable-string, path?: string, title?: string, post_type?: string, tag?: string, taxonomy?: string, args?: array<int, mixed>}>
+ * @return array<int, array{label: string, fix: callable-string, path?: string, title?: string, post_type?: string, sweep?: bool, tag?: string, taxonomy?: string, args?: array<int, mixed>}>
  */
 function od_pages_registry(): array
 {
@@ -4515,6 +4596,17 @@ function od_pages_registry(): array
         ];
     }
 
+    // Last, and a different kind of entry: `sweep` addresses every published
+    // record of a post type rather than one named record. The eleven entries
+    // above run first and are unaffected — they prepend a lead line, this one
+    // only ever links a contact that is already in the body.
+    $registry[] = [
+        'label' => 'D3 · every `profile` record — plain-text phones, e-mails and social URLs as links',
+        'post_type' => 'profile',
+        'sweep' => true,
+        'fix' => 'od_pages_profile_contacts',
+    ];
+
     return $registry;
 }
 
@@ -4534,10 +4626,22 @@ WP_CLI::log($apply ? 'Applying changes.' : 'Dry run — pass `apply` to write.')
 foreach (od_pages_registry() as $entry) {
     $postType = $entry['post_type'] ?? 'page';
 
-    if (isset($entry['path'])) {
-        $post = get_page_by_path($entry['path'], OBJECT, $postType);
+    if (!empty($entry['sweep'])) {
+        // Every published record of the type, oldest id first so a re-run logs
+        // in the same order and two runs can be diffed.
+        $posts = get_posts([
+            'post_type' => $postType,
+            'post_status' => 'publish',
+            'numberposts' => -1,
+            'orderby' => 'ID',
+            'order' => 'ASC',
+            'suppress_filters' => false,
+        ]);
+        WP_CLI::log(sprintf('%s: sweeping %d published %s records', $entry['label'], count($posts), $postType));
+    } elseif (isset($entry['path'])) {
+        $posts = array_filter([get_page_by_path($entry['path'], OBJECT, $postType)]);
     } else {
-        $found = get_posts([
+        $posts = get_posts([
             'post_type' => $postType,
             'title' => $entry['title'],
             'post_status' => 'publish',
@@ -4545,15 +4649,13 @@ foreach (od_pages_registry() as $entry) {
             'suppress_filters' => false,
         ]);
 
-        if (count($found) !== 1) {
-            WP_CLI::warning(sprintf('%s: %d records titled «%s» — expected exactly 1', $entry['label'], count($found), $entry['title']));
+        if (count($posts) !== 1) {
+            WP_CLI::warning(sprintf('%s: %d records titled «%s» — expected exactly 1', $entry['label'], count($posts), $entry['title']));
             continue;
         }
-
-        $post = $found[0];
     }
 
-    if (!$post) {
+    if (!$posts) {
         WP_CLI::warning(sprintf('%s: no such %s', $entry['label'], $postType));
         continue;
     }
@@ -4582,31 +4684,33 @@ foreach (od_pages_registry() as $entry) {
         $extra[] = ['id' => (string) $media->ID, 'src' => wp_get_attachment_url($media->ID)];
     }
 
-    try {
-        $new = $entry['fix']($post->post_content, $filmTag ? (int) $filmTag->term_id : 0, ...$extra);
-    } catch (Throwable $e) {
-        WP_CLI::warning(sprintf('%s (#%d): %s', $entry['label'], $post->ID, $e->getMessage()));
-        continue;
+    foreach ($posts as $post) {
+        try {
+            $new = $entry['fix']($post->post_content, $filmTag ? (int) $filmTag->term_id : 0, ...$extra);
+        } catch (Throwable $e) {
+            WP_CLI::warning(sprintf('%s (#%d): %s', $entry['label'], $post->ID, $e->getMessage()));
+            continue;
+        }
+
+        if ($new === $post->post_content) {
+            WP_CLI::log(sprintf('%s (#%d): already in shape, skipped', $entry['label'], $post->ID));
+            continue;
+        }
+
+        WP_CLI::log(sprintf('%s (#%d): %d bytes -> %d bytes', $entry['label'], $post->ID, strlen($post->post_content), strlen($new)));
+
+        if (!$apply) {
+            continue;
+        }
+
+        wp_save_post_revision($post->ID);
+        $written = $wpdb->update($wpdb->posts, ['post_content' => $new], ['ID' => $post->ID], ['%s'], ['%d']);
+        if ($written === false) {
+            WP_CLI::warning(sprintf('%s (#%d): write failed', $entry['label'], $post->ID));
+            continue;
+        }
+
+        clean_post_cache($post->ID);
+        WP_CLI::success(sprintf('%s (#%d): written', $entry['label'], $post->ID));
     }
-
-    if ($new === $post->post_content) {
-        WP_CLI::log(sprintf('%s (#%d): already in shape, skipped', $entry['label'], $post->ID));
-        continue;
-    }
-
-    WP_CLI::log(sprintf('%s (#%d): %d bytes -> %d bytes', $entry['label'], $post->ID, strlen($post->post_content), strlen($new)));
-
-    if (!$apply) {
-        continue;
-    }
-
-    wp_save_post_revision($post->ID);
-    $written = $wpdb->update($wpdb->posts, ['post_content' => $new], ['ID' => $post->ID], ['%s'], ['%d']);
-    if ($written === false) {
-        WP_CLI::warning(sprintf('%s (#%d): write failed', $entry['label'], $post->ID));
-        continue;
-    }
-
-    clean_post_cache($post->ID);
-    WP_CLI::success(sprintf('%s (#%d): written', $entry['label'], $post->ID));
 }
