@@ -6,10 +6,14 @@ import { RUSSIA_MAP_REGIONS } from './regions.generated';
 import { RussiaMap } from './RussiaMap';
 
 /**
- * The 74 published children of page 529 plus `/khabarovskiy/`, which sits at the
+ * The published children of page 529 plus `/khabarovskiy/`, which sits at the
  * WordPress root. Written out rather than derived from the generated table,
  * because the thing worth catching is a *generated* href that no page answers
  * for — checking the table against itself would catch nothing.
+ *
+ * `evreiskaya-ao` is deliberately absent: it was the one regional page with
+ * nothing on it — no contact, no coordinator, no event — and `od-wp.php` drafted
+ * it (2026-08-20), so the map draws that region and does not link it.
  *
  * Refresh from `node --env-file=.env scripts/generate-russia-map.mjs`, which
  * fails rather than emitting an href outside this set.
@@ -32,7 +36,6 @@ const REGION_PAGES = new Set([
     'chukotskiy-ao',
     'chuvashiya',
     'dnr',
-    'evreiskaya-ao',
     'hanty-mansiyskiy-ao',
     'irkutskaya',
     'ivanovskaya',

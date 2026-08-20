@@ -19,10 +19,11 @@
  * **Adding a task.** One function, called from the runner at the bottom, taking
  * `$apply` and doing nothing but logging when it is false. Whatever it needs to
  * know goes in a registry function above it, so the data can be read and tested
- * without WordPress. There are five today — {@see od_wp_tag_programme_films()},
- * {@see od_wp_rename_pages()}, {@see od_wp_order_pages()}, {@see od_wp_edit_menu()}
- * and {@see od_wp_create_profiles()} — and still no framework between them,
- * because five calls in a row is not a thing that needs one.
+ * without WordPress. There are six today — {@see od_wp_tag_programme_films()},
+ * {@see od_wp_rename_pages()}, {@see od_wp_order_pages()},
+ * {@see od_wp_draft_empty_branches()}, {@see od_wp_edit_menu()} and
+ * {@see od_wp_create_profiles()} — and still no framework between them, because
+ * six calls in a row is not a thing that needs one.
  *
  * House rules, same as `od-pages.php`: dry run by default, writing takes the
  * positional argument `apply`, everything is idempotent, and **posts are
@@ -399,6 +400,146 @@ function od_wp_order_pages(bool $apply): void
 }
 
 
+/**
+ * Whether a regional page's body states **no way to reach anybody** — no
+ * telephone, no address, no page on a social network.
+ *
+ * 19 of od-dev's 74 regional bodies are like this, and the reason is always the
+ * same: the accordion the branch card is built from holds «Адрес офиса:», «тел.»
+ * and «e-mail:» with nothing after them. Pure, so `wp/tests/od-wp.test.php` can
+ * check it against the real shapes.
+ *
+ * Reads the body whether or not `od-pages.php` has run on it: before the card the
+ * contacts are plain text, after it they are `tel:` and `mailto:` links, and both
+ * match.
+ */
+function od_wp_branch_contactless(string $content): bool
+{
+    $text = wp_strip_all_tags($content);
+
+    return !preg_match('~[\w.+-]+@[\w.-]+\.[A-Za-z]{2,}~', $text)
+        && !preg_match('~(?:\+7|\b8)[\s\-()]*\d{3}[\s\-()]*\d{2,3}[\s\-]?\d{2}~', $text)
+        && !preg_match('~(?:vk\.(?:com|ru)|t\.me)/~i', $content);
+}
+
+/**
+ * The taxonomy terms a regional page's two `core/query` blocks list — its
+ * coordinators (`pl-categs`) and its «События» (`category`).
+ *
+ * `-1` is the migrator's «match nothing» placeholder and is dropped, so a page
+ * that asks for it counts as asking for nothing.
+ *
+ * @return array<string, int> Taxonomy => term id.
+ */
+function od_wp_branch_query_terms(string $content): array
+{
+    $terms = [];
+
+    foreach (['pl-categs', 'category'] as $taxonomy) {
+        if (preg_match('~"' . preg_quote($taxonomy, '~') . '":\[(-?\d+)\]~', $content, $found) && (int) $found[1] > 0) {
+            $terms[$taxonomy] = (int) $found[1];
+        }
+    }
+
+    return $terms;
+}
+
+/**
+ * Drafts the regional pages that hold **nothing**: no contact in the body, no
+ * coordinator in the loop, no event in the news query.
+ *
+ * Asked for as «пустые карточки переведи в статус черновик», and the three
+ * conditions are why it is not just the first one. 19 of od-dev's 74 regional
+ * cards carry only the branch's legal name — but `/contacts/arkhangelskaya/`
+ * lists **8 coordinators** under it and 50 events, and unpublishing that page
+ * would hide both. A page has to be empty in every sense before it is not worth
+ * an address; on od-dev exactly one is (`/contacts/evreiskaya-ao/`).
+ *
+ * **What drafting a page does here:** the catch-all stops finding a published
+ * page for that URL, so it falls through to the A6 iframe (`WP_LEGACY_BASE`) —
+ * or to a 404 on a tier that has none — and the page leaves `sitemap.xml`. The
+ * URL does not die, it stops being ours.
+ *
+ * Through `$wpdb->update` for the same reason as everything else in this file:
+ * `wp_update_post()` would run the block parser over a body written by a script.
+ */
+function od_wp_draft_empty_branches(bool $apply): void
+{
+    global $wpdb;
+
+    $index = get_page_by_path('contacts');
+    if (!$index) {
+        WP_CLI::warning('/contacts/: no such page — skipping the empty-branch pass');
+
+        return;
+    }
+
+    $pages = get_posts([
+        'post_type' => 'page',
+        'post_status' => 'publish',
+        'post_parent' => $index->ID,
+        'numberposts' => -1,
+        'orderby' => 'title',
+        'order' => 'ASC',
+    ]);
+
+    $extra = get_page_by_path('khabarovskiy', OBJECT, 'page');
+    if ($extra && $extra->post_status === 'publish') {
+        $pages[] = $extra;
+    }
+
+    $drafted = 0;
+
+    foreach ($pages as $page) {
+        if (!od_wp_branch_contactless($page->post_content)) {
+            continue;
+        }
+
+        $listed = [];
+        foreach (od_wp_branch_query_terms($page->post_content) as $taxonomy => $term) {
+            $listed[$taxonomy] = count(get_posts([
+                'post_type' => $taxonomy === 'pl-categs' ? 'profile' : 'post',
+                'post_status' => 'publish',
+                'numberposts' => 1,
+                'fields' => 'ids',
+                'tax_query' => [['taxonomy' => $taxonomy, 'terms' => [$term]]],
+            ]));
+        }
+
+        if (array_sum($listed) > 0) {
+            WP_CLI::log(sprintf(
+                '%s (#%d): no contacts, but the page lists %s — left published',
+                $page->post_name,
+                $page->ID,
+                implode(', ', array_map(
+                    function ($taxonomy) use ($listed) {
+                        return $listed[$taxonomy] . ' × ' . $taxonomy;
+                    },
+                    array_keys(array_filter($listed))
+                ))
+            ));
+            continue;
+        }
+
+        WP_CLI::log(sprintf('%s (#%d): nothing on the page — publish -> draft', $page->post_name, $page->ID));
+
+        if (!$apply) {
+            continue;
+        }
+
+        $written = $wpdb->update($wpdb->posts, ['post_status' => 'draft'], ['ID' => $page->ID], ['%s'], ['%d']);
+        if ($written === false) {
+            WP_CLI::warning(sprintf('%s (#%d): write failed', $page->post_name, $page->ID));
+            continue;
+        }
+
+        clean_post_cache($page->ID);
+        $drafted++;
+    }
+
+    WP_CLI::log(sprintf('%d regional page(s) drafted.', $drafted));
+}
+
 /** The menu the site's header is built from — `wp menu list` calls it `primary`. */
 const OD_WP_MENU = 'main-navigation';
 
@@ -681,5 +822,6 @@ WP_CLI::log($apply ? 'Applying changes.' : 'Dry run — pass `apply` to write.')
 od_wp_tag_programme_films($apply);
 od_wp_rename_pages($apply);
 od_wp_order_pages($apply);
+od_wp_draft_empty_branches($apply);
 od_wp_edit_menu($apply);
 od_wp_create_profiles($apply);

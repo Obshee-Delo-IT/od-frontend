@@ -439,6 +439,45 @@ source. It is the same rule the roles follow — the federal one and the regiona
 both go on the card. If the client ever prunes a contact, it is one line each in
 `od-pages.php`; nothing needs a code change to *show* it.
 
+## Eighteen branch cards state no way to reach anybody — and prod's page set is not od-dev's
+
+**Found 2026-08-20**, reading all 75 finished cards, and it turned into two
+findings.
+
+**The cards.** 19 of od-dev's regional bodies hold only the branch's legal name:
+the accordion they were built from says «Адрес офиса:», «тел.», «e-mail:» with
+nothing after them. That is the data, not the transform — checked against each
+page's pre-conversion revision. **But an empty card is not an empty page**:
+`/contacts/arkhangelskaya/` lists 8 coordinators and 50 events under its empty
+card, and every one of the 19 except `/contacts/evreiskaya-ao/` lists events.
+So only that one was drafted (`od_wp_draft_empty_branches()` in
+`wp/scripts/od-wp.php`, which requires no contact **and** no coordinator **and**
+no event), and the other 18 are a content gap: somebody has to fill in the
+telephone numbers, or the branch has none to give.
+
+The 18: Астраханская · Ивановская · Калужская · Курская · Мурманская ·
+Оренбургская · Орловская · Пензенская · Мордовия · Северная Осетия (which does
+name a coordinator, with no way to reach him) · Чечня · Чувашия · Рязанская ·
+Смоленская · Тюменская · Украина · Чукотский АО · Хабаровский край, plus
+Архангельская.
+
+**The page sets.** Counted on production the same day, read-only: the `/contacts/`
+subtree has **58 published children and 2 drafts** there against od-dev's 74, and
+the difference runs both ways — production publishes `rezan-oblast` and
+`smolenskaya-oblasti` (which od-dev 404s, and which [`page-inventory.md`](./page-inventory.md)
+had written off as slugs that never existed), while od-dev carries ~16 regional
+pages production has never had. Emptiness differs too: **5 empty cards on
+production**, and od-dev's `khakasiya` has contacts production's does not.
+
+**What to decide:** whether od-dev's extra pages are drafts of work in progress or
+stale copies. It matters for the cutover only in one direction — the launch runs
+against production's page set — so the safe reading is that anything measured on
+od-dev is the *shape* of the work, not the shipping list. Also worth knowing while
+working on prod: its CLI `php` is **5.6** (`wp` runs under it; `/usr/local/bin/php8.2`
+exists), and its WordPress is still 5.5.5, which cannot render a `core/query`
+block at all — so the coordinator loops and «События» that od-dev draws are
+invisible there until the core upgrade in the runbook.
+
 ## Twelve regions on the map have no page, and five pages have no region
 
 **Found 2026-08-20**, building the `/contacts/` map (D4). The map is generated
@@ -605,3 +644,104 @@ every WordPress page, so `/about/` has «Главная › Об организ�
 heading at all is an SEO regression, and suppressing it would need a per-page
 exception in `pageSections.ts`. Worth a sentence with Design — the same question
 applies to `home`, which also draws none and is a native route that renders none.
+
+---
+
+## Contact Form 7 is five years behind on prod, and prod's REST is switched off
+
+Recorded 2026-08-20 while answering "what is the отзыв form built on". Nothing
+was changed — this is the version state, where the plugin is actually used, and
+what has to be updated or dropped.
+
+**The versions.** Prod (`od-root`) runs **CF7 5.4.2**, released July 2021, on
+**WP 5.5.5 / PHP 7.4.33**. Upstream is **6.1.7** (2026-08-17). `wp plugin list`
+reports `update: none`, and that is truthful rather than broken — every later
+CF7 raises its `Requires at least` above this core:
+
+| CF7 | Requires WP | On WP 5.5.5 |
+|---|---|---|
+| **5.4.2** (installed) | 5.5 | the last version that fits |
+| 5.5.x | 5.7 | no |
+| 5.6.x | 5.9 | no |
+| 5.7.x | 6.0 | no |
+| 5.8.x / 5.9.x | 6.2 / 6.3 | no |
+| 6.0.x / **6.1.7** | 6.6 / 6.7 | no |
+
+There is no 5.4.3 — the tag 404s on plugins.svn, so 5.4.2 is the end of that
+branch and no back-patch is coming. Taken from
+`plugins.svn.wordpress.org/contact-form-7/tags/<v>/readme.txt`, not from memory.
+
+**So the update is not a plugin decision, it is the cutover.** Core is pinned at
+5.5.5 by `wp-downgrade`, and it cannot move while the `welfare` theme fatals on
+PHP 8 (`functions.php:754`) — the chain is theme → PHP 8 → core → plugins. Do
+**not** try CF7 in place on prod. od-stage and od-dev already run **6.1.6** on
+WP 7.1 (see [`wp-backend.md`](./wp-backend.md)), so the version gap closes for
+free the day prod becomes that stack, and CF7 is one of the ~4 plugins
+[`prod-migration-runbook.md`](./prod-migration-runbook.md) §04 keeps.
+
+**Where it is used — three forms, four pages.**
+
+| Form | Title | Embedded on | Shortcode |
+|---|---|---|---|
+| **20138** | Твой отзыв об Общем деле | 20139 `/about/ostavit-otziv/` | `[cmsms_contact_form form_plugin="cf7" form_cf7="20138…"]` |
+| **6** | Написать письмо в общее дело | 25805 `/about/написать-письмо-в-общее-дело/` | `[contact-form-7 id="6"]` |
+| **30103** | Интернет волонтёр | 30102 `/get-involved/internet-volunteer/` and 32543 `/get-involved/it-volunteer/` | `[contact-form-7 id="30103"]` |
+
+Two `content_template` rows (3382 `search`, 3455 `home3`) also carry a
+`[cmsms_contact_form form_plugin="cfb" …]` — the cmsms theme's *other* form
+plugin, which isn't installed. Templates aren't served, so it is dead text.
+
+**Three of those four pages are rendered natively by us, and their form is
+dead.** Only `/about/ostavit-otziv/` is in
+[`legacyEmbedPages.ts`](../src/shared/config/legacyEmbedPages.ts); the other
+three fall through the catch-all. Verified against stage:
+`GET /wp-json/wp/v2/pages/30102` returns `content.rendered` with the full
+`<div class="wpcf7" id="wpcf7-f30103-o1">` markup — and its `<form action>` is
+whatever URL the body was fetched from, in that response literally
+`/wp-json/wp/v2/pages/30102?…`. Nothing on our side ships CF7's script or
+stylesheet (`grep -ri wpcf7 src/` finds only the generated OpenAPI types), so
+those pages currently show an unstyled form that cannot submit. Either add the
+three paths to `LEGACY_EMBED_PAGES` until B6 exists, or let B6 replace all four
+at once.
+
+**Prod REST is off, which likely means the отзыв form is already dead there.**
+`clearfy_option.disable_json_rest_api = 'on'` (Clearfy Pro's "Disable REST
+API"), and every route answers with the theme's 404 page: `/wp-json/`,
+`/wp-json/contact-form-7/v1`, `/?rest_route=/`. But the live page's own inline
+config is `wpcf7 = {"api":{"root":"https://obshee-delo.ru/wp-json/","namespace":"contact-form-7/v1"}}`
+— CF7 5.x submits by `fetch` to exactly that root, so the browser path ends in
+the 404 HTML. The page also carries reCAPTCHA v3 keys (`wpcf7_recaptcha`).
+**Needs one live test submission to settle** whether anything reaches the mailbox
+today; probing was kept read-only deliberately. The same flag is what B6 will
+hit: a native form posting to
+`POST /contact-form-7/v1/contact-forms/{id}/feedback` on prod needs that toggle
+off or that one route allowlisted (§2.1's public-REST warning applies).
+
+**Where submissions go, and why some may be lost anyway.** Forms 20138 and 6
+mail `web@obshee-delo.ru, dmd_kostroma@mail.ru`; **form 30103 mails
+`villain218@gmail.com`**, a personal address left from whoever built the page.
+Sender on all three is `wordpress@общее-дело.рф`, and that domain's SPF still
+reads `v=spf1 include:_spf.timeweb.ru ~all` — six days after the site started
+sending from BeGet. Softfail into mail.ru for every notification; `obshee-delo.ru`
+already includes BeGet in its SPF, so switching the sender to
+`wordpress@obshee-delo.ru` is the one-field fix. Nothing stores submissions:
+no Flamingo, no CF7-DB, so a mail that spam-filters away is an отзыв nobody
+ever sees. Full recon:
+`~/Projects/servers-agent/tasks/2026-08-20-od-root-feedback-form-recon/`.
+
+**Next, in order.**
+
+1. **Test the live form once** on `/about/ostavit-otziv/` and check
+   `web@obshee-delo.ru` — everything below assumes we know whether prod delivers
+   at all today.
+2. **Fix the sender domain** (CF7 → both mail templates → `wordpress@obshee-delo.ru`)
+   and **form 30103's recipient**. Both are prod-side, independent of the
+   redesign, and cheap. Form 20138's disabled `_mail_2` autoreply still carries
+   the theme donor's `melafi.ru` / `villain218@gmail.com` — clean it while there.
+3. **Decide keep-or-drop** (runbook §12, still open): CF7 6.1.7 as the B6 forms
+   backend, or drop the plugin for `app/api/*` + Yandex SmartCaptcha. If it is
+   dropped, the two `[contact-form-7 …]` shortcodes must be stripped from page
+   bodies in `wp/scripts/od-pages.php` first — a shortcode whose plugin is gone
+   renders as its own source text.
+4. **Whichever way that goes, add Flamingo or an equivalent** so submissions
+   survive a mail failure — unless B6 stores them itself.

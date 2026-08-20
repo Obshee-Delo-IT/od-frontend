@@ -11,6 +11,13 @@
 declare(strict_types=1);
 
 require __DIR__ . '/harness.php';
+
+/** WordPress's own, near enough for the bodies these functions are handed. */
+function wp_strip_all_tags(string $html): string
+{
+    return trim(preg_replace('~<[^>]*>~', ' ', preg_replace('~<(script|style)\b[\s\S]*?</\1>~i', '', $html)));
+}
+
 require __DIR__ . '/../scripts/od-wp.php';
 
 $registry = od_wp_programmes();
@@ -140,5 +147,31 @@ foreach ($order as $path => $value) {
     od_test($path . ': a page path, resolved with get_page_by_path()', $path !== '' && strpos($path, '/') !== 0);
     od_test($path . ': an integer menu_order', is_int($value));
 }
+
+// -- the pages that hold nothing --------------------------------------------
+//
+// «Пустая карточка» is not «пустая страница», and that distinction is the whole
+// point of the pass: 19 of od-dev's 74 regional bodies state no contact at all,
+// but `/contacts/arkhangelskaya/` lists 8 coordinators and 50 events under that
+// empty card. Only a page with nothing in any of the three places is drafted.
+
+$empty = '<!-- wp:details --><details><summary>Об отделении</summary><!-- wp:paragraph -->'
+	. '<p><strong>Архангельское областное отделение Общероссийской общественной организации «Общее дело»</strong></p>'
+	. '<p><b>Адрес офиса:</b></p><p>тел.</p><p>e-mail:</p><!-- /wp:paragraph --></details><!-- /wp:details -->';
+od_test('a body whose labels have nothing after them states no contact', od_wp_branch_contactless($empty));
+od_test('a telephone counts', ! od_wp_branch_contactless($empty . '<p>тел. 8-924-140-60-40</p>'));
+od_test('so does one written as a link', ! od_wp_branch_contactless($empty . '<p><a href="tel:+79241406040">+7 924 140-60-40</a></p>'));
+od_test('an e-mail counts', ! od_wp_branch_contactless($empty . '<p>e-mail: rabota-amur@mail.ru</p>'));
+od_test('and a page on a social network counts', ! od_wp_branch_contactless($empty . '<p><a href="https://vk.com/od_bel">vk.com/od_bel</a></p>'));
+// The card's own markup must not read as a contact: `mailto:` and `tel:` are what
+// `od-pages.php` writes, and a page that has been through it is still contactless
+// if the accordion held nothing.
+od_test('the transform\'s own output does not invent one', od_wp_branch_contactless('<!-- wp:group {"className":"od-branch"} --><div class="wp-block-group od-branch"><p class="od-branch__title">Архангельское областное отделение</p></div><!-- /wp:group -->'));
+
+$terms = od_wp_branch_query_terms('<!-- wp:query {"query":{"postType":"profile","taxQuery":{"pl-categs":[506]}}} --><!-- wp:query {"query":{"postType":"post","taxQuery":{"category":[75]}}} -->');
+od_test('both query terms are read off the body', ['pl-categs' => 506, 'category' => 75] === $terms);
+// `-1` is the migrator's «match nothing»: a page asking for it lists nobody, so it
+// must not count as a reason to keep the page.
+od_test('the «match nothing» placeholder is not a term', [] === od_wp_branch_query_terms('<!-- wp:query {"query":{"taxQuery":{"pl-categs":[-1]}}} -->'));
 
 od_test_summary();

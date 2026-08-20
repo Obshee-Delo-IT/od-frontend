@@ -1707,6 +1707,13 @@ od_test(
 $carried = (string) od_branch_person_rows( '<strong>Председатель правления</strong> Владислав Круть тел.: +7 (938) 403-57-70 e-mail: vlad.krut@obshee-delo.ru' );
 od_test( 'branch card: a person row keeps the name and hands over the contacts', str_contains( $carried, '<strong>Владислав Круть</strong><br>Председатель правления' ) );
 od_test( 'branch card: …which become rows of their own', str_contains( $carried, 'tel:+79384035770' ) && str_contains( $carried, 'mailto:vlad.krut@obshee-delo.ru' ) );
+/* Two roles in bold with a comma between them, then the name: reading only the
+   first left «, Руководитель Московского городского отделения Моисеев Олег
+   Олегович» as the man's *name*. */
+$twoRoles = (string) od_branch_person_rows( '<strong>Руководитель департамента профилактики</strong>, <strong>Руководитель Московского городского отделения</strong> Моисеев Олег Олегович' );
+od_test( 'branch card: every bold run at the head of the line is the role', str_contains( $twoRoles, '<strong>Моисеев Олег Олегович</strong><br>Руководитель департамента профилактики, Руководитель Московского городского отделения' ) );
+od_test( 'branch card: and the name never opens with punctuation', ! str_contains( $twoRoles, '<strong>,' ) );
+
 od_test( 'branch card: a person line with no contacts in it is unchanged', str_contains( (string) od_branch_person_rows( '<strong>Координатор </strong>Титова Ирина Александровна' ), '<strong>Титова Ирина Александровна</strong><br>Координатор' ) );
 
 od_test( 'branch card: an operator in brackets is not part of the number', str_contains( (string) od_branch_contact_row( 'тел. :+7(910)141-90-28 (МТС)' ), 'tel:+79101419028' ) );
