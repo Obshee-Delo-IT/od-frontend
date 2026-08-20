@@ -55,13 +55,25 @@ const SHADOWED = [
   '/video/famous-people/',
 ];
 
-/** The `od_pages_registry()` paths — read from the script rather than restated. */
+/**
+ * The `od_pages_registry()` paths — read from the script rather than restated.
+ *
+ * Two shapes of entry, and both count: one that names a `path`, and a `sweep`
+ * bounded by a `parent`, which is how the 74 `/contacts/<region>/` pages get
+ * their branch card. A sweep over a whole post type is skipped — those address
+ * `profile` records, not pages — and so is a `path` on a `profile` entry, which
+ * is why the entries that name a person use `title` rather than a literal path.
+ *
+ * @returns {{paths: Set<string>, parents: string[]}} `parents` are prefixes:
+ *   every published child of one is redesigned.
+ */
 const readRedesigned = () => {
   const php = fs.readFileSync(path.join(REPO, 'wp/scripts/od-pages.php'), 'utf8');
-  // Everything after the profile loop addresses `profile` records, not pages.
-  const start = php.indexOf('function od_pages_registry');
-  const end = php.indexOf('// One entry per person', start);
-  return new Set([...php.slice(start, end).matchAll(/'path' => '([^']+)'/g)].map(([, slug]) => `/${slug}/`));
+  const body = php.slice(php.indexOf('function od_pages_registry'));
+  return {
+    paths: new Set([...body.matchAll(/'path' => '([^']+)'/g)].map(([, slug]) => `/${slug}/`)),
+    parents: [...body.matchAll(/'sweep' => true,\s*'parent' => '([^']+)'/g)].map(([, slug]) => `/${slug}/`),
+  };
 };
 
 const readEmbedded = () => {
@@ -113,7 +125,10 @@ const classify = (requested, { pages, redesigned, embedded }) => {
   if (embedded.has(url) || embedded.has(paginationParent)) {
     return 'A6 iframe';
   }
-  if (redesigned.has(url)) {
+  // A sweep's parent is a prefix, so the page has to exist before its URL can be
+  // counted as one: `/contacts/rezan-oblast/` is a 404 that search still asks for.
+  const swept = pages.has(url) && redesigned.parents.some((parent) => url.startsWith(parent) && url !== parent);
+  if (redesigned.paths.has(url) || swept) {
     return 'WP page, redesigned';
   }
   if (pages.has(url)) {

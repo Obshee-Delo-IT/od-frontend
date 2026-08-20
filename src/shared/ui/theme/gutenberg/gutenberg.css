@@ -314,11 +314,14 @@ th {
   }
 }
 
-/* A loop whose cards were replaced by `PersonCard` is a stack, not a grid:
-   Figma `contact-page` draws one coordinator per row, photo left and contacts
-   right, at the full 1240. See `parsePost`'s card embeds. */
+/* A loop whose cards were replaced by `PersonCard` is two per row, not the four
+   the block's own `columnCount` asks for: the card is the photo beside a name, a
+   role and two contact rows, and Figma draws that pair at 610 on `/team/`.
+   Figma `contact-page` shows a single coordinator across the full 1240 — a
+   region with eight of them (`/contacts/samarskaya/`) is the case the mock does
+   not draw. See `parsePost`'s card embeds. */
 .wp-block-post-template.is-layout-grid:has(> .od-person) {
-  --od-loop-columns: 1;
+  --od-loop-columns: 2;
   gap: 20px;
 }
 
@@ -1501,10 +1504,12 @@ h2:has(+ .od-tiles) {
 /* A contact row: a 24px glyph, 12px, then the link. Figma `Frame 33883` —
    280 × 56 for the pair, so 8px between the rows.
 
-   `mask-image` over `currentColor` rather than a background copy of the SVG:
-   the icons in `src/shared/ui/assets/icons/` are stroked with `currentColor`,
-   and a `background-image` copy would have to bake the brand red into the file
-   under `public/`. */
+   `mask-image` rather than a background copy of the SVG: the icons in
+   `src/shared/ui/assets/icons/` are stroked with `currentColor`, and a
+   `background-image` copy would have to bake the colour into the file under
+   `public/`. The glyph is `--gray-7` beside a red link — Figma strokes it
+   `#414e62` on `contact-page` (`1567:13166`) and `PersonCard` paints it the same,
+   so a red glyph was this rule's own invention. */
 .od-contact {
   display: flex;
   align-items: center;
@@ -1517,7 +1522,7 @@ h2:has(+ .od-tiles) {
   width: 24px;
   height: 24px;
   flex: 0 0 auto;
-  background-color: currentcolor;
+  background-color: var(--gray-7);
   content: '';
 }
 
@@ -1527,6 +1532,83 @@ h2:has(+ .od-tiles) {
 
 .od-contact--email::before {
   mask: center / contain no-repeat url('/figma/icons/email.svg');
+}
+
+.od-contact--person::before {
+  mask: center / contain no-repeat url('/figma/icons/user.svg');
+}
+
+.od-contact--vk::before {
+  mask: center / contain no-repeat url('/figma/icons/vk-outline.svg');
+}
+
+.od-contact--telegram::before {
+  mask: center / contain no-repeat url('/figma/icons/telegram.svg');
+}
+
+/* -----------------------------------------------------------------------------
+ * `/contacts/<region>/` — Figma `contact-page` (`754:675`)
+ *
+ * `Frame 33928` there is the branch's card: the legal name of the отделение and
+ * then the lockup that reaches it. It is `PersonCard`'s photo-less card — same
+ * frame name, same white 12/20, same 18/140 red name over a grey role — with a
+ * line of prose above it, so it is built out of the same two pieces:
+ * `.od-branch` for the card and `.od-contact` for the rows.
+ *
+ * `wp/scripts/od-pages.php` writes both classes into `post_content`, out of the
+ * `core/details` accordion these 74 pages used to open with — see
+ * `od_pages_branch_card()` for what a line has to look like to become a row.
+ * -------------------------------------------------------------------------- */
+.od-branch {
+  padding: 20px;
+  border-radius: 12px;
+  background-color: var(--white);
+}
+
+/* A constrained `core/group` puts a `.wp-block-group__inner-container` between
+   the card and its blocks, so a `gap` on the card itself lands nowhere — the
+   trap `.od-asset` documents above. 6px is Figma's spacing between two contact
+   rows; the two wider gaps are the exceptions below. */
+.od-branch.od-branch > .wp-block-group__inner-container {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* Every paragraph in the card is 18/140, and the column's gap does the spacing.
+   Doubled, because `.gutenberg p` is (0,1,1) and would otherwise keep its 16px
+   and its 1em bottom margin. */
+.od-branch.od-branch p {
+  margin-bottom: 0;
+  font-size: var(--font-size-4);
+  line-height: var(--line-height-4);
+}
+
+.od-branch.od-branch p.od-branch__title {
+  color: var(--gray-7);
+}
+
+/* The name over the role, red over grey, with the glyph on the first line rather
+   than centred — this row is two lines where every other row is one. */
+.od-branch.od-branch .od-contact--person {
+  align-items: flex-start;
+  color: var(--gray-7);
+}
+
+.od-branch.od-branch .od-contact--person strong {
+  color: var(--red-8);
+}
+
+/* Figma: 20 after the branch's name and after any prose, 15 after the person
+   row — 14 and 9 on top of the 6 the column already gives them. Written as the
+   space *above* the next block, so nothing has to be excused from it at the end
+   of the card. */
+.od-branch.od-branch .od-contact--person + * {
+  margin-top: 9px;
+}
+
+.od-branch.od-branch p:not(.od-contact) + * {
+  margin-top: 14px;
 }
 
 /* `/about/ustav/` — Figma `charter` (`706:3695`): a contents column and the

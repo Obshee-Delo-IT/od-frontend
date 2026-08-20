@@ -3469,6 +3469,36 @@ function od_replace_unlinked(string $content, string $pattern, callable $callbac
 }
 
 /**
+ * A phone number linked as an e-mail address, relinked as a phone.
+ *
+ * Seven `profile` records carry `<a href="mailto:posoh74@mail.ru">8(927)211-56-04</a>`
+ * — one editing slip, made once and copied along a region's roster: the number
+ * and the address were selected together and linked as one. The card believes
+ * the href, so it drew a phone number behind an envelope, and tapping it opened
+ * a mail composer instead of the dialler.
+ *
+ * Only when the address is stated somewhere else in the body as well, which in
+ * all seven is the very next line: rewriting the one anchor that holds an address
+ * would delete it from the record.
+ */
+function od_mailto_phone_links(string $content): string
+{
+    return preg_replace_callback(
+        '~<a\b([^>]*)href="mailto:([^"]+)"([^>]*)>([^<@]*)</a>~i',
+        static function (array $m) use ($content): string {
+            $href = od_tel_href($m[4]);
+
+            if ($href === '' || substr_count($content, $m[2]) < 2) {
+                return $m[0];
+            }
+
+            return '<a' . $m[1] . 'href="' . $href . '"' . $m[3] . '>' . od_tel_label($m[4]) . '</a>';
+        },
+        $content
+    );
+}
+
+/**
  * Plain-text e-mail addresses as `mailto:` links.
  *
  * ASCII-only on purpose: `\w` under `/u` matches Cyrillic, so a pattern written
@@ -3528,7 +3558,7 @@ function od_social_links(string $content): string
  */
 function od_pages_profile_contacts(string $content, int $_termId = 0): string
 {
-    return od_social_links(od_mailto_links(od_canonical_tel_links($content)));
+    return od_social_links(od_mailto_links(od_canonical_tel_links(od_mailto_phone_links($content))));
 }
 
 /**
@@ -4384,6 +4414,285 @@ function od_pages_coordinator_heading_level(string $content, int $_termId = 0): 
 
 
 /**
+ * The role words these bodies use for the person who runs a regional отделение —
+ * «Координатор отделения», «Руководитель», «Председатель правления».
+ */
+const OD_BRANCH_ROLE = '(?:координатор|руководител|председател|представител|начальник|директор|помощник'
+    . '|заместител|секретар|куратор|специалист)';
+
+/**
+ * The labels an editor typed in front of a contact — and, on their own, the empty
+ * field they never filled in: 40 of the 74 branch bodies carry a bare «тел.» and
+ * an «e-mail:» with nothing after them.
+ */
+const OD_BRANCH_LABEL = '(?:тел(?:\.|ефон)?|моб(?:\.|ильный)?|e-?mail|почта|адрес(?:\s+офиса)?|факс|сайт'
+    . '|(?:группа\s+в\s+)?[«"]?вконтакте[»"]?|вк|vk|телеграмм?|telegram)';
+
+/**
+ * `/contacts/<region>/` — the «Об отделении» accordion as the card Figma
+ * `contact-page` (`754:675`) draws: white, 12px radius, 20px padding, open.
+ *
+ * Every one of the 74 regional pages (and `/khabarovskiy/`, outside the tree)
+ * opens with the same `core/details` block, and the block is the whole problem:
+ * the mock has no accordion, it has a card that states the branch's legal name
+ * and then one contact lockup — `[24px glyph] 12 [red 18px link]`, the rows
+ * `PersonCard` draws and `.od-contact` already styles.
+ *
+ * What the bodies hold behind that summary is not uniform — 49 paragraphs on
+ * `/contacts/moscow/`, four on `/contacts/udmurtiya/`, nothing at all on
+ * `/contacts/sverdlovskaya/` — so this classifies **lines**, not pages, and only
+ * three kinds of line become something other than a paragraph:
+ *
+ * - the branch's legal name, bold and the first line of every body that has one
+ *   (65 of 74), becomes the card's own title — 18px `--gray-7`, not bold, which
+ *   is what the mock sets;
+ * - a bold role followed by a name («**Координатор** Титова Ирина Александровна»)
+ *   becomes the person row, name above role, the way the mock stacks them;
+ * - a phone, an e-mail or a `vk.com`/`t.me` URL — labelled or bare, linked or
+ *   plain text — becomes a contact row with its glyph.
+ *
+ * Everything else stays the paragraph it was, in the order it was written: an
+ * address, a sentence about the region, `/contacts/udmurtiya/`'s thirteen links.
+ * **A label with nothing after it is dropped**, because a card that draws a phone
+ * glyph beside an empty line states something untrue.
+ *
+ * The coordinator's own phone and e-mail are usually *not* here — they are in the
+ * `profile` records the query below the card renders, which is what
+ * `od_pages_profile_contacts()` linked. A sparse card is the right answer for a
+ * branch that only ever published its legal name.
+ *
+ * @param string $content The page's `post_content`.
+ * @param int    $_termId Unused — the runner passes the term id to every transform.
+ * @return string Rewritten content, or `$content` unchanged when the page has no
+ *                accordion or already carries the card.
+ */
+function od_pages_branch_card(string $content, int $_termId = 0): string
+{
+    if (od_has_block_class($content, 'od-branch')) {
+        return $content; // Already converted — leave the editor's copy alone.
+    }
+
+    if (!preg_match('~<!--\s*wp:details\s*-->\s*(.*?)<!--\s*/wp:details\s*-->~s', $content, $found)) {
+        return $content; // No «Об отделении» block — `/contacts/sverdlovskaya/`.
+    }
+
+    $blocks = od_branch_blocks(od_branch_lines($found[1]));
+    $card   = $blocks === '' ? '' : rtrim(od_pages_group('od-branch', $blocks)) . "\n";
+
+    return od_drop_empty_layout_groups(str_replace($found[0], $card, $content));
+}
+
+/**
+ * The accordion's visible lines, in order — a `<br>` is a line here, because half
+ * these bodies write a name, a number and a VK address as one paragraph.
+ *
+ * The `<span style="font-family: -apple-system, BlinkMacSystemFont, …">` wrappers
+ * go first: they are an editor's paste from another window, they say nothing, and
+ * a role wrapped in one would hide from the matchers below.
+ *
+ * @return array<int, string> Line HTML, links and emphasis intact.
+ */
+function od_branch_lines(string $details): array
+{
+    $details = preg_replace('~</?span[^>]*>~i', '', $details);
+    $details = preg_replace('~<summary\b[^>]*>.*?</summary>~si', '', $details);
+
+    preg_match_all('~<p\b[^>]*>(.*?)</p>~si', $details, $found);
+
+    $lines = [];
+    foreach ($found[1] as $paragraph) {
+        foreach (preg_split('~<br\s*/?>~i', $paragraph) as $line) {
+            $line = trim($line);
+            if ($line !== '' && od_line_text($line) !== '') {
+                $lines[] = $line;
+            }
+        }
+    }
+
+    return $lines;
+}
+
+/**
+ * The card's blocks: a title, the rows a line resolves to, and a paragraph for
+ * every line that is prose.
+ *
+ * @param array<int, string> $lines From {@see od_branch_lines()}.
+ */
+function od_branch_blocks(array $lines): string
+{
+    $blocks = '';
+    $titled = false;
+
+    foreach ($lines as $line) {
+        $text = od_line_text($line);
+
+        if (!$titled && preg_match('~^<(?:strong|b)>(.*)</(?:strong|b)>$~si', $line, $bold)
+            && preg_match('~отделени|общее\s+дело~iu', $text)
+        ) {
+            $blocks .= od_pages_classed_paragraph(trim($bold[1]), 'od-branch__title');
+            $titled  = true;
+            continue;
+        }
+
+        if (preg_match('~^' . OD_BRANCH_LABEL . '$~iu', $text)) {
+            continue; // A field nobody filled in.
+        }
+
+        $person = od_branch_person_rows($line);
+        if ($person !== null) {
+            $blocks .= $person;
+            continue;
+        }
+
+        $contact = od_branch_contact_row($line);
+        $blocks .= $contact === null ? od_pages_paragraph($line) : $contact;
+    }
+
+    return $blocks;
+}
+
+/**
+ * A bold role and the person it names, as the mock's person row: the name above
+ * the role, both 18px, behind the `User` glyph the other rows indent to.
+ *
+ * Returns `''` — drop the line — for a role with nobody after it, which is what
+ * «**Координатор отделения**» on its own is: 33 of these pages carry the label
+ * and no name. `null` means «not a person line», and the caller tries the
+ * contact matcher next.
+ *
+ * A VK or Telegram address the name is linked with becomes a row of its own: the
+ * link is the only place several of these pages state a coordinator's contact,
+ * and a name that is also a link would read as one of the red contact rows.
+ */
+function od_branch_person_rows(string $line): ?string
+{
+    if (!preg_match('~^<(?:strong|b)>\s*([^<]*?)\s*</(?:strong|b)>\s*:?\s*(.*)$~si', $line, $found)) {
+        return null;
+    }
+
+    $role = od_line_text($found[1]);
+    // The role word need not open the line: `/contacts/samarskaya/` bolds
+    // «Полномочный представитель организации в Приволжском федеральном округе».
+    if ($role === '' || !preg_match('~' . OD_BRANCH_ROLE . '~iu', $role)) {
+        return null;
+    }
+
+    $name = od_line_text($found[2]);
+    if ($name === '') {
+        return '';
+    }
+
+    // A name is a name. `/contacts/moscow/` states its chairman's full standing —
+    // two council memberships and 180 characters — before naming him, and that
+    // paragraph is prose, not the mock's two-line person row.
+    if (mb_strlen($name) > 80) {
+        return null;
+    }
+
+    // The two lines go inside one `<span>`: the row is a flex box — that is what
+    // puts the glyph beside the text — and a bare `<br>` between two text nodes
+    // makes them two flex items, which lays the role out *next to* the name
+    // instead of under it.
+    $rows = od_pages_classed_paragraph(
+        '<span><strong>' . $name . '</strong><br>' . $role . '</span>',
+        'od-contact od-contact--person'
+    );
+
+    if (preg_match('~href="([^"]+)"~i', $found[2], $href)) {
+        $social = od_branch_social($href[1]);
+        if ($social !== null) {
+            $rows .= od_pages_contact_row($social, $href[1], od_branch_social_label($href[1]));
+        }
+    }
+
+    return $rows;
+}
+
+/**
+ * One contact row for a line that is a contact and nothing else — «тел. 8-924-140-60-40»,
+ * «e-mail: <a>rabota-amur@mail.ru</a>», «https://vk.com/romanusha».
+ *
+ * The label in front of the value goes: the glyph says what the row is, which is
+ * the whole reason the mock has no «тел.» on it. `null` when the line is prose.
+ */
+function od_branch_contact_row(string $line): ?string
+{
+    // The bullet and the «по» of `/contacts/udmurtiya/`'s «- по тел. 8-965-845-98-32;»
+    // are part of the label as much as the label is.
+    $value = trim(preg_replace('~^[-–—•]?\s*(?:по\s+)?' . OD_BRANCH_LABEL . '\s*:?\s*~iu', '', $line));
+
+    if (preg_match('~^<a\b[^>]*href="([^"]+)"[^>]*>(.*?)</a>[.,;]?$~si', $value, $link)) {
+        $href  = $link[1];
+        $label = od_line_text($link[2]);
+
+        if (stripos($href, 'mailto:') === 0) {
+            return od_pages_contact_row('email', $href, $label);
+        }
+
+        if (stripos($href, 'tel:') === 0) {
+            return od_pages_contact_row('phone', od_tel_href($href), od_tel_label($label));
+        }
+
+        // An address, not a sentence: `/contacts/udmurtiya/` links «Подробнее о
+        // Фамутдинове Р.З.» to a VK wall post, and that is prose with a link in
+        // it — a contact row would claim it is how to reach him.
+        $social = od_branch_social($href);
+
+        return $social === null || od_branch_social($label) === null
+            ? null
+            : od_pages_contact_row($social, $href, od_branch_social_label($label));
+    }
+
+    if (strpos($value, '<') !== false) {
+        return null; // Prose with markup in it — a link inside a sentence stays there.
+    }
+
+    $text = od_line_text($value);
+
+    // A number and nothing else. `od_tel_href()` reads the digits of whatever it
+    // is given, so a sentence carrying eleven of them between other words would
+    // otherwise become one long telephone link.
+    if (preg_match('~^\+?[\d\s()\-]{10,20}$~', $text) && od_tel_href($text) !== '') {
+        return od_pages_contact_row('phone', od_tel_href($text), od_tel_label($text));
+    }
+
+    if (preg_match('~^[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*\.[A-Za-z]{2,}$~', $text)) {
+        return od_pages_contact_row('email', 'mailto:' . $text, $text);
+    }
+
+    $social = od_branch_social($text);
+
+    return $social === null
+        ? null
+        : od_pages_contact_row($social, od_branch_social_href($text), od_branch_social_label($text));
+}
+
+/** `vk` or `telegram` for an address on either, `null` for anything else. */
+function od_branch_social(string $url): ?string
+{
+    if (!preg_match('~^(?:https?://)?(?:(?:www|m)\.)?(vk\.(?:com|ru)|t\.me)/[A-Za-z0-9_.\-/?=&%#]*$~i', trim($url), $host)) {
+        return null;
+    }
+
+    return stripos($host[1], 't.me') === 0 ? 'telegram' : 'vk';
+}
+
+/** An address typed without a scheme would otherwise link to a path on this site. */
+function od_branch_social_href(string $url): string
+{
+    $url = trim($url);
+
+    return preg_match('~^https?://~i', $url) ? $url : 'https://' . $url;
+}
+
+/** The address as a label: the scheme is noise on a row that has a glyph. */
+function od_branch_social_label(string $url): string
+{
+    return preg_replace('~^https?://(?:www\.)?~i', '', trim($url));
+}
+
+
+/**
  * Every record workstream D rewrites, newest last.
  *
  * `path` is resolved with `get_page_by_path()` — exact and hierarchy-aware.
@@ -4652,6 +4961,19 @@ function od_pages_registry(): array
         'label' => 'F2 · /khabarovskiy/ — the same, for the regional page outside the tree',
         'path' => 'khabarovskiy',
         'fix' => 'od_pages_coordinator_heading_level',
+    ];
+
+    $registry[] = [
+        'label' => 'D4 · /contacts/<region>/ — «Об отделении» as the card Figma `contact-page` draws',
+        'sweep' => true,
+        'parent' => 'contacts',
+        'fix' => 'od_pages_branch_card',
+    ];
+
+    $registry[] = [
+        'label' => 'D4 · /khabarovskiy/ — the same card, outside the tree',
+        'path' => 'khabarovskiy',
+        'fix' => 'od_pages_branch_card',
     ];
 
     return $registry;
