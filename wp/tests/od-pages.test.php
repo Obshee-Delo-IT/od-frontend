@@ -1620,7 +1620,7 @@ od_test_idempotent( 'od_pages_branch_card on samarskaya', 'od_pages_branch_card'
    out holding nothing but a link, which is what sent someone looking. */
 $sverdlovsk = od_pages_branch_card( file_get_contents( __DIR__ . '/fixtures/contacts-sverdlovskaya.before.html' ) );
 od_test( 'branch card: a page with no accordion is read out of its body instead', od_has_block_class( $sverdlovsk, 'od-branch' ) );
-od_test( 'branch card: the centred legal name in an `<h2>` becomes the card title', str_contains( $sverdlovsk, '<p>Свердловское областное отделение Общероссийской' ) );
+od_test( 'branch card: the centred legal name in an `<h2>` becomes the card title', str_contains( $sverdlovsk, '<p class="od-branch__title">Свердловское областное отделение Общероссийской' ) );
 od_test( 'branch card: eight person rows across the two columns', 8 === substr_count( $sverdlovsk, 'od-contact--person' ) / 2 );
 od_test( 'branch card: «Лектор» and «Член правления» count as roles', str_contains( $sverdlovsk, '<br>Соучредитель, член правления, лектор</span>' ) );
 /* The boundary: everything from the coordinator loop on is not the branch's text. */
@@ -1640,6 +1640,77 @@ od_test( 'branch card: a converted page is left alone', od_pages_branch_card( $c
    a number and nothing else before it can become one. */
 od_test( 'branch card: a sentence carrying eleven digits is not a phone number', od_branch_contact_row( 'В 2024 году мы провели 1500 занятий для 89 000 школьников' ) === null );
 od_test( 'branch card: a number on its own is', str_contains( (string) od_branch_contact_row( 'тел. 8 924 140 60 40' ), 'tel:+79241406040' ) );
+
+/* Six readings the 75 bodies needed and the first pass did not have. Each one is
+   a *shape*, not a page: they were found by reading the finished accordion for
+   lines that still carried a contact and asking why. */
+od_test( 'branch card: a bold label is a label', str_contains( (string) od_branch_contact_row( '<strong>Телефон</strong> +79046609271' ), 'tel:+79046609271' ) );
+od_test( 'branch card: so is a bold «почта»', str_contains( (string) od_branch_contact_row( '<strong>почта</strong> roberto-kazan@mail.ru' ), 'mailto:roberto-kazan@mail.ru' ) );
+/* Eleven lines write it with a Cyrillic Е, which is a different letter. */
+od_test( 'branch card: «Е-mail» is an e-mail', str_contains( (string) od_branch_contact_row( 'Е-mail Maridem.90@mail.ru' ), 'mailto:Maridem.90@mail.ru' ) );
+/* «Тел. 8-982-…, 8-929-…» is two ways to reach one person. */
+$pair = (string) od_branch_contact_row( 'Тел. 8-982-611-97-77, 8-929-221-19-99' );
+od_test( 'branch card: two numbers on one line are two rows', 2 === substr_count( $pair, 'od-contact--phone' ) / 2 && str_contains( $pair, 'tel:+79826119777' ) && str_contains( $pair, 'tel:+79292211999' ) );
+od_test( 'branch card: a comma in a sentence is not a second number', od_branch_contact_row( 'В 2024 году мы провели 1500 занятий, 89 000 школьников' ) === null );
+/* «Группа ВКонтакте» names the network, which the glyph already draws. */
+od_test( 'branch card: «Группа ВКонтакте» is a label', str_contains( (string) od_branch_contact_row( 'Группа ВКонтакте <a href="http://vk.com/od_tatarstan">vk.com/od_tatarstan</a>' ), 'od-contact--vk' ) );
+/* …and «Страница отделения Вконтакте» still says *whose* page it is. */
+od_test( 'branch card: a label naming the branch keeps its line', od_branch_contact_row( 'Страница отделения Вконтакте: <a href="https://vk.com/obsheedelo19">https://vk.com/obsheedelo19</a>' ) === null );
+/* The card's title is the branch's legal name — which always carries the
+   organisation's own name. A bolded *role* can mention «отделения» too, and one
+   did: `/contacts/st-petersburg/` had «Председатель правления Ленинградского
+   областного отделения» drawn as the card's title. */
+od_test(
+	'branch card: a bold role naming a branch is not the card title',
+	! str_contains(
+		od_pages_branch_card(
+			'<!-- wp:details --><details><summary>Об отделении</summary><!-- wp:paragraph -->'
+				. '<p><strong>Председатель правления Ленинградского областного отделения</strong></p>'
+				. '<p><strong>Чернов Евгений Павлович</strong></p><p>тел. 8-921-555-11-22</p>'
+				. '<!-- /wp:paragraph --></details><!-- /wp:details -->'
+		),
+		'od-branch__title'
+	)
+);
+
+/* Written from mail.ru's web client: the href is a composer that wants a mail.ru
+   session, the link text is the address itself. The address is what the editor
+   meant, so the row is built from the text. Six bodies do this. */
+od_test(
+	'branch card: an address linked through mail.ru\'s composer still links to the address',
+	str_contains(
+		(string) od_branch_contact_row( 'e-mail: <a class="maill" href="https://e.mail.ru/compose/?mailto=mailto%3aalexb46@gmail.com" target="_blank">alexb46@gmail.com</a>' ),
+		'href="mailto:alexb46@gmail.com"'
+	)
+);
+
+/* One line, two labelled contacts — «г. Краснодар Елена Удовенко тел.: … e-mail:
+   …», eight of them on `/contacts/krasnodarskiy-kray/`. The single-value path
+   cannot read these: the value it strips the label from is another label. */
+$compound = (string) od_branch_compound_rows( 'г. Краснодар Елена Удовенко тел.: +7 (908) 685-02-23 e-mail: elena.udovenko@obshee-delo.ru' );
+od_test( 'branch card: a line with two contacts becomes two rows', str_contains( $compound, 'tel:+79086850223' ) && str_contains( $compound, 'mailto:elena.udovenko@obshee-delo.ru' ) );
+od_test( 'branch card: and the city and the person in front of them stay a sentence', str_contains( $compound, '<p>г. Краснодар Елена Удовенко</p>' ) );
+od_test( 'branch card: the rows keep the order the line states them in', strpos( $compound, 'tel:' ) < strpos( $compound, 'mailto:' ) );
+/* One label and one value is the ordinary case, and a sentence is neither. */
+od_test( 'branch card: a single labelled contact is not a compound line', od_branch_compound_rows( 'тел. 8-924-140-60-40' ) === null && od_branch_compound_rows( 'e-mail: rabota-amur@mail.ru' ) === null );
+od_test( 'branch card: nor is a sentence with numbers in it', od_branch_compound_rows( 'В 2024 году мы провели 1500 занятий для 89 000 школьников' ) === null );
+/* One of the eight states the number without a label at all. */
+od_test(
+	'branch card: an unlabelled number counts when the line also states an address',
+	str_contains( (string) od_branch_compound_rows( 'г. Славянск на Кубани Щепина Татьяна +7 (918) 478-86-54 e-mail: SHCEPINA1987@LIST.RU' ), 'tel:+79184788654' )
+);
+/* «тел. :+7(910)141-90-28 (МТС)» — the operator is not part of the number, and
+   that row is the only phone `/contacts/nizegorodskaya/` states. */
+/* A person line can hold the contacts too: «<strong>Председатель правления</strong>
+   Владислав Круть тел.: … e-mail: …» drew a person row whose *name* was 76
+   characters of telephone number. */
+$carried = (string) od_branch_person_rows( '<strong>Председатель правления</strong> Владислав Круть тел.: +7 (938) 403-57-70 e-mail: vlad.krut@obshee-delo.ru' );
+od_test( 'branch card: a person row keeps the name and hands over the contacts', str_contains( $carried, '<strong>Владислав Круть</strong><br>Председатель правления' ) );
+od_test( 'branch card: …which become rows of their own', str_contains( $carried, 'tel:+79384035770' ) && str_contains( $carried, 'mailto:vlad.krut@obshee-delo.ru' ) );
+od_test( 'branch card: a person line with no contacts in it is unchanged', str_contains( (string) od_branch_person_rows( '<strong>Координатор </strong>Титова Ирина Александровна' ), '<strong>Титова Ирина Александровна</strong><br>Координатор' ) );
+
+od_test( 'branch card: an operator in brackets is not part of the number', str_contains( (string) od_branch_contact_row( 'тел. :+7(910)141-90-28 (МТС)' ), 'tel:+79101419028' ) );
+od_test( 'branch card: brackets with digits in them are', str_contains( (string) od_branch_contact_row( 'тел. +7 (982) 611-97-77' ), 'tel:+79826119777' ) );
 
 od_test( 'branch social: an address on either network is recognised', od_branch_social( 'https://vk.com/od' ) === 'vk' && od_branch_social( 't.me/od' ) === 'telegram' );
 od_test( 'branch social: anything else is not', od_branch_social( 'https://obshee-delo.ru/' ) === null && od_branch_social( 'Подробнее' ) === null );

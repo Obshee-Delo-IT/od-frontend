@@ -4433,16 +4433,16 @@ function od_pages_coordinator_heading_level(string $content, int $_termId = 0): 
  * «Координатор отделения», «Руководитель», «Председатель правления».
  */
 const OD_BRANCH_ROLE = '(?:координатор|руководител|председател|представител|начальник|директор|помощник'
-    . '|заместител|секретар|куратор|специалист|лектор|соучредител|член\s+правления|ответственн)';
+    . '|заместител|секретар|куратор|специалист|лектор|соучредител|член\s+правления|ответственн|активист)';
 
 /**
  * The labels an editor typed in front of a contact — and, on their own, the empty
  * field they never filled in: 40 of the 74 branch bodies carry a bare «тел.» and
  * an «e-mail:» with nothing after them.
  */
-const OD_BRANCH_LABEL = '(?:тел(?:\.|ефон)?|моб(?:\.|ильный)?|e-?mail|почта|адрес(?:\s+офиса)?|факс|сайт'
-    . '|(?:группа\s+в\s+)?[«"]?вконтакте[»"]?|вк|vk|телеграмм?|telegram'
-    . '|ссылка(?:\s+вк(?:онтакте)?)?|страница(?:\s+в\s+вк\w*)?|группа|сайт)';
+const OD_BRANCH_LABEL = '(?:тел(?:\.|ефон)?|моб(?:\.|ильный)?|[eе]-?mail|почта|адрес(?:\s+офиса)?|факс|сайт'
+    . '|(?:(?:группа|страница|ссылка)\s+)?(?:в\s+)?[«"]?(?:вконтакте|вк|vk)[»"]?|телеграмм?|telegram'
+    . '|группа|сайт)';
 
 /**
  * `/contacts/<region>/` — the «Об отделении» accordion as the card Figma
@@ -4536,7 +4536,10 @@ function od_branch_card_from_body(string $content): string
     // The legal name is an `<h2>` **inside** a paragraph block here — the
     // migrator's doing — and `od_branch_lines()` reads paragraphs, so the
     // headings become paragraphs before it looks.
-    $prefix = preg_replace('~<h([1-6])\b[^>]*>(.*?)</h\1>~si', '<p>$2</p>', substr($content, 0, $wrapper));
+    // `<strong>`, because the legal name is what the title rule reads and it reads
+    // a *bold* line: every accordion states the name in bold, and this page states
+    // it as a centred heading instead.
+    $prefix = preg_replace('~<h([1-6])\b[^>]*>(.*?)</h\1>~si', '<p><strong>$2</strong></p>', substr($content, 0, $wrapper));
     $blocks = od_branch_blocks(od_branch_lines($prefix));
 
     if (strpos($blocks, 'od-contact') === false) {
@@ -4591,8 +4594,12 @@ function od_branch_blocks(array $lines): string
     foreach ($lines as $line) {
         $text = od_line_text($line);
 
+        // «Общее дело» and not merely «отделение»: every one of the 69 legal names
+        // carries the organisation's own name, and a *role* line does not —
+        // `/contacts/st-petersburg/` bolds «Председатель правления Ленинградского
+        // областного отделения», which the looser test made the card's title.
         if (!$titled && preg_match('~^<(?:strong|b)>(.*)</(?:strong|b)>$~si', $line, $bold)
-            && preg_match('~отделени|общее\s+дело~iu', $text)
+            && preg_match('~общее\s+дело~iu', $text)
         ) {
             $blocks .= od_pages_classed_paragraph(trim($bold[1]), 'od-branch__title');
             $titled  = true;
@@ -4607,6 +4614,13 @@ function od_branch_blocks(array $lines): string
         if ($person !== null) {
             $blocks .= $person;
             $seen = array_merge($seen, od_branch_hrefs($person));
+            continue;
+        }
+
+        $compound = od_branch_compound_rows($line);
+        if ($compound !== null) {
+            $blocks .= $compound;
+            $seen = array_merge($seen, od_branch_hrefs($compound));
             continue;
         }
 
@@ -4645,6 +4659,77 @@ function od_branch_hrefs(string $html): array
 }
 
 /**
+ * A line that carries **more than one** labelled contact — «г. Краснодар Елена
+ * Удовенко тел.: +7 (908) 685-02-23 e-mail: elena.udovenko@obshee-delo.ru».
+ *
+ * `/contacts/krasnodarskiy-kray/` writes one of these per city, eight of them, and
+ * `/contacts/khakasiya/` one; the single-value path cannot read them, because the
+ * value it strips the label from is another label. So the pairs are pulled out in
+ * the order they appear and what is left in front of them — the city and the
+ * person — stays the sentence it is.
+ *
+ * **Both kinds have to be present**, a number *and* an address: one label and one
+ * value is the ordinary case the caller already handles, and a looser test here
+ * would take over lines that path reads better.
+ *
+ * Reads the line's plain text, so the rows it builds carry `tel:` and `mailto:`
+ * hrefs of its own making rather than whatever the editor's client pasted.
+ *
+ * @return string|null Blocks, or `null` when the line is not one of these.
+ */
+function od_branch_compound_rows(string $line): ?string
+{
+    $parts = od_branch_compound($line);
+
+    return $parts === null
+        ? null
+        : ($parts['prefix'] === '' ? '' : od_pages_paragraph($parts['prefix'])) . $parts['rows'];
+}
+
+/**
+ * The same reading, as its parts — `['prefix' => 'г. Краснодар Елена Удовенко',
+ * 'rows' => '<contact rows>']`. A person line needs them apart: its prefix is the
+ * name that belongs *in* the person row, not a paragraph of its own.
+ *
+ * @return array{prefix: string, rows: string}|null
+ */
+function od_branch_compound(string $line): ?array
+{
+    $text  = od_line_text($line);
+    // The number's label is optional — `/contacts/krasnodarskiy-kray/` writes «г.
+    // Славянск на Кубани Щепина Татьяна +7 (918) 478-86-54 e-mail: …» with none —
+    // and the e-mail's is not. That asymmetry is the guard: a bare run of digits
+    // only counts on a line that already states an address.
+    $phone = '~(?:(?:тел|моб)[^:\d]{0,12}:?\s*)?(\+?\d[\d\s()\-]{8,17}\d)~iu';
+    $mail  = '~[eе]-?mail[^:\w]{0,12}:?\s*([A-Za-z0-9._%+-]+@[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*\.[A-Za-z]{2,})~iu';
+
+    if (!preg_match_all($phone, $text, $numbers, PREG_OFFSET_CAPTURE)
+        || !preg_match_all($mail, $text, $addresses, PREG_OFFSET_CAPTURE)
+    ) {
+        return null;
+    }
+
+    $found = [];
+    foreach ($numbers[1] as $number) {
+        $found[$number[1]] = od_pages_contact_row('phone', od_tel_href($number[0]), od_tel_label($number[0]));
+    }
+    foreach ($addresses[1] as $address) {
+        $found[$address[1]] = od_pages_contact_row('email', 'mailto:' . $address[0], $address[0]);
+    }
+
+    ksort($found);
+
+    // Whatever stands in front of the first label: «г. Краснодар Елена Удовенко».
+    $prefix = trim(preg_replace('~[\s,;:—–-]+$~u', '', mb_substr($text, 0, mb_strpos($text, (string) $numbers[0][0][0]) ?: 0)));
+    $prefix = preg_replace('~\s*(?:тел|моб)[^:\d]{0,12}:?$~iu', '', $prefix);
+
+    return [
+        'prefix' => preg_match('~\p{L}~u', $prefix) ? $prefix : '',
+        'rows' => implode('', $found),
+    ];
+}
+
+/**
  * A bold role and the person it names, as the mock's person row: the name above
  * the role, both 18px, behind the `User` glyph the other rows indent to.
  *
@@ -4671,6 +4756,19 @@ function od_branch_person_rows(string $line): ?string
     }
 
     $name = od_line_text($found[2]);
+
+    // «<strong>Председатель правления</strong> Владислав Круть тел.: +7 (938)
+    // 403-57-70 e-mail: vlad.krut@obshee-delo.ru» — one line holding the role, the
+    // name *and* both contacts, which drew a person row whose name was 76
+    // characters of telephone number. The contacts come out as their own rows and
+    // what is left in front of them is the name.
+    $carried  = od_branch_compound($found[2]);
+    $contacts = '';
+    if ($carried !== null && $carried['prefix'] !== '') {
+        $name     = $carried['prefix'];
+        $contacts = $carried['rows'];
+    }
+
     if ($name === '') {
         return '';
     }
@@ -4698,7 +4796,7 @@ function od_branch_person_rows(string $line): ?string
         }
     }
 
-    return $rows;
+    return $rows . $contacts;
 }
 
 /**
@@ -4718,7 +4816,34 @@ function od_branch_contact_row(string $line): ?string
     // *whose* page it is and stays a sentence — a rule loose enough to catch any
     // short label would take the meaning off the second one too (and read
     // `https:` as a label).
+    // Nine of these bodies **bold the label** — `<strong>Телефон</strong>
+    // +79046609271` — which sends the line past the person matcher (the bold text
+    // is not a role) and then past the strip below (the line does not open with
+    // the word). Unwrap it first: a bold label is a label.
+    $line = preg_replace('~^<(strong|b)>\s*(' . OD_BRANCH_LABEL . ')\s*:?\s*</\1>~iu', '$2 ', $line, 1);
+
     $value = trim(preg_replace('~^[-–—•]?\s*(?:по\s+)?' . OD_BRANCH_LABEL . '\s*:?\s*~iu', '', $line));
+
+    // «Тел. 8-982-611-97-77, 8-929-221-19-99» is two ways to reach one person, and
+    // two rows: the split is only taken when **every** part is a bare number, so a
+    // sentence with a comma in it is untouched.
+    if (strpos($value, ',') !== false && strpos($value, '<') === false) {
+        $numbers = array_map('trim', explode(',', $value));
+        $rows    = '';
+
+        foreach ($numbers as $number) {
+            if (!preg_match('~^\+?[\d\s()\-]{10,20}$~', $number) || od_tel_href($number) === '') {
+                $rows = '';
+                break;
+            }
+
+            $rows .= od_pages_contact_row('phone', od_tel_href($number), od_tel_label($number));
+        }
+
+        if ($rows !== '') {
+            return $rows;
+        }
+    }
 
     if (preg_match('~^<a\b[^>]*href="([^"]+)"[^>]*>(.*?)</a>[.,;]?$~si', $value, $link)) {
         $href  = $link[1];
@@ -4730,6 +4855,16 @@ function od_branch_contact_row(string $line): ?string
 
         if (stripos($href, 'tel:') === 0) {
             return od_pages_contact_row('phone', od_tel_href($href), od_tel_label($label));
+        }
+
+        // **The link text is an address and the href is not.** Six of these
+        // bodies were written from mail.ru's web client, which pastes
+        // `https://e.mail.ru/compose/?mailto=mailto%3aname@example.com` — a
+        // composer that wants a mail.ru session — over the address itself. The
+        // address is what the editor meant and what the reader can use, so the
+        // row is built from the text and the href is dropped.
+        if (preg_match('~^[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*\.[A-Za-z]{2,}$~', $label)) {
+            return od_pages_contact_row('email', 'mailto:' . $label, $label);
         }
 
         // An address, not a sentence: `/contacts/udmurtiya/` links «Подробнее о
@@ -4747,6 +4882,12 @@ function od_branch_contact_row(string $line): ?string
     }
 
     $text = od_line_text($value);
+
+    // «тел. :+7(910)141-90-28 (МТС)» — the operator in brackets after a number is
+    // not part of it, and the row it stopped from forming is the only phone
+    // `/contacts/nizegorodskaya/` states. Only a bracket with no digits in it:
+    // «+7 (910) …» is a number written with them.
+    $text = trim(preg_replace('~\s*\([^)\d]*\)$~u', '', $text));
 
     // A number and nothing else. `od_tel_href()` reads the digits of whatever it
     // is given, so a sentence carrying eleven of them between other words would

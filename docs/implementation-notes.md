@@ -1206,6 +1206,21 @@ Four details worth knowing about it:
 - **`/khabarovskiy/` is spliced in alphabetically**, between «Ульяновская» and «Ханты-Мансийский». It sits outside the `/contacts/` subtree — its URL is public and cannot be re-parented — so the query cannot return it; appending it would bury it three screens past where anyone looks. The list the query returned keeps the database's own collation, and only the one page is inserted.
 - **«Центральный Аппарат» is first because of one integer.** It is the page `/contacts/moscow/`, alphabetically last of 75, and the mock puts it at the top: `od_wp_page_order()` writes `menu_order = -1` and the shortcode orders by `menu_order, title`. Nothing has to be listed, nothing renumbers when a region is added, and an editor can still reorder from the admin's own «Порядок» field.
 
+**Reading the finished accordion found six more shapes** (2026-08-20, after «are there other empty cards?»). Nothing was empty — 20 of the 75 cards hold only the legal name, and the pages behind them say only that: «Адрес офиса:», «тел.», «e-mail:» with nothing after them, confirmed against each page's pre-conversion revision. But 61 lines inside the cards still carried a contact as prose, and each one was a *shape* the classifier had not met:
+
+| shape | where | reading |
+| --- | --- | --- |
+| **a bold label** — `<strong>Телефон</strong> +79046609271` | 9 bodies | the line went past the person matcher (the bold text is not a role) and then past the label strip (it does not open with the word). A bold label is a label. |
+| **«Е-mail» with a Cyrillic Е** | 11 lines | a different letter, and the label list had only the Latin one |
+| **two numbers on one line** — «Тел. 8-982-…, 8-929-…» | 2 | two ways to reach one person, so two rows — taken only when *every* comma-separated part is a bare number |
+| **«Группа ВКонтакте <url>»** | 6 | the label names the network, which the glyph draws. «Страница отделения Вконтакте» still says *whose* page it is, and stays prose |
+| **an address linked through mail.ru's composer** | 6 | `https://e.mail.ru/compose/?mailto=mailto%3a…` over the address itself — a link that wants a mail.ru session. When the link *text* is an address, the row is built from the text |
+| **two labelled contacts on one line** — «г. Краснодар Елена Удовенко тел.: … e-mail: …» | 9, eight of them on `/contacts/krasnodarskiy-kray/` | the single-value path cannot read these: the value it strips the label from is another label. The pairs come out in order and the city and the person stay the sentence they are. The e-mail's label is required and the number's is not, which is what keeps a sentence with digits out |
+
+Two more from the same reading: a **bolded role can mention «отделения»** — `/contacts/st-petersburg/` had «Председатель правления Ленинградского областного отделения» drawn as the card's *title*, so the title now has to carry «Общее дело», which all 69 legal names do and no role does. And a **person line can carry its own contacts** («**Председатель правления** Владислав Круть тел.: … e-mail: …»), which had produced a person row whose name was 76 characters of telephone number.
+
+After all of it: **377 contact rows and 127 person lockups** across the 75 cards, and 22 prose lines still hold a contact — 15 of them `/contacts/udmurtiya/`'s deliberate thirteen-link list, and the other 7 the «label says whose» case the rule protects on purpose.
+
 Freshness needed no wiring: `od-revalidate.php` queues the coarse `wp:pages` tag on any page save, and that purges `/contacts/` along with every other WP page.
 
 **Two things this pass found by accident**, both older than it:
