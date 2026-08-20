@@ -46,7 +46,7 @@ Related: [`implementation-plan.md`](./implementation-plan.md) (task state) · [`
 
 **01 · `wp-rocket` + `clearfy-pro` deactivated.** REST still answered **404** — which is the finding: clearfy's `disable_json_rest_api` is *not* the only switch, and §2.1 was wrong to treat it as one.
 
-**02 · theme swapped to `twentytwentyone`, `welfare` deleted.** *This* is what opened REST. `welfare/functions.php:729–748` ran `add_filter('rest_enabled','__return_false')` plus `remove_action('parse_request','rest_api_loaded')` and four sibling `remove_action`s, unconditionally at theme load — no option, no toggle, nothing WP-CLI could flip. **B1 has two switches and the theme's is the harder one.** Two side findings: WP 5.5.5's own `_wp_sidebars_changed` fatals under PHP 8.2 (`widgets.php:1265`) on `after_switch_theme`, so the swap had to run as `/opt/php7.4/bin/php /usr/local/bin/wp …` — meaning `--skip-themes` had been masking a **core** incompatibility, not only the theme's; and `twentytwentyone` was already installed, so no theme had to be written. A minimal `od-headless` theme (`wp-backend.md` §4.5) stays deferred — nothing needs it yet.
+**02 · theme swapped to `twentytwentyone`, `welfare` deleted.** *This* is what opened REST. (Deleting the theme is the *clone's* answer, not prod's — §2.1 now carries all three ways to lift this switch and which one belongs where.) `welfare/functions.php:729–748` ran `add_filter('rest_enabled','__return_false')` plus `remove_action('parse_request','rest_api_loaded')` and four sibling `remove_action`s, unconditionally at theme load — no option, no toggle, nothing WP-CLI could flip. **B1 has two switches and the theme's is the harder one.** Two side findings: WP 5.5.5's own `_wp_sidebars_changed` fatals under PHP 8.2 (`widgets.php:1265`) on `after_switch_theme`, so the swap had to run as `/opt/php7.4/bin/php /usr/local/bin/wp …` — meaning `--skip-themes` had been masking a **core** incompatibility, not only the theme's; and `twentytwentyone` was already installed, so no theme had to be written. A minimal `od-headless` theme (`wp-backend.md` §4.5) stays deferred — nothing needs it yet.
 
 **03 · `od-profile.php` installed, then `cmsms-content-composer` deactivated.** Forced, not optional: with `welfare` gone the plugin fatals on *every* shortcode render, because `cmsms_divpdel()` is defined **in the theme** — so `the_content` over any cmsms body threw `Call to undefined function` and REST 500'd. Deactivating the plugin degrades those bodies to literal shortcode text instead, which is ugly but 200. `wp/mu-plugins/od-profile.php` went up first so `profile` (209 rows) and `pl-categs` survive the loss of their registrar; `project` (21 Lorem drafts) and `content_template` (38) lose theirs as intended. **REST 200 from here on:** 8285 posts / 148 pages / 132 profiles / 17961 media / 110 categories.
 
@@ -72,7 +72,7 @@ Related: [`implementation-plan.md`](./implementation-plan.md) (task state) · [`
 8. **Workstream D scripts** — `wp/scripts/od-pages.php` and `od-wp.php`, dry-run then apply; afterwards `pnpm pages:inventory` measures **stage**, not od-dev.
 9. **Frontend smoke** — `WP_BASE=https://od.webtm.ru`, `SITE_URL` set to the stage origin (leaving it at the prod default makes stage advertise prod's canonicals), `pnpm build && pnpm start`, then §5's gates and `pnpm url:check`.
 10. **Hygiene, last.** Drop `nvp_content_copy` (8565 rows — it *is* the migration rollback, so only after gate 9 passes), then the `cmsms_%`-except-`cmsms_profile_subtitle` meta sweep from [`wp-backend.md` §4.4 step 8](./wp-backend.md), the orphan `wp_wysija_*` / WooCommerce / `tribe_*` tables, and the three-line `WP_DEBUG` block this prep added at the top of `wp-config.php`.
-11. **PHP floor.** The vhost is 7.4.33, exactly WP 7.1's minimum; move stage to 8.2 in the timeweb panel (a panel action, not a CLI one) and re-run the gates. **Prod's PHP is the real dependency** — it is `mod_php7`, and if it is below 7.4 the core update cannot happen there at all. Read it before scheduling the prod pass.
+11. ~~**PHP floor.**~~ **Done 2026-08-20** — stage's vhost moved from 7.4.33 to **8.2.32 (`apache2handler`)**, so web and CLI now match and the whole stack is what prod should end up on. Gates re-run clean. **Prod's PHP is still the open dependency**, and it is now two-sided: below 7.4 the core upgrade cannot happen there at all, and at 8.x `welfare` fatals on load (§2.7) — so on prod the PHP move and the theme deletion have to land in the same window.
 12. **Decisions this prep deliberately did not take.** Whether `leyka` stays on this WP or moves to `помоги.общее-дело.рф`; whether prod's REST goes public or gets path-allowlisted (§2.1's warning still stands — stage is not the same risk); whether `contact-form-7` 5.4.2 is updated or dropped for the Next form (it throws PHP 8.2 deprecations on every load today, as does `leyka` 3.30.3).
 
 ---
@@ -129,9 +129,62 @@ od-dev: 203 `format=video` posts, 99 in the four film sub-categories.
 
 ## 2. WordPress preparation
 
-**2.1 Enable REST (B1).** ⚠️ **§0.6 corrects this step: there are two switches, and this one is the lesser.** The `welfare` theme disables REST in code (`functions.php:729–748`), unconditionally and with no option behind it, so REST stays 404 until the theme is off — which on stage meant activating `twentytwentyone` and deleting `welfare` outright. Do that first; the clearfy toggle below is still needed, just not sufficient.
+> **Read the order before the steps.** The numbering below is historical — other docs link to §2.1, §2.5, §2.6 and §2.8 by number, so they keep them. The **execution order is not the numbering**, and the rehearsal on od-stage (§0.6) is what settled it:
+>
+> | # | do this | why here |
+> |---|---|---|
+> | 1 | Capture the A6 frozen copy | It needs `welfare` + cmsms to render, and both are about to go. Once the theme is deleted there is no second chance. |
+> | 2 | `wp cmsms backup` | Free, and it is the per-post rollback for everything after it. |
+> | 3 | Core upgrade (**§2.7** first half) | Must precede the conversion — 5.5.5 renders the migrator's `wp:query` as an empty div, at 200. |
+> | 4 | `wp cmsms migrate` (**§2.7** second half) | Needs the shortcode text still present, nothing else; the migrator is pure regex over raw `post_content` and does not need cmsms loaded. |
+> | 5 | `od-profile.php` (**§2.6** steps 2–3) | Installed while cmsms is still active, so it can be verified before anything is switched off. |
+> | 6 | Open REST (**§2.1**) | On prod this is where the paths fork — see §2.1. On a clone it is the theme deletion, and that is what forces step 7 immediately. |
+> | 7 | cmsms off and deleted (**§2.6** step 4) | **Forced, not tidying,** if step 6 removed the theme: `cmsms_divpdel()` lives in `welfare`, so with the theme gone every shortcode render throws `Call to undefined function` and REST 500s. |
+> | 8 | Plugin prune ([`wp-backend.md` §4.3](./wp-backend.md)) | After the conversion, so a plugin whose shortcodes are still in a body is measured before it is dropped, not after. |
+> | 9 | ACF and the film group (**§2.2–2.4**) | Independent of all of the above; last only because nothing else waits on it. |
+> | 10 | `od-revalidate.php` (**§2.5**), page fixes (**§2.8**) | Both want the final content in place. |
+>
+> **The clone path and the prod path diverge at step 6, and only there.** On od-stage the site did not have to keep serving, so the theme was simply deleted and the ugly window between steps 6 and 7 — bodies rendering as literal `[cmsms_…]` text under a stock theme — cost nothing. **Prod is public throughout,** so it cannot take that window: there, open REST *without* removing the theme (§2.1), and let the theme deletion fall inside the cutover window itself.
 
-A `clearfy-pro` setting, not code — its "disable REST API" toggle in the WP admin (Clearfy → API). **It does not require the admin UI**, which matters because prod admin was the item this blocker was waiting on: the toggle is the single key `disable_json_rest_api` inside the `clearfy_option` array, and WP-CLI over `ssh od-root` can flip it (`'on'` → unset/`''`; read on BeGet 2026-08-15, still `'on'`). The F6 pass used exactly that mechanism to switch on a different clearfy option, so the path is proven. Re-run §1.1 to confirm.
+
+**2.1 Enable REST (B1). There are two switches, and the one this step was written about is the lesser of them.** Established on od-stage 2026-08-20 (§0.6): deactivating `clearfy-pro` left REST answering **404**.
+
+**Switch A — `clearfy-pro`, an option.** The key `disable_json_rest_api` inside the `clearfy_option` array; `'on'` → unset/`''`. **No admin UI needed**, which is what unblocked this: WP-CLI over `ssh od-root` can flip it (read on BeGet 2026-08-15, still `'on'`), and the F6 pass already used that mechanism on a different clearfy option.
+
+**Switch B — the `welfare` theme, in code, with no option behind it.** `functions.php:729–748`, under the comment `// Отключаем сам REST API`:
+
+```php
+add_filter('rest_enabled', '__return_false');
+remove_action( 'init', 'rest_api_init' );
+remove_action( 'rest_api_init', 'rest_api_default_filters', 10, 1 );
+remove_action( 'parse_request', 'rest_api_loaded' );          // ← this is the one that 404s
+remove_filter( 'rest_authentication_errors', 'rest_cookie_check_errors', 100 );
+remove_action( 'rest_api_init', 'wp_oembed_register_route' );
+// … plus rest_output_rsd / rest_output_link_wp_head / rest_output_link_header
+// and the five auth_cookie_* rest_cookie_collect_status hooks
+```
+
+`remove_action('parse_request', 'rest_api_loaded')` is the decisive line — without it `/wp-json/*` never routes, whatever clearfy says. `rest_enabled` has been a no-op since 4.7 and is a red herring.
+
+**Three ways to lift switch B. Which one is right depends on whether the site has to keep serving.**
+
+1. **Delete the theme** — what od-stage did: `wp theme activate twentytwentyone && wp theme delete welfare`. Simplest, and it retires switch B permanently. **It also forces §2.6 step 4 in the same window** (see the order table above), and it leaves the site rendering stock-theme shortcode text until the conversion lands. Right for a clone, wrong for a live prod.
+2. **An mu-plugin that re-adds what the theme removed** — leaves `welfare` rendering prod exactly as it does today, and rolls back with `rm`. The theme's removals run when `functions.php` is included, which is *before* `after_setup_theme` fires, so re-adding there wins:
+   ```php
+   <?php // wp-content/mu-plugins/od-rest-on.php — PHP 7.0 syntax, mu-plugins load on every request
+   add_action('after_setup_theme', 'od_rest_on', 99);
+   function od_rest_on() {
+       remove_filter('rest_enabled', '__return_false');
+       add_action('parse_request', 'rest_api_loaded');
+       add_action('init', 'rest_api_init');
+       add_action('rest_api_init', 'rest_api_default_filters', 10, 1);
+       add_filter('rest_authentication_errors', 'rest_cookie_check_errors', 100);
+   }
+   ```
+   **Not yet run against prod's stack** — od-stage could not rehearse it, because by the time it was known the theme was already gone and `welfare` cannot even load under stage's PHP 8.2 (see §2.7). Try it on a throwaway clone before the prod window, not in it.
+3. **Edit `functions.php`** and comment the block out. Works, and it is the most obvious reading of the file — but it is a live edit to a file a theme update would overwrite, and it has no `rm`-shaped rollback. Prefer 2.
+
+Re-run §1.1 to confirm, and check **both** switches are off before concluding the endpoint is closed for a reason.
 
 ⚠️ **This one is a decision, not a chore** — it opens prod's REST surface to the public internet, so it wants a deliberate go-ahead rather than being flipped in passing. If REST must stay closed to the public, allowlist by path rather than disabling wholesale; the app needs `wp/v2/posts`, `wp/v2/media`, `wp/v2/menus`, `wp/v2/menu-items`.
 
@@ -206,6 +259,8 @@ ssh od-root 'cd ~/public_html && wp --skip-plugins --skip-themes eval "
 
 **The order is the whole instruction.** Prod's content is still CMSMasters shortcodes, so the plugin that renders them has to outlive the conversion:
 
+⚠️ **Unless the theme goes first, in which case cmsms cannot outlive anything.** Measured on od-stage 2026-08-20: `cmsms_divpdel()` is defined in **`welfare`**, not in the plugin, so with the theme deleted every `the_content` over a cmsms body throws `Call to undefined function cmsms_divpdel()` at `cmsms-content-composer/inc/shortcodes.php:222` — and REST 500s on the first `content.rendered` it tries. Deactivating the plugin is then not a choice but the fix: with no shortcode handler registered the bodies degrade to literal `[cmsms_…]` text, which is ugly and answers 200. **This is why the order table above puts the theme deletion and the cmsms deactivation in the same window,** and why on prod the theme is not deleted before cutover at all (§2.1).
+
 1. **Convert the content first** — the `wp cmsms migrate` pass this runbook already schedules. A shortcode whose plugin is gone renders as its own source text, so anything unconverted becomes visible bracket soup. od-dev needed four extra branches for `[cmsms_table]`, `[cmsms_audios]`, `[cmsms_tabs]` and `[cmsms_slider]`, which are now in the migrator — re-check after the pass with:
    ```bash
    ssh od-root 'cd ~/public_html && wp --skip-plugins --skip-themes eval "
@@ -215,6 +270,10 @@ ssh od-root 'cd ~/public_html && wp --skip-plugins --skip-themes eval "
      }"'
    ```
    `page` and `post` must be **0** or the remaining paths must all be on the A6 iframe list. Post types with no route here (`product`, `leyka_campaign`, `campaign`, `tribe_*`, `content_template`) don't matter.
+
+   **What that query returned on the prod clone, after the pass:** `page=10`, `post=0`, plus the routeless types. So `post` reaches zero and `page` does not — the ten are listed in §0.6's open list, and every tag left on them (`[cmsms_sidebar]`, `[cmsms_selected_products]`, `[cmsms_contact_form]`) is one the redesign has no use for. Worth knowing before the pass: the migrator's coverage looks thinner than it is. It handles 26 tags, and the ones it doesn't — `counter`, `stat`, `quote`, `icon_list`, `dropcap`, `twitter` — appear **only** inside `content_template`, cmsms's own CPT, which loses its registration with the plugin.
+
+   Note also that this step does not need cmsms *loaded*, only its shortcode text present: `welfare_to_gutenberg()` is `preg_replace_callback` over the raw `post_content` read back out of `nvp_content_copy`. A deactivated — even deleted — cmsms converts identically.
 2. **First dump prod's own registration and diff it against the file.** The
    arguments in `od-profile.php` were dumped from **od-dev**, where cmsms runs
    under WP 6.8.8; prod is a different cmsms release under 5.5.5, and a
@@ -276,9 +335,21 @@ ssh od-root 'cd ~/public_html && wp --skip-plugins --skip-themes core update && 
 ssh od-root 'cd ~/public_html && wp --skip-plugins --skip-themes core version'
 ```
 
+**Rehearsed on od-stage 2026-08-20, and five things came out of it.**
+
+- **The pin is real and it lies.** With `wp-downgrade` active `core check-update` answers "WordPress is at the latest version" — it filters the update API, so a check is not evidence. Deactivate it first, then check. Keep it *installed* afterwards: it is the re-pin lever if the upgrade has to be undone.
+- **5.5.5 → 7.1 in one hop**, `--locale=ru_RU`, and `core update-db` was a no-op (already at db 61833). No intermediate version needed.
+- **PHP floor: WP 7.1 wants ≥ 7.4.** Read it from the API rather than guessing: `curl -s 'https://api.wordpress.org/core/version-check/1.7/?version=5.5.5&locale=ru_RU'` and look at `offers[].php_version`. **This is the one item that can block prod outright** — prod is `mod_php7` of unread minor, and if it is below 7.4 the upgrade cannot happen there at all until the host moves it.
+- **The upgrade is what makes WP-CLI ordinary again.** Before it, timeweb's 8.2 CLI could not load the site at all, and `--skip-themes` was hiding the reason: it is not only the theme that fatals under PHP 8, it is **WP 5.5.5 itself** — `_wp_sidebars_changed` at `wp-includes/widgets.php:1265`, reached from `after_switch_theme`. Anything that switches a theme on 5.5.5 has to run under `/opt/php7.4/bin/php /usr/local/bin/wp`, not behind a flag. After the upgrade, plain `wp` works: no `--skip-plugins`, no `--skip-themes`.
+- **`welfare` cannot survive PHP 8**, and the reason is not the one [`wp-backend.md` §2](./wp-backend.md#2-stack-on-od-dev) used to give. `functions.php:754` reads `remove_action( ‘woocommerce_after_shop_loop_item’, … )` — **typographic** quotes, pasted from a word processor — so the arguments are undefined constants. PHP 7 makes that a warning and carries on with the string; PHP 8 makes it a fatal `Error`. That is the whole difference between prod serving fine today and the same file dying the moment its host moves to 8.x. It also means **moving prod's PHP to 8 and keeping `welfare` are mutually exclusive**, so on prod the two have to happen in the cutover window together.
+
+**Verified after the upgrade, on od-stage** (site PHP moved to **8.2.32, apache2handler**, 2026-08-20): `/`, `/<id>/`, `/wp-admin/` and every REST route used by the app answer, and the migrated bodies carry `is-layout-flex` / `is-layout-constrained` / `is-layout-grid` in `content.rendered` — which is the B10 check, done by observation rather than by reasoning about core versions.
+
 ⚠ **Take the DB snapshot through the BeGet panel first** (§7), and expect the *old theme* to be the risk here, not core: prod still renders its own pages with CMSMasters, whose newest release predates WP 6. That is acceptable only because the theme is on the way out — but the A6 frozen copy must be **captured before the upgrade**, or the fallback inherits whatever the upgrade breaks in the old theme. Prod's site PHP is 7.x (`mod_php7`), so also check the minimum PHP of the core version being installed before starting.
 
 Then run the content conversion — [`wp-page-passthrough.md` §6](./wp-page-passthrough.md#6-running-the-migrator) — `wp cmsms backup` first, since it is what makes the rest reversible, and only then `wp cmsms migrate`.
+
+**What that looked like on the prod clone.** `wp cmsms backup` copied **8565** originals into `nvp_content_copy` (`publish`, and only `post` / `page` / `profile`) — that is the per-post rollback, `wp cmsms restore`, and it is why the gzipped dump went from 26 MB to 34 MB. `--dry-run` predicted **5669 to change, 2896 unchanged**; the real run matched exactly, so the dry-run count is trustworthy as a gate. Afterwards: **5393 posts, 144 pages and 132 profiles** hold core Gutenberg where **none** did before — prod stores shortcodes in *everything*, not only in pages as B2 assumed. Budget the wall time: ~8500 records, a few minutes, and it is a single long-running WP-CLI call with no resume, so run it under `run_in_background` or `nohup` rather than an interactive session that a dropped SSH multiplex can kill.
 
 **2.8 Apply the page fixes.** Workstream D's WordPress-side changes are scripts in this repo, not admin edits, precisely so this step is a handful of commands. Procedure and guarantees: [`wp-page-redesign.md`](./wp-page-redesign.md).
 
@@ -602,3 +673,11 @@ Nothing here is destructive, but in order of blast radius:
 - **Cover uploads** — `film:covers` only touches posts with no featured image. To undo, unset `featured_media` and delete the `film-cover-<id>.jpg` attachments.
 - **ACF field group** — deactivating the ACF plugin hides the fields from REST but leaves postmeta intact; re-activating restores everything.
 - **Before starting on prod**, take a DB snapshot through the **BeGet** panel (prod's host — not Timeweb's, which holds the stale copy) — the migration writes postmeta across ~30 posts and uploads ~23 attachments.
+
+**For the §2 preparation pass specifically, the panel snapshot is not enough** — that pass rewrites 5669 bodies, deletes 22 plugins and replaces core, and a single before-snapshot gives you one all-or-nothing return point across the lot. What od-stage used instead, and what prod should reuse (`~/od-backup.sh <slug> [--full]`, installed on `ssh timeweb`):
+
+- One `~/backups/<NN-slug>/` per step, taken **before** the step it is named for, so `NN` restores the state that step started from. Each holds `db.sql.gz`, `files.tar.gz` and a `MANIFEST.txt` recording timestamp, core version, active theme and active plugins — the manifest is the part that makes a directory readable six weeks later.
+- `--full` (whole tree) only for the baseline. The later tars carry `wp-config.php`, `.htaccess` and `wp-content/{plugins,themes,mu-plugins}` only: uploads are the bulk of the site and no step in §2 touches them. On od-stage that was 1.3 GB once and ~30 MB per step after.
+- It refuses to write into an existing slug rather than overwriting, and it runs WP-CLI under PHP 7.4, so the same script works on both sides of the core upgrade.
+- **The baseline is not only a rollback.** `00-baseline` is a complete un-migrated clone — tree *including* `welfare` and `cmsms-content-composer`, plus a matching dump — which is exactly what `frozen.obshee-delo.ru` has to serve for A6. Capture it before step 1 of the order table and don't tidy it away afterwards.
+- **Content specifically rolls back per post,** without touching any of the above: `wp cmsms restore --post=<ids>` (or wholesale) rewrites `post_content` from `nvp_content_copy`. Which is also why that meta stays until the frontend gates pass — dropping it is the *last* item in §0.6's list, not housekeeping to do while things still move.

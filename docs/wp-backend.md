@@ -63,7 +63,9 @@ ssh timeweb 'cd ~/od-dev/public_html && wp --skip-plugins=clearfy-pro <command>'
 
 Without that flag the output is unusable. With it, all commands run cleanly.
 
-**On prod, `--skip-themes` is required as well** — the CLI's PHP is 8.2 while the site itself runs older, so the `welfare` theme fatals (`functions.php:754`, an optional-parameter-before-required signature) on every command and even `option get` fails:
+**On prod, `--skip-themes` is required as well** — the CLI's PHP is 8.2 while the site itself runs older, so the `welfare` theme fatals on every command and even `option get` fails. **The cause, read from the file 2026-08-20:** `functions.php:754` is `remove_action( ‘woocommerce_after_shop_loop_item’, … )` with **typographic** quotes, pasted from a word processor, so the arguments are undefined constants — a warning in PHP 7 that evaluates to the string, a fatal `Error` in PHP 8. (Earlier notes here called it an optional-parameter-before-required signature; that was wrong.) The practical consequence is bigger than a CLI flag: **prod cannot move to PHP 8 while `welfare` is installed**, so that move and the theme deletion belong in one window — see [`prod-migration-runbook.md` §2.7](./prod-migration-runbook.md).
+
+⚠️ `--skip-themes` was also masking something that is *not* the theme: on **WP 5.5.5 under PHP 8.2, core itself** fatals at `wp-includes/widgets.php:1265` (`_wp_sidebars_changed`, reached from `after_switch_theme`). A flag cannot help there — switching a theme on 5.5.5 has to run under the site's own PHP, `/opt/php7.4/bin/php /usr/local/bin/wp …`. Found on od-stage 2026-08-20.
 
 ```bash
 ssh od-root 'cd ~/public_html && wp --skip-plugins --skip-themes <command>'   # live prod, BeGet
