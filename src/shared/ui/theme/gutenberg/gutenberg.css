@@ -555,7 +555,6 @@ h2:has(+ .od-cards, + .od-poster-cards) {
   margin-bottom: 120px;
 }
 
-
 .wp-block-cb-carousel-v2.od-cards .cb-wrapper {
   align-items: stretch;
 }
@@ -1709,6 +1708,118 @@ h2:has(+ .od-tiles) {
   margin-top: 24px;
 }
 
+/* -----------------------------------------------------------------------------
+ * `/contacts/` — Figma `contact` (`754:587`)
+ *
+ * The index's region list: a white pill per region that opens into the branch's
+ * card. The markup is `[od_regions]`'s (`wp/mu-plugins/od-regions.php`), a native
+ * `<details>` per region — no script, and the summary is a real one, so keyboard
+ * and find-in-page work with nothing from us.
+ *
+ * Everything inside the card is already drawn by the `.od-branch` / `.od-contact`
+ * rules above, which is the whole reason the shortcode lifts the card rather
+ * than rebuilding it. What is new here is the pill, the ⊕/⊗ control and the link.
+ * -------------------------------------------------------------------------- */
+.od-regions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* `Frame 33975`: 48 tall closed — 10 + the 28px icon + 10 — and 12px radius.
+   Open, Figma gives the same box 32 at the bottom (`Frame 33976`). */
+.od-region {
+  padding: 10px 15px;
+  border-radius: 12px;
+  background-color: var(--white);
+}
+
+.od-region[open] {
+  padding-bottom: 32px;
+}
+
+/* Figma puts the title at x=58 against an icon at x=15, so 15 between them. */
+.od-region summary {
+  display: flex;
+  align-items: center;
+  color: var(--gray-9);
+  cursor: pointer;
+  font-size: var(--font-size-4);
+  font-weight: 700;
+  gap: 15px;
+  line-height: var(--line-height-4);
+  list-style: none;
+}
+
+.od-region summary::-webkit-details-marker {
+  display: none;
+}
+
+/* The control is one file in two states: Figma's open icon is the *same* vector
+   rotated 45°, so a ⊕ and `rotate(45deg)` draw both and there is no second
+   asset to keep in step. `mask-image` over `background-color`, the call
+   `.od-contact::before` makes — the icon in `src/shared/ui/assets/icons/` is
+   stroked with `currentColor` and CSS cannot reference that tree (every `.svg`
+   there is a JS module, see `next.config.ts`), so `public/figma/icons/` holds a
+   byte-identical copy. Red — `#ae0a04` in both states. */
+.od-region summary::before {
+  display: block;
+  width: 28px;
+  height: 28px;
+  flex: 0 0 auto;
+  background-color: var(--red-8);
+  content: '';
+  mask: center / contain no-repeat url('/figma/icons/add-outlined.svg');
+  transition: transform 0.2s ease;
+}
+
+.od-region[open] summary::before {
+  transform: rotate(45deg);
+}
+
+/* `Frame 33927`: the body sits 40 in from the card's padding, behind a 1px rule,
+   with 32 of its own before the text and 15 above it. A flex column so the link
+   below can take an exact margin rather than a line box's leading.
+
+   939 is a measure, not a hug: the panel is that wide inside a 1241 pill in both
+   frames that draw this accordion (`contact` and `faq` — the same
+   979 / 939 / 887 chain), which leaves a legal name 75 characters to the line
+   instead of 95. Below 1049 the pill is narrower than that and it stops binding. */
+.od-region__body {
+  display: flex;
+  max-width: 939px;
+  flex-direction: column;
+  padding: 8px 20px 8px 32px;
+  border-left: 1px solid var(--gray-4);
+  margin: 15px 0 0 40px;
+}
+
+/* The card loses its own surface here and keeps everything else. On a region page
+   it is a white card on the grey page; inside the pill it is white on white, and
+   the 20px padding would double the panel's own 32. */
+.od-region .od-branch.od-branch {
+  padding: 0;
+  border-radius: 0;
+  background-color: transparent;
+}
+
+/* Figma's button is the site's filled pill at the smaller size: 182 × 40 from
+   10/20 padding and 16px text, 35 under the card. `align-self` so it is the one
+   thing in the column that does not stretch. */
+.od-region__link {
+  align-self: flex-start;
+  padding: 10px 20px;
+  margin-top: 35px;
+  font-size: var(--font-size-3);
+}
+
+/* `/contacts/sverdlovskaya/` is the one region with no card for the shortcode to
+   lift, so its panel is the link alone — and 35px of margin under nothing is a
+   gap with no card above it to separate from. */
+.od-region__body > .od-region__link:first-child {
+  margin-top: 0;
+}
+
 /* `/about/ustav/` — Figma `charter` (`706:3695`): a contents column and the
    charter beside it. Figma: nav 384 from x=103, text 814 from x=527 — 384 + 40
    + 814 = 1238 against the grid's 1240. */
@@ -2307,5 +2418,12 @@ h2:has(+ .od-tiles) {
      is the same shape at another size; no row carries both classes. */
   .od-figures--3 .wp-block-image img {
     height: 300px;
+  }
+
+  /* No mobile frame for `contact`. 72px of indent — Figma's 40 + 32 — is a fifth
+     of a phone's width, so the rule keeps its place and the offsets shrink. */
+  .od-region__body {
+    padding: 8px 0 8px 16px;
+    margin-left: 6px;
   }
 }

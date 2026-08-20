@@ -155,9 +155,9 @@ describe('the native WP page branch (D6)', () => {
 
   it('never asks about an exception path, WP page or not', async () => {
     fetchWpPage.mockClear();
-    loadLegacyDocument.mockResolvedValue(ok('Контакты'));
+    loadLegacyDocument.mockResolvedValue(ok('Актуально'));
 
-    const element = await render(['contacts']);
+    const element = await render(['actual']);
 
     expect(fetchWpPage).not.toHaveBeenCalled();
     expect(element.type).toBe(LegacyEmbed);

@@ -19,10 +19,10 @@
  * **Adding a task.** One function, called from the runner at the bottom, taking
  * `$apply` and doing nothing but logging when it is false. Whatever it needs to
  * know goes in a registry function above it, so the data can be read and tested
- * without WordPress. There are four today — {@see od_wp_tag_programme_films()},
- * {@see od_wp_rename_pages()}, {@see od_wp_edit_menu()} and
- * {@see od_wp_create_profiles()} — and still no framework between them, because
- * four calls in a row is not a thing that needs one.
+ * without WordPress. There are five today — {@see od_wp_tag_programme_films()},
+ * {@see od_wp_rename_pages()}, {@see od_wp_order_pages()}, {@see od_wp_edit_menu()}
+ * and {@see od_wp_create_profiles()} — and still no framework between them,
+ * because five calls in a row is not a thing that needs one.
  *
  * House rules, same as `od-pages.php`: dry run by default, writing takes the
  * positional argument `apply`, everything is idempotent, and **posts are
@@ -243,6 +243,26 @@ function od_wp_page_titles(): array
 }
 
 /**
+ * Pages whose `menu_order` decides where something lists them, and the value.
+ *
+ * One entry. `/contacts/`'s accordion (`[od_regions]`,
+ * `wp/mu-plugins/od-regions.php`) orders its 75 regions by `menu_order` then
+ * title, and «Центральный Аппарат» — the page `/contacts/moscow/` — is first in
+ * Figma `contact` (`754:587`) and **last** alphabetically. All 74 children sit at
+ * 0, so a single negative value is the whole fix, and it is the cheapest one:
+ * nothing has to be listed, nothing renumbers when a region is added, and an
+ * editor can still reorder from the admin's own «Порядок» field.
+ *
+ * @return array<string, int> Page path => `menu_order`.
+ */
+function od_wp_page_order(): array
+{
+    return [
+        'contacts/moscow' => -1,
+    ];
+}
+
+/**
  * Where a photograph is fetched from when the library this runs against has not
  * got it: production, whose media library is the one every other environment is
  * a stale copy of.
@@ -339,6 +359,45 @@ function od_wp_rename_pages(bool $apply): void
         WP_CLI::success(sprintf('%s (#%d): renamed', $path, $page->ID));
     }
 }
+
+/**
+ * Sets the `menu_order` in {@see od_wp_page_order()} on the pages that do not
+ * already carry it. Through `$wpdb->update` for the same reason as above.
+ */
+function od_wp_order_pages(bool $apply): void
+{
+    global $wpdb;
+
+    foreach (od_wp_page_order() as $path => $order) {
+        $page = get_page_by_path($path);
+
+        if (!$page) {
+            WP_CLI::warning(sprintf('%s: no such page', $path));
+            continue;
+        }
+
+        if ((int) $page->menu_order === $order) {
+            WP_CLI::log(sprintf('%s (#%d): already menu_order %d, skipped', $path, $page->ID, $order));
+            continue;
+        }
+
+        WP_CLI::log(sprintf('%s (#%d): menu_order %d -> %d', $path, $page->ID, (int) $page->menu_order, $order));
+
+        if (!$apply) {
+            continue;
+        }
+
+        $written = $wpdb->update($wpdb->posts, ['menu_order' => $order], ['ID' => $page->ID], ['%d'], ['%d']);
+        if ($written === false) {
+            WP_CLI::warning(sprintf('%s (#%d): write failed', $path, $page->ID));
+            continue;
+        }
+
+        clean_post_cache($page->ID);
+        WP_CLI::success(sprintf('%s (#%d): reordered', $path, $page->ID));
+    }
+}
+
 
 /** The menu the site's header is built from — `wp menu list` calls it `primary`. */
 const OD_WP_MENU = 'main-navigation';
@@ -621,5 +680,6 @@ WP_CLI::log($apply ? 'Applying changes.' : 'Dry run — pass `apply` to write.')
 
 od_wp_tag_programme_films($apply);
 od_wp_rename_pages($apply);
+od_wp_order_pages($apply);
 od_wp_edit_menu($apply);
 od_wp_create_profiles($apply);

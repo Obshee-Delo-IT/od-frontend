@@ -439,6 +439,30 @@ source. It is the same rule the roles follow — the federal one and the regiona
 both go on the card. If the client ever prunes a contact, it is one line each in
 `od-pages.php`; nothing needs a code change to *show* it.
 
+## Twelve regions on the map have no page, and five pages have no region
+
+**Found 2026-08-20**, building the `/contacts/` map (D4). The map is generated
+from the old jqvmap plugin's paths and links each region to its published page —
+which makes both gaps visible for the first time, and neither is a code question:
+
+- **12 regions are drawn and not clickable** because no `/contacts/<region>/`
+  page exists: Дагестан, Кабардино-Балкария, Карачаево-Черкесия, Адыгея,
+  Липецкая, Калининградская, Саратовская, Марий Эл, Курганская, Ненецкий АО,
+  Республика Алтай, Ингушетия. Publish a page and `pnpm map:generate` links it
+  with no other edit.
+- **5 pages have no region to click**: `/contacts/ukraine/`, `lnr/`, `dnr/`,
+  `belarus/` — outside a map of Russia — and `/contacts/moscow/`, which is
+  «Центральный Аппарат» rather than a subject. All five are in the accordion, so
+  they are reachable; only the map cannot show them.
+
+Also found on the way: the old map still routed Saratov Oblast to
+`/contacts/saratovskaya/`, **a page that no longer exists** — a live 404 on the
+page being replaced. That case is dropped rather than carried over.
+
+**What to decide:** whether the twelve are regions with no branch (then nothing
+to do) or branches with no page (then the pages are missing). The map is
+regenerable either way.
+
 ## ~~`/contacts/samarskaya/` lists no coordinators, and the term exists~~ — done 2026-08-20
 
 **Found 2026-08-18.** Page 21557's `core/query` block still carried the old

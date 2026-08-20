@@ -64,6 +64,13 @@
  * as the section's one remaining entry, and it is here for a different reason — a
  * Contact Form 7 form, which nothing on this side renders.
  *
+ * **`/contacts/` came off on 2026-08-20 (D4)**, and it was here for the same kind
+ * of reason: the page was a jqvmap clickable map — jQuery 1.7.2 from googleapis,
+ * two plugin scripts and an inline `vectorMap()` call — and a body whose script
+ * never runs is a blank rectangle here. It is a component now, and the 50
+ * hand-written region spoilers under it are `[od_regions]`
+ * (`wp/mu-plugins/od-regions.php`), which builds all 75 from the region pages.
+ *
  * Paths are compared **decoded**, the form `decodeSegments` produces, which is
  * why the one Cyrillic entry is written in Cyrillic rather than as the
  * percent-encoded slug WordPress stores.
@@ -71,7 +78,6 @@
 export const LEGACY_EMBED_PAGES = [
   '/about/ostavit-otziv/',
   '/actual/',
-  '/contacts/',
   '/get-involved/',
   '/get-involved/join/',
   '/materials/pppuiv-constructor/',

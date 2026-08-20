@@ -1,0 +1,1309 @@
+<!-- wp:group {"layout":{"type":"constrained"}} --><div class="wp-block-group"><!-- wp:columns --><div class="wp-block-columns"><!-- wp:column {"width":"100%"} --><div class="wp-block-column" style="flex-basis:100%"><!-- wp:paragraph --><p>&nbsp;</p>
+<!-- /wp:paragraph --></div><!-- /wp:column --></div><!-- /wp:columns --></div><!-- /wp:group --><!-- wp:group {"layout":{"type":"constrained"}} --><div class="wp-block-group"><!-- wp:columns --><div class="wp-block-columns"><!-- wp:column {"width":"100%"} --><div class="wp-block-column" style="flex-basis:100%"><!-- wp:html -->
+<link href="../wp-includes/css/jqvmap.css" media="screen" rel="stylesheet" type="text/css" />
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js" type="text/javascript"></script>
+<script src="../wp-includes/js/jquery.vmap.js" type="text/javascript"></script>
+<script src="../wp-includes/js/jquery.vmap.russia.js" type="text/javascript"></script>
+
+
+<!-- /wp:html --></div><!-- /wp:column --></div><!-- /wp:columns --></div><!-- /wp:group --><!-- wp:group {"layout":{"type":"constrained"}} --><div class="wp-block-group"><!-- wp:columns --><div class="wp-block-columns"><!-- wp:column {"width":"100%"} --><div class="wp-block-column" style="flex-basis:100%"><!-- wp:paragraph --><p>&nbsp;</p>
+<!-- /wp:paragraph --></div><!-- /wp:column --></div><!-- /wp:columns --></div><!-- /wp:group --><!-- wp:group {"layout":{"type":"constrained"}} --><div class="wp-block-group"><!-- wp:columns --><div class="wp-block-columns"><!-- wp:column {"width":"100%"} --><div class="wp-block-column" style="flex-basis:100%"><!-- wp:paragraph --><div id="vmap" style="width: 100%;height: 650px;text-align: center"></div>
+<!-- /wp:paragraph --></div><!-- /wp:column --></div><!-- /wp:columns --></div><!-- /wp:group --><!-- wp:group {"layout":{"type":"constrained"}} --><div class="wp-block-group"><!-- wp:columns --><div class="wp-block-columns"><!-- wp:column {"width":"100%"} --><div class="wp-block-column" style="flex-basis:100%"><!-- wp:html -->
+<div class="custom_js">
+<script type="text/javascript">
+    var data_obj = {
+
+    };
+
+    colorRegion = 'rgba(209, 77, 66, 0.8)'; 
+    focusRegion = '#ae0a04'; 
+    selectRegion = 'rgba(205, 205, 205, 0.8)'; 
+
+    highlighted_states = {};
+
+    
+    for(iso in data_obj)
+    {
+        highlighted_states[iso]  = selectRegion;
+    }
+
+    $(document).ready(function() {
+
+        $(document).on('click','#contactsCollaps .panel-heading',function(){
+            if($(this).parents('.panel').find('.panel-collapse.collapse').hasClass('in'))
+            {
+                $(this).parents('.panel').find('.panel-collapse.collapse').removeClass('in').attr('style','height: 0px;');
+            } else {
+                $(this).parents('.panel').find('.panel-collapse.collapse').addClass('in').attr('style','');
+            }
+        });
+
+        $('#vmap').vectorMap({
+            map: 'russia',
+            backgroundColor: '#ffffff',
+            borderColor: '#ffffff',
+            borderWidth: 1,
+            color: colorRegion,
+            colors: highlighted_states,
+            hoverOpacity: null,
+            enableZoom: false,
+            showTooltip: true,
+
+            
+            onLabelShow: function(event, label, code){
+                name = '<strong>'+label.text()+'</strong><br>';
+                if(data_obj[code]){
+                    list_obj = '<ul>';
+                    for(ob in data_obj[code]){
+                        list_obj += '<li>'+data_obj[code][ob]+'</li>';
+                    }
+                    list_obj += '</ul>';
+                }else{
+                    list_obj = '';
+                }
+                label.html(name + list_obj);
+                list_obj = '';
+            },
+            
+            onRegionClick: function(element, code, region){
+                switch (code) {
+case "al": parent.location.assign("/contacts/altayskiy-kray/"); break;
+case "am": parent.location.assign("/contacts/amurskaya/"); break;
+/*case "ar": parent.location.assign("/contacts/arkhangelskaya/"); break;*/
+/*case "bl": parent.location.assign("/contacts/belgorodskaya/"); break;*/
+/*case "bn": parent.location.assign("/contacts/bryanskaya/"); break;*/
+case "bs": parent.location.assign("/contacts/bashkortostan/"); break;
+case "br": parent.location.assign("/contacts/buryatiya/"); break;
+case "cl": parent.location.assign("/contacts/chelyabinskaya/"); break;
+/*case "cu": parent.location.assign("/contacts/chuvashiya/"); break;*/
+/*case "eu": parent.location.assign("/contacts/evreiskaya-ao/"); break;*/
+case "hk": parent.location.assign("/contacts/khakasiya/"); break;
+case "ht": parent.location.assign("/contacts/hanty-mansiyskiy-ao/"); break;
+case "ir": parent.location.assign("/contacts/irkutskaya/"); break;
+/*case "iv": parent.location.assign("/contacts/ivanovskaya/"); break;*/
+case "ka": parent.location.assign("/contacts/kamchatskiy-kray/"); break;
+/*case "kj": parent.location.assign("/contacts/kalujskaya/"); break;*/
+case "kk": parent.location.assign("/contacts/kalmykiya/"); break;
+case "kl": parent.location.assign("/contacts/karelia/"); break;
+case "km": parent.location.assign("/contacts/kemerovo/"); break;
+case "ki": parent.location.assign("/contacts/kirovskaya/"); break;
+case "ko": parent.location.assign("/contacts/komi/"); break;
+case "ks": parent.location.assign("/contacts/krasnodarskiy-kray/"); break;
+case "kr": parent.location.assign("/contacts/krasnoyarskiy-kray/"); break;
+case "kt": parent.location.assign("/contacts/kostromskaya/"); break;
+/*case "ky": parent.location.assign("/contacts/kurskaya/"); break;*/
+case "le": parent.location.assign("/contacts/st-petersburg/"); break;
+case "ma": parent.location.assign("/contacts/magadanskaya/"); break;
+case "mc": parent.location.assign("/contacts/moscow-oblast/"); break;
+case "nn": parent.location.assign("/contacts/nizegorodskaya/"); break;
+case "no": parent.location.assign("/contacts/novgorodskaya/"); break;
+case "nv": parent.location.assign("/contacts/novosibirskaya/"); break;
+/*case "ob": parent.location.assign("/contacts/orenburgskaya/"); break;*/
+case "om": parent.location.assign("/contacts/omskaya/"); break;
+/*case "or": parent.location.assign("/contacts/orlovskaya/"); break;*/
+case "pe": parent.location.assign("/contacts/permskiy-kray/"); break;
+case "pr": parent.location.assign("/contacts/primorskiy-kray/"); break;
+case "ps": parent.location.assign("/contacts/pskovskaya/"); break;
+case "sa": parent.location.assign("/contacts/yakutiya/"); break;
+/*case "so": parent.location.assign("/contacts/alaniya/"); break;*/
+case "sh": parent.location.assign("/contacts/sakhalinskaya/"); break;
+/*case "sr": parent.location.assign("/contacts/saratovskaya/"); break;*/
+case "ss": parent.location.assign("/contacts/samarskaya/"); break;
+case "st": parent.location.assign("/contacts/stavropolskiy-kray/"); break;
+case "sv": parent.location.assign("/contacts/sverdlovskaya/"); break;
+case "ta": parent.location.assign("/contacts/tatarstan/"); break;
+case "tb": parent.location.assign("/contacts/tambovskaya/"); break;
+case "tm": parent.location.assign("/contacts/tomskaya/"); break;
+/*case "tr": parent.location.assign("/contacts/tverskaya/"); break;*/
+/*case "tu": parent.location.assign("/contacts/tyumenskaya/"); break;*/
+case "tl": parent.location.assign("/contacts/tulskaya/"); break;
+case "tv": parent.location.assign("/contacts/tyva/"); break;
+case "ud": parent.location.assign("/contacts/udmurtiya/"); break;
+case "ul": parent.location.assign("/contacts/uliyanovskaya/"); break;
+case "vl": parent.location.assign("/contacts/volgogradskaya/"); break;
+case "vm": parent.location.assign("/contacts/vladimirskaya/"); break;
+case "vn": parent.location.assign("/contacts/voronejskaya/"); break;
+case "vo": parent.location.assign("/contacts/vologodskaya/"); break;
+case "cr": parent.location.assign("/contacts/krym/"); break;
+/*case "rz": parent.location.assign("/contacts/ryazanskaya/"); break;*/
+case "ro": parent.location.assign("/contacts/rostovskaya/"); break;
+case "ya": parent.location.assign("/contacts/yamalo-nenetskiy-ao/"); break;
+case "yr": parent.location.assign("/contacts/yaroslavskaya/"); break;
+case "zb": parent.location.assign("/contacts/zabaikalskiy-kray/"); break;
+}
+            },
+            onRegionOver: function(event, code, region)
+            {
+                if (
+code != "al" && 
+code != "am" && 
+/*code != "ar" && */
+/*code != "bl" &&*/
+code != "br" && 
+code != "bn" && 
+code != "bs" && 
+code != "cl" && 
+/*code != "cu" &&*/
+code != "cr" &&  
+/*code != "eu" && */
+code != "hk" && 
+code != "ht" && 
+code != "ir" && 
+/*code != "iv" && */
+code != "ka" && 
+/*code != "kj" && */
+code != "ki" && 
+code != "kk" && 
+code != "kl" && 
+code != "km" && 
+code != "ko" && 
+code != "kr" && 
+code != "ks" && 
+code != "kt" && 
+/*code != "ky" && */
+code != "le" && 
+code != "ma" && 
+code != "mc" && 
+code != "nn" && 
+code != "no" && 
+code != "nv" && 
+/*code != "ob" &&*/
+code != "om" && 
+/*code != "or" && */
+code != "pe" &&
+code != "pr" && 
+code != "ps" && 
+/*code != "rz" && */
+code != "ro" &&
+code != "sa" && 
+code != "sh" &&   
+code != "so" && 
+/*code != "sr" && */
+code != "ss" && 
+code != "st" && 
+code != "sv" && 
+code != "ta" &&
+code != "tb" &&
+/*code != "tm" && */
+code != "tr" && 
+/*code != "tu" && */
+code != "tl" && 
+code != "tv" && 
+code != "ud" && 
+code != "ul" && 
+code != "vl" && 
+code != "vm" && 
+code != "vn" && 
+code != "vo" &&
+code != "ya" &&
+code != "yr" &&
+code != "zb")
+                {
+                    document.body.style.cursor = "default";
+                }
+                else{
+                    document.body.style.cursor = "pointer";
+                }
+            }
+        });
+
+        jQuery('#vmap').vectorMap('set', 'colors', {
+ad: 'rgba(205, 205, 205, 0.8)',
+/*am: 'rgba(205, 205, 205, 0.8)',*/
+ar: 'rgba(205, 205, 205, 0.8)',
+as: 'rgba(205, 205, 205, 0.8)',
+bl: 'rgba(205, 205, 205, 0.8)',
+/*br: 'rgba(205, 205, 205, 0.8)',*/
+bn: 'rgba(205, 205, 205, 0.8)',
+cc: 'rgba(205, 205, 205, 0.8)',
+ch: 'rgba(205, 205, 205, 0.8)',
+cu: 'rgba(205, 205, 205, 0.8)',
+da: 'rgba(205, 205, 205, 0.8)',
+eu: 'rgba(205, 205, 205, 0.8)',
+ha: 'rgba(205, 205, 205, 0.8)',
+/*hk: 'rgba(205, 205, 205, 0.8)',*/
+in: 'rgba(205, 205, 205, 0.8)',
+iv: 'rgba(205, 205, 205, 0.8)',
+/*ka: 'rgba(205, 205, 205, 0.8)',*/
+kb: 'rgba(205, 205, 205, 0.8)',
+kc: 'rgba(205, 205, 205, 0.8)',
+/*ki: 'rgba(205, 205, 205, 0.8)',*/
+kj: 'rgba(205, 205, 205, 0.8)',
+/*kk: 'rgba(205, 205, 205, 0.8)',*/
+/*kl: 'rgba(205, 205, 205, 0.8)',*/
+kn: 'rgba(205, 205, 205, 0.8)',
+ku: 'rgba(205, 205, 205, 0.8)',
+ky: 'rgba(205, 205, 205, 0.8)',
+lp: 'rgba(205, 205, 205, 0.8)',
+lt: 'rgba(205, 205, 205, 0.8)',
+/*ma: 'rgba(205, 205, 205, 0.8)',*/
+ml: 'rgba(205, 205, 205, 0.8)',
+mr: 'rgba(205, 205, 205, 0.8)',
+mu: 'rgba(205, 205, 205, 0.8)',
+ne: 'rgba(205, 205, 205, 0.8)',
+/*nv: 'rgba(205, 205, 205, 0.8)',*/
+ob: 'rgba(205, 205, 205, 0.8)',
+or: 'rgba(205, 205, 205, 0.8)',
+/*pe: 'rgba(205, 205, 205, 0.8)',*/
+/*pr: 'rgba(205, 205, 205, 0.8)',*/
+pz: 'rgba(205, 205, 205, 0.8)',
+/*ro: 'rgba(205, 205, 205, 0.8)',*/
+/*rz: 'rgba(205, 205, 205, 0.8)',*/
+/*sa: 'rgba(205, 205, 205, 0.8)',*/
+/*sh: 'rgba(205, 205, 205, 0.8)',*/
+sm: 'rgba(205, 205, 205, 0.8)',
+so: 'rgba(205, 205, 205, 0.8)',
+/*tb: 'rgba(205, 205, 205, 0.8)',*/
+/*tl: 'rgba(205, 205, 205, 0.8)',*/
+/*tm: 'rgba(205, 205, 205, 0.8)',*/
+tr: 'rgba(205, 205, 205, 0.8)',
+tu: 'rgba(205, 205, 205, 0.8)',
+/*tl: 'rgba(205, 205, 205, 0.8)',*/
+/*ya: 'rgba(205, 205, 205, 0.8)'*/
+/*yr: 'rgba(205, 205, 205, 0.8)',*/
+/*zb: 'rgba(205, 205, 205, 0.8)'*/});
+});
+    
+    $(document).ready(function() {
+        for(region in data_obj){
+            for(obj in data_obj[region]){
+                $('.list-object').append('<li><a href="'+selectRegion+'" id="'+region+'" class="focus-region">'+data_obj[region][obj]+' ('+region+')</a></li>');
+            }
+        }
+    });
+
+    
+    $(function(){
+        $('.focus-region').mouseover(function(){
+            iso = $(this).prop('id');
+            fregion = {};
+            fregion[iso] = focusRegion;
+            $('#vmap').vectorMap('set', 'colors', fregion);
+        });
+        $('.focus-region').mouseout(function(){
+            c = $(this).attr('href');
+            cl = (c === '#')?colorRegion:c;
+            iso = $(this).prop('id');
+            fregion = {};
+            fregion[iso] = cl;
+            $('#vmap').vectorMap('set', 'colors', fregion);
+        });
+    });
+
+</script>
+</div>
+<!-- /wp:html --></div><!-- /wp:column --></div><!-- /wp:columns --></div><!-- /wp:group --><!-- wp:group {"layout":{"type":"constrained"}} --><div class="wp-block-group"><!-- wp:columns --><div class="wp-block-columns"><!-- wp:column {"width":"100%"} --><div class="wp-block-column" style="flex-basis:100%"><!-- wp:details -->
+<details class="wp-block-details">
+  <summary>Центральный Аппарат</summary>
+  <!-- wp:paragraph -->
+  <p><strong>Центральный Аппарат Общероссийской общественной организации поддержки президентских инициатив в области здоровьесбережения нации “Общее дело”</strong></p>
+<p>Почтовый адрес: 109443 г. Москва Волгоградский проспект д. 135, корп. 3</p>
+<p><strong>Председатель правления</strong> Общероссийской общественной организации «Общее дело», член Общественного совета при Главном управлении региональной безопасности Московской области, член Общественного совета при Федеральной службе исполнения наказаний <strong>Варламов Леонид Геннадьевич</strong></p>
+<p>E-mail <a href="mailto:l.varlamov@obshee-delo.ru">l.varlamov@obshee-delo.ru</a><br />
+ВК <a href="https://vk.com/l.varlamov">https://vk.com/l.varlamov</a></p>
+<p><strong>Помощник Председателя правления</strong> Сметанникова Наталья Владимировна</p>
+<p>Тел. 8-926-528-89-28<br />
+E-mail <a class="maill" href="mailto:9578532@bk.ru">9578532@bk.ru</a></p>
+<p><strong>Руководитель департамента Председателя правления </strong>Маслаков Илья Алексеевич</p>
+<p>Тел. 8-921-921-57-28<br />
+E-mail <a href="mailto:maslakov@obshee-delo.ru">maslakov@obshee-delo.ru</a><br />
+ВК <a href="https://vk.com/maslakow">https://vk.com/maslakow</a></p>
+<p><strong>Руководитель медиа департамента</strong> Дегтярёв Алексей Анатольевич</p>
+<p>Тел. 8-962-950-75-61<br />
+E-mail: <a class="maill" href="mailto:post27@bk.ru">post27@bk.ru</a><br />
+ВК <a href="https://vk.com/odaleksey">https://vk.com/odaleksey</a></p>
+<p><strong>Руководитель департамента по развитию добровольчества, руководитель оргкомитета Всероссийского конкурса «Доброволец-ПРО. Проекты. Развитие. Общество»</strong> Рябовичева Елена Владимировна</p>
+<p>Тел. 8-917-773-12-24<br />
+E-mail ryabovicheva@obshee-delo.ru<br />
+ВК <a href="https://vk.com/id252521561">https://vk.com/id252521561</a></p>
+<p><strong>Руководитель департамента по связям с госструктурами</strong> Чагаев Дмитрий Владимирович</p>
+<p>Тел. 8-903-722-53-29<br />
+E-mail <a href="mailto:chagaev@mail.ru">chagaev@mail.ru</a><br />
+ВК <a href="https://vk.com/id171386862">https://vk.com/id171386862</a></p>
+<p><strong>Руководитель департамента по связям с силовыми структурами</strong> Леонтьев Геннадий Иванович</p>
+<p>Тел. 8-926-334-90-29<br />
+E-mail <a href="mailto:leon62@mail.ru">leon62@mail.ru</a><br />
+ВК <a href="https://vk.com/giri108">https://vk.com/giri108</a></p>
+<p><strong>Руководитель департамента профилактики</strong>, <strong>Руководитель Московского городского отделения</strong> Моисеев Олег Олегович</p>
+<p>Тел. 8-903-774-80-61<br />
+E-mail <a href="mailto:moiseev_od@mail.ru">moiseev_od@mail.ru</a><br />
+ВК <a href="https://vk.com/moiseev_od">https://vk.com/moiseev_od</a></p>
+<p><strong>Полномочный представитель организации в Приволжском федеральном округе </strong>Нуждин Вадим Владимирович</p>
+<p>Тел. 8-927-207-05-72<br />
+E-mail <a href="mailto:centrsamara@mail.ru">centrsamara@mail.ru</a></p>
+<p><strong>Первый заместитель Полномочного представителя организации в Приволжском федеральном округе </strong>Козлов Даниил Игоревич</p>
+<p>Тел. 8-917-034-23-18<br />
+Е-mail <a href="mailto:danikname@yandex.ru">danikname@yandex.ru</a><br />
+ВК <a href="https://vk.com/id4283728">https://vk.com/id4283728</a></p>
+<p><strong>Заместитель Полномочного представителя организации в Приволжском федеральном округе</strong> Головин Илья Иванович</p>
+<p>Тел.8-932-600-32-10<br />
+Е-mail <a class="ns-action" href="mailto:Golilya@mail.ru" data-click-action="common.go" data-params="new_window&amp;url=%23compose%2Fmailto%3DGolilya%2540mail.ru">Golilya@mail.ru</a></p>
+<p><strong> </strong><strong>Уполномоченный по развитию в Северо-западном федеральном округе </strong>Васильев Михаил Геннадьевич</p>
+<p>Тел. 8-911-359-21-67<br />
+Е-mail <a href="mailto:yulmi@inbox.ru">yulmi@inbox.ru</a><br />
+ВК <a href="https://vk.com/newpskovregion">https://vk.com/newpskovregion</a></p>
+<p><strong>Уполномоченный по развитию в Южном и Северо-Кавказском федеральных округах </strong>Максимченко Олег Викторович</p>
+<p>Тел. 8-918-558-00-73<br />
+Е-mail <a href="mailto:chisto_max@mail.ru">chisto_max@mail.ru</a><br />
+ВК <a href="https://vk.com/id312384509">https://vk.com/id312384509</a></p>
+<p><strong> </strong><strong>Уполномоченный по развитию в Уральском федеральном округе </strong>Бальцевич Вячеслав Павлович</p>
+<p>Тел. 8-982-611-97-77, 8-929-221-19-99<br />
+Е-mail <a href="mailto:baltsevich77@bk.ru">baltsevich77@bk.ru</a><br />
+ВК <a href="https://vk.com/pro107">https://vk.com/pro107</a></p>
+<p><strong> </strong><strong>Уполномоченный по развитию в Сибирском федеральном округе </strong>Дмитриев Дмитрий Владиславович</p>
+<p>Тел. 8-965-906-10-00<br />
+Е-mail <a href="mailto:crang@inbox.ru">crang@inbox.ru</a><br />
+ВК <a href="https://vk.com/dmitrycrang">https://vk.com/dmitrycrang</a></p>
+<p><strong>Уполномоченный по развитию на Дальнем Востоке</strong> Амельченко Геннадий Андреевич</p>
+<p>Тел. 8-903-940-33-18<br />
+Е-mail <a href="mailto:178pilot@mail.ru">178pilot@mail.ru</a><br />
+ВК <a href="https://vk.com/amelchenkog">https://vk.com/amelchenkog</a></p>
+<p><strong>Руководитель департамента фандрайзинга </strong>Калашников Павел Сергеевич</p>
+<p>Тел. 8-925-190-66-99<br />
+Е-mail <a href="mailto:p.kalashnikov@obshee-delo.ru">p.kalashnikov@obshee-delo.ru</a><br />
+ВК <a href="https://vk.com/id386985504">https://vk.com/id386985504</a></p>
+<p><strong>Специалист департамента фандрайзинга</strong> Беловинцева Олеся</p>
+<p>Тел. <span class="wmi-callto">8-964-149-94-25</span><br />
+E-mail <a class="ns-action" href="mailto:o.belovintseva@gmail.com" data-click-action="common.go" data-params="new_window&amp;url=%23compose%2Fmailto%3Do.belovintseva%2540gmail.com">o.belovintseva@gmail.com</a><br />
+ВК <a class="daria-goto-anchor" href="https://vk.com/jfx_dnb" target="_blank" rel="noopener noreferrer" data-vdir-href="https://mail.yandex.ru/re.jsx?uid=502453&amp;c=LIZA&amp;cv=26.14.0&amp;mid=177047760351019864&amp;h=a,bORrv1M70GDFo1-xWUfp0g&amp;l=aHR0cHM6Ly92ay5jb20vamZ4X2RuYg" data-orig-href="https://vk.com/jfx_dnb">https://vk.com/jfx_dnb</a></p>
+<p><strong>Специалист департамента фандрайзинга</strong> Черных Ксения</p>
+<p>Тел. <span class="wmi-callto">8-958-111-47-95</span><br />
+E-mail <a class="daria-goto-anchor" href="https://e.mail.ru/compose/?mailto=mailto%3apodderzhi@obshee%2ddelo.ru" target="_blank" rel="noopener noreferrer" data-vdir-href="https://mail.yandex.ru/re.jsx?uid=502453&amp;c=LIZA&amp;cv=26.14.0&amp;mid=177047760351019864&amp;h=a,Kts9JgK7cQduR0ShxEFdmg&amp;l=aHR0cHM6Ly9lLm1haWwucnUvY29tcG9zZS8_bWFpbHRvPW1haWx0byUzYXBvZGRlcnpoaUBvYnNoZWUlMmRkZWxvLnJ1" data-orig-href="https://e.mail.ru/compose/?mailto=mailto%3apodderzhi@obshee%2ddelo.ru">podderzhi@obshee-delo.ru</a><br />
+ВК <a class="daria-goto-anchor" href="https://vk.com/id594641249" target="_blank" rel="noopener noreferrer" data-vdir-href="https://mail.yandex.ru/re.jsx?uid=502453&amp;c=LIZA&amp;cv=26.14.0&amp;mid=177047760351019864&amp;h=a,EilAvfgA4nxTRgiGSVEKuA&amp;l=aHR0cHM6Ly92ay5jb20vaWQ1OTQ2NDEyNDk" data-orig-href="https://vk.com/id594641249">https://vk.com/id594641249</a></p>
+<p><strong>Специалист департамента фандрайзинга</strong> Гамаюнов Павел Геннадьевич</p>
+<p>Тел. <span class="wmi-callto">8-960-961-08-08</span><br />
+E-mail <a class="ns-action" href="mailto:vmeste@obshee-delo.ru" data-click-action="common.go" data-params="new_window&amp;url=%23compose%2Fmailto%3Dvmeste%2540obshee-delo.ru">vmeste@obshee-delo.ru</a><br />
+ВК <a class="daria-goto-anchor" href="https://vk.com/id6487625" target="_blank" rel="noopener noreferrer" data-vdir-href="https://mail.yandex.ru/re.jsx?uid=502453&amp;c=LIZA&amp;cv=26.14.0&amp;mid=177047760351019864&amp;h=a,1dbx6WIIHQk1p5mz3DcrQA&amp;l=aHR0cHM6Ly92ay5jb20vaWQ2NDg3NjI1" data-orig-href="https://vk.com/id6487625">https://vk.com/id6487625</a></p>
+<p><strong>Руководитель департамента пиара и СМИ</strong> Петропавлов Артем Вячеславович</p>
+<p>Тел. <span class="wmi-callto">8-925-517-52-35</span><br />
+E-mail <a class="ns-action" href="mailto:a.petropavlov@euroasian.group" data-click-action="common.go" data-params="new_window&amp;url=%23compose%2Fmailto%3Da.petropavlov%2540euroasian.group">a.petropavlov@euroasian.group</a></p>
+<p><strong>Специалист департамента пиара и СМИ</strong> Рыкова Вера Юрьевна</p>
+<p>Тел. <span class="wmi-callto">8-926-975-52-20</span><br />
+E-mail <a class="ns-action" href="mailto:menedge@yandex.ru" data-click-action="common.go" data-params="new_window&amp;url=%23compose%2Fmailto%3Dmenedge%2540yandex.ru">menedge@yandex.ru</a><br />
+ВК: <a class="daria-goto-anchor" href="https://vk.com/rykova_vera" target="_blank" rel="noopener noreferrer" data-vdir-href="https://mail.yandex.ru/re.jsx?uid=502453&amp;c=LIZA&amp;cv=26.14.0&amp;mid=177047760351019864&amp;h=a,4JUVnoQb3j1D8h6oOm6dag&amp;l=aHR0cHM6Ly92ay5jb20vcnlrb3ZhX3ZlcmE" data-orig-href="https://vk.com/rykova_vera">https://vk.com/rykova_vera</a></p>
+<p>Приглашаем всех в наш дружный и теплый коллектив. Будем очень рады видеть единомышленников и просто людей, желающих поддержать это светлое движение, направленное на духовное и нравственное возрождение нашей страны.</p>
+<p><a class="cmsms_button icon_box_button" href="/contacts/moscow/">Страница отделения</a></p>
+
+  <!-- /wp:paragraph -->
+</details>
+<!-- /wp:details --><!-- wp:details -->
+<details class="wp-block-details">
+  <summary>Алтайский край</summary>
+  <!-- wp:paragraph -->
+  <p><strong>Алтайское краевое отделение Общероссийской общественной организации поддержки президентских инициатив в области здоровьесбережения нации «Общее дело»</strong></p>
+<p class="cont1"><strong>Координатор отделения</strong> Гамаюнов Павел Геннадьевич</p>
+<p class="cont1">тел. 8 (960) 961-08-08</p>
+<p class="cont1">e-mail: <a href="mailto:Gamaunov85@mail.ru">Gamaunov85@mail.ru</a></p>
+<p class="cont1"><a class="cmsms_button icon_box_button" href="/contacts/altayskiy-kray/">Страница отделения</a></p>
+
+  <!-- /wp:paragraph -->
+</details>
+<!-- /wp:details --><!-- wp:details -->
+<details class="wp-block-details">
+  <summary>Амурская область</summary>
+  <!-- wp:paragraph -->
+  <p><strong>Амурское областное отделение Общероссийской общественной организации поддержки президентских инициатив в области здоровьесбережения нации «Общее дело»</strong></p>
+<p><strong>Координатор </strong>Титова Ирина Александровна</p>
+<p>тел. 8-924-140-60-40</p>
+<p>e-mail: rabota-amur@mail.ru</p>
+<p><a class="cmsms_button icon_box_button" href="/contacts/amurskaya/">Страница отделения</a></p>
+
+  <!-- /wp:paragraph -->
+</details>
+<!-- /wp:details --><!-- wp:details -->
+<details class="wp-block-details">
+  <summary>Республика Башкортостан</summary>
+  <!-- wp:paragraph -->
+  <p><strong>Башкортостанское республиканское отделение Общероссийской общественной организации поддержки президентских инициатив в области здоровьесбережения нации “Общее дело”</strong></p>
+<p><strong>Координатор по Республике Башкортостан </strong><a href="https://vk.com/id177705021">Садовникова Лилия Анваровна</a></p>
+<p>тел. +79174529337</p>
+<p>e-mail: <a href="mailto:lilya-sadovnikova@mail.ru" target="_blank" rel="noopener noreferrer">lilya-sadovnikova@mail.ru</a> , <a href="mailto:bashkortostan@obshee-delo.ru">bashkortostan@obshee-delo.ru</a></p>
+<p><strong>Председатель правления Башкортостанского отделения </strong><a href="https://vk.com/id252521561">Рябовичева Елена Владимировна</a></p>
+<p>тел. +7 (917) 773-12-24</p>
+<p>e-mail: <a href="mailto:Ryabovicheva@obshee-delo.ru" target="_blank" rel="noopener noreferrer">Ryabovicheva@obshee-delo.ru</a></p>
+<p><strong>Координатор г. Нефтекамск </strong><a href="https://vk.com/id27507923" target="_blank" rel="noopener noreferrer">Яковлев Юрий Геннадьевич</a></p>
+<p>тел. +7 (917) 767-11-19</p>
+<p>e-mail: <a href="mailto:sairam-07@mail.ru">sairam-07@mail.ru</a></p>
+<p><strong>Координатор г. Агидель </strong>Шавалиев Ильнур Маратович</p>
+<p>тел. +7 (927) 309-40-12</p>
+<p>e-mail: <a href="mailto:ilnur.shavaliev.1980@mail.ru">ilnur.shavaliev.1980@mail.ru</a></p>
+<p><strong>Координатор по г.Межгорье, г.Белорецк и Белорецкому району</strong></p>
+<p><strong> </strong><a href="https://vk.com/id229847657">Малахова Ольга Викторовна</a></p>
+<p>тел. 8-960-806-25-32</p>
+<p>e-mail: <a href="mailto:Olga.malahova.1978@mail.ru">Olga.malahova.1978@mail.ru</a></p>
+<p><strong>Координатор по г.Октябрьский </strong><a href="https://vk.com/nataliamasenkina">Масенкина Наталья Александровна</a></p>
+<p>тел. 8-937-159-67-53</p>
+<p>e-mail: <a href="mailto:vr-onk@mail.ru">vr-onk@mail.ru</a>, <a href="mailto:natali133@bk.ru">natali133@bk.ru</a></p>
+<p>Отделение Вконтакте: <a href="https://vk.com/club78775597" target="_blank" rel="noopener noreferrer">https://vk.com/club78775597</a></p>
+<p><a class="cmsms_button icon_box_button" href="/contacts/bashkortostan/">Страница отделения</a></p>
+
+  <!-- /wp:paragraph -->
+</details>
+<!-- /wp:details --><!-- wp:details -->
+<details class="wp-block-details">
+  <summary>Республика Бурятия</summary>
+  <!-- wp:paragraph -->
+  <p><strong>Бурятское республиканское отделение Общероссийской общественной организации поддержки президентских инициатив в области здоровьесбережения нации «Общее дело»</strong></p>
+<p><strong>Координатор по Республике Бурятия</strong> Карнаухов Алексей Валерьевич</p>
+<p>тел.: 8(914)837-74-60</p>
+<p>e-mail: <a href="mailto:alval@yandex.ru">alval@yandex.ru</a></p>
+<p><strong>Координатор по Сверобайкальску </strong><a href="https://vk.com/vanya_baykalskiy">Воробьёв Иван Сергеевич</a></p>
+<p>тел.: 8(924)550-97-27</p>
+<p>e-mail: <a href="mailto:Vanya_baykalskiy@mail.ru">Vanya_baykalskiy@mail.ru</a></p>
+<p><a class="cmsms_button icon_box_button" href="/contacts/buryatiya/">Страница отделения</a></p>
+
+  <!-- /wp:paragraph -->
+</details>
+<!-- /wp:details --><!-- wp:details -->
+<details class="wp-block-details">
+  <summary>Владимирская область</summary>
+  <!-- wp:paragraph -->
+  <p><strong>Владимирское областное отделение Общероссийской общественной организации поддержки президентских инициатив в области здоровьесбережения нации «Общее дело»</strong></p>
+<div>
+<p><strong>Председатель правления </strong>Мочалова Елена Анатольевна</p>
+<p>тел. +7(920)927-77-99</p>
+<p>e-mail: od-vladimir33@yandex.ru</p>
+<p>группа Вконтакте <a href="https://vk.com/od_vladimir" target="_blank" rel="noopener noreferrer">https://vk.com/od_vladimir</a></p>
+</div>
+<div><a class="cmsms_button icon_box_button" href="/contacts/vladimirskaya/">Страница отделения</a></div>
+
+  <!-- /wp:paragraph -->
+</details>
+<!-- /wp:details --><!-- wp:details -->
+<details class="wp-block-details">
+  <summary>Волгоградская область</summary>
+  <!-- wp:paragraph -->
+  <p><strong>Волгоградское областное отделение Общероссийской общественной организации поддержки президентских инициатив в области здоровьесбережения нации «Общее дело»</strong></p>
+<div class="cmsms_toggle">
+<p><strong>Председатель правления Волгоградского отделения</strong> <span style="color: #000000; font-family: -apple-system, BlinkMacSystemFont, Roboto, 'Open Sans', 'Helvetica Neue', 'Noto Sans Armenian', 'Noto Sans Bengali', 'Noto Sans Cherokee', 'Noto Sans Devanagari', 'Noto Sans Ethiopic', 'Noto Sans Georgian', 'Noto Sans Hebrew', 'Noto Sans Kannada', 'Noto Sans Khmer', 'Noto Sans Lao', 'Noto Sans Osmanya', 'Noto Sans Tamil', 'Noto Sans Telugu', 'Noto Sans Thai', sans-serif;">Перцев Вадим Михайлович</span></p>
+<p>тел.: +7 (919) 548-39-19</p>
+<p>e-mail: <a href="mailto:vadim_percev@mail.ru">vadim_percev@mail.ru</a></p>
+<p><strong>Координатор </strong><a href="https://vk.com/id302713449" target="_blank" rel="noopener noreferrer">Хмызов Ярослав Максимович</a></p>
+<p>тел.: +7-960-872-58-44</p>
+<p>e-mail: <a href="mailto:YaroslavODVolgograd@ya.ru">YaroslavODVolgograd@ya.ru</a></p>
+<p><strong>Координатор</strong> <a href="http://vk.com/dmbessh" target="_blank" rel="noopener noreferrer">Бесштанов Дмитрий Иванович</a></p>
+<p>тел.: +7(906)170-03-81</p>
+<p>e-mail: <a href="mailto:dm_bessh@mail.ru">dm_bessh@mail.ru</a></p>
+<p><strong>Ответственная за развитие волонтерства</strong> Вячеславова Юлия Евгеньевна</p>
+<p>тел: +7 (904) 77-88-486</p>
+<p>e-mail: <a href="mailto:yuliya.v@obshee-delo.ru">yuliya.v@obshee-delo.ru</a></p>
+</div>
+<p><a class="cmsms_button icon_box_button" href="/contacts/volgogradskaya/">Страница отделения</a></p>
+
+  <!-- /wp:paragraph -->
+</details>
+<!-- /wp:details --><!-- wp:details -->
+<details class="wp-block-details">
+  <summary>Вологодская область</summary>
+  <!-- wp:paragraph -->
+  <p><strong>Вологодское областное отделение Общероссийской общественной организации поддержки президентских инициатив в области здоровьесбережения нации “Общее дело”</strong></p>
+<p><strong>Руководитель областного отделения: Ефимов Владимир Валерьевич (г. Череповец)</strong></p>
+<p><span class="wmi-callto">тел: +7-921-718-1055</span></p>
+<p>e-mail: <a href="mailto:efimov@obshee-delo.ru">efimov@obshee-delo.ru</a></p>
+<p>ВК <a href="https://vk.com/efimovod">https://vk.com/efimovod</a></p>
+<p><b>Координатор</b> Заболоцкий Константин Андреевич (г. Вологда)</p>
+<p>тел: +7-911-501-2211</p>
+<p>e-mail: <a href="mailto:konstantin@obshee-delo.ru">konstantin@obshee-delo.ru</a></p>
+<p>ВК <a href="https://vk.com/k.zabolotsky">https://vk.com/k.zabolotsky</a></p>
+<p><strong>Координатор</strong> Меркурьев Дмитрий Сергеевич (г. Великий Устюг)</p>
+<p>тел: 8-900-506-0390</p>
+<p>e-mail: <a href="mailto:merkurev@obshee-delo.ru">merkurev@obshee-delo.ru</a></p>
+<p>ВК <a href="https://vk.com/id235077077">https://vk.com/id235077077</a></p>
+<p><strong>Координатор</strong> Аверин Кирилл Александрович (г. Вытегра)</p>
+<p>тел: +7 996 309-40-20</p>
+<p>e-mail:<a href="mailto:averin@obshee-delo.ru"> averin@obshee-delo.ru</a></p>
+<p>ВК <a href="https://vk.com/id574284370">https://vk.com/id574284370</a></p>
+<p><strong>Лектор</strong> Легостаев Василий Михайлович (г. Вологда)</p>
+<p>Тел. 8-961-025-76-03</p>
+<p>E-mail <a href="mailto:v.m.legostaev@obshee-delo.ru">v.m.legostaev@obshee-delo.ru</a></p>
+<p>ВК <a href="https://vk.com/id294236507">https://vk.com/id294236507</a></p>
+<p><a class="cmsms_button icon_box_button" href="/contacts/vologodskaya/">Страница отделения</a></p>
+
+  <!-- /wp:paragraph -->
+</details>
+<!-- /wp:details --><!-- wp:details -->
+<details class="wp-block-details">
+  <summary>Воронежская область</summary>
+  <!-- wp:paragraph -->
+  <p><strong>Воронежское областное отделение Общероссийской общественной организации поддержки президентских инициатив в области здоровьесбережения нации «Общее дело»</strong></p>
+<p>группа в Вконтакте: <a href="https://vk.com/od136" target="_blank" rel="noopener noreferrer">https://vk.com/od136</a></p>
+<p><strong>Руководитель отделения</strong> Тимашев Александр Валерьевич</p>
+<p>тел.: 8(905)652-65-55</p>
+<p>e-mail: ts.vrn@list.ru</p>
+<p><strong>Координатор</strong> Лобах Николай Сергеевич</p>
+<p>тел.: 8(999)435-63-03</p>
+<p>e-mail: nikolay.lobakh@gmail.com</p>
+<p><strong>Координатор </strong>Косякова Елена Викторовна</p>
+<p>тел.: 8(952)550-80-08</p>
+<p>e-mail: <a class="maill" href="mailto:kosyakova7@mail.ru">kosyakova7@mail.ru</a></p>
+<p><a class="cmsms_button icon_box_button" href="/contacts/voronejskaya/">Страница отделения</a></p>
+
+  <!-- /wp:paragraph -->
+</details>
+<!-- /wp:details --><!-- wp:details -->
+<details class="wp-block-details">
+  <summary>Забайкальский край</summary>
+  <!-- wp:paragraph -->
+  <p><strong>Забайкальское краевое отделение Общероссийской общественной организации поддержки президентских инициатив в области здоровьесбережения нации «Общее дело»</strong></p>
+<p><strong>Координатор отделения </strong>Сапунова Валентина Николаевна</p>
+<p>тел.: +7 914 122-89-43</p>
+<p>e-mail: <a class="ns-action" href="mailto:Valichka-chita@yandex.ru" rel="noopener noreferrer" data-click-action="common.go" data-params="new_window&amp;url=%23compose%2Fmailto%3DValichka-chita%2540yandex.ru">Valichka-chita@yandex.ru</a></p>
+<p><a class="cmsms_button icon_box_button" href="https://xn----9sbkcac6brh7h.xn--p1ai/contacts/zabaikalskiy-kray/">Страница отделения</a></p>
+
+  <!-- /wp:paragraph -->
+</details>
+<!-- /wp:details --><!-- wp:details -->
+<details class="wp-block-details">
+  <summary>Иркутская область</summary>
+  <!-- wp:paragraph -->
+  <p><strong>Иркутское областное отделение Общероссийской общественной организации поддержки президентских инициатив в области здоровьесбережения нации «Общее дело»</strong></p>
+<p><strong>Координатор по Иркутской области</strong> Потакуев Иван Николаевич</p>
+<p>тел. 8 (914) 916-95-59</p>
+<p>e-mail: <a href="mailto:664467@gmail.com">664467@gmail.com</a></p>
+<p><strong>Координатор по работе со СМИ</strong> Пронин Илья Сергеевич</p>
+<p>тел. 8 (964) 270-88-05</p>
+<p>e-mail: <a href="mailto:iluxa01@gmail.com">iluxa01@gmail.com</a></p>
+<p><strong>Координатор </strong>Кореев Степан Олегович</p>
+<p>тел. 8 (950) 050-47-71</p>
+<p>e-mail: <a href="mailto:stepankoreev2702@yandex.ru">stepankoreev2702@yandex.ru</a></p>
+<p><a class="cmsms_button icon_box_button" href="/contacts/irkutskaya/">Страница отделения</a></p>
+
+  <!-- /wp:paragraph -->
+</details>
+<!-- /wp:details --><!-- wp:details -->
+<details class="wp-block-details">
+  <summary>Республика Калмыкия</summary>
+  <!-- wp:paragraph -->
+  <div class="cmsms_toggle">
+<p><strong>Калмыцкое республиканское отделение Общероссийской общественной организации поддержки президентских инициатив в области здоровьесбережения нации «Общее дело»</strong></p>
+<p><strong>Координатор отделения </strong><a href="https://vk.com/sensei08" target="_blank" rel="noopener noreferrer">Нарджиев Эрдни Робертович </a></p>
+<p>тел. 8(905)484-39-27</p>
+<p>e-mail: erdninar@yandex.ru</p>
+</div>
+<p><a class="cmsms_button icon_box_button" href="/contacts/kalmykiya/">Страница отделения</a></p>
+
+  <!-- /wp:paragraph -->
+</details>
+<!-- /wp:details --><!-- wp:details -->
+<details class="wp-block-details">
+  <summary>Камчатский край</summary>
+  <!-- wp:paragraph -->
+  <p><strong>Камчатское краевое отделение Общероссийской общественной организации поддержки президентских инициатив в области здоровьесбережения нации «Общее дело»</strong></p>
+<p class="cont1"><strong>Координатор отделения </strong>Демьяненко Михаил Викторович</p>
+<p class="cont1">тел. 8(916)780-44-99</p>
+<p class="cont1">e-mail: <a href="mailto:spbmishka@ya.ru">spbmishka@ya.ru</a></p>
+<p class="cont1"><a class="cmsms_button icon_box_button" href="/contacts/kamchatskiy-kray/">Страница отделения</a></p>
+
+  <!-- /wp:paragraph -->
+</details>
+<!-- /wp:details --><!-- wp:details -->
+<details class="wp-block-details">
+  <summary>Республика Карелия</summary>
+  <!-- wp:paragraph -->
+  <p><strong>Карельское региональное отделение Общероссийской общественной организации поддержки президентских инициатив в области здоровьесбережения нации "Общее дело"</strong></p>
+<p>город Петрозаводск</p>
+<p>группа в Вконтакте <a href="https://vk.com/club143521729" target="_blank" rel="noopener noreferrer">https://vk.com/club143521729</a></p>
+<p><strong>Координатор </strong>Башев Михаил Алексеевич</p>
+<p>тел. 8(909) 571-94-51</p>
+<p>e-mail: bashev.nitsaa@yandex.ru</p>
+<p><a class="cmsms_button icon_box_button" href="/contacts/karelia/">Страница отделения</a></p>
+
+  <!-- /wp:paragraph -->
+</details>
+<!-- /wp:details --><!-- wp:details -->
+<details class="wp-block-details">
+  <summary>Кемеровская область</summary>
+  <!-- wp:paragraph -->
+  <p><strong>Кемеровское областное отделение Общероссийской общественной организации поддержки президентских инициатив в области здоровьесбережения нации “Общее дело”</strong></p>
+<p><strong>Координатор </strong>Апарин Сергей Павлович</p>
+<p>тел. 8(905)075-22-77</p>
+<p>e-mail: <a href="mailto:asp@dinkom.ru">asp@dinkom.ru</a></p>
+<p><a class="cmsms_button icon_box_button" href="/contacts/kemerovo/">Страница отделения</a></p>
+
+  <!-- /wp:paragraph -->
+</details>
+<!-- /wp:details --><!-- wp:details -->
+<details class="wp-block-details">
+  <summary>Кировская область</summary>
+  <!-- wp:paragraph -->
+  <p><strong>Кировское областное отделение Общероссийской общественной организации поддержки президентских инициатив в области здоровьесбережения нации «Общее дело»</strong></p>
+<p><strong>Заместитель Полномочного представителя организации в Приволжском федеральном округе </strong>Головин Илья Иванович</p>
+<p>Тел.8-932-600-32-10</p>
+<p>Е-mail <a class="ns-action" href="mailto:Golilya@mail.ru" data-click-action="common.go" data-params="new_window&amp;url=%23compose%2Fmailto%3DGolilya%2540mail.ru">Golilya@mail.ru</a></p>
+<p><strong>Координатор отделения</strong> Котельников Владимир Анатольевич</p>
+<p>Тел. 8-912-825-65-02</p>
+<p>Е-mail: <a href="mailto:vmir911@gmail.com">vmir911@gmail.com</a></p>
+<p><a class="cmsms_button icon_box_button" href="/contacts/kirovskaya/">Страница отделения</a></p>
+
+  <!-- /wp:paragraph -->
+</details>
+<!-- /wp:details --><!-- wp:details -->
+<details class="wp-block-details">
+  <summary>Республика Коми</summary>
+  <!-- wp:paragraph -->
+  <p><strong>Коми республиканское отделение Общероссийской общественной организации поддержки президентских инициатив в области здоровьесбережения нации «Общее дело»</strong></p>
+<p>город Сыктывкар</p>
+<p><strong>Координатор </strong><a href="https://vk.com/v_gellert" target="_blank" rel="noopener noreferrer">Геллерт Валерий Валериевич</a></p>
+<p>тел. 8(904)220-02-22</p>
+<p>e-mail: valerijgellert@gmail.com</p>
+<p class="cont1">город Воркута</p>
+<p class="cont1"><strong>Координатор </strong><a href="http://vk.com/dartveyder" target="_blank" rel="noopener noreferrer">Тельнов Виктор Николаевич</a></p>
+<p class="cont1">тел. <a href="mailto:telvic@maul.ru">8(912) 947-80-04</a></p>
+<p class="cont1">e-mail: <a href="mailto:telvic@maul.ru">telvic@maul.ru</a></p>
+<p class="cont1"><strong>Координатор </strong>Дмитрий Гаврилюк</p>
+<p class="cont1">тел.<a href="mailto:d.i.gavrilyuk@yandex.ru">+7(912) 176-18-18</a></p>
+<p class="cont1">e-mail: <a href="mailto:d.i.gavrilyuk@yandex.ru">d.i.gavrilyuk@yandex.ru</a></p>
+<p><a class="cmsms_button icon_box_button" href="/contacts/komi/">Страница отделения</a></p>
+
+  <!-- /wp:paragraph -->
+</details>
+<!-- /wp:details --><!-- wp:details -->
+<details class="wp-block-details">
+  <summary>Костромская область</summary>
+  <!-- wp:paragraph -->
+  <p><strong>Костромское областное отделение Общероссийской общественной организации поддержки президентских инициатив в области здоровьесбережения нации «Общее дело»</strong></p>
+<p><strong>Группа Вконтакте </strong><a href="http://vk.com/odkostroma" target="_blank" rel="noopener noreferrer">http://vk.com/odkostroma</a></p>
+<p><strong>Председатель Правления</strong> <a href="https://xn----9sbkcac6brh7h.xn--p1ai/profile/tikhomirov-sv/" target="_blank" rel="noopener noreferrer">Тихомиров Сергей Владимирович</a></p>
+<p>тел. 8-930-091-10-86</p>
+<p>e-mail: <a class="maill" href="mailto:dmd_kostroma@mail.ru">dmd_kostroma@mail.ru</a></p>
+<p><a class="cmsms_button icon_box_button" href="/contacts/kostromskaya/">Страница отделения</a></p>
+
+  <!-- /wp:paragraph -->
+</details>
+<!-- /wp:details --><!-- wp:details -->
+<details class="wp-block-details">
+  <summary>Краснодарский край</summary>
+  <!-- wp:paragraph -->
+  <p><strong>Краснодарское краевое отделение Общероссийской общественной организации поддержки президентских инициатив в области здоровьесбережения нации “Общее дело”</strong></p>
+<p><strong>Председатель правления </strong>Владислав Круть тел.: +7 (938) 403-57-70 e-mail: <a href="mailto:vlad.krut@obshee-delo.ru">vlad.krut@obshee-delo.ru</a></p>
+<p><strong>Е-mail отделения</strong>: <a href="mailto:krasnodar@obshee-delo.ru">krasnodar@obshee-delo.ru</a></p>
+<p><strong>Группа ВКонтакте</strong> <a href="http://vk.com/odkuban" target="_blank" rel="noopener noreferrer">http://vk.com/odkuban</a></p>
+<p><strong>г. Краснодар</strong> Елена Удовенко тел.: +7 (908) 685-02-23 e-mail: <a href="mailto:elena.udovenko@obshee-delo.ru">elena.udovenko@obshee-delo.ru</a></p>
+<p><strong>г. Сочи</strong> Евгения Тихонова тел.: +7 (862) 295-92-03 e-mail: <a href="mailto:sochi@obshee-delo.ru">sochi@obshee-delo.ru</a></p>
+<p><strong>г. Новороссийск</strong> Владимир Шеховцов тел.: +7 (918) 343-40-31 e-mail: <a href="mailto:vladi.mir@list.ru">vladi.mir@list.ru</a></p>
+<p><strong>г. Геленджик</strong> Золотухина Элеонора тел.: +7 (918) 023-37-23 e-mail: <a href="mailto:eleonora.zolotukhina@mail.ru">eleonora.zolotukhina@mail.ru</a></p>
+<p><strong>г. Горячий ключ</strong> Легостаев Василий Михайлович тел.: 8-961-025-76-03, е-mail <a href="mailto:v.m.legostaev@obshee-delo.ru">v.m.legostaev@obshee-delo.ru</a></p>
+<p><strong>г. Славянск на Кубани</strong> Щепина Татьяна +7 (918) 478-86-54 e-mail: <a href="mailto:SHCEPINA1987@LIST.RU">SHCEPINA1987@LIST.RU</a></p>
+<p><strong>Северский район</strong> Андрей Абрамов тел.: +7 (953) 100-29-45 e-mail: <a href="mailto:abramov@obshee-delo.ru">abramov@obshee-delo.ru</a></p>
+<p><a class="cmsms_button icon_box_button" href="/contacts/krasnodarskiy-kray/">Страница отделения</a></p>
+
+  <!-- /wp:paragraph -->
+</details>
+<!-- /wp:details --><!-- wp:details -->
+<details class="wp-block-details">
+  <summary>Красноярский край</summary>
+  <!-- wp:paragraph -->
+  <p><strong>Красноярское краевое отделение Общероссийской общественной организации поддержки президентских инициатив в области здоровьесбережения нации «Общее дело»</strong></p>
+<p><strong>Адрес:</strong> ул. Обороны 3, офис 302-8</p>
+<p><strong>Председатель правления </strong><a href="http://vk.com/dmitrycrang" target="_blank" rel="noopener noreferrer">Дмитриев Дмитрий Владиславович</a></p>
+<p>тел. 8(965)906-10-00</p>
+<p>e-mail: crang@inbox.ru</p>
+<p><strong>Заместитель председателя правления</strong> <a href="https://vk.com/tanya_snow" target="_blank" rel="noopener noreferrer">Вящева Татьяна Витальевна</a></p>
+<p>тел. 8(902)924-32-86</p>
+<p>Группа в Вконтакте: <a href="https://vk.com/od_24">https://vk.com/od_24</a></p>
+<p><strong>Ермаковское отделение Общее дело</strong> Молодежный Центр “Звёздный” пл. Ленина,5</p>
+<p><strong>руководитель</strong> <a href="https://vk.com/id17607133">Александр Налькин</a></p>
+<p>тел. 8 391-38-2-01-29</p>
+<p>e-mail: mc-zvezdnii@mail.ru</p>
+<p><strong>Ужурское отделение Общероссийской общественной организации поддержки президентских инициатив в области здоровьесбережения нации «Общее дело»</strong></p>
+<p><strong>Заместитель директора по воспитательной работе СОШ №3, куратор РДШ</strong> <a href="https://vk.com/id420534244">Калистратова Ирина Юрьевна</a></p>
+<p>тел. 8(923) 300-94-90</p>
+<p><a class="cmsms_button icon_box_button" href="/contacts/krasnoyarskiy-kray/">Страница отделения</a></p>
+
+  <!-- /wp:paragraph -->
+</details>
+<!-- /wp:details --><!-- wp:details -->
+<details class="wp-block-details">
+  <summary>Республика Крым и Севастополь</summary>
+  <!-- wp:paragraph -->
+  <p><strong>Крымское республиканское отделение Общероссийской общественной организации поддержки президентских инициатив в области здоровьесбережения нации «Общее дело»</strong></p>
+<p><strong>Координатор по Республике Крым </strong>Рябовичева Елена Владимировна</p>
+<p>Тел. 8-917-773-12-24</p>
+<p>E-mail <a class="ns-action" href="mailto:ryabovicheva@obshee-delo.ru" data-click-action="common.go" data-params="new_window&amp;url=%23compose%2Fmailto%3Dryabovicheva%2540obshee-delo.ru">ryabovicheva@obshee-delo.ru</a></p>
+<p>ВК <a href="https://vk.com/id252521561">https://vk.com/id252521561</a></p>
+<p><strong>Координатор по Тавриде (Республике Крым) </strong>Трифонов Вениамин Юрьевич</p>
+<p>Тел. +7(978)596-4570</p>
+<p>E-mail <a class="ns-action" href="mailto:veniaminyalta@yandex.ru" data-click-action="common.go" data-params="new_window&amp;url=%23compose%2Fmailto%3Dryabovicheva%2540obshee-delo.ru">veniaminyalta@yandex.ru</a></p>
+<p>ВК <a href="https://vk.com/veniaminyalta">https://vk.com/veniaminyalta</a></p>
+<p>ВК группа ОД <a href="https://vk.com/odtavrida">https://vk.com/odtavrida</a></p>
+<p><strong>Севастопольское региональное отделение Общероссийской общественной организации поддержки президентских инициатив в области здоровьесбережения нации «Общее дело»</strong></p>
+<p><strong>Координатор по Севастополю </strong>Майко Елена Викторовна</p>
+<p>Тел. 8-978-726-06-16</p>
+<p>E-mail <a class="ns-action" href="mailto:sevroditeli@yandex.ru" data-click-action="common.go" data-params="new_window&amp;url=%23compose%2Fmailto%3Dsevroditeli%2540yandex.ru">sevroditeli@yandex.ru</a></p>
+<p>ВК <a href="https://vk.com/alyonaji">https://vk.com/alyonaji</a></p>
+<p class="cont1"><a class="cmsms_button icon_box_button" href="/contacts/krym/">Страница отделения</a></p>
+
+  <!-- /wp:paragraph -->
+</details>
+<!-- /wp:details --><!-- wp:details -->
+<details class="wp-block-details">
+  <summary>Магаданская область</summary>
+  <!-- wp:paragraph -->
+  <p><strong>Магаданское областное отделение Общероссийской общественной организации поддержки президентских инициатив в области здоровьесбережения нации «Общее дело»</strong></p>
+<p><strong>Координатор отделения </strong>Леонид Игоревич Фомин</p>
+<p>тел.: 8(914)867-00-02</p>
+<p>e-mail: union_outdoor@mail.ru</p>
+<p><strong>Координатор отделения </strong>Аленичева Ирина Владиславовна</p>
+<p>тел.:</p>
+<p>e-mail:</p>
+<p><a class="cmsms_button icon_box_button" href="/contacts/magadanskaya/">Страница отделения</a></p>
+
+  <!-- /wp:paragraph -->
+</details>
+<!-- /wp:details --><!-- wp:details -->
+<details class="wp-block-details">
+  <summary>Москва и Московская область</summary>
+  <!-- wp:paragraph -->
+  <p class="cont1"><strong>Московское отделение Общероссийской общественной организации поддержки президентских инициатив в области здоровьесбережения нации «Общее дело»</strong></p>
+<p><strong>Руководитель Московского городского отделения, лектор</strong> Моисеев Олег Олегович (г. Москва)</p>
+<p>Тел. 8-903-774-80-61<br />
+E-mail <a href="mailto:moiseev_od@mail.ru">moiseev_od@mail.ru</a><br />
+ВК: <a href="https://vk.com/moiseev_od">https://vk.com/moiseev_od</a></p>
+<p><strong>Руководитель Московского областного отделения, лектор</strong> Гурин Анатолий Евгеньевич (г. Видное)</p>
+<p>Тел. 8-905-727-39-80<br />
+E-mail <a href="mailto:molodec@mail.ru">molodec@mail.ru</a></p>
+<p><strong>Координатор по Московской области</strong> Маслов Игорь Валерьевич (г. Пушкино)</p>
+<p>Тел. 8-926-418-63-69<br />
+E-mail <a href="mailto:905742@mail.ru">905742@mail.ru</a><br />
+ВК <a href="https://vk.com/igor905">https://vk.com/igor905</a></p>
+<p><strong>Руководитель департамента по связям с силовыми структурами, лектор</strong> Леонтьев Геннадий Иванович (г. Звенигород)</p>
+<p>Тел. 8-926-334-90-29<br />
+E-mail <a href="mailto:leon62@mail.ru">leon62@mail.ru</a><br />
+ВК <a href="https://vk.com/giri108">https://vk.com/giri108</a></p>
+<p><strong>Руководитель департамента фандрайзинга </strong>Калашников Павел Сергеевич (г. Москва)</p>
+<p>Тел. 8-925-190-66-99<br />
+E-mail <a href="mailto:p.kalashnikov@obshee-delo.ru">p.kalashnikov@obshee-delo.ru</a><br />
+ВК <a href="https://vk.com/id386985504">https://vk.com/id386985504</a></p>
+<p><strong>Специалист департамента фандрайзинга</strong> Черных Ксения (г. Москва)</p>
+<p>Тел. 8-958-111-47-95<br />
+E-mail <a href="https://e.mail.ru/compose/?mailto=mailto%3apodderzhi@obshee%2ddelo.ru">podderzhi@obshee-delo.ru</a><br />
+ВК <a href="https://vk.com/id594641249">https://vk.com/id594641249</a></p>
+<p><strong>Руководитель направления по связям с образовательными учреждениями</strong> Зюзина Людмила Филипповна (г. Москва)</p>
+<p>Тел. 8-916-211-39-38<br />
+E-mail <a href="mailto:zyuzinaliudmila@mail.ru">zyuzinaliudmila@mail.ru</a></p>
+<p><strong>Лектор</strong> Соколов Иван Васильевич (г. Дмитров)</p>
+<p>Тел. 8-926-435-51-52<br />
+E-mail <a href="https://e.mail.ru/compose/?mailto=mailto%3aivan.sokolov@obshee%2ddelo.ru">ivan.sokolov@obshee-delo.ru</a><br />
+ВК: <a href="https://vk.com/i.sokolov35">https://vk.com/i.sokolov35</a></p>
+<p><strong>Руководитель департамента пиара и СМИ</strong> Петропавлов Артем Вячеславович (г. Москва)</p>
+<p>Тел. 8-925-517-52-35<br />
+E-mail <a href="mailto:a.petropavlov@euroasian.group">a.petropavlov@euroasian.group</a></p>
+<p><strong>Специалист департамента пиара и СМИ</strong> Рыкова Вера Юрьевна (г. Воскресенск)</p>
+<p>Тел. 8-926-975-52-20<br />
+E-mail <a href="mailto:menedge@yandex.ru">menedge@yandex.ru</a><br />
+ВК: <a href="https://vk.com/rykova_vera">https://vk.com/rykova_vera</a></p>
+<p><a class="cmsms_button icon_box_button" href="/contacts/moscow-oblast/">Страница отделения</a></p>
+
+  <!-- /wp:paragraph -->
+</details>
+<!-- /wp:details --><!-- wp:details -->
+<details class="wp-block-details">
+  <summary>Нижегородская область</summary>
+  <!-- wp:paragraph -->
+  <p><strong>Нижегородское областное отделение Общероссийской общественной организации поддержки президентских инициатив в области здоровьесбережения нации “Общее дело”</strong></p>
+<p>город Шахунья</p>
+<p class="cont1">Группа в ВК: <a href="http://vk.com/delo52">vk.com/delo52</a></p>
+<p class="cont1"><strong>Координатор </strong><a href="https://vk.com/tsvetkov_denis" target="_blank" rel="noopener noreferrer">Цветков Денис</a></p>
+<p class="cont1">тел. :+7(910)141-90-28 (МТС)</p>
+<p class="cont1">e-mail: <a href="mailto:ooo-megavolt@mail.ru">ooo-megavolt@mail.ru</a></p>
+<p>город Выкса</p>
+<p class="cont1"><strong>Координатор </strong>Иван Михайлович Кирсанычев</p>
+<p class="cont1">тел. +7(960)184-38-68</p>
+<p class="cont1">e-mail: <a href="mailto:gramels@rambler.ru">gramels@rambler.ru</a></p>
+<p>e-mail: <a href="mailto:odnnov@mail.ru">odnnov@mail.ru</a></p>
+<p><a class="cmsms_button icon_box_button" href="/contacts/nizegorodskaya/">Страница отделения</a></p>
+
+  <!-- /wp:paragraph -->
+</details>
+<!-- /wp:details --><!-- wp:details -->
+<details class="wp-block-details">
+  <summary>Новгородская область</summary>
+  <!-- wp:paragraph -->
+  <p><strong>Новгородское областное отделение Общероссийской общественной организации поддержки президентских инициатив в области здоровьесбережения нации «Общее дело»</strong></p>
+<p><strong>Координатор </strong>Загородников Роман Сергеевич</p>
+<p>тел. +7(960)209-56-17</p>
+<p>e-mail: <a href="https://e.mail.ru/compose/?mailto=mailto%3ar.zagorodnickov@yandex.ru" target="_blank" rel="noopener noreferrer">r.zagorodnickov@yandex.ru</a></p>
+<p><a class="cmsms_button icon_box_button" href="/contacts/novgorodskaya/">Страница отделения</a></p>
+
+  <!-- /wp:paragraph -->
+</details>
+<!-- /wp:details --><!-- wp:details -->
+<details class="wp-block-details">
+  <summary>Новосибирская область</summary>
+  <!-- wp:paragraph -->
+  <p><strong>Новосибирское областное отделение Общероссийской общественной организации поддержки президентских инициатив в области здоровьесбережения нации «Общее дело»</strong></p>
+<p><strong>Адрес офиса отделения</strong> г. Новосибирск, ул. Каменская 84в</p>
+<p><strong>Председатель отделения</strong> Романуша Артем Александрович</p>
+<p>тел. 89185700050</p>
+<p>Вконтакте https://vk.com/romanusha</p>
+<p><a class="cmsms_button icon_box_button" href="/contacts/novosibirskaya/">Страница отделения</a></p>
+
+  <!-- /wp:paragraph -->
+</details>
+<!-- /wp:details --><!-- wp:details -->
+<details class="wp-block-details">
+  <summary>Омская область</summary>
+  <!-- wp:paragraph -->
+  <p><strong>Омское областное отделение Общероссийской общественной организации поддержки президентских инициатив в области здоровьесбережения нации «Общее дело»</strong></p>
+<p><strong>Председатель правления </strong><a href="http://vk.com/mazdorov_lev" target="_blank" rel="noopener noreferrer">Маздоров Лев Сергеевич</a></p>
+<p>тел. +7 (913) 630-77-60</p>
+<p>e-mail: <a href="mailto:mazdorov.lev@yandex.ru">mazdorov.lev@yandex.ru</a></p>
+<p>ВКонтакте: <a href="https://vk.com/obsheedeloomsk" target="_blank" rel="noopener noreferrer">https://vk.com/obsheedeloomsk</a></p>
+<p><a class="cmsms_button icon_box_button" href="/contacts/omskaya/">Страница отделения</a></p>
+
+  <!-- /wp:paragraph -->
+</details>
+<!-- /wp:details --><!-- wp:details -->
+<details class="wp-block-details">
+  <summary>Пермский край</summary>
+  <!-- wp:paragraph -->
+  <p><strong>Пермское краевое отделение Общероссийской общественной организации поддержки президентских инициатив в области здоровьесбережения нации «Общее дело»</strong></p>
+<p><strong>Координатор Пермского краевого отделения </strong>Шаповалова Елена Викторовна</p>
+<p>тел.: 8-902-479-98-41</p>
+<p>e-mail: <a class="ns-action" href="mailto:chapowalowa@mail.ru" data-click-action="common.go" data-params="new_window&amp;url=%23compose%2Fmailto%3Dchapowalowa%2540mail.ru">chapowalowa@mail.ru</a></p>
+<p>ВКонтакте: <a href="https://vk.com/od.perm.kray">https://vk.com/od.perm.kray</a></p>
+<p><a class="cmsms_button icon_box_button" href="/contacts/permskiy-kray/">Страница отделения</a></p>
+
+  <!-- /wp:paragraph -->
+</details>
+<!-- /wp:details --><!-- wp:details -->
+<details class="wp-block-details">
+  <summary>Приморский край</summary>
+  <!-- wp:paragraph -->
+  <div class="cmsms_toggle">
+<p><strong>Приморское краевое отделение Общероссийской общественной организации поддержки президентских инициатив в области здоровьесбережения нации «Общее дело»</strong></p>
+<p><strong>Координатор по Приморскому краю:</strong> Амельченко Геннадий Андреевич</p>
+<p>тел.  +7 (923) 530-33-18<br />
+e-mail:<a href="mailto:amelchenko@obshee-delo.ru"> amelchenko@obshee-delo.ru</a></p>
+</div>
+<p><a class="cmsms_button icon_box_button" href="/contacts/primorskiy-kray/">Страница отделения</a></p>
+
+  <!-- /wp:paragraph -->
+</details>
+<!-- /wp:details --><!-- wp:details -->
+<details class="wp-block-details">
+  <summary>Псковская область</summary>
+  <!-- wp:paragraph -->
+  <p><strong>Псковское областное отделение Общероссийской общественной организации поддержки президентских инициатив в области здоровьесбережения нации “Общее дело”</strong></p>
+<p>Город Псков</p>
+<p><span style="color: #000000; font-family: -apple-system, BlinkMacSystemFont, Roboto, 'Open Sans', 'Helvetica Neue', 'Noto Sans Armenian', 'Noto Sans Bengali', 'Noto Sans Cherokee', 'Noto Sans Devanagari', 'Noto Sans Ethiopic', 'Noto Sans Georgian', 'Noto Sans Hebrew', 'Noto Sans Kannada', 'Noto Sans Khmer', 'Noto Sans Lao', 'Noto Sans Osmanya', 'Noto Sans Tamil', 'Noto Sans Telugu', 'Noto Sans Thai', sans-serif;"><strong>Руководитель отделения</strong> Васильев Михаил Геннадьевич</span></p>
+<p>тел. +7(911)359-21-67</p>
+<p>e-mail: <a href="mailto:pskov@obshee-delo.ru">pskov@obshee-delo.ru</a></p>
+<p>ВКонтакте: <a href="https://vk.com/newpskovregion">https://vk.com/newpskovregion</a></p>
+<p><a class="cmsms_button icon_box_button" href="/contacts/pskovskaya/">Страница отделения</a></p>
+
+  <!-- /wp:paragraph -->
+</details>
+<!-- /wp:details --><!-- wp:details -->
+<details class="wp-block-details">
+  <summary>Ростовская область</summary>
+  <!-- wp:paragraph -->
+  <p><strong>Ростовское областное отделение Общероссийской общественной организации поддержки президентских инициатив в области здоровьесбережения нации «Общее дело»</strong></p>
+<p>Ростов-на-Дону</p>
+<p>группа Вконтакте <a href="https://vk.com/obsheedelo_rnd">https://vk.com/obsheedelo_rnd</a></p>
+<p><strong>Руководитель городского отделения</strong> Максимченко Олег Викторович</p>
+<p>тел. 8(918)558-00-73</p>
+<p>e-mail: <a class="ns-action" href="mailto:chisto_max@mail.ru" data-click-action="common.go" data-params="new_window&amp;url=%23compose%2Fmailto%3Dchisto_max%2540mail.ru">chisto_max@mail.ru</a></p>
+<p><strong>Координатор</strong> Панов Михаил Николаевич</p>
+<p>тел. 8(988)569-00-53</p>
+<p>e-mail: <a href="mailto:mihail7355@yandex.ru">mihail7355@yandex.ru</a></p>
+<p>Милютинский район, ст. Милютинская</p>
+<p><strong>Координатор </strong>Давидчик Кирилл Геннадьевич</p>
+<p>тел. +7(928)751-22-33</p>
+<p>e-mail: davidchik@mail.ru</p>
+<p><a class="cmsms_button icon_box_button" href="/contacts/rostovskaya/">Страница отделения</a></p>
+
+  <!-- /wp:paragraph -->
+</details>
+<!-- /wp:details --><!-- wp:details -->
+<details class="wp-block-details">
+  <summary>Самарская область</summary>
+  <!-- wp:paragraph -->
+  <p><strong>Самарское областное отделение Общероссийской общественной организации поддержки президентских инициатив в области здоровьесбережения нации «Общее дело»</strong></p>
+<p class="cont1">Адрес: г. Самара, 443099, ул. Галактионовская, д. 40Б, оф. 5</p>
+<p><strong>Полномочный представитель организации в Приволжском федеральном округе </strong>Нуждин Вадим Владимирович</p>
+<p>Тел. 8-927-207-05-72</p>
+<p>E-mail <a href="mailto:centrsamara@mail.ru">centrsamara@mail.ru</a></p>
+<p class="cont1"><strong>Председатель правления, Первый заместитель Полномочного представителя организации в ПФО </strong><a href="https://vk.com/id4283728" target="_blank" rel="noopener noreferrer">Козлов Даниил Игоревич</a></p>
+<p class="cont1">тел. 8-917-034-23-18</p>
+<p class="cont1">e-mail: <a href="mailto:danikname@yandex.ru">danikname@yandex.ru</a></p>
+<p class="cont1"><strong>Руководитель по направлению “Физкультура, спорт, ГТО”</strong> <a href="http://vk.com/nikishkinilya" target="_blank" rel="noopener noreferrer">Никишкин Илья Валерьевич</a></p>
+<p class="cont1">тел. +7(927)712-65-51</p>
+<p class="cont1">e-mail:<a href="mailto:nikishkinilya@mail.ru">nikishkinilya@mail.ru</a></p>
+<p class="cont1"><strong>Руководитель проекта “Молодёжные коллегии” </strong><a href="http://vk.com/alex_tkachuk" target="_blank" rel="noopener noreferrer">Ткачук Алексей Владимирович</a></p>
+<p class="cont1">тел. +7(927)006-16-94</p>
+<p class="cont1">e-mail:<a href="mailto:aleksey.tkachuk@gmail.com">aleksey.tkachuk@gmail.com</a></p>
+<p class="cont1"><strong>Руководитель по развитию г. о. Новокуйбышевск </strong><a href="https://vk.com/macterdobra" target="_blank" rel="noopener noreferrer">Никонов Алексей Витальевич</a></p>
+<p class="cont1">тел. +7(927)011-00-42</p>
+<p class="cont1">e-mail:<a href="mailto:alexeinskk@gmail.com">alexeinskk@gmail.com</a></p>
+<p>ссылка Вк: <a href="https://vk.com/macterdobra" target="_blank" rel="noopener noreferrer">https://vk.com/macterdobra</a></p>
+<p>Координатор по развитию г. о. Новокуйбышевск Батов Сергей Олегович</p>
+<p>почта: <a href="mailto:serbat44@gmail.com">serbat44@gmail.com</a><br />
+телефон: 89991586090<br />
+ссылка Вк: <a href="https://vk.com/sergey_batov_official" target="_blank" rel="noopener noreferrer">https://vk.com/sergey_batov_official</a></p>
+<p class="cont1"><strong>Руководитель по развитию г. о. Сызрань и г. о. Октябрьск </strong><a href="http://vk.com/id218187019" target="_blank" rel="noopener noreferrer">Таловиков Александр Сергеевич</a></p>
+<p class="cont1">тел. +7(917)821-34-68</p>
+<p class="cont1">e-mail:<a href="mailto:crash005@mail.ru">crash005@mail.ru</a></p>
+<p class="cont1"><strong>Руководитель по развитию г.о.Тольятти</strong><span class="apple-converted-space"> <a href="http://vk.com/id6534721" target="_blank" rel="noopener noreferrer">Васильев Александр Николаевич</a></span></p>
+<p class="cont1"><span class="apple-converted-space">тел. +7(927)211-56-04</span></p>
+<p class="cont1"><span class="apple-converted-space">e-mail:<a href="mailto:posoh74@mail.ru">posoh74@mail.ru</a></span></p>
+<p class="cont1">Отделение Вконтакте: <a href="https://vk.com/odsamara" target="_blank" rel="noopener noreferrer">https://vk.com/odsamara</a></p>
+<p><a class="cmsms_button icon_box_button" href="/contacts/samarskaya/">Страница отделения</a></p>
+
+  <!-- /wp:paragraph -->
+</details>
+<!-- /wp:details --><!-- wp:details -->
+<details class="wp-block-details">
+  <summary>Санкт-Петербург и Лен. область</summary>
+  <!-- wp:paragraph -->
+  <h2><strong>Санкт-Петербургское городское и Ленинградское областное отделения Общероссийской общественной организации поддержки президентских инициатив в области здоровьесбережения нации «Общее дело»</strong></h2>
+<p><strong>Председатель правления Санкт-Петербургского отделения,<br />
+Координатор по работе с силовыми структурами и образовательными учреждениями</strong></p>
+<p>Ковалевский Ярослав Викторович</p>
+<p>Тел. 8-985-435-73-18</p>
+<p>E-mail <a href="mailto:odmosk@gmail.com">odmosk@gmail.com</a></p>
+<p>ВК <a href="https://vk.com/yaroslav_kovalevskiy">https://vk.com/yaroslav_kovalevskiy</a></p>
+<p>ВКОНТАКТЕ: <a href="https://vk.com/kopylovpa">https://vk.com/kopylovpa</a></p>
+<div><strong>Председатель правления Ленинградского областного отделения,</strong></div>
+<div><strong>Региональный координатор по развитию добровольчества в Ленинградской области</strong></div>
+<p><strong>Чернов Евгений Павлович</strong></p>
+<p>тел.: +79111620252</p>
+<p>e-mail: <a href="https://e.mail.ru/compose?To=lenobl@obshee%2ddelo.ru">lenobl@obshee-delo.ru</a></p>
+<p>ВКОНТАКТЕ: <a href="https://vk.com/faceboock34">https://vk.com/faceboock34</a></p>
+<div class="chat-input">
+<div class="chat-input-container">
+<div class="rows-wrapper-wrapper">
+<div class="rows-wrapper chat-input-wrapper">
+<div class="reply-wrapper">
+<div class="btn-menu">
+<div class="btn-menu-item rp-overflow tgico-replace">
+<p><strong>Координатор по Кингисеппскому, Сланцевскому, Волосовскому району</strong></p>
+<p><strong>Тарасов Сергей Валентинович</strong></p>
+<p>тел.: +79062755758</p>
+<p><a class="cmsms_button icon_box_button" href="/contacts/st-petersburg/">Страница отделения</a></p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+  <!-- /wp:paragraph -->
+</details>
+<!-- /wp:details --><!-- wp:details -->
+<details class="wp-block-details">
+  <summary>Сахалинская область</summary>
+  <!-- wp:paragraph -->
+  <div class="cmsms_toggle">
+<p><strong>Сахалинское областное отделение Общероссийской общественной организации поддержки президентских инициатив в области здоровьесбережения нации «Общее дело»</strong></p>
+<p>г. Южно-Сахалинск</p>
+<p><strong>Координатор отделения </strong><a href="https://vk.com/id13893053" target="_blank" rel="noopener noreferrer">Ларионов Алексей Александрович</a></p>
+<p>тел. +7(914) 087-74-69</p>
+<p>e-mail: hiphopwerter@rambler.ru</p>
+</div>
+<p><a class="cmsms_button icon_box_button" href="/contacts/sakhalinskaya/">Страница отделения</a></p>
+
+  <!-- /wp:paragraph -->
+</details>
+<!-- /wp:details --><!-- wp:details -->
+<details class="wp-block-details">
+  <summary>Свердловская область и УрФО</summary>
+  <!-- wp:paragraph -->
+  <p>Свердловское областное отделение Общероссийской общественной организации поддержки президентских инициатив в области здоровьесбережения нации «Общее дело»</p>
+<p>Председатель: Бальцевич Вячеслав Павлович</p>
+<p>тел. +7 (982) 611-97-77</p>
+<p>тел. +7-929-221-19-99</p>
+<p>e-mail: baltsevich77@bk.ru</p>
+<p>Координатор по Челябинской области, член правления, координатор по развитию добровольчества в Свердловской области, лектор: Малёнкин Евгений Викторович</p>
+<p>тел. +7-982-687-28-45</p>
+<p>e-mail: malenkin76@mail.ru</p>
+<p>Соучредитель, член правления, лектор: Исмагилов Илья Расимович</p>
+<p>тел. +7-922-140-20-53</p>
+<p>e-mail: ismir@list.ru</p>
+<p>Лектор: Низамов Руслан Маратович</p>
+<p>тел. +7-982-657-7240</p>
+<p>e-mail: nizamovruslan1988@gmail.com</p>
+<p>Координатор по ГО Заречный, руководитель направления фандрайзинга, лектор: Черепанов Вадим Викторович</p>
+<p>тел: +7-902-443-27-28</p>
+<p>e-mail: zar_od@bk.ru</p>
+<p>Координатор ГО Режевской, ГО Артёмовский и ГО Невьянский, член правления, ответственный за добровольческое направление: Омелёхин Александр Александрович</p>
+<p>тел. +7-958-233-15-03</p>
+<p>e-mail: 24-omel-od@mail.ru</p>
+<p>Ответственный за IT направление, лектор: Котов Василий Викторович</p>
+<p>тел. +7-963-032-98-86</p>
+<p>e-mail: vvkotof@mail.ru</p>
+<p>VK: https://vk.com/vasya_kotov</p>
+<p>Координатор по ГО Староуткинск, ответственный за развитие добровольческого направления, лектор: Соболев Игнат Вячеславович</p>
+<p>тел. +7-950-207-32-16</p>
+<p>e-mail: ignat8609@mail.ru</p>
+<p>Координатор по г. Екатеринбургу, ответственный за добровольческое направление, лектор: Байлук Светлана Владимировна</p>
+<p>тел. +7-902-263-09-27</p>
+<p>e-mail: by-look@mail.ru</p>
+<p>Лектор: Голубев Александр Васильевич</p>
+<p>тел. 8-922-160-27-18</p>
+<p>e-mail: gralex-i@ya.ru</p>
+<p>Группа в ВК: https://vk.com/ekb_od</p>
+<p>Почта: ekt@obshee-delo.ru</p>
+<p>Страница отделения - https://общее-дело.рф/contacts/sverdlovskaya/</p>
+
+  <!-- /wp:paragraph -->
+</details>
+<!-- /wp:details --><!-- wp:details -->
+<details class="wp-block-details">
+  <summary>Ставропольский край</summary>
+  <!-- wp:paragraph -->
+  <p><strong>Ставропольское областное отделение Общероссийской общественной организации поддержки президентских инициатив в области здоровьесбережения нации «Общее дело»</strong></p>
+<p>город-курорт Кисловодск</p>
+<p><strong>Координатор </strong>Чеканов Александр Борисович</p>
+<p>тел.: 8-918-808-80-28</p>
+<p>e-mail: <a class="maill" href="https://e.mail.ru/compose/?mailto=mailto%3aalexb46@gmail.com" target="_blank" rel="noopener noreferrer">alexb46@gmail.com</a></p>
+<p>город Ставрополь</p>
+<p><strong>Координатор </strong>Шапошников Дмитрий Викторович</p>
+<p>тел.: +7 906 479-72-27</p>
+<p>e-mail: <a href="mailto:dshaposhnikov@mail.ru">dshaposhnikov@mail.ru</a></p>
+<p>город Ессентуки</p>
+<p><strong>Координатор </strong>Денисов Евгений Владимирович</p>
+<p>тел.: +7 928 013 20 60</p>
+<p>e-mail: <a href="mailto:denissovev@mail.ru">denissovev@mail.ru</a></p>
+<p><a class="cmsms_button icon_box_button" href="/contacts/stavropolskiy-kray/">Страница отделения</a></p>
+
+  <!-- /wp:paragraph -->
+</details>
+<!-- /wp:details --><!-- wp:details -->
+<details class="wp-block-details">
+  <summary>Тамбовская область</summary>
+  <!-- wp:paragraph -->
+  <p><strong>Тамбовское областное отделение Общероссийской общественной организации поддержки президентских инициатив в области здоровьесбережения нации «Общее дело»</strong></p>
+<p>г. Мичуринск</p>
+<p><b>Координатор </b>Викторов Олег Сергеевич</p>
+<p>тел.  8(953)720-38-25</p>
+<p>e-mail: <a href="https://e.mail.ru/compose/?mailto=mailto%3aoleg.divniy@yandex.ru" target="_blank" rel="noopener noreferrer">oleg.divniy@yandex.ru</a></p>
+<p><a class="cmsms_button icon_box_button" href="/contacts/tambovskaya/">Страница отделения</a></p>
+
+  <!-- /wp:paragraph -->
+</details>
+<!-- /wp:details --><!-- wp:details -->
+<details class="wp-block-details">
+  <summary>Республика Татарстан</summary>
+  <!-- wp:paragraph -->
+  <p><strong>Татарстанское республиканское отделение Общероссийской общественной организации поддержки президентских инициатив в области здоровьесбережения нации “Общее дело”</strong></p>
+<p>город Казань</p>
+<p><strong>Координатор</strong> Гатауллин Роберт Кутдусович<br />
+<strong>почта</strong> roberto-kazan@mail.ru<br />
+<strong>Телефон</strong> <span class="js-phone-number">+79046609271</span></p>
+<p><strong>Организатор лекций</strong>: Воробьёва Алина</p>
+<p>тел. 8(927)417-67-75</p>
+<p>Группа ВКонтакте <a class="maill" href="http://vk.com/od_tatarstan" target="_blank" rel="noopener noreferrer">vk.com/od_tatarstan</a></p>
+<p><a class="cmsms_button icon_box_button" href="/contacts/tatarstan/">Страница отделения</a></p>
+
+  <!-- /wp:paragraph -->
+</details>
+<!-- /wp:details --><!-- wp:details -->
+<details class="wp-block-details">
+  <summary>Томская область</summary>
+  <!-- wp:paragraph -->
+  <p><strong>Томское областное отделение Общероссийской общественной организации поддержки президентских инициатив в области здоровьесбережения нации «Общее дело»</strong></p>
+<p class="cont1"><b>Координатор отделения</b> Григорьев Максим Викторович</p>
+<p class="cont1">e-mail: <a href="mailto:grigorev.mv@inbox.ru" target="_blank" rel="noopener noreferrer">grigorev.mv@inbox.ru</a></p>
+<p>ВК: <a href="https://vk.com/id779921663">https://vk.com/id779921663</a></p>
+<p class="cont1"><b><strong>Заместитель координатора</strong> </b>Кадышева Алёна Викторовна</p>
+<p>Организатор мероприятий, лекций, ведение СМИ, приём заявок</p>
+<p class="cont1">тел.: 89234427070</p>
+<p class="cont1">ВК: <a href="https://vk.com/id780741131">https://vk.com/id780741131</a></p>
+<p><a class="cmsms_button icon_box_button" href="/contacts/tomskaya/">Страница отделения</a></p>
+
+  <!-- /wp:paragraph -->
+</details>
+<!-- /wp:details --><!-- wp:details -->
+<details class="wp-block-details">
+  <summary>Тульская область</summary>
+  <!-- wp:paragraph -->
+  <p><strong>Тульское областное отделение Общероссийской общественной организации поддержки президентских инициатив в области здоровьесбережения нации «Общее дело»</strong></p>
+<p class="cont1"><b>Координатор отделения</b> Касатиков Александр Юрьевич</p>
+<p>Тел.: <span style="font-family: 'Arial',sans-serif; color: #424242;">+7 903 037-77-08</span></p>
+<p class="cont1">E-mail: <a href="mailto:SilaOtechestva@mail.ru">SilaOtechestva@mail.ru</a></p>
+<p>ВК: <a href="https://vk.com/id44507712">https://vk.com/id44507712</a></p>
+<p><a class="cmsms_button icon_box_button" href="https://общее-дело.рф/contacts/tulskaya/">Страница отделения</a></p>
+
+  <!-- /wp:paragraph -->
+</details>
+<!-- /wp:details --><!-- wp:details -->
+<details class="wp-block-details">
+  <summary>Республика Тыва</summary>
+  <!-- wp:paragraph -->
+  <p><strong>Отделение Республики Тыва Общероссийской общественной организации поддержки президентских инициатив в области здоровьесбережения нации “Общее дело”</strong></p>
+<p><strong>Координатор</strong> Михайлов Денис Герасимович</p>
+<p>тел. :8-913-356-40-44</p>
+<p>e-mail: <a class="maill" href="mailto:denis.yacut@mail.ru">denis.yacut@mail.ru</a></p>
+<p><a class="cmsms_button icon_box_button" href="/contacts/tyva/">Страница отделения</a></p>
+
+  <!-- /wp:paragraph -->
+</details>
+<!-- /wp:details --><!-- wp:details -->
+<details class="wp-block-details">
+  <summary>Удмуртская Республика</summary>
+  <!-- wp:paragraph -->
+  <p><strong>Удмуртское республиканское отделение Общероссийской общественной организации поддержки президентских инициатив в области здоровьесбережения нации “Общее дело”</strong></p>
+<p><strong>Координатор проекта</strong> Фамутдинов Ринат Зиганурович</p>
+<p>тел. 8-965-845-98-32</p>
+<p>e-mail: <a class="maill" href="mailto:odizhevsk@mail.ru">odizhevsk@mail.ru</a></p>
+<p>Группа по Удмуртии «Вконтакте» с новостной лентой и документами <a href="https://vk.com/obsheedeloregion18" target="_blank" rel="noopener noreferrer">https://vk.com/obsheedeloregion18</a></p>
+<p>Страница в Ютубе с видеозаписями занятий по трезвому образу жизни и нравственно-патриотическому воспитанию <a href="http://www.youtube.com/channel/UCldnR52MB-8BMSlrGarTY1Q" target="_blank" rel="noopener noreferrer">http://www.youtube.com/channel/UCldnR52MB-8BMSlrGarTY1Q</a></p>
+<p>Личная страница в контакте <a href="http://vk.com/odizhevsk" target="_blank" rel="noopener noreferrer">http://vk.com/odizhevsk</a></p>
+<p><a class="cmsms_button icon_box_button" href="/contacts/udmurtiya/">Страница отделения</a></p>
+
+  <!-- /wp:paragraph -->
+</details>
+<!-- /wp:details --><!-- wp:details -->
+<details class="wp-block-details">
+  <summary>Ульяновская область</summary>
+  <!-- wp:paragraph -->
+  <p><strong>Координатор </strong>Димитриева Екатерина Владиславовна</p>
+<p>тел: 8(937)875-14-24</p>
+<p>e-mail: basw7ir@ya.ru</p>
+<p><a class="cmsms_button icon_box_button" href="/contacts/uliyanovskaya/">Страница отделения</a></p>
+
+  <!-- /wp:paragraph -->
+</details>
+<!-- /wp:details --><!-- wp:details -->
+<details class="wp-block-details">
+  <summary>Ханты-Мансийский АО</summary>
+  <!-- wp:paragraph -->
+  <p class="cont1"><strong>Ханты-Мансийское региональное отделение Общероссийской общественной организации поддержки президентских инициатив в области здоровьесбережения нации “Общее дело”</strong></p>
+<p class="cont1"><strong>Председатель правления </strong>Курбатов Алексей Александрович</p>
+<p>Тел. 8-913-628-37-97</p>
+<p>E-mail <a href="mailto:a.kurbatov@rst1.ru">a.kurbatov@rst1.ru</a></p>
+<p class="cont1"><strong>Координатор</strong> <a href="http://vk.com/id267527954" target="_blank" rel="noopener noreferrer">Куренков Святослав Михайлович</a></p>
+<p class="cont1">тел. + 7(982)156-25-86</p>
+<p>Почта отделения: <a href="mailto:hmao@obshee-delo.ru">hmao@obshee-delo.ru</a></p>
+<p class="cont1"><a class="cmsms_button icon_box_button" href="/contacts/hanty-mansiyskiy-ao/">Страница отделения</a></p>
+
+  <!-- /wp:paragraph -->
+</details>
+<!-- /wp:details --><!-- wp:details -->
+<details class="wp-block-details">
+  <summary>Республика Хакасия</summary>
+  <!-- wp:paragraph -->
+  <p><strong>Хакасское республиканское отделение Общероссийской общественной организации поддержки президентских инициатив в области здоровьесбережения нации "Общее дело"</strong></p>
+<p><strong>Страница отделения Вконтакте:</strong> <a href="https://vk.com/obsheedelo19">https://vk.com/obsheedelo19</a></p>
+<p><strong>Координатор по Республике Хакасия</strong> <a href="https://vk.com/antonvdele">Калентьев Антон Борисович</a></p>
+<p>Тел.: 89235835586</p>
+<p>Е-mail: <a href="mailto:antonvdele19@mail.ru" target="_blank" rel="noopener noreferrer">antonvdele19@mail.ru</a></p>
+<p><a class="cmsms_button icon_box_button" href="/contacts/khakasiya/">Страница отделения</a></p>
+
+  <!-- /wp:paragraph -->
+</details>
+<!-- /wp:details --><!-- wp:details -->
+<details class="wp-block-details">
+  <summary>Челябинская область</summary>
+  <!-- wp:paragraph -->
+  <p><strong>Челябинское областное отделение Общероссийской общественной организации поддержки президентских инициатив в области здоровьесбережения нации «Общее дело»</strong></p>
+<p><strong>Координатор по Челябинску и Челябинской области</strong> Маленкин Евгений Викторович</p>
+<p class="cont1">тел. +7 (982) 687-28-45</p>
+<p class="cont1">e-mail: <a href="mailto:malenkin1976@gmail.com">malenkin1976@gmail.com</a></p>
+<p><strong>Координатор по Озерску</strong> Побелянец Тимофей Васильевич</p>
+<p class="cont1">тел. +7 (922) 236-42-05</p>
+<p class="cont1">e-mail: <a href="mailto:timvp25@mail.ru">timvp25@mail.ru</a></p>
+<p><strong>Координатор по Миасскому городскому округу</strong> Вельгус Татьяна Дмитриевна</p>
+<p>тел: +7 912 473-70-10</p>
+<p>email: <a href="mailto:Velgustd@mail.ru">Velgustd@mail.ru</a></p>
+<p><strong>Магнитогорское отделение Общероссийской общественной организации поддержки президентских инициатив в области здоровьесбережения нации «Общее дело»</strong></p>
+<p><strong>Координатор по городу Магнитогорску</strong>: Андрей Алексеевич Рязанов тел. +7(904)818-08-69 e-mail: <a href="mailto:obshcheedelo@inbox.ru" target="_blank" rel="noopener noreferrer">obshcheedelo@inbox.ru</a></p>
+<p><strong>Организатор работы с молодежью: </strong> Константин Николенко тел. +7 (912) 898-71-45</p>
+<p><strong>Лектор, координатор: </strong>Олег Бакиров тел. +7 (912) 300-69-57 e-mail: <a href="mailto:olegktv@mail.ru">olegktv@mail.ru</a></p>
+<p><strong>Лектор, организатор работы с молодежью:  </strong>Александр Анцифиров тел. +7 (903) 091-37-33</p>
+<p><strong>Педагог, лектор, организатор мероприятий:  </strong>Татьяна Орехова тел. +7 (919) 302-54-72 e-mail: <a href="mailto:orehovna49@mail.ru">orehovna49@mail.ru</a></p>
+<p><a class="cmsms_button icon_box_button" href="/contacts/chelyabinskaya/">Страница отделения</a></p>
+
+  <!-- /wp:paragraph -->
+</details>
+<!-- /wp:details --><!-- wp:details -->
+<details class="wp-block-details">
+  <summary>Республика Якутия (Саха)</summary>
+  <!-- wp:paragraph -->
+  <p><strong>Якутское республиканское отделение Общероссийской общественной организации поддержки президентских инициатив в области здоровьесбережения нации «Общее дело»</strong></p>
+<p><b>Адрес офиса: </b></p>
+<p><strong>Координатор отделения</strong> Колесникова Елена Карловна</p>
+<p>тел.: 8(914)226-14-98</p>
+<p>e-mail: <a href="mailto:Elena_premudraya3000@mail.ru">Elena_premudraya3000@mail.ru</a></p>
+<p><strong>Нерюнгринское районное отделение Республики Саха (Якутия) Общероссийской общественной организации поддержки президентских инициатив в области здоровьесбережения нации «Общее дело»</strong></p>
+<p><strong>Координатор отделения</strong> Григорьев Иван Борисович</p>
+<p>тел.: 8(924)164-34-43</p>
+<p>e-mail: <a href="mailto:79241643443@yandex.ru">79241643443@yandex.ru</a></p>
+<p><b>Ленское районное отделение Республики Саха (Якутия) Общероссийской общественной организации поддержки президентских инициатив в области здоровьесбережения нации «Общее дело»</b></p>
+<p><b>Координатор отделения</b> Пожидаева Юлия Евгеньевна</p>
+<p>тел.: 8 (914) <span class="wmi-callto">255-87-86</span></p>
+<p><span lang="EN-US">e-mail: </span><a class="ns-action" href="mailto:julya_ivanova_87@mail.ru" data-click-action="common.go" data-params="new_window&amp;url=%23compose%2Fmailto%3Djulya_ivanova_87%2540mail.ru"><span lang="EN-US">julya_ivanova_87@mail.ru</span></a></p>
+<p><a class="cmsms_button icon_box_button" href="/contacts/yakutiya/">Страница отделения</a></p>
+
+  <!-- /wp:paragraph -->
+</details>
+<!-- /wp:details --><!-- wp:details -->
+<details class="wp-block-details">
+  <summary>Ямало-ненецкий АО</summary>
+  <!-- wp:paragraph -->
+  <p><strong>Ямало-ненецкое региональное отделение Общероссийской общественной организации поддержки президентских инициатив в области здоровьесбережения нации «Общее дело»</strong></p>
+<p><strong>Активист</strong> Хорт Марианна Евгеньевна (г. Ноябрьск)</p>
+<p>Тел. 8-922-057-09-17</p>
+<p>Е-mail <a href="mailto:Maridem.90@mail.ru">Maridem.90@mail.ru</a></p>
+<p>ВК <a href="https://vk.com/marianna_khort">https://vk.com/marianna_khort</a></p>
+<p><strong>Активист</strong> Дрибас Иван Сергеевич (г. Новый Уренгой)</p>
+<p>Тел. 8-922-091-58-12</p>
+<p>Е-mail <a href="mailto:ivandribas@yandex.ru">ivandribas@yandex.ru</a></p>
+<p>ВК <a href="https://vk.com/ivandribas">https://vk.com/ivandribas</a></p>
+<p><a class="cmsms_button icon_box_button" href="/contacts/yamalo-nenetskiy-ao/">Страница отделения</a></p>
+
+  <!-- /wp:paragraph -->
+</details>
+<!-- /wp:details --><!-- wp:details -->
+<details class="wp-block-details">
+  <summary>Ярославская область</summary>
+  <!-- wp:paragraph -->
+  <p><strong>Ярославское областное отделение Общероссийской общественной организации поддержки президентских инициатив в области здоровьесбережения нации «Общее дело»</strong></p>
+<p><strong>Координатор по Ярославской области, лектор </strong>Разумов Александр Владиславович (г. Рыбинск)</p>
+<p>Тел. 8-960-537-36-97</p>
+<p>E-mail <a href="mailto:razumow76@list.ru">razumow76@list.ru</a></p>
+<p><strong>Лектор</strong> Валеев Алексей Александрович (г. Рыбинск)</p>
+<p>Тел. 8-909-278-37-74, 8-920-143-65-22</p>
+<p>E-mail <a href="mailto:valeev-aleks@mail.ru">valeev-aleks@mail.ru</a></p>
+<p>ВК <a href="https://vk.com/id168669620">https://vk.com/id168669620</a></p>
+<p><a class="cmsms_button icon_box_button" href="https://xn----9sbkcac6brh7h.xn--p1ai/contacts/yaroslavskaya/">Страница отделения</a></p>
+
+  <!-- /wp:paragraph -->
+</details>
+<!-- /wp:details --><!-- wp:details -->
+<details class="wp-block-details">
+  <summary>ДНР</summary>
+  <!-- wp:paragraph -->
+  <p>"ОБЩЕЕ ДЕЛО" ДНР</p>
+<p>город Донецк</p>
+<p><strong>Координатор: </strong>Пушкин Любомир Евгеньевич</p>
+<p>тел. +38-071-666-13-13</p>
+<p>e-mail: <a href="mailto:saba6@yandex.ru" target="_blank" rel="noopener noreferrer">saba6@yandex.ru</a></p>
+<p><strong>Координатор</strong>: Квасов Максим Васильевич, участковый врач психиатр-нарколог Ворошиловского района, городской подростковый нарколог г. Донецка Республиканского Наркологического Центра</p>
+<p>тел.: +7(863)308-25-00</p>
+<p>+38(099) 053 11 83, +38(071) 331 95 56</p>
+<p>e-mail: <a href="mailto:kvasovmv@mail.ru">kvasovmv@mail.ru</a></p>
+<p><a class="cmsms_button icon_box_button" href="/contacts/dnr/">Страница отделения</a></p>
+
+  <!-- /wp:paragraph -->
+</details>
+<!-- /wp:details --><!-- wp:heading {"level":2,"textAlign":"left","style":{"spacing":{"margin":{"top":"25px","bottom":"20px"}}}} --><h2 class="wp-block-heading has-text-align-left">Не нашел свой город?</h2><!-- /wp:heading --><!-- wp:paragraph --><p>Ты можешь сделать свой город лучше. Начни прямо сейчас.<br />
+Присоединяйся к команде Общего дела.</p>
+<p>Пиши на почту: <a href="mailto:web@obshee-delo.ru">web@obshee-delo.ru</a></p>
+<!-- /wp:paragraph --></div><!-- /wp:column --></div><!-- /wp:columns --></div><!-- /wp:group --><!-- wp:group {"layout":{"type":"constrained"}} --><div class="wp-block-group"><!-- wp:columns --><div class="wp-block-columns"><!-- wp:column {"width":"100%"} --><div class="wp-block-column" style="flex-basis:100%"><!-- wp:html -->
+<style type="text/css">
+#vmap{
+border: 1px solid #d1d1d1;
+border-radius:20px;
+    background-image: url('/wp-content/uploads/2016/03/globus.png');
+    background-repeat: no-repeat;
+    background-position: center center;
+    background-size: contain;
+}
+
+</style>
+
+<!-- /wp:html --></div><!-- /wp:column --></div><!-- /wp:columns --></div><!-- /wp:group --><!-- wp:group {"layout":{"type":"constrained"}} --><div class="wp-block-group"><!-- wp:columns --><div class="wp-block-columns"><!-- wp:column {"width":"100%"} --><div class="wp-block-column" style="flex-basis:100%"><!-- wp:paragraph /--></div><!-- /wp:column --></div><!-- /wp:columns --></div><!-- /wp:group --><!-- wp:group {"layout":{"type":"constrained"}} --><div class="wp-block-group"><!-- wp:columns --><div class="wp-block-columns"><!-- wp:column {"width":"50%"} --><div class="wp-block-column" style="flex-basis:50%"><!-- wp:heading {"level":3,"textAlign":"right","style":{"spacing":{"margin":{"top":"8px","bottom":"0px"}}}} --><h3 class="wp-block-heading has-text-align-right">Хотите быть в курсе наших новостей?</h3><!-- /wp:heading --></div><!-- /wp:column --><!-- wp:column {"width":"50%"} --><div class="wp-block-column" style="flex-basis:50%"><!-- wp:paragraph --><p>[wysija_form id="2"]</p>
+<!-- /wp:paragraph --></div><!-- /wp:column --></div><!-- /wp:columns --></div><!-- /wp:group -->

@@ -127,4 +127,18 @@ foreach ($profiles as $entry) {
 $slugs = array_column($profiles, 'slug');
 od_test('no slug is listed twice', count($slugs) === count(array_unique($slugs)));
 
+// -- the one page whose menu_order decides where it lists -------------------
+
+$order = od_wp_page_order();
+od_test('exactly one page is reordered', 1 === count($order));
+od_test('and it is «Центральный Аппарат»', array_key_exists('contacts/moscow', $order));
+// The accordion sorts by `menu_order` then title, so anything below every other
+// page's 0 puts it first. A 0 here would bury it at the bottom of 75 regions.
+od_test('at a menu_order below the 0 every other region carries', $order['contacts/moscow'] < 0);
+
+foreach ($order as $path => $value) {
+    od_test($path . ': a page path, resolved with get_page_by_path()', $path !== '' && strpos($path, '/') !== 0);
+    od_test($path . ': an integer menu_order', is_int($value));
+}
+
 od_test_summary();

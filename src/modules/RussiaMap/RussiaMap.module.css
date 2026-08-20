@@ -1,0 +1,99 @@
+/* Figma `image 14` (`754:606`): white, 12px radius, no border and no shadow,
+   spanning the 1240 content column — which `layout.module.css` already sets, so
+   the card only has to fill it. 46px of vertical padding is the mock's own gap
+   between the card edge and the map (665 − 572.1, halved).
+
+   **The card is shorter than the mock's 665, and the map is why.** Figma's
+   silhouette is one merged vector 991×572; ours is jqvmap's 82 paths, whose
+   drawn extent is 979×477 — the same width and a flatter shape, so at the mock's
+   width it stands 485 tall and the card lands at 577. Matching the height
+   instead would mean rendering the map 1174 wide, bleeding into the card's
+   corners, which the mock plainly does not do. What is kept is the *proportion*
+   the mock draws: air around the map is 9 % of its height here against 8 %
+   there. (The `viewBox` is cropped to that extent for the same reason — see
+   `VIEW_BOX` in `scripts/generate-russia-map.mjs`.) */
+.card {
+  width: 100%;
+  padding: 46px 24px;
+  border-radius: 12px;
+  background-color: #fff;
+
+  /* Figma has no mobile frame for this page. 24/16 is the padding the rest of
+     the mobile layouts use, and at 390 the card is 358 wide and the map 326 —
+     the vertical space 46px buys is worth more to the accordion below. */
+  @media (--mobile) {
+    padding: 24px 16px;
+  }
+}
+
+/* Natural size is the 991 the mock draws; narrower viewports scale it down and
+   `height: auto` keeps the aspect ratio, so the page never scrolls sideways. */
+.map {
+  display: block;
+  width: 100%;
+  max-width: 991px;
+  height: auto;
+  margin: 0 auto;
+}
+
+.link {
+  cursor: pointer;
+}
+
+/* Two fills and a white border, which is how the old page drew this and what it
+   said: jqvmap was configured `colorRegion` for a region, `selectRegion` grey for
+   one it had nothing for, `focusRegion` `#ae0a04` under the pointer, over a 1px
+   white `borderColor`. Figma draws the map as one merged silhouette instead — it
+   cannot show the difference, because a merged vector has no regions — so the
+   fill is the mock's and the structure is prod's.
+
+   The border is a **white stroke on every region**, so the internal edges are the
+   subjects' own boundaries rather than the anti-aliasing seam they used to be:
+   82 separate paths never share a pixel grid, and what was a hairline artefact to
+   hide is the line this now draws on purpose.
+
+   `non-scaling-stroke` because the border is a 1px line at every size — in
+   viewBox units it would be 0.5px at 1440 and 0.16px at 390, where it thinned
+   into nothing.
+
+   Only `fill` changes on hover. SVG paints in document order and has no
+   `z-index`, so a *contrasting* border on an early region would be clipped by the
+   neighbours drawn after it, while a fill swap reads correctly whatever the paint
+   order. */
+.region {
+  fill: #f8aca0;
+  stroke: #fff;
+  stroke-width: 1;
+  transition: fill 150ms ease;
+  vector-effect: non-scaling-stroke;
+}
+
+/* Grey, and not by decoration: no page answers for these twelve regions, so
+   there is nothing to click and the map should not pretend otherwise. Same
+   distinction prod's `selectRegion` made — see `next-steps.md` for the list and
+   the question it asks (a region with no branch, or a branch with no page?). */
+.unlinked {
+  fill: var(--gray-4);
+}
+
+.link:hover .region {
+  fill: var(--red-8);
+}
+
+/* Keyboard focus needs to be visible without a pointer to follow, so it gets
+   both the hover fill and an outline around the region's bounding box.
+
+   The outline is **partly hidden on most regions**, and there is no CSS fix for
+   it: SVG paints in document order and has no `z-index`, so the neighbours that
+   come after a region in the table cover the part of its ring that crosses them
+   (`transform` and `position: relative` were both tried). The fill swap is the
+   indicator that always lands — a whole region going from `#f8aca0` to
+   `#ae0a04`, 5.3:1 — and the ring is redundancy on top of it. */
+.link:focus-visible {
+  outline: 2px solid var(--red-9);
+  outline-offset: 2px;
+
+  & .region {
+    fill: var(--red-8);
+  }
+}

@@ -1332,7 +1332,7 @@ function od_strip_site_suffix(string $heading): string
 }
 
 /**
- * Drop `group > columns > column{100%}` wrappers that contain nothing.
+ * Drop `group > columns > column` wrappers whose columns all contain nothing.
  *
  * CMSMasters rows were the old theme's vertical spacing, and an empty
  * `[cmsms_row][cmsms_column data_width="1/1"][/cmsms_column][/cmsms_row]` pair
@@ -1340,13 +1340,33 @@ function od_strip_site_suffix(string $heading): string
  * empty divs — invisible, but they are what makes "the first `wp:columns` block"
  * an unreliable thing to point at, so this runs first.
  *
+ * **Any number of columns**, not just the one the spacer rows have: emptying a
+ * block leaves its column behind, and a two-column row whose halves have both
+ * been emptied is the same residue — `/contacts/`'s trailing MailPoet row is
+ * exactly that once the form and its heading are gone.
+ *
  * Idempotent: after one pass there are none left to match.
  */
 function od_drop_empty_layout_groups(string $content): string
 {
+    // A column holding nothing, or holding nothing but empty paragraph blocks —
+    // what an editor leaves behind by deleting a paragraph's text and not the
+    // block. It renders as an empty `<div>`, so it is residue by the same
+    // argument as the rest of this.
+    //
+    // **Three spellings, and they are not interchangeable.** The block editor
+    // writes the void `<!-- wp:paragraph /-->`; saving that same page through
+    // `wp_update_post()` turns it into the paired `<!-- wp:paragraph --><!--
+    // /wp:paragraph -->`; and the CMSMasters migrator wrote `<p>&nbsp;</p>`
+    // between the tags. A pattern matching one of them silently leaves the other
+    // two standing — which is how `/contacts/` kept a trailing empty group
+    // through its first conversion.
+    $empty = '<!--\s*wp:paragraph\b[^>]*(?:/-->|-->\s*(?:<p>(?:&nbsp;|\s)*</p>)?\s*<!--\s*/wp:paragraph\s*-->)';
+    $column = '\s*<!--\s*wp:column\b[^>]*-->\s*<div class="wp-block-column"[^>]*>'
+        . '\s*(?:' . $empty . '\s*)*</div>\s*<!--\s*/wp:column\s*-->';
     $pattern = '~<!--\s*wp:group\b[^>]*-->\s*<div class="wp-block-group">'
         . '\s*<!--\s*wp:columns\b[^>]*-->\s*<div class="wp-block-columns">'
-        . '\s*<!--\s*wp:column\b[^>]*-->\s*<div class="wp-block-column"[^>]*>\s*</div>\s*<!--\s*/wp:column\s*-->'
+        . '(?:' . $column . ')+'
         . '\s*</div>\s*<!--\s*/wp:columns\s*-->'
         . '\s*</div>\s*<!--\s*/wp:group\s*-->~s';
 
@@ -4824,6 +4844,83 @@ function od_pages_branch_news(string $content, int $_termId = 0): string
 }
 
 
+/** The block `/contacts/` carries instead of 50 hand-written spoilers. */
+const OD_REGIONS_SHORTCODE = '[od_regions]';
+
+/**
+ * `/contacts/` — the index, as Figma `contact` (`754:587`) draws it: a map, then
+ * one disclosure per region.
+ *
+ * Everything this drops is either dead or duplicated:
+ *
+ * - **the jqvmap furniture** — a stylesheet, jQuery 1.7.2 from googleapis, two
+ *   plugin scripts, a `<div id="vmap">` and a 49-case `onRegionClick` table, in
+ *   three `wp:html` blocks. None of it runs on this frontend (no jQuery, and
+ *   `content.rendered` is parsed, not executed), and the map is a component here;
+ * - **the 50 `wp:details` spoilers**, which are the point of the change. Each one
+ *   retyped a branch's legal name, its coordinator, a phone, an e-mail and a link
+ *   that the region's own page already holds — 25 of the 74 published regions had
+ *   no spoiler at all, and three of the 49 that did linked to `общее-дело.рф`.
+ *   `[od_regions]` (`wp/mu-plugins/od-regions.php`) renders all 75 from the pages;
+ * - **the trailing MailPoet form and its heading.** MailPoet is still active on
+ *   od-dev, so unlike `/about/ustav/` this one really expands — into a form whose
+ *   JS is the old theme's and which does nothing here.
+ *
+ * What stays is the one thing on the page that is neither: «Не нашел свой город?»
+ * and the paragraph under it. The Figma frame draws nothing below the accordion,
+ * but that is the mock being cropped, not an instruction to delete an editor's
+ * call to action.
+ *
+ * @param string $content The page's `post_content`.
+ * @param int    $_termId Unused — the runner passes the term id to every transform.
+ * @return string Rewritten content, or `$content` unchanged when the shortcode is
+ *                already there.
+ * @throws RuntimeException when the page carries no accordion to replace.
+ */
+function od_pages_contacts(string $content, int $_termId = 0): string
+{
+    if (strpos($content, OD_REGIONS_SHORTCODE) !== false) {
+        // Already converted, so the body is the editor's now and nothing above is
+        // rewritten. The layout sweep still runs: a page converted by an earlier
+        // version of this transform can hold a group whose column was emptied but
+        // not dropped, and a second `apply` is the only chance to clear it. Runs
+        // to a fixed point, so the run after that reports no change.
+        return od_drop_empty_layout_groups($content);
+    }
+
+    // All three `wp:html` blocks name the container's id, which is what tells
+    // them from an escape hatch holding content.
+    $content = preg_replace_callback(
+        '~<!--\s*wp:html\s*-->(?:(?!<!--\s*/wp:html\s*-->)[\s\S])*<!--\s*/wp:html\s*-->~',
+        static fn(array $m): string => strpos($m[0], 'vmap') === false ? $m[0] : '',
+        $content
+    );
+
+    // The container itself, and the migrator's copies of the old theme's empty
+    // spacer rows — two `&nbsp;` paragraphs and one block with nothing in it.
+    $content = preg_replace('~<!--\s*wp:paragraph\s*-->\s*<div id="vmap"[\s\S]*?<!--\s*/wp:paragraph\s*-->~', '', $content);
+    $content = preg_replace('~<!--\s*wp:paragraph\b[^>]*-->\s*<p>(?:&nbsp;|\s)*</p>\s*<!--\s*/wp:paragraph\s*-->~', '', $content);
+    $content = preg_replace('~<!--\s*wp:paragraph\s*/-->~', '', $content);
+
+    // The spoilers: the first one's place is where the shortcode goes, so the
+    // heading below it keeps its position on the page.
+    $accordion = '~<!--\s*wp:details\b[\s\S]*?<!--\s*/wp:details\s*-->~';
+    $shortcode = "<!-- wp:shortcode -->\n" . OD_REGIONS_SHORTCODE . "\n<!-- /wp:shortcode -->\n\n";
+
+    $content = preg_replace($accordion, $shortcode, $content, 1, $replaced);
+    if ($replaced !== 1) {
+        throw new RuntimeException('no `wp:details` accordion to replace with the region loop');
+    }
+
+    $content = preg_replace($accordion, '', $content);
+
+    // The MailPoet form and the heading that introduces it.
+    $content = preg_replace('~<!--\s*wp:paragraph\b[^>]*-->\s*<p>\s*\[wysija_form[^\]]*\]\s*</p>\s*<!--\s*/wp:paragraph\s*-->~', '', $content);
+    $content = preg_replace('~<!--\s*wp:heading\b[^>]*-->\s*<h3[^>]*>Хотите быть в курсе[^<]*</h3>\s*<!--\s*/wp:heading\s*-->~u', '', $content);
+
+    return od_drop_empty_layout_groups($content);
+}
+
 /**
  * Every record workstream D rewrites, newest last.
  *
@@ -4959,6 +5056,8 @@ function od_pages_registry(): array
             'label' => 'D6m · /materials/autosticker/ — Figma `car sticker` (966:8388)',
             'path' => 'materials/autosticker',
             'fix' => 'od_pages_autosticker',
+        ],
+        [
             'label' => 'D3 · /team/ — Figma `team-1` (706:1584)',
             'path' => 'team',
             'fix' => 'od_pages_team',
@@ -5119,6 +5218,15 @@ function od_pages_registry(): array
         'label' => 'D4 · /khabarovskiy/ — the same cards, outside the tree',
         'path' => 'khabarovskiy',
         'fix' => 'od_pages_branch_news',
+    ];
+
+    // Last, because it is the only entry that depends on the ones above having
+    // run: the accordion it writes renders the cards `od_pages_branch_card()`
+    // put on the 74 regional pages.
+    $registry[] = [
+        'label' => 'D4 · /contacts/ — the index accordion as `[od_regions]`, drawn from the region pages',
+        'path' => 'contacts',
+        'fix' => 'od_pages_contacts',
     ];
 
     return $registry;
