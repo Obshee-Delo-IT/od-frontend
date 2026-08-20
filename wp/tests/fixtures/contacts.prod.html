@@ -1,0 +1,316 @@
+<!-- wp:group {"layout":{"type":"constrained"}} --><div class="wp-block-group"><!-- wp:columns --><div class="wp-block-columns"><!-- wp:column {"width":"100%"} --><div class="wp-block-column" style="flex-basis:100%"><!-- wp:paragraph --><p>&nbsp;</p>
+<!-- /wp:paragraph --></div><!-- /wp:column --></div><!-- /wp:columns --></div><!-- /wp:group --><!-- wp:group {"layout":{"type":"constrained"}} --><div class="wp-block-group"><!-- wp:columns --><div class="wp-block-columns"><!-- wp:column {"width":"100%"} --><div class="wp-block-column" style="flex-basis:100%"><!-- wp:paragraph --><p>&nbsp;</p>
+<!-- /wp:paragraph --></div><!-- /wp:column --></div><!-- /wp:columns --></div><!-- /wp:group --><!-- wp:group {"layout":{"type":"constrained"}} --><div class="wp-block-group"><!-- wp:columns --><div class="wp-block-columns"><!-- wp:column {"width":"100%"} --><div class="wp-block-column" style="flex-basis:100%"><!-- wp:paragraph --><p>&nbsp;</p>
+<!-- /wp:paragraph --></div><!-- /wp:column --></div><!-- /wp:columns --></div><!-- /wp:group --><!-- wp:group {"layout":{"type":"constrained"}} --><div class="wp-block-group"><!-- wp:columns --><div class="wp-block-columns"><!-- wp:column {"width":"100%"} --><div class="wp-block-column" style="flex-basis:100%"><!-- wp:html -->
+<link href="../wp-includes/css/jqvmap.css" media="screen" rel="stylesheet" type="text/css" />
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js" type="text/javascript"></script>
+<script src="../wp-includes/js/jquery.vmap.js" type="text/javascript"></script>
+<script src="../wp-includes/js/jquery.vmap.russia.js" type="text/javascript"></script>
+
+
+<!-- /wp:html --></div><!-- /wp:column --></div><!-- /wp:columns --></div><!-- /wp:group --><!-- wp:group {"layout":{"type":"constrained"}} --><div class="wp-block-group"><!-- wp:columns --><div class="wp-block-columns"><!-- wp:column {"width":"100%"} --><div class="wp-block-column" style="flex-basis:100%"><!-- wp:paragraph --><p>&nbsp;</p>
+<!-- /wp:paragraph --></div><!-- /wp:column --></div><!-- /wp:columns --></div><!-- /wp:group --><!-- wp:group {"layout":{"type":"constrained"}} --><div class="wp-block-group"><!-- wp:columns --><div class="wp-block-columns"><!-- wp:column {"width":"100%"} --><div class="wp-block-column" style="flex-basis:100%"><!-- wp:paragraph --><div id="vmap" style="width: 100%;height: 650px;text-align: center"></div>
+<!-- /wp:paragraph --></div><!-- /wp:column --></div><!-- /wp:columns --></div><!-- /wp:group --><!-- wp:group {"layout":{"type":"constrained"}} --><div class="wp-block-group"><!-- wp:columns --><div class="wp-block-columns"><!-- wp:column {"width":"100%"} --><div class="wp-block-column" style="flex-basis:100%"><!-- wp:html -->
+<div class="custom_js">
+<script type="text/javascript">
+    var data_obj = {
+
+    };
+
+    colorRegion = 'rgba(209, 77, 66, 0.8)'; 
+    focusRegion = '#ae0a04'; 
+    selectRegion = 'rgba(205, 205, 205, 0.8)'; 
+
+    highlighted_states = {};
+
+    
+    for(iso in data_obj)
+    {
+        highlighted_states[iso]  = selectRegion;
+    }
+
+    $(document).ready(function() {
+
+        $(document).on('click','#contactsCollaps .panel-heading',function(){
+            if($(this).parents('.panel').find('.panel-collapse.collapse').hasClass('in'))
+            {
+                $(this).parents('.panel').find('.panel-collapse.collapse').removeClass('in').attr('style','height: 0px;');
+            } else {
+                $(this).parents('.panel').find('.panel-collapse.collapse').addClass('in').attr('style','');
+            }
+        });
+
+        $('#vmap').vectorMap({
+            map: 'russia',
+            backgroundColor: '#ffffff',
+            borderColor: '#ffffff',
+            borderWidth: 1,
+            color: colorRegion,
+            colors: highlighted_states,
+            hoverOpacity: null,
+            enableZoom: false,
+            showTooltip: true,
+
+            
+            onLabelShow: function(event, label, code){
+                name = '<strong>'+label.text()+'</strong><br>';
+                if(data_obj[code]){
+                    list_obj = '<ul>';
+                    for(ob in data_obj[code]){
+                        list_obj += '<li>'+data_obj[code][ob]+'</li>';
+                    }
+                    list_obj += '</ul>';
+                }else{
+                    list_obj = '';
+                }
+                label.html(name + list_obj);
+                list_obj = '';
+            },
+            
+            onRegionClick: function(element, code, region){
+                switch (code) {
+case "al": parent.location.assign("/contacts/altayskiy-kray/"); break;
+case "am": parent.location.assign("/contacts/amurskaya/"); break;
+/*case "ar": parent.location.assign("/contacts/arkhangelskaya/"); break;*/
+/*case "bl": parent.location.assign("/contacts/belgorodskaya/"); break;*/
+/*case "bn": parent.location.assign("/contacts/bryanskaya/"); break;*/
+case "bs": parent.location.assign("/contacts/bashkortostan/"); break;
+case "br": parent.location.assign("/contacts/buryatiya/"); break;
+case "cl": parent.location.assign("/contacts/chelyabinskaya/"); break;
+/*case "cu": parent.location.assign("/contacts/chuvashiya/"); break;*/
+/*case "eu": parent.location.assign("/contacts/evreiskaya-ao/"); break;*/
+case "hk": parent.location.assign("/contacts/khakasiya/"); break;
+case "ht": parent.location.assign("/contacts/hanty-mansiyskiy-ao/"); break;
+case "ir": parent.location.assign("/contacts/irkutskaya/"); break;
+/*case "iv": parent.location.assign("/contacts/ivanovskaya/"); break;*/
+case "ka": parent.location.assign("/contacts/kamchatskiy-kray/"); break;
+/*case "kj": parent.location.assign("/contacts/kalujskaya/"); break;*/
+case "kk": parent.location.assign("/contacts/kalmykiya/"); break;
+case "kl": parent.location.assign("/contacts/karelia/"); break;
+case "km": parent.location.assign("/contacts/kemerovo/"); break;
+case "ki": parent.location.assign("/contacts/kirovskaya/"); break;
+case "ko": parent.location.assign("/contacts/komi/"); break;
+case "ks": parent.location.assign("/contacts/krasnodarskiy-kray/"); break;
+case "kr": parent.location.assign("/contacts/krasnoyarskiy-kray/"); break;
+case "kt": parent.location.assign("/contacts/kostromskaya/"); break;
+/*case "ky": parent.location.assign("/contacts/kurskaya/"); break;*/
+case "le": parent.location.assign("/contacts/st-petersburg/"); break;
+case "ma": parent.location.assign("/contacts/magadanskaya/"); break;
+case "mc": parent.location.assign("/contacts/moscow-oblast/"); break;
+case "nn": parent.location.assign("/contacts/nizegorodskaya/"); break;
+case "no": parent.location.assign("/contacts/novgorodskaya/"); break;
+case "nv": parent.location.assign("/contacts/novosibirskaya/"); break;
+/*case "ob": parent.location.assign("/contacts/orenburgskaya/"); break;*/
+case "om": parent.location.assign("/contacts/omskaya/"); break;
+/*case "or": parent.location.assign("/contacts/orlovskaya/"); break;*/
+case "pe": parent.location.assign("/contacts/permskiy-kray/"); break;
+/*case "pr": parent.location.assign("/contacts/primorskiy-kray/"); break;*/
+case "ps": parent.location.assign("/contacts/pskovskaya/"); break;
+case "sa": parent.location.assign("/contacts/yakutiya/"); break;
+/*case "so": parent.location.assign("/contacts/alaniya/"); break;*/
+case "sh": parent.location.assign("/contacts/sakhalinskaya/"); break;
+/*case "sr": parent.location.assign("/contacts/saratovskaya/"); break;*/
+case "ss": parent.location.assign("/contacts/samarskaya/"); break;
+case "st": parent.location.assign("/contacts/stavropolskiy-kray/"); break;
+case "sv": parent.location.assign("/contacts/sverdlovskaya/"); break;
+case "ta": parent.location.assign("/contacts/tatarstan/"); break;
+case "tb": parent.location.assign("/contacts/tambovskaya/"); break;
+case "tm": parent.location.assign("/contacts/tomskaya/"); break;
+/*case "tr": parent.location.assign("/contacts/tverskaya/"); break;*/
+/*case "tu": parent.location.assign("/contacts/tyumenskaya/"); break;*/
+case "tl": parent.location.assign("/contacts/tulskaya/"); break;
+/*case "tv": parent.location.assign("/contacts/tyva/"); break;*/
+case "ud": parent.location.assign("/contacts/udmurtiya/"); break;
+case "ul": parent.location.assign("/contacts/uliyanovskaya/"); break;
+case "vl": parent.location.assign("/contacts/volgogradskaya/"); break;
+case "vm": parent.location.assign("/contacts/vladimirskaya/"); break;
+case "vn": parent.location.assign("/contacts/voronejskaya/"); break;
+case "vo": parent.location.assign("/contacts/vologodskaya/"); break;
+case "cr": parent.location.assign("/contacts/krym/"); break;
+/*case "rz": parent.location.assign("/contacts/ryazanskaya/"); break;*/
+case "ro": parent.location.assign("/contacts/rostovskaya/"); break;
+case "ya": parent.location.assign("/contacts/yamalo-nenetskiy-ao/"); break;
+case "yr": parent.location.assign("/contacts/yaroslavskaya/"); break;
+case "zb": parent.location.assign("/contacts/zabaikalskiy-kray/"); break;
+}
+            },
+            onRegionOver: function(event, code, region)
+            {
+                if (
+code != "al" && 
+code != "am" && 
+/*code != "ar" && */
+/*code != "bl" &&*/
+code != "br" && 
+code != "bn" && 
+code != "bs" && 
+code != "cl" && 
+/*code != "cu" &&*/
+code != "cr" &&  
+/*code != "eu" && */
+code != "hk" && 
+code != "ht" && 
+code != "ir" && 
+/*code != "iv" && */
+code != "ka" && 
+/*code != "kj" && */
+code != "ki" && 
+code != "kk" && 
+code != "kl" && 
+code != "km" && 
+code != "ko" && 
+code != "kr" && 
+code != "ks" && 
+code != "kt" && 
+/*code != "ky" && */
+code != "le" && 
+code != "ma" && 
+code != "mc" && 
+code != "nn" && 
+code != "no" && 
+code != "nv" && 
+/*code != "ob" &&*/
+code != "om" && 
+/*code != "or" && */
+code != "pe" &&
+/*code != "pr" && */
+code != "ps" && 
+/*code != "rz" && */
+code != "ro" &&
+code != "sa" && 
+code != "sh" &&   
+code != "so" && 
+/*code != "sr" && */
+code != "ss" && 
+code != "st" && 
+code != "sv" && 
+code != "ta" &&
+code != "tb" &&
+/*code != "tm" && */
+code != "tr" && 
+/*code != "tu" && */
+code != "tl" && 
+/*code != "tv" && */
+code != "ud" && 
+code != "ul" && 
+code != "vl" && 
+code != "vm" && 
+code != "vn" && 
+code != "vo" &&
+code != "ya" &&
+code != "yr" &&
+code != "zb")
+                {
+                    document.body.style.cursor = "default";
+                }
+                else{
+                    document.body.style.cursor = "pointer";
+                }
+            }
+        });
+
+        jQuery('#vmap').vectorMap('set', 'colors', {
+ad: 'rgba(205, 205, 205, 0.8)',
+/*am: 'rgba(205, 205, 205, 0.8)',*/
+ar: 'rgba(205, 205, 205, 0.8)',
+as: 'rgba(205, 205, 205, 0.8)',
+bl: 'rgba(205, 205, 205, 0.8)',
+/*br: 'rgba(205, 205, 205, 0.8)',*/
+bn: 'rgba(205, 205, 205, 0.8)',
+cc: 'rgba(205, 205, 205, 0.8)',
+ch: 'rgba(205, 205, 205, 0.8)',
+cu: 'rgba(205, 205, 205, 0.8)',
+da: 'rgba(205, 205, 205, 0.8)',
+eu: 'rgba(205, 205, 205, 0.8)',
+ha: 'rgba(205, 205, 205, 0.8)',
+/*hk: 'rgba(205, 205, 205, 0.8)',*/
+in: 'rgba(205, 205, 205, 0.8)',
+iv: 'rgba(205, 205, 205, 0.8)',
+/*ka: 'rgba(205, 205, 205, 0.8)',*/
+kb: 'rgba(205, 205, 205, 0.8)',
+kc: 'rgba(205, 205, 205, 0.8)',
+/*ki: 'rgba(205, 205, 205, 0.8)',*/
+kj: 'rgba(205, 205, 205, 0.8)',
+/*kk: 'rgba(205, 205, 205, 0.8)',*/
+/*kl: 'rgba(205, 205, 205, 0.8)',*/
+kn: 'rgba(205, 205, 205, 0.8)',
+ku: 'rgba(205, 205, 205, 0.8)',
+ky: 'rgba(205, 205, 205, 0.8)',
+lp: 'rgba(205, 205, 205, 0.8)',
+lt: 'rgba(205, 205, 205, 0.8)',
+/*ma: 'rgba(205, 205, 205, 0.8)',*/
+ml: 'rgba(205, 205, 205, 0.8)',
+mr: 'rgba(205, 205, 205, 0.8)',
+mu: 'rgba(205, 205, 205, 0.8)',
+ne: 'rgba(205, 205, 205, 0.8)',
+/*nv: 'rgba(205, 205, 205, 0.8)',*/
+ob: 'rgba(205, 205, 205, 0.8)',
+or: 'rgba(205, 205, 205, 0.8)',
+/*pe: 'rgba(205, 205, 205, 0.8)',*/
+pr: 'rgba(205, 205, 205, 0.8)',
+tv: 'rgba(205, 205, 205, 0.8)',
+pz: 'rgba(205, 205, 205, 0.8)',
+/*ro: 'rgba(205, 205, 205, 0.8)',*/
+/*rz: 'rgba(205, 205, 205, 0.8)',*/
+/*sa: 'rgba(205, 205, 205, 0.8)',*/
+/*sh: 'rgba(205, 205, 205, 0.8)',*/
+sm: 'rgba(205, 205, 205, 0.8)',
+so: 'rgba(205, 205, 205, 0.8)',
+/*tb: 'rgba(205, 205, 205, 0.8)',*/
+/*tl: 'rgba(205, 205, 205, 0.8)',*/
+/*tm: 'rgba(205, 205, 205, 0.8)',*/
+tr: 'rgba(205, 205, 205, 0.8)',
+tu: 'rgba(205, 205, 205, 0.8)',
+/*tl: 'rgba(205, 205, 205, 0.8)',*/
+/*ya: 'rgba(205, 205, 205, 0.8)'*/
+/*yr: 'rgba(205, 205, 205, 0.8)',*/
+/*zb: 'rgba(205, 205, 205, 0.8)'*/});
+});
+    
+    $(document).ready(function() {
+        for(region in data_obj){
+            for(obj in data_obj[region]){
+                $('.list-object').append('<li><a href="'+selectRegion+'" id="'+region+'" class="focus-region">'+data_obj[region][obj]+' ('+region+')</a></li>');
+            }
+        }
+    });
+
+    
+    $(function(){
+        $('.focus-region').mouseover(function(){
+            iso = $(this).prop('id');
+            fregion = {};
+            fregion[iso] = focusRegion;
+            $('#vmap').vectorMap('set', 'colors', fregion);
+        });
+        $('.focus-region').mouseout(function(){
+            c = $(this).attr('href');
+            cl = (c === '#')?colorRegion:c;
+            iso = $(this).prop('id');
+            fregion = {};
+            fregion[iso] = cl;
+            $('#vmap').vectorMap('set', 'colors', fregion);
+        });
+    });
+
+</script>
+</div>
+<!-- /wp:html --></div><!-- /wp:column --></div><!-- /wp:columns --></div><!-- /wp:group --><!-- wp:group {"layout":{"type":"constrained"}} --><div class="wp-block-group"><!-- wp:columns --><div class="wp-block-columns"><!-- wp:column {"width":"100%"} --><div class="wp-block-column" style="flex-basis:100%"><!-- wp:paragraph --><div class="od-branches">[pagelist child_of="529" depth="1" class="page-list-cols-3" exclude="29933,27429"]</div>
+<!-- /wp:paragraph --><!-- wp:heading {"level":2,"textAlign":"left","style":{"spacing":{"margin":{"top":"25px","bottom":"20px"}}}} --><h2 class="wp-block-heading has-text-align-left">Не нашел свой город?</h2><!-- /wp:heading --><!-- wp:paragraph --><p>Ты можешь сделать свой город лучше. Начни прямо сейчас.<br />
+Присоединяйся к команде Общего дела.</p>
+<p>Пиши на почту: <a href="mailto:web@obshee-delo.ru">web@obshee-delo.ru</a></p>
+<!-- /wp:paragraph --></div><!-- /wp:column --></div><!-- /wp:columns --></div><!-- /wp:group --><!-- wp:group {"layout":{"type":"constrained"}} --><div class="wp-block-group"><!-- wp:columns --><div class="wp-block-columns"><!-- wp:column {"width":"100%"} --><div class="wp-block-column" style="flex-basis:100%"><!-- wp:html -->
+<style type="text/css">
+#vmap{
+border: 1px solid #d1d1d1;
+border-radius:20px;
+    background-image: url('/wp-content/uploads/2016/03/globus.png');
+    background-repeat: no-repeat;
+    background-position: center center;
+    background-size: contain;
+}
+
+</style>
+
+<!-- /wp:html --></div><!-- /wp:column --></div><!-- /wp:columns --></div><!-- /wp:group --><!-- wp:group {"layout":{"type":"constrained"}} --><div class="wp-block-group"><!-- wp:columns --><div class="wp-block-columns"><!-- wp:column {"width":"100%"} --><div class="wp-block-column" style="flex-basis:100%"><!-- wp:paragraph --><!-- /wp:paragraph --></div><!-- /wp:column --></div><!-- /wp:columns --></div><!-- /wp:group --><!-- wp:group {"layout":{"type":"constrained"}} --><div class="wp-block-group"><!-- wp:columns --><div class="wp-block-columns"><!-- wp:column {"width":"50%"} --><div class="wp-block-column" style="flex-basis:50%"><!-- wp:heading {"level":3,"textAlign":"right","style":{"spacing":{"margin":{"top":"8px","bottom":"0px"}}}} --><h3 class="wp-block-heading has-text-align-right">Хотите быть в курсе наших новостей?</h3><!-- /wp:heading --></div><!-- /wp:column --><!-- wp:column {"width":"50%"} --><div class="wp-block-column" style="flex-basis:50%"><!-- wp:paragraph --><p>[wysija_form id="2"]</p>
+<!-- /wp:paragraph --></div><!-- /wp:column --></div><!-- /wp:columns --></div><!-- /wp:group -->

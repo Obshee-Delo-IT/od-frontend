@@ -251,14 +251,31 @@ function od_pages_healthy_kids(string $content, int $filmTagId): string
 
     preg_match('#Цель программы</h2>\s*<p>(.*?)</p>#s', $content, $goal);
     preg_match('#<p><span class="fontstyle0">(.*?)</span></p>#s', $content, $note);
-    preg_match_all('#<li>(.*?)</li>#s', $content, $found, PREG_SET_ORDER);
     preg_match_all('#<h3><a href="([^"]+)">([^<]+)</a></h3>#', $content, $links, PREG_SET_ORDER);
 
+    $buttons = array_map(
+        static fn(array $link): array => ['href' => $link[1], 'label' => od_pages_inline_text($link[2])],
+        $links
+    );
+
+    // «Фильмы программы» is one linked heading on od-dev and a plain heading over
+    // a two-item list on prod — the playlists are the same two urls. Taken out of
+    // the body before the tasks are counted, because those are `<li>`s too.
+    $prose = $content;
+    if (preg_match('#<h3>Фильмы программы[^<]*</h3>\s*<ul>(.*?)</ul>#s', $content, $films)) {
+        preg_match_all('#<li><a href="([^"]+)">([^<]+)</a></li>#s', $films[1], $rows, PREG_SET_ORDER);
+        foreach ($rows as $row) {
+            $buttons[] = ['href' => $row[1], 'label' => 'Фильмы ' . od_pages_inline_text($row[2])];
+        }
+        $prose = str_replace($films[0], '', $content);
+    }
+
+    preg_match_all('#<li>(.*?)</li>#s', $prose, $found, PREG_SET_ORDER);
     $tasks = array_map(static fn(array $task): string => od_pages_inline_text($task[1]), $found);
 
-    if ($logo === null || count($tasks) !== 3 || count($links) !== 2) {
+    if ($logo === null || count($tasks) !== 3 || count($buttons) < 2) {
         throw new RuntimeException(
-            sprintf('unexpected input: logo=%d tasks=%d links=%d', $logo !== null, count($tasks), count($links))
+            sprintf('unexpected input: logo=%d tasks=%d links=%d', $logo !== null, count($tasks), count($buttons))
         );
     }
     if (empty($goal[1]) || empty($note[1])) {
@@ -271,11 +288,11 @@ function od_pages_healthy_kids(string $content, int $filmTagId): string
     $out .= od_pages_goal_card(
         od_pages_inline_text($goal[1]),
         array_map(
-            static fn(array $link): array => [
-                'href' => od_pages_site_link($link[1]),
-                'label' => od_pages_inline_text($link[2]),
+            static fn(array $button): array => [
+                'href' => od_pages_site_link($button['href']),
+                'label' => $button['label'],
             ],
-            $links
+            $buttons
         )
     );
     $out .= od_pages_heading(2, 'Задачи программы');
@@ -829,6 +846,19 @@ function od_pages_kinescope(string $youtubeUrl): string
 
     [$id, $title] = OD_KINESCOPE_EMBEDS[$found[1]];
 
+    return od_pages_kinescope_player($id, $title);
+}
+
+/**
+ * The same player, for a page that already names its Kinescope video — prod's
+ * `/about/` carries the `<iframe>` in a `wp:html` block rather than the
+ * `wp:embed` of a YouTube url that od-dev has, so there is nothing to look up.
+ *
+ * @param string $id    Kinescope id, as it appears in the embed url.
+ * @param string $title The `title` attribute, which is what a screen reader reads.
+ */
+function od_pages_kinescope_player(string $id, string $title): string
+{
     return "<!-- wp:html -->\n"
         . '<figure class="wp-block-embed is-type-video wp-block-embed-kinescope wp-embed-aspect-16-9 wp-has-aspect-ratio">'
         . '<div class="wp-block-embed__wrapper">'
@@ -959,6 +989,13 @@ function od_pages_asset_column(string $column): array
 
     if (preg_match('#\[cmsms_audio\](.*?)\[/cmsms_audio\]#s', $column, $audio)) {
         $out['audio'] = trim($audio[1]);
+    }
+
+    // Prod's clone carries a `core/audio` block where od-dev still holds the
+    // shortcode — the two installs were migrated by different revisions of
+    // `cmsms-gutenberg-upgrade`, and it is the same upload either way.
+    if ($out['audio'] === '' && preg_match('#<audio[^>]+src="([^"]+)"#', $column, $block)) {
+        $out['audio'] = trim($block[1]);
     }
 
     return $out;
@@ -3966,6 +4003,9 @@ const OD_ABOUT_TASK_ICONS = ['education', 'film', 'law', 'materials'];
  */
 const OD_ABOUT_LEAD_SPLIT = ', активно занимающаяся';
 
+/** The `<iframe title>` of the section's hero, whichever way the video is stored. */
+const OD_ABOUT_VIDEO_TITLE = 'Что такое ОБЩЕЕ ДЕЛО. Презентация организации';
+
 /**
  * `/about/` — Figma `about` (`706:70`) + `about-learn-more` (`706:1257`), D6w.
  *
@@ -4056,13 +4096,19 @@ function od_pages_about(string $content, int $_filmTagId = 0): string
     }
 
     $presentation = od_about_link($content, 'Скачать презентацию');
-    if (!preg_match('~<!-- wp:embed \{"url":"([^"]+)"~', $content, $video)) {
+
+    // Two shapes, one player. od-dev stores a `wp:embed` of the YouTube url and
+    // the id is looked up; prod's own page already holds the Kinescope
+    // `<iframe>`, and then the page's own id is the one to keep — reading a
+    // volatile value out of the body rather than writing it in here.
+    if (preg_match('~<iframe[^>]+src="https://kinescope\.io/embed/([A-Za-z0-9_-]+)"~', $content, $frame)) {
+        $out = od_pages_kinescope_player($frame[1], OD_ABOUT_VIDEO_TITLE);
+    } elseif (preg_match('~<!-- wp:embed \{"url":"([^"]+)"~', $content, $video)) {
+        $out = od_pages_kinescope($video[1]);
+    } else {
         throw new RuntimeException('unexpected input: no video embed');
     }
 
-    // Kinescope, not the stored YouTube frame: the same call every other page in
-    // this file makes, and the clip is on Kinescope under the same title.
-    $out = od_pages_kinescope($video[1]);
     $out .= od_pages_paragraph($presentation);
 
     $out .= od_pages_columns([
@@ -4388,6 +4434,13 @@ function od_pages_samarskaya_coordinators(string $content, int $termId): string
 
     $placeholder = '"taxQuery":{"post_tag":[-1]}';
     $found = substr_count($content, $placeholder);
+    // Prod's own page never got the broken query: it carries the news loop and
+    // nothing else, so there is nothing to repoint and this entry is a no-op
+    // there. The loop is what tells that page from a page this was aimed at by
+    // mistake, which still has to be refused.
+    if ($found === 0 && strpos($content, '<!-- wp:query ') !== false) {
+        return $content;
+    }
     if ($found !== 1) {
         throw new RuntimeException(sprintf('unexpected input: %d "match nothing" tax queries, expected 1', $found));
     }
@@ -5054,6 +5107,14 @@ function od_pages_branch_news(string $content, int $_termId = 0): string
 const OD_REGIONS_SHORTCODE = '[od_regions]';
 
 /**
+ * Where the jqvmap container and the `[pagelist]` branch list were, held for one
+ * function only. Neither reaches the database: one of them becomes the region
+ * loop and the rest are removed, in every branch of {@see od_pages_contacts()}.
+ */
+const OD_CONTACTS_MAP_MARKER = '<!-- od:contacts-map -->';
+const OD_CONTACTS_LIST_MARKER = '<!-- od:contacts-list -->';
+
+/**
  * `/contacts/` — the index, as Figma `contact` (`754:587`) draws it: a map, then
  * one disclosure per region.
  *
@@ -5104,7 +5165,26 @@ function od_pages_contacts(string $content, int $_termId = 0): string
 
     // The container itself, and the migrator's copies of the old theme's empty
     // spacer rows — two `&nbsp;` paragraphs and one block with nothing in it.
-    $content = preg_replace('~<!--\s*wp:paragraph\s*-->\s*<div id="vmap"[\s\S]*?<!--\s*/wp:paragraph\s*-->~', '', $content);
+    // The map's own paragraph leaves a marker behind: it is the fallback
+    // insertion point below, and it is dropped again if it is not used.
+    $content = preg_replace(
+        '~<!--\s*wp:paragraph\s*-->\s*<div id="vmap"[\s\S]*?<!--\s*/wp:paragraph\s*-->~',
+        OD_CONTACTS_MAP_MARKER,
+        $content,
+        1,
+        $mapped
+    );
+
+    // Prod lists its branches with `[pagelist]`, from a plugin the headless prep
+    // deletes — so the shortcode is dead text there, and its place is the most
+    // faithful home for the region loop.
+    $content = preg_replace(
+        '~<!--\s*wp:paragraph\s*-->\s*<div class="od-branches">\s*\[pagelist[^\]]*\]\s*</div>\s*<!--\s*/wp:paragraph\s*-->~',
+        OD_CONTACTS_LIST_MARKER,
+        $content,
+        1,
+        $listed
+    );
     $content = preg_replace('~<!--\s*wp:paragraph\b[^>]*-->\s*<p>(?:&nbsp;|\s)*</p>\s*<!--\s*/wp:paragraph\s*-->~', '', $content);
     $content = preg_replace('~<!--\s*wp:paragraph\s*/-->~', '', $content);
 
@@ -5115,14 +5195,75 @@ function od_pages_contacts(string $content, int $_termId = 0): string
 
     $content = preg_replace($accordion, $shortcode, $content, 1, $replaced);
     if ($replaced !== 1) {
-        throw new RuntimeException('no `wp:details` accordion to replace with the region loop');
+        // Prod's own page has no spoilers at all: there the region links were
+        // drawn by the jqvmap plugin's JavaScript, and od-dev's 50 `wp:details`
+        // are a hand edit that never travelled. The map's place is the same
+        // place, so that is where the loop goes.
+        if ($listed === 1) {
+            $content = str_replace(OD_CONTACTS_LIST_MARKER, $shortcode, $content);
+        } elseif ($mapped === 1) {
+            $content = str_replace(OD_CONTACTS_MAP_MARKER, $shortcode, $content);
+        } else {
+            throw new RuntimeException('no accordion, no `[pagelist]` and no `#vmap` to replace with the region loop');
+        }
     }
 
     $content = preg_replace($accordion, '', $content);
+    $content = str_replace([OD_CONTACTS_MAP_MARKER, OD_CONTACTS_LIST_MARKER], '', $content);
 
     // The MailPoet form and the heading that introduces it.
     $content = preg_replace('~<!--\s*wp:paragraph\b[^>]*-->\s*<p>\s*\[wysija_form[^\]]*\]\s*</p>\s*<!--\s*/wp:paragraph\s*-->~', '', $content);
     $content = preg_replace('~<!--\s*wp:heading\b[^>]*-->\s*<h3[^>]*>Хотите быть в курсе[^<]*</h3>\s*<!--\s*/wp:heading\s*-->~u', '', $content);
+
+    return od_drop_empty_layout_groups($content);
+}
+
+/**
+ * Whatever `cmsms-gutenberg-upgrade` could not convert, wherever it is left.
+ *
+ * The migrator covers 26 tags; four survive it on the prod clone, and this is
+ * where they die rather than in a branch of the migrator, because none of them
+ * is a conversion — three are furniture that means nothing without the old theme
+ * and the fourth is a plugin call whose plugin is still installed:
+ *
+ * - `[cmsms_sidebar sidebar="division-list"]` on `/news/` and `/добровольчество/`
+ *   printed a widget area. Headless there is no widget area but `sidebar_bottom`
+ *   ({@see wp/mu-plugins/od-sidebars.php}), and nothing reads this one.
+ * - `[cmsms_selected_products]` on `/pppuiv-constructor/` was a WooCommerce
+ *   product grid; WooCommerce went with the plugin prune.
+ * - `[cmsms_contact_form form_cf7="20138{|}…"]` on `/about/ostavit-otziv/` is
+ *   the отзыв form, and Contact Form 7 is one of the two plugins that stay — so
+ *   it becomes CF7's own shortcode, with the id the old wrapper carried.
+ *
+ * A sweep rather than four registry entries: the tags are what is addressed, not
+ * the pages, and prod may hold one somewhere this list has not seen.
+ *
+ * @param string $content Stored `post_content`.
+ * @param int    $_termId Unused — the runner passes the term id to every transform.
+ * @return string Rewritten content, or `$content` unchanged when no tag is left.
+ */
+function od_pages_dead_shortcodes(string $content, int $_termId = 0): string
+{
+    if (strpos($content, '[cmsms_') === false) {
+        return $content; // Nothing of the old builder here.
+    }
+
+    // The form first: it is the one tag that becomes something rather than
+    // nothing, and the id is read out of the page for the usual reason.
+    $content = preg_replace_callback(
+        '~\[cmsms_contact_form\b[^\]]*\]~',
+        static function (array $found): string {
+            if (!preg_match('~form_cf7="(\d+)~', $found[0], $form)) {
+                throw new RuntimeException('unexpected input: a cmsms contact form with no CF7 id');
+            }
+
+            return sprintf('[contact-form-7 id="%s"]', $form[1]);
+        },
+        $content
+    );
+
+    $content = preg_replace('~\[cmsms_sidebar\b[^\]]*\]~', '', $content);
+    $content = preg_replace('~\[cmsms_selected_products\b[^\]]*\]~', '', $content);
 
     return od_drop_empty_layout_groups($content);
 }
@@ -5433,6 +5574,17 @@ function od_pages_registry(): array
         'label' => 'D4 · /contacts/ — the index accordion as `[od_regions]`, drawn from the region pages',
         'path' => 'contacts',
         'fix' => 'od_pages_contacts',
+    ];
+
+    // After every page-shaped entry above, because those rewrite whole bodies and
+    // this only picks what they leave — on the prod clone six of the ten pages
+    // that still held a `[cmsms_*]` tag were rewritten by an entry above and lost
+    // it on the way.
+    $registry[] = [
+        'label' => 'A7 · every page — the four `[cmsms_*]` tags the migrator does not convert',
+        'post_type' => 'page',
+        'sweep' => true,
+        'fix' => 'od_pages_dead_shortcodes',
     ];
 
     return $registry;
