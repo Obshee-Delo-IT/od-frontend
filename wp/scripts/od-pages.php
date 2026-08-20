@@ -2526,18 +2526,13 @@ function od_pages_post_cards(string $content, int $_filmTagId = 0): string
 
     $attrs['className'] = 'od-post-cards';
 
-    return sprintf("<!-- wp:query %s -->\n<div class=\"wp-block-query od-post-cards\">\n", od_pages_json($attrs))
-        . "<!-- wp:post-template {\"layout\":{\"type\":\"grid\",\"columnCount\":3}} -->\n"
-        . "<!-- wp:post-featured-image {\"isLink\":true} /-->\n"
+    return od_pages_card_query(
+        $attrs,
+        'od-post-cards',
+        "<!-- wp:post-featured-image {\"isLink\":true} /-->\n"
         . "<!-- wp:post-title {\"isLink\":true} /-->\n"
         . "<!-- wp:post-excerpt /-->\n"
-        . "<!-- /wp:post-template -->\n\n"
-        . "<!-- wp:query-pagination {\"paginationArrow\":\"chevron\",\"showLabel\":false} -->\n"
-        . "<!-- wp:query-pagination-previous /-->\n"
-        . "<!-- wp:query-pagination-numbers /-->\n"
-        . "<!-- wp:query-pagination-next /-->\n"
-        . "<!-- /wp:query-pagination -->\n"
-        . "</div>\n<!-- /wp:query -->\n";
+    );
 }
 
 /**
@@ -4426,7 +4421,8 @@ const OD_BRANCH_ROLE = '(?:координатор|руководител|пре�
  * an «e-mail:» with nothing after them.
  */
 const OD_BRANCH_LABEL = '(?:тел(?:\.|ефон)?|моб(?:\.|ильный)?|e-?mail|почта|адрес(?:\s+офиса)?|факс|сайт'
-    . '|(?:группа\s+в\s+)?[«"]?вконтакте[»"]?|вк|vk|телеграмм?|telegram)';
+    . '|(?:группа\s+в\s+)?[«"]?вконтакте[»"]?|вк|vk|телеграмм?|telegram'
+    . '|ссылка(?:\s+вк(?:онтакте)?)?|страница(?:\s+в\s+вк\w*)?|группа|сайт)';
 
 /**
  * `/contacts/<region>/` — the «Об отделении» accordion as the card Figma
@@ -4522,6 +4518,7 @@ function od_branch_blocks(array $lines): string
 {
     $blocks = '';
     $titled = false;
+    $seen   = [];
 
     foreach ($lines as $line) {
         $text = od_line_text($line);
@@ -4541,14 +4538,42 @@ function od_branch_blocks(array $lines): string
         $person = od_branch_person_rows($line);
         if ($person !== null) {
             $blocks .= $person;
+            $seen = array_merge($seen, od_branch_hrefs($person));
             continue;
         }
 
         $contact = od_branch_contact_row($line);
-        $blocks .= $contact === null ? od_pages_paragraph($line) : $contact;
+        if ($contact === null) {
+            $blocks .= od_pages_paragraph($line);
+            continue;
+        }
+
+        // Several of these bodies state the same address twice — once beside the
+        // coordinator's name and once as a line of its own («ссылка Вк:
+        // https://vk.com/…»). Two identical rows under one glyph is not a
+        // second way to reach them.
+        $hrefs = od_branch_hrefs($contact);
+        if (array_intersect($hrefs, $seen) !== []) {
+            continue;
+        }
+
+        $seen = array_merge($seen, $hrefs);
+        $blocks .= $contact;
     }
 
     return $blocks;
+}
+
+/**
+ * Every `href` in a block of markup — what a row has already offered the reader.
+ *
+ * @return array<int, string>
+ */
+function od_branch_hrefs(string $html): array
+{
+    preg_match_all('~href="([^"]+)"~i', $html, $found);
+
+    return $found[1];
 }
 
 /**
@@ -4619,6 +4644,12 @@ function od_branch_contact_row(string $line): ?string
 {
     // The bullet and the «по» of `/contacts/udmurtiya/`'s «- по тел. 8-965-845-98-32;»
     // are part of the label as much as the label is.
+    //
+    // Only the words in `OD_BRANCH_LABEL`, and that is the point: «ссылка Вк:»
+    // says what the glyph says and goes, while «Отделение Вконтакте:» says
+    // *whose* page it is and stays a sentence — a rule loose enough to catch any
+    // short label would take the meaning off the second one too (and read
+    // `https:` as a label).
     $value = trim(preg_replace('~^[-–—•]?\s*(?:по\s+)?' . OD_BRANCH_LABEL . '\s*:?\s*~iu', '', $line));
 
     if (preg_match('~^<a\b[^>]*href="([^"]+)"[^>]*>(.*?)</a>[.,;]?$~si', $value, $link)) {
@@ -4689,6 +4720,107 @@ function od_branch_social_href(string $url): string
 function od_branch_social_label(string $url): string
 {
     return preg_replace('~^https?://(?:www\.)?~i', '', trim($url));
+}
+
+
+/**
+ * A `core/query` rebuilt as a card grid: the loop template it is given, and the
+ * pagination the mocks draw.
+ *
+ * The query's own attributes pass through untouched — `queryId`, the category id
+ * and `perPage` are the editor's and per-environment — with only `className`
+ * added, which is both the hook `gutenberg.css` keys on and the idempotency mark.
+ *
+ * The pagination arrows are core's `chevron` with `showLabel` off: «Предыдущая
+ * страница» spelled out is a 200px-wide link where every mock has a 36px circle.
+ * Both attributes go on the **parent** `core/query-pagination` — it is what
+ * provides them as context, and the same keys on the previous/next blocks are
+ * read by nobody.
+ *
+ * @param array<string, mixed> $attrs     The query block's attributes, `className` included.
+ * @param string               $className The class on the wrapper `<div>`.
+ * @param string               $template  The blocks inside `core/post-template`.
+ */
+function od_pages_card_query(array $attrs, string $className, string $template): string
+{
+    return sprintf("<!-- wp:query %s -->\n<div class=\"wp-block-query %s\">\n", od_pages_json($attrs), $className)
+        . "<!-- wp:post-template {\"layout\":{\"type\":\"grid\",\"columnCount\":3}} -->\n"
+        . $template
+        . "<!-- /wp:post-template -->\n\n"
+        . "<!-- wp:query-pagination {\"paginationArrow\":\"chevron\",\"showLabel\":false} -->\n"
+        . "<!-- wp:query-pagination-previous /-->\n"
+        . "<!-- wp:query-pagination-numbers /-->\n"
+        . "<!-- wp:query-pagination-next /-->\n"
+        . "<!-- /wp:query-pagination -->\n"
+        . "</div>\n<!-- /wp:query -->\n";
+}
+
+/**
+ * `/contacts/<region>/`'s «События» — the `/news/` card, and the site's own
+ * pagination.
+ *
+ * The regional template gave the section a four-column loop of cover, title,
+ * date and excerpt with core's unstyled «Предыдущая страница / 1 2 3 …» beneath
+ * it. Two things were wrong with that: the loop's `columnCount` never reaches the
+ * browser (WordPress prints the grid's CSS into the page's own `<style>`, and
+ * `content.rendered` carries only the class), and the section is the one place on
+ * the site where a post teaser is drawn by WordPress rather than by `NewsCard` —
+ * so it looked like nothing else on the site.
+ *
+ * It is now `NewsCard`'s own shape: cover, date, title, three across,
+ * surfaceless — `.od-news-cards` in `gutenberg.css` restates that component's
+ * numbers for a `core/query` loop. The excerpt goes, because `/news/` shows none.
+ *
+ * Only the **posts** query: the page's other loop lists the region's coordinators
+ * as `profile` records, and `PersonCard` draws those (see `parsePost`'s card
+ * embeds). Pagination is left on both — core renders it only past the first page,
+ * and no region has more than twelve coordinators, so in practice the page has at
+ * most one paginated loop, which is what `/contacts/<region>/page/2/` needs to be
+ * unambiguous (`fetchWpPage` reads the first `query-<id>-page` in the body).
+ *
+ * The «События» heading comes along: the migrator left it as a bare `<h2>` inside
+ * a `core/paragraph`, which renders but is not a block an editor can edit.
+ *
+ * @param string $content The page's `post_content`.
+ * @param int    $_termId Unused — the runner passes the term id to every transform.
+ */
+function od_pages_branch_news(string $content, int $_termId = 0): string
+{
+    if (od_has_block_class($content, 'od-news-cards')) {
+        return $content; // Already converted — leave the editor's copy alone.
+    }
+
+    $content = preg_replace_callback(
+        '~<!--\s*wp:paragraph\s*-->\s*<h2 id="news_section">(.*?)</h2>\s*<!--\s*/wp:paragraph\s*-->~s',
+        static function (array $m): string {
+            return od_pages_heading(2, od_pages_inline_text($m[1]), 'news_section');
+        },
+        $content
+    );
+
+    preg_match_all('~<!--\s*wp:query (\{.*?\})\s*-->.*?<!--\s*/wp:query\s*-->~s', $content, $found, PREG_SET_ORDER);
+
+    foreach ($found as $block) {
+        $attrs = json_decode($block[1], true);
+        if (!is_array($attrs) || ($attrs['query']['postType'] ?? '') !== 'post') {
+            continue; // The coordinator loop, or a query this does not understand.
+        }
+
+        $attrs['className'] = 'od-news-cards';
+        $content = str_replace(
+            $block[0],
+            od_pages_card_query(
+                $attrs,
+                'od-news-cards',
+                "<!-- wp:post-featured-image {\"isLink\":true} /-->\n"
+                . "<!-- wp:post-date /-->\n"
+                . "<!-- wp:post-title {\"isLink\":true} /-->\n"
+            ),
+            $content
+        );
+    }
+
+    return $content;
 }
 
 
@@ -4974,6 +5106,19 @@ function od_pages_registry(): array
         'label' => 'D4 · /khabarovskiy/ — the same card, outside the tree',
         'path' => 'khabarovskiy',
         'fix' => 'od_pages_branch_card',
+    ];
+
+    $registry[] = [
+        'label' => 'D4 · /contacts/<region>/ — «События» as the /news/ cards, with the site\'s pagination',
+        'sweep' => true,
+        'parent' => 'contacts',
+        'fix' => 'od_pages_branch_news',
+    ];
+
+    $registry[] = [
+        'label' => 'D4 · /khabarovskiy/ — the same cards, outside the tree',
+        'path' => 'khabarovskiy',
+        'fix' => 'od_pages_branch_news',
     ];
 
     return $registry;
