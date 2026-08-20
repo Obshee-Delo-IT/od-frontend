@@ -1159,6 +1159,32 @@ It is the registry's first **`sweep`**: every published record of a post type ra
 
 Applied on od-dev, and predicted exactly by a local run over all 142 bodies first: 90 records rewritten, phone rows **32 → 106**, e-mail 108 → 113, social 44 → 45, records showing at least one contact 113 → 122, plain-text phones **75 → 1**. The frontend did not change. This is also the answer to `wp-backend.md` §3.1's first "what to do instead": no ACF fields, no second copy of a number the body already holds.
 
+### D4. The branch card on 75 regional pages — 2026-08-20
+
+Figma `contact-page` (`754:675`) opens a region with a white card: the отделение's legal name, then one contact lockup. Every one of the 74 `/contacts/<region>/` pages (and `/khabarovskiy/`) instead opened with a `core/details` accordion labelled «Об отделении» — closed, so the branch's name and its coordinator's number were behind a click that the mock does not have.
+
+`od_pages_branch_card()` unwraps it, and the card it writes is built out of two things that already existed: `PersonCard`'s frame — the mock's card is the same white 12/20 with the same red-name-over-grey-role lockup — and `.od-contact`, the `[24px glyph] 12 [red 18px link]` row `/about/udostoverenie/` introduced. So the transform's whole job is deciding what a **line** is:
+
+- the bold legal name (65 of 74 bodies open with one) becomes the card's title, un-bolded, 18/140 `--gray-7`;
+- a bold role followed by a name becomes the person row, name above role — with the name capped at 80 characters, because `/contacts/moscow/` states its chairman's two council memberships before naming him and that is a paragraph, not a lockup;
+- a phone, an e-mail or a `vk.com`/`t.me` address — labelled or bare, linked or plain — becomes a contact row with its glyph, and the «тел.» / «e-mail:» the glyph replaces is dropped.
+
+Everything else stays the paragraph it was. **A label with nothing after it is dropped** — 40 of these pages carry a bare «тел.» and an «e-mail:» an editor never filled in, and a phone glyph beside an empty line states something untrue. Measured over all 74 bodies before applying: 113 person rows, 120 phone, 109 e-mail, 75 social, 69 titles; one page (`/contacts/sverdlovskaya/`) has no accordion and is left alone.
+
+Three findings from the same pass:
+
+- **A `<br>` inside a flex row is a flex item.** The person row's two lines came out side by side until both went inside one `<span>` — the row is `display: flex` because that is what puts the glyph beside the text.
+- **The glyph is `--gray-7`, not the link's red.** `.od-contact::before` painted it `currentcolor`; Figma strokes it `#414e62` here and `PersonCard` has always painted it that way, so the red glyph was the rule's own invention.
+- **Seven `profile` records linked a phone number as an e-mail address** — `<a href="mailto:posoh74@mail.ru">8(927)211-56-04</a>`, one slip copied along a region's roster. The card believes the href, so five of `/contacts/samarskaya/`'s eight coordinators showed a number behind an envelope that opened a mail composer. `od_mailto_phone_links()` relinks it as `tel:`, but only when the address is stated somewhere else in the body too — in all seven it is the next line.
+
+The coordinator cards themselves are **two per row**, not the mock's single full-width one: `contact-page` draws a region with one coordinator, and `/contacts/samarskaya/` has eight. Inside the card, the person row keeps **30 above it** rather than the mock's 20, so a person and the two contact rows under them read as one lockup instead of four rows in a list.
+
+Two content rules came out of the wider pages. A **label an editor typed in front of a link** goes when the glyph already says what the row is («ссылка Вк:», «тел.») and **stays** when it says something the glyph cannot («Отделение Вконтакте:» names *whose* page it is) — a rule loose enough to catch any short label took the meaning off the second kind, and read `https:` as a label besides. And a **contact stated twice is offered once**: several bodies name an address beside the coordinator and again on a line of its own, which came out as two identical rows under two identical glyphs.
+
+**«События» is `/news/`'s card now** (`od_pages_branch_news`). The section was a four-column loop of cover, title, date and excerpt under core's unstyled «Предыдущая страница / 1 2 3 …» — the one place on the site where a post teaser was drawn by WordPress rather than by `NewsCard`, and it looked like it. It is now that card exactly: a 12px-radius cover at 280∶216, the date, the title, three across and surfaceless, with `.od-news-cards` in `gutenberg.css` restating `NewsCard.module.css`'s numbers for markup a CSS module cannot reach. The pagination is the site's own 36px chips, shared with the `.od-post-cards` pages through one `:is()` — a paginated `core/query` is paginated the same way wherever it is, and `/contacts/<region>/page/2/` already worked, being the same D3 mechanism `/about/smi/page/2/` uses. That it works *unambiguously* rests on a measurement: no region has more than twelve coordinators, so the coordinator loop never renders pagination of its own and `fetchWpPage`'s «first `query-<id>-page` in the body» is always the news loop's.
+
+**Both card grids now share one builder** (`od_pages_card_query`), which is what keeps the two paginations from drifting: the white-card pages differ from the regional ones only in the blocks inside `core/post-template`.
+
 ### F4. SEO — the URL-facing half, 2026-08-13 (`ea290ac`)
 
 It shipped with A8 because a URL layer nothing advertises is only half a migration — and because the live site's `sitemap.xml` comes from a WP plugin that stops answering the moment the frontend takes the domain, removing the discovery path for the whole archive at exactly the moment the URL set changes.

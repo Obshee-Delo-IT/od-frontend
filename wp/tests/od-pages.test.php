@@ -1501,6 +1501,139 @@ od_test( 'a level on another block is not touched', od_pages_coordinator_heading
 $gutenberg = file_get_contents( __DIR__ . '/../../src/shared/ui/theme/gutenberg/gutenberg.css' );
 od_test( 'the stylesheet keeps a card title looking like one at level 2', (bool) preg_match( '~\.wp-block-post-title \{\s*font-size~', $gutenberg ) );
 
+/* ------------------------------------------------- od_pages_branch_news */
+
+$branch = file_get_contents( __DIR__ . '/fixtures/contacts-amurskaya.before.html' );
+od_test( 'the branch fixture really carries two loops', 2 === substr_count( $branch, '<!-- wp:query {' ) );
+od_test( 'and its «События» heading is a bare h2 inside a paragraph block', str_contains( $branch, '<!-- wp:paragraph --><h2 id="news_section">События</h2>' ) );
+
+$news = od_pages_branch_news( $branch );
+od_test( 'branch news: the posts loop is a card grid', str_contains( $news, '"className":"od-news-cards"' ) && str_contains( $news, '<div class="wp-block-query od-news-cards">' ) );
+od_test( 'branch news: cover, then date, then title — the /news/ card', str_contains( $news, "<!-- wp:post-featured-image {\"isLink\":true} /-->\n<!-- wp:post-date /-->\n<!-- wp:post-title {\"isLink\":true} /-->" ) );
+/* `/news/` shows no excerpt, so neither does this. */
+od_test( 'branch news: the excerpt goes', str_contains( $news, 'wp:post-excerpt' ) === false );
+od_test( 'branch news: the pagination is the site\'s chips', str_contains( $news, '<!-- wp:query-pagination {"paginationArrow":"chevron","showLabel":false} -->' ) );
+od_test( 'branch news: the query keeps its own id and category', str_contains( $news, '"queryId":139' ) && str_contains( $news, '"taxQuery":{"category":[628]}' ) );
+/* Only the posts loop: the other one lists `profile` records for `PersonCard`. */
+od_test( 'branch news: the coordinator loop is untouched', str_contains( $news, '"taxQuery":{"pl-categs":[635]}' ) && str_contains( $news, '<!-- wp:post-featured-image {"isLink":true,"className":"profile-thumbnail"} /-->' ) );
+od_test( 'branch news: the heading becomes a heading block, anchor and all', str_contains( $news, '<!-- wp:heading {"anchor":"news_section"} -->' ) && str_contains( $news, '<h2 class="wp-block-heading" id="news_section">События</h2>' ) );
+od_test_idempotent( 'od_pages_branch_news', 'od_pages_branch_news', $branch );
+
+/* The card transform runs first on the same page; neither may undo the other. */
+$both = od_pages_branch_news( od_pages_branch_card( $branch ) );
+od_test( 'branch news: the branch card survives it', str_contains( $both, 'od-branch__title' ) && str_contains( $both, 'od-news-cards' ) );
+od_test( 'branch news: and the order does not matter', od_pages_branch_card( od_pages_branch_news( $branch ) ) === $both );
+
+/* A sweep addresses whatever is in the tree. */
+od_test( 'branch news: a page with no loop is left alone', od_pages_branch_news( '<!-- wp:paragraph --><p>Текст</p><!-- /wp:paragraph -->' ) === '<!-- wp:paragraph --><p>Текст</p><!-- /wp:paragraph -->' );
+
+/* Both card grids share one builder, so both get the same pagination. */
+od_test( 'the white-card pages still get their own template', str_contains( od_pages_post_cards( file_get_contents( __DIR__ . '/fixtures/about-smi.before.html' ) ), '<!-- wp:post-excerpt /-->' ) );
+
+od_test( 'the stylesheet draws the news cards and shares the pagination', str_contains( $gutenberg, '.od-news-cards .wp-block-post-template {' ) && str_contains( $gutenberg, ':is(.od-post-cards, .od-news-cards) .wp-block-query-pagination {' ) );
+
+/* ------------------------------------------------ od_mailto_phone_links */
+
+$vasilev = file_get_contents( __DIR__ . '/fixtures/profile-vasilev.html' );
+od_test( 'the fixture really links a phone number as an e-mail', str_contains( $vasilev, '<a href="mailto:posoh74@mail.ru">8(927)211-56-04</a>' ) );
+
+$relinked = od_mailto_phone_links( $vasilev );
+od_test( 'a number linked as an address becomes a phone link', str_contains( $relinked, '<a href="tel:+79272115604">8(927)211-56-04</a>' ) );
+od_test( 'and the address itself keeps its own link', str_contains( $relinked, '<a href="mailto:posoh74@mail.ru">posoh74@mail.ru</a>' ) );
+od_test_idempotent( 'od_mailto_phone_links', 'od_mailto_phone_links', $vasilev );
+
+/* The guard: an address stated *only* inside that one anchor would be deleted
+   from the record by the rewrite, so it is left as it is. */
+od_test(
+	'an address the body states nowhere else is left alone',
+	od_mailto_phone_links( '<p><a href="mailto:one@example.com">8(927)211-56-04</a></p>' ) === '<p><a href="mailto:one@example.com">8(927)211-56-04</a></p>'
+);
+od_test(
+	'an anchor whose text is an address is not a phone number',
+	od_mailto_phone_links( '<p><a href="mailto:one@example.com">one@example.com</a> one@example.com</p>' ) === '<p><a href="mailto:one@example.com">one@example.com</a> one@example.com</p>'
+);
+/* The sweep runs the repair before the canonical pass, so the card sees a `tel:`. */
+od_test( 'the profile sweep includes it', str_contains( od_pages_profile_contacts( $vasilev ), '<a href="tel:+79272115604">8(927)211-56-04</a>' ) );
+
+/* ------------------------------------------------- od_pages_branch_card */
+
+$amurskaya = file_get_contents( __DIR__ . '/fixtures/contacts-amurskaya.before.html' );
+od_test( 'the branch fixture really opens with an accordion', str_contains( $amurskaya, '<!-- wp:details -->' ) );
+
+$card = od_pages_branch_card( $amurskaya );
+od_test( 'branch card: the accordion is gone', str_contains( $card, 'wp:details' ) === false && str_contains( $card, '<summary>' ) === false );
+od_test( 'branch card: a group carries the class the stylesheet draws', str_contains( $card, '{"className":"od-branch","layout":{"type":"constrained"}}' ) );
+od_test( 'branch card: the legal name is the card title, and not bold', str_contains( $card, '<p class="od-branch__title">Амурское областное отделение' ) && str_contains( $card, '<strong>Амурское областное' ) === false );
+/* One `<span>` around both lines, because the row is a flex box: two bare text
+   nodes either side of a `<br>` become two flex items and lay the role out
+   beside the name. */
+od_test( 'branch card: the name is above the role, in one flex item', str_contains( $card, '<p class="od-contact od-contact--person"><span><strong>Титова Ирина Александровна</strong><br>Координатор</span></p>' ) );
+od_test( 'branch card: the phone is a row and a canonical link', str_contains( $card, '<p class="od-contact od-contact--phone"><a href="tel:+79241406040">8-924-140-60-40</a></p>' ) );
+od_test( 'branch card: the e-mail is a row', str_contains( $card, '<p class="od-contact od-contact--email"><a href="mailto:rabota-amur@mail.ru">rabota-amur@mail.ru</a></p>' ) );
+/* The glyph says «телефон»; the mock has no word in front of it. */
+od_test( 'branch card: the labels the glyphs replace are gone', str_contains( $card, 'тел.' ) === false && str_contains( $card, 'e-mail:' ) === false );
+/* Everything below the card is the page — two queries and their pagination. */
+od_test( 'branch card: the coordinator query is untouched', str_contains( $card, '"taxQuery":{"pl-categs":[635]}' ) );
+od_test( 'branch card: the «События» query is untouched', str_contains( $card, '<h2 id="news_section">События</h2>' ) && str_contains( $card, '"taxQuery":{"category":[628]}' ) );
+od_test_idempotent( 'od_pages_branch_card', 'od_pages_branch_card', $amurskaya );
+
+/* 40 of the 74 pages carry the labels and no values — a card that drew a phone
+   glyph beside an empty line would be stating something untrue. */
+$empty = od_pages_branch_card( file_get_contents( __DIR__ . '/fixtures/contacts-chukotskiy.before.html' ) );
+od_test( 'branch card: an unfilled field is dropped, not drawn', str_contains( $empty, 'od-branch__title' ) && str_contains( $empty, 'od-contact' ) === false );
+od_test( 'branch card: and the bare role goes with it', str_contains( $empty, 'Координатор отделения' ) === false );
+
+/* Half these bodies write a name, a number and a VK address as one paragraph
+   split by `<br>`, so a line — not a paragraph — is what gets classified. */
+$novosibirskaya = od_pages_branch_card( file_get_contents( __DIR__ . '/fixtures/contacts-novosibirskaya.before.html' ) );
+od_test( 'branch card: a `<br>` line becomes its own row', str_contains( $novosibirskaya, '<p class="od-contact od-contact--phone"><a href="tel:+79185700050">+7 918 570-00-50</a></p>' ) );
+od_test( 'branch card: a VK address becomes a row with its own glyph', str_contains( $novosibirskaya, '<p class="od-contact od-contact--vk"><a href="https://vk.com/romanusha">vk.com/romanusha</a></p>' ) );
+/* No bold legal name in this one — the card simply has no title. */
+od_test( 'branch card: a body with no legal name gets no title', str_contains( $novosibirskaya, 'od-branch__title' ) === false );
+od_test( 'branch card: and its prose survives as prose', str_contains( $novosibirskaya, '<p>Романуша Артем Александрович</p>' ) );
+
+$udmurtiya = od_pages_branch_card( file_get_contents( __DIR__ . '/fixtures/contacts-udmurtiya.before.html' ) );
+od_test( 'branch card: a bulleted «- по тел.» is still a phone row', str_contains( $udmurtiya, '<p class="od-contact od-contact--phone"><a href="tel:+79658459832">8-965-845-98-32</a></p>' ) );
+/* A link is not a contact just because it points at vk.com: this one is a wall
+   post about the coordinator, in the middle of his biography. */
+od_test( 'branch card: a VK link whose text is a sentence stays prose', str_contains( $udmurtiya, '<p><a href="https://vk.com/wall24503112_2035">Подробнее о Фамутдинове Р.З.</a></p>' ) );
+od_test( 'branch card: the thirteen-link paragraph is left alone', str_contains( $udmurtiya, 'Полезная дополнительная информация' ) && substr_count( $udmurtiya, 'https://vk.com/wall24503112' ) >= 4 );
+
+/* The regional page with ten people on it, and the one that repeats an address
+   it has already stated. */
+$samara = od_pages_branch_card( file_get_contents( __DIR__ . '/fixtures/contacts-samarskaya.before.html' ) );
+od_test( 'branch card: a label of its own becomes the row its glyph describes', str_contains( $samara, '<p class="od-contact od-contact--vk"><a href="https://vk.com/macterdobra">vk.com/macterdobra</a></p>' ) );
+od_test( 'branch card: «ссылка Вк:» does not survive as words', str_contains( $samara, 'ссылка Вк' ) === false );
+/* Stated twice in the body — beside the name and again on a line of its own. */
+od_test( 'branch card: the same address is offered once', 1 === substr_count( $samara, 'href="https://vk.com/macterdobra"' ) );
+/* A label that says *whose* page it is is a sentence, not a row: the glyph
+   cannot carry «Отделение». */
+od_test( 'branch card: a label that carries meaning keeps its line', (bool) preg_match( '~<p>Отделение Вконтакте:\s*<a href="https://vk\.com/odsamara"~u', $samara ) );
+/* Seven of the region's ten people write their role in bold; the other three
+   are named in prose the transform leaves alone. */
+od_test( 'branch card: seven person rows on the biggest regional page', 7 === substr_count( $samara, 'od-contact--person' ) / 2 );
+od_test_idempotent( 'od_pages_branch_card on samarskaya', 'od_pages_branch_card', file_get_contents( __DIR__ . '/fixtures/contacts-samarskaya.before.html' ) );
+
+/* A sweep runs over the whole subtree: `/contacts/sverdlovskaya/` has no
+   accordion at all, and one that has already been converted must not be
+   converted twice. */
+od_test( 'branch card: a page with no accordion is left alone', od_pages_branch_card( '<!-- wp:paragraph --><p>Текст</p><!-- /wp:paragraph -->' ) === '<!-- wp:paragraph --><p>Текст</p><!-- /wp:paragraph -->' );
+od_test( 'branch card: a converted page is left alone', od_pages_branch_card( $card ) === $card );
+
+/* `od_tel_href()` reads the digits of whatever it is handed, so a line has to be
+   a number and nothing else before it can become one. */
+od_test( 'branch card: a sentence carrying eleven digits is not a phone number', od_branch_contact_row( 'В 2024 году мы провели 1500 занятий для 89 000 школьников' ) === null );
+od_test( 'branch card: a number on its own is', str_contains( (string) od_branch_contact_row( 'тел. 8 924 140 60 40' ), 'tel:+79241406040' ) );
+
+od_test( 'branch social: an address on either network is recognised', od_branch_social( 'https://vk.com/od' ) === 'vk' && od_branch_social( 't.me/od' ) === 'telegram' );
+od_test( 'branch social: anything else is not', od_branch_social( 'https://obshee-delo.ru/' ) === null && od_branch_social( 'Подробнее' ) === null );
+od_test( 'branch social: an address typed without a scheme still leaves this site', od_branch_social_href( 'vk.com/od' ) === 'https://vk.com/od' );
+od_test( 'branch social: the label drops the scheme the glyph makes redundant', od_branch_social_label( 'https://www.vk.com/od' ) === 'vk.com/od' );
+
+/* The card's look is held by the stylesheet, the same coupling the heading level
+   above has: without these two classes the transform writes markup nothing draws. */
+od_test( 'the stylesheet draws the card the transform writes', str_contains( $gutenberg, '.od-branch {' ) && str_contains( $gutenberg, '.od-contact--person' ) );
+
 /* ------------------------------------------------------- the registry itself */
 
 foreach ( od_pages_registry() as $entry ) {

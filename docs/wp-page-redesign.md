@@ -26,6 +26,8 @@ Five files, split by lifetime:
 
 **The third kind of entry is `sweep`**, and it addresses a whole post type rather than one record: with it the runner runs the transform over **every published record of `post_type`**. It exists for a transform that is idempotent by *detection* rather than by a marker — `od_pages_profile_contacts` links the phones, e-mails and social URLs a body already carries, so «is this record done?» is a question about the record itself and a sweep cannot double-apply. Don't reach for it with a whole-page transform: those refuse an input they don't recognise, and 142 warnings is not a run.
 
+A sweep also takes a **`parent`**, which bounds it to that page's published children — how the 74 `/contacts/<region>/` pages get their branch card (`od_pages_branch_card`) and their `h2` card titles. The same rule applies: such a transform must **return its input unchanged** for a page of the subtree it does not recognise, rather than raise, because «no accordion on this one» is a fact about the page and not a bad input. `pnpm pages:inventory` counts a parent-bounded sweep's children as redesigned, so a new one moves the census.
+
 **The PHP floor on the second file is not a style preference.** Production's *site* PHP is 7.x (`mod_php7`) while its CLI is 8.2, and 7.4+ syntax in an mu-plugin is a parse error that takes the whole site down the moment it loads. `wp/mu-plugins/od-revalidate.php` is written to that floor for the same reason — read its header before editing either.
 
 **`od-design.php` does not exist yet, and should not be created speculatively.** It appears the first time a design variant repeats often enough to earn a dropdown (§2, rung 4).
@@ -95,7 +97,7 @@ Measured over od-dev's 170 published pages, 2026-08-17:
 | pages with a `className` | 89 | migrator residue (`cmsms_*`) and real hooks mixed together |
 | pages with `wp:html` | 34 | an escape hatch that bypasses the whole design system — convert to real blocks |
 | pages with `wp:query` | 86 | ~80 of them are the regional `/contacts/*` template |
-| pages with `wp:details` | 79 | core accordion, already the right block for D4/D5 |
+| pages with `wp:details` | 79 | core accordion, already the right block for D5. **75 of them were the regional «Об отделении»** and are cards now, not accordions (D4, 2026-08-20) — the block is right when the mock draws a disclosure, and it was not what `contact-page` draws |
 
 Block usage across the same set, most-used first: `column` 1212 · `paragraph` 857 · `group` 843 · `columns` 748 · `image` 295 · `separator` 253 · `button` 234 · `heading` 151 · `details` 129 · `html` 101 · `embed` 51 · `gallery` 2.
 
