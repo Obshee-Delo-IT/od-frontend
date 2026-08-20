@@ -485,12 +485,12 @@ the statistics site a refresh, then put the card back** — it is one row in
 `OD_ABOUT_CARDS` plus a `::before` rule, and `direction-2.svg` is the drawing it
 had. Nothing else on this side needs to change.
 
-**The nav menu still links it**, though: «Наша статистика» (item 48974) is under
-«О НАС» on both installs, and only the card came off. That was deliberate — the
-ask was about the page — but the two should agree, so it is the same decision:
-refresh the site and both stay, or drop the menu item too. One
-`wp menu item delete 48974` on each install, and nothing in this repo changes,
-since the menu is WordPress data.
+**The nav menu item went too** (2026-08-20), so the two agree: «Наша статистика»
+under «О НАС» is a row in `od_wp_menu_edits()` in `wp/scripts/od-wp.php`, matched
+by its label because its url is a bare domain and its *path* is `/` — the same
+path «ГЛАВНАЯ» has. Bringing the card back therefore means three edits, not one:
+the row out of `od_wp_menu_edits()`, the menu item added back in WordPress (the
+script only deletes), and the card and its `::before` rule back.
 
 **«СМИ о нас» draws `/materials/`'s «Статьи» illustration.** It is the one card
 left with no drawing of its own: Figma `about` supplies seven, and the mock has no

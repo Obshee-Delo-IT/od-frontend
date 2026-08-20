@@ -289,11 +289,13 @@ of production's: a Kinescope id is the same asset on either install.
 **The nav-menu edits are `od-wp.php`'s**, not steps here (2026-08-20).
 `od_wp_menu_edits()` deletes «Написать отзыв» — the footer's «Отзывы» column
 already links that page, so the nav entry was a third route to one Contact Form 7
-form — and merges «Устав организации» + «Документы» into the one item «Устав и
-документы», the pair being a tab strip on this side now. Keyed by the path each
-item points at, because the two installs disagree about the labels and about the
-origins but not about the pages, so the `od-wp.php` run above does both without a
-list of ids here. **One ordering note:** the merge leaves nothing linking
+form — merges «Устав организации» + «Документы» into the one item «Устав и
+документы», the pair being a tab strip on this side now, and drops «Наша
+статистика», whose card came off `/about/` for the same reason. Items are found
+by the path they point at, because the two installs disagree about the labels and
+about the origins but not about the pages; «Наша статистика» is found by its
+label, its url being a bare domain. So the `od-wp.php` run above does all of it
+without a list of ids here. **One ordering note:** the merge leaves nothing linking
 `/about/docs/` for anything that doesn't draw the tab strip, and the old theme
 doesn't — so it wants the cutover window with the rest of workstream D, which is
 where this step already sits.

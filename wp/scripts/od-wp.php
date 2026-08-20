@@ -344,17 +344,26 @@ function od_wp_rename_pages(bool $apply): void
 const OD_WP_MENU = 'main-navigation';
 
 /**
- * The «main-navigation» edits, keyed by the **path** the item points at: a title
- * to retitle it, `null` to delete it.
+ * The «main-navigation» edits: one row per item, each naming how to find it and
+ * what to do with it. No `rename` means delete it.
  *
- * Keyed by path rather than by id, per this file's house rule, and rather than by
- * label, which is the other stable-looking key: the two installs disagree on the
- * labels here (prod says «Документы и отчёты» where od-dev says «Документы») but
- * the pages are the same pages, so their paths agree. What the items disagree on
- * is the *origin* — several are still absolute against an old `.рф` domain — which
- * is why only the path is compared ({@see od_wp_menu_path()}).
+ * **Found by `path`, per this file's house rule of never using an id** — and
+ * rather than by label, which is the other stable-looking key: the two installs
+ * disagree on the labels here (prod says «Документы и отчёты» where od-dev says
+ * «Документы») but the pages are the same pages, so their paths agree. What the
+ * items disagree on is the *origin* — several are still absolute against an old
+ * `.рф` domain — which is why only the path is compared
+ * ({@see od_wp_menu_path()}).
  *
- * What each one is for:
+ * **`title` is the matcher for an item that points off-site**, where the path
+ * says nothing: the statistics site's url is a bare domain, so its path is `/`,
+ * which is «ГЛАВНАЯ»'s path too — matching on it would delete the home link.
+ * Both installs carry that item under the same label and the same url, and the
+ * label is the half a human recognises. (`navOverrides`, the frontend's late
+ * «ОБЩЕЕДЕЛО-ПРО» filter, matched by label for the same reason before the item
+ * was deleted outright — see `implementation-notes.md`.)
+ *
+ * What each row is for:
  *
  *  - **`/about/ostavit-otziv/`** — «Написать отзыв» goes. The footer's «Отзывы»
  *    column already links the page, so the nav entry was a third route to one
@@ -363,19 +372,24 @@ const OD_WP_MENU = 'main-navigation';
  *    They are a tabbed pair on the frontend now
  *    (`src/shared/config/pageSections.ts`), the way «Команда» and
  *    «Наблюдательный совет» are, and a section with a tab strip gets one entry.
+ *  - **«Наша статистика»** — the statistics site it points at wants a refresh
+ *    before the organisation sends readers to it. The `/about/` card came off
+ *    first; this is the nav agreeing with it. Both come back together, and
+ *    `next-steps.md` says how.
  *
  * **Order matters on production.** The merge leaves no link to `/about/docs/` for
  * anything that doesn't draw the tab strip, and the old theme doesn't — so this
  * runs in the cutover window, with the rest of workstream D, not before it.
  *
- * @return array<string, string|null> Path => the new title, or `null` to delete.
+ * @return array<int, array{path?: string, title?: string, rename?: string}>
  */
 function od_wp_menu_edits(): array
 {
     return [
-        '/about/ostavit-otziv/' => null,
-        '/about/docs/'          => null,
-        '/about/ustav/'         => 'Устав и документы',
+        ['path' => '/about/ostavit-otziv/'],
+        ['path' => '/about/docs/'],
+        ['path' => '/about/ustav/', 'rename' => 'Устав и документы'],
+        ['title' => 'Наша статистика'],
     ];
 }
 
@@ -413,38 +427,41 @@ function od_wp_edit_menu(bool $apply): void
     }
 
     $items = wp_get_nav_menu_items($menu->term_id) ?: [];
-    $byPath = [];
-    foreach ($items as $item) {
-        $byPath[od_wp_menu_path($item->url)][] = $item;
-    }
 
-    foreach (od_wp_menu_edits() as $path => $title) {
-        $found = $byPath[$path] ?? [];
+    foreach (od_wp_menu_edits() as $edit) {
+        $key = $edit['path'] ?? $edit['title'];
+        $found = array_filter($items, static function ($item) use ($edit): bool {
+            return isset($edit['path'])
+                ? od_wp_menu_path($item->url) === $edit['path']
+                : $item->title === $edit['title'];
+        });
 
         if ($found === []) {
             // Which is the state this leaves behind, so it is a skip, not a
             // warning: a second run reports every deletion this way.
-            WP_CLI::log(sprintf('%s: no item in %s, skipped', $path, OD_WP_MENU));
+            WP_CLI::log(sprintf('%s: no item in %s, skipped', $key, OD_WP_MENU));
             continue;
         }
 
         foreach ($found as $item) {
+            $title = $edit['rename'] ?? null;
+
             if ($title === null) {
-                WP_CLI::log(sprintf('%s (#%d): «%s» to be deleted', $path, $item->db_id, $item->title));
+                WP_CLI::log(sprintf('%s (#%d): «%s» to be deleted', $key, $item->db_id, $item->title));
 
                 if ($apply && wp_delete_post($item->db_id, true)) {
-                    WP_CLI::success(sprintf('%s (#%d): deleted', $path, $item->db_id));
+                    WP_CLI::success(sprintf('%s (#%d): deleted', $key, $item->db_id));
                 }
 
                 continue;
             }
 
             if ($item->title === $title) {
-                WP_CLI::log(sprintf('%s (#%d): already «%s», skipped', $path, $item->db_id, $title));
+                WP_CLI::log(sprintf('%s (#%d): already «%s», skipped', $key, $item->db_id, $title));
                 continue;
             }
 
-            WP_CLI::log(sprintf('%s (#%d): «%s» -> «%s»', $path, $item->db_id, $item->title, $title));
+            WP_CLI::log(sprintf('%s (#%d): «%s» -> «%s»', $key, $item->db_id, $item->title, $title));
 
             if (!$apply) {
                 continue;
@@ -452,12 +469,12 @@ function od_wp_edit_menu(bool $apply): void
 
             $written = $wpdb->update($wpdb->posts, ['post_title' => $title], ['ID' => $item->db_id], ['%s'], ['%d']);
             if ($written === false) {
-                WP_CLI::warning(sprintf('%s (#%d): write failed', $path, $item->db_id));
+                WP_CLI::warning(sprintf('%s (#%d): write failed', $key, $item->db_id));
                 continue;
             }
 
             clean_post_cache($item->db_id);
-            WP_CLI::success(sprintf('%s (#%d): retitled', $path, $item->db_id));
+            WP_CLI::success(sprintf('%s (#%d): retitled', $key, $item->db_id));
         }
     }
 }
