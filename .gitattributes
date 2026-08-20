@@ -1,0 +1,4 @@
+# Fixtures are captured `post_content`, bytes rather than text: WordPress stores
+# CRLF in some bodies — prod's own `/about/` is one — and a transform has to be
+# tested against the real thing, not against a normalised copy of it.
+wp/tests/fixtures/** -text

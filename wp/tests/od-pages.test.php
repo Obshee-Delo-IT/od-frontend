@@ -11,9 +11,14 @@
  * `od_test()` from `harness.php`, never PHP's own `assert()` — that one is
  * compiled out here; the helper's header says why.
  *
- * Fixtures in `fixtures/` are **real `post_content`**, captured from od-dev
- * 2026-08-17 with `wp post get <id> --field=post_content`. Recapture them rather
- * than editing them by hand.
+ * Fixtures in `fixtures/` are **real `post_content`**, captured with
+ * `wp post get <id> --field=post_content`. Recapture them rather than editing
+ * them by hand. They come from **two installs**, and the pair is the point:
+ * `*.before.html` is od-dev 2026-08-17, the instance the designs were built
+ * against, and `*.prod.html` is od-stage 2026-08-21, a clone of live production.
+ * Five pages differ in shape between the two — production never had od-dev's
+ * hand edits — so every transform below that carries a `.prod.html` case is one
+ * that would have refused prod's own body until it learnt both shapes.
  *
  * Every transform gets the idempotency case, `f(f(x)) === f(x)`: this script is
  * run again on every environment, and possibly after an editor has been in the
@@ -1900,5 +1905,117 @@ od_test( 'the registry: the file defines at least the transforms we know of', co
 foreach ( $defined[1] as $transform ) {
 	od_test( "the registry: {$transform}() is registered", in_array( $transform, $registered, true ) );
 }
+
+/* --------------------------------- the prod clone's own bodies (od-stage) ----
+
+   Every case here is a shape od-dev does not have. They were found by running
+   the script against the prod clone on 2026-08-21: five entries warned and left
+   their page untouched, which is the failure mode this section exists to keep
+   closed — a transform that is right about od-dev and refuses production is a
+   transform that does nothing where it matters.                             */
+
+$contacts_prod = file_get_contents( __DIR__ . '/fixtures/contacts.prod.html' );
+
+/* What prod's page really is: no spoilers at all, the map, and a `[pagelist]`
+   from a plugin the headless prep deletes. */
+od_test( 'contacts (prod): no accordion to replace', 0 === substr_count( $contacts_prod, '<!-- wp:details' ) );
+od_test( 'contacts (prod): the branch list is a dead [pagelist]', str_contains( $contacts_prod, '[pagelist child_of="529"' ) );
+od_test( 'contacts (prod): and the jqvmap furniture is there', str_contains( $contacts_prod, '<div id="vmap"' ) );
+
+$contacts_prod_out = od_pages_contacts( $contacts_prod );
+
+od_test( 'contacts (prod): the region loop takes the branch list\'s place', 1 === substr_count( $contacts_prod_out, "<!-- wp:shortcode -->\n[od_regions]\n<!-- /wp:shortcode -->" ) );
+od_test( 'contacts (prod): the dead shortcode is gone', str_contains( $contacts_prod_out, 'pagelist' ) === false );
+od_test( 'contacts (prod): so is the map and its scripts', str_contains( $contacts_prod_out, 'vmap' ) === false && str_contains( $contacts_prod_out, '<script' ) === false );
+od_test( 'contacts (prod): the one heading that is content survives', str_contains( $contacts_prod_out, 'Не нашел свой город?' ) );
+od_test( 'contacts (prod): and the address under it', str_contains( $contacts_prod_out, 'mailto:web@obshee-delo.ru' ) );
+od_test_idempotent( 'od_pages_contacts (prod)', 'od_pages_contacts', $contacts_prod );
+
+/* A page with neither an accordion, nor a list, nor a map is not this page. */
+$threw = false;
+try {
+	od_pages_contacts( '<!-- wp:paragraph --><p>Другая страница</p><!-- /wp:paragraph -->' );
+} catch ( RuntimeException $e ) {
+	$threw = true;
+}
+od_test( 'contacts (prod): a page with none of the three is refused', $threw );
+
+$kids_prod = file_get_contents( __DIR__ . '/fixtures/healthy-kids.prod.html' );
+
+/* od-dev writes both trailing links as `<h3><a>`; prod writes «Методические
+   рекомендации» that way and the two playlists as a list under a plain heading,
+   which is why the `<li>` count was 5 and the transform refused the page. */
+od_test( 'healthy-kids (prod): one linked heading, not two', 1 === preg_match_all( '#<h3><a href="[^"]+">#', $kids_prod ) );
+od_test( 'healthy-kids (prod): and the films are a list', str_contains( $kids_prod, '<h3>Фильмы программы:</h3>' ) );
+
+$kids_prod_out = od_pages_healthy_kids( $kids_prod, 777 );
+
+od_test( 'healthy-kids (prod): the three tasks are numbered cards', 1 === substr_count( $kids_prod_out, 'od-task-number">01' ) && 1 === substr_count( $kids_prod_out, 'od-task-number">03' ) && 0 === substr_count( $kids_prod_out, 'od-task-number">04' ) );
+od_test( 'healthy-kids (prod): the playlists become goal-card buttons', str_contains( $kids_prod_out, '>Фильмы на Ютубе</a>' ) && str_contains( $kids_prod_out, '>Фильмы на Рутубе</a>' ) );
+od_test( 'healthy-kids (prod): the methodology link keeps its own label, root-relative', str_contains( $kids_prod_out, '<a href="/materials/pppuiv-ted-6/">Методические рекомендации</a>' ) );
+od_test( 'healthy-kids (prod): the programme films row is the tag query', str_contains( $kids_prod_out, '"tagIds":[777]' ) );
+od_test_idempotent( 'od_pages_healthy_kids (prod)', function ( $content ) { return od_pages_healthy_kids( $content, 777 ); }, $kids_prod );
+
+$audio_prod = file_get_contents( __DIR__ . '/fixtures/audio-roliki-social-reklama.prod.html' );
+
+/* The same four rows, but the clip is a `core/audio` block rather than the
+   `[cmsms_audio]` shortcode od-dev still holds — two revisions of the migrator. */
+od_test( 'audio (prod): the clips are core/audio blocks', 4 === substr_count( $audio_prod, '<!-- wp:audio' ) && str_contains( $audio_prod, '[cmsms_audio]' ) === false );
+
+$audio_prod_out = od_pages_audio_roliki( $audio_prod, 0 );
+
+od_test( 'audio (prod): all four cards are written', 4 === substr_count( $audio_prod_out, '"className":"od-asset"' ) );
+od_test( 'audio (prod): each card keeps its player', 4 === substr_count( $audio_prod_out, '<audio controls src=' ) );
+od_test( 'audio (prod): and its download button', 4 === substr_count( $audio_prod_out, 'Скачать аудио-ролик' ) );
+od_test_idempotent( 'od_pages_audio_roliki (prod)', function ( $content ) { return od_pages_audio_roliki( $content, 0 ); }, $audio_prod );
+
+$about_prod = file_get_contents( __DIR__ . '/fixtures/page-about.prod.html' );
+
+/* prod holds the player as a raw `<iframe>`; od-dev holds a `wp:embed` of the
+   YouTube url. The id in the body is the one to keep — nothing to look up. */
+od_test( 'about (prod): the hero is an iframe, not a wp:embed', str_contains( $about_prod, 'kinescope.io/embed/btj4T6bA6nco148tuqBpgY' ) && str_contains( $about_prod, '<!-- wp:embed' ) === false );
+
+$about_prod_out = od_pages_about( $about_prod );
+
+od_test( 'about (prod): the page\'s own Kinescope id survives the rewrite', str_contains( $about_prod_out, 'https://kinescope.io/embed/btj4T6bA6nco148tuqBpgY' ) );
+od_test( 'about (prod): as the same player block every other page writes', str_contains( $about_prod_out, 'wp-block-embed-kinescope' ) && str_contains( $about_prod_out, od_attr( OD_ABOUT_VIDEO_TITLE ) ) );
+od_test_idempotent( 'od_pages_about (prod)', 'od_pages_about', $about_prod );
+
+$samarskaya_prod = file_get_contents( __DIR__ . '/fixtures/contacts-samarskaya.prod.html' );
+
+/* prod's page never got the broken coordinator query, so this entry has nothing
+   to do there — and «nothing to do» must not read as «wrong page». */
+od_test( 'samarskaya (prod): there is no placeholder query to repoint', str_contains( $samarskaya_prod, '"taxQuery":{"post_tag":[-1]}' ) === false );
+od_test( 'samarskaya (prod): but the news loop is there', str_contains( $samarskaya_prod, '<!-- wp:query ' ) );
+od_test( 'samarskaya (prod): so the page is left exactly as it is', od_pages_samarskaya_coordinators( $samarskaya_prod, 532 ) === $samarskaya_prod );
+
+/* ------------------------------------------- od_pages_dead_shortcodes ----- */
+
+$sidebar = '<!-- wp:paragraph --><p>[cmsms_sidebar sidebar="division-list"]</p><!-- /wp:paragraph -->';
+od_test( 'dead shortcodes: the widget area goes', str_contains( od_pages_dead_shortcodes( $sidebar ), 'cmsms' ) === false );
+
+$products = '<!-- wp:paragraph --><p>[cmsms_selected_products orderby="date" order="DESC" ids="28307" columns="1"]</p><!-- /wp:paragraph -->';
+od_test( 'dead shortcodes: so does the WooCommerce grid', str_contains( od_pages_dead_shortcodes( $products ), 'cmsms' ) === false );
+
+$form = '<!-- wp:paragraph --><p>[cmsms_contact_form form_plugin="cf7" form_cf7="20138{|}Твой отзыв об Общем деле" animation_delay="0"]</p><!-- /wp:paragraph -->';
+$form_out = od_pages_dead_shortcodes( $form );
+od_test( 'dead shortcodes: the отзыв form becomes CF7\'s own shortcode', str_contains( $form_out, '[contact-form-7 id="20138"]' ) );
+od_test( 'dead shortcodes: and the wrapper it was in survives', str_contains( $form_out, '<!-- wp:paragraph -->' ) );
+od_test_idempotent( 'od_pages_dead_shortcodes', 'od_pages_dead_shortcodes', $form );
+od_test_idempotent( 'od_pages_dead_shortcodes (sidebar)', 'od_pages_dead_shortcodes', $sidebar );
+
+/* A sweep runs over every published page, so the common case is «not this page»
+   and it has to be free and byte-exact. */
+od_test( 'dead shortcodes: a page with no cmsms tag is returned as it is', od_pages_dead_shortcodes( $page ) === $page );
+
+/* A form tag with no id is a body this rule does not understand — and a silent
+   drop would delete the only form on the page. */
+$threw = false;
+try {
+	od_pages_dead_shortcodes( '<p>[cmsms_contact_form form_plugin="cf7"]</p>' );
+} catch ( RuntimeException $e ) {
+	$threw = true;
+}
+od_test( 'dead shortcodes: a form tag with no CF7 id is refused', $threw );
 
 od_test_summary();
