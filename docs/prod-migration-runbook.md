@@ -93,7 +93,7 @@ Related: [`implementation-plan.md`](./implementation-plan.md) (task state) · [`
 ### Still open on od-stage, in order
 
 1. **The 10 residual pages.** `[cmsms_sidebar]` and `[cmsms_selected_products]` are meaningless headless — strip them. `[cmsms_contact_form]`, on one page, becomes a CF7 shortcode or the Next form. Cheapest as a rule in [`wp/scripts/od-pages.php`](../wp/scripts/od-pages.php), which already owns page bodies, rather than a new branch in the migrator. Pages: 526 `news`, 20139 `ostavit-otziv`, 21952 `reviews`, 25991 `school`, 25997 `vuz`, 26004 `mvd`, 26007 `letters`, 26012 `middle`, 28240 `pppuiv-constructor`, 56687 `добровольчество`.
-2. **ACF and the film field group (B3)** — §2.2–2.4 as written, minus every skip flag. Then [`wp/mu-plugins/od-film-meta.php`](../wp/mu-plugins/od-film-meta.php).
+2. ~~**ACF and the film field group (B3)**~~ **Done 2026-08-20, and the worksheet is applied.** ACF free **6.8.8** installed and activated, then the ops repo's two idempotent scripts run over `wp eval-file -` (§2.2–2.4, no skip flags needed): `setup-film-acf.php` imported `group_film_meta` as post **80414** — 18 fields, `show_in_rest=1` — and `migrate-download-slots.php` was a **no-op**, because the clone holds **zero** `download_full_*`/`download_short_*` rows. That is the expected answer and worth stating: those keys were od-dev's earlier ACF shape, and **prod never had ACF at all**, so there is nothing to fold on a fresh clone. [`od-film-meta.php`](../wp/mu-plugins/od-film-meta.php) is installed as the fourth mu-plugin. **§2.4's gate passes** — all 18 `acf` keys come back, and `meta.od_card_cover` resolves through its fallback branch (no плакат yet, so it serves the featured image), which is what that mu-plugin exists for. §3 then wrote **309 cells across 74 films**: **74 of the 85 catalogue films have a Kinescope player**, share links on 32, a download on 35. Verified as a render, not only as JSON — `/71933/` embeds `kinescope.io/embed/q2ufLsHSSxyYp6teUUke92` and `/19123/` embeds `sNgGnFgYFfAKo7nF3NX5RT`, each the id its row holds.
 3. **Application password** — the one thing here that still needs a decision, and it blocks items 6 and 9. `wp-openapi` is installed (step 08) and the **schema gap is already measured**: WP 7.1 adds 14 routes the committed types' source (od-dev, 6.8.8) has never had (`wp-abilities/v1/*`, `wp/v2/icons*`, `wp/v2/media/{id}/sideload`+`finalize`, `wp/v2/view-config`) and lacks three of that install's plugin routes (`author_avatar/blocks/v1*`, CF7's `feedback/schema`). **The types in the repo are generated from od-dev, which is not the source of truth for anything** — regenerating them from the clone once its plugin set is final is the real close-out here, and it needs the pre-pass below; **`pnpm type-check` passes clean against stage-generated types**, so nothing the fetchers touch changed shape across 6.8.8 → 7.1. ⚠ But **`pnpm generate:types` fails outright against 7.1**: core's new `view-config` schema declares `default_view.filters.items.properties.value` as `[]`, and openapi-typescript rejects it — `#/components/schemas/view-config/default_view/filters: invalid property value. Expected Schema Object or boolean, got Array`. Rewriting that one empty array to `{}` before generating is enough (proven — that is how the diff above was taken), so the fix is a pre-pass in `generate:types`, a redocly decorator, or pinning `wp-openapi` to 1.0.21; none of the three is chosen yet. Also note the schema build logs 56 × `Undefined array key "type"` from `wp-openapi/src/Spec/Operation.php:329` — same malformed node, seen from the other side. ~~**What is left:** the password itself.~~ **Done 2026-08-20**, as a service account, because every one of stage's 7 admins is a real person: `od-frontend` (id **5367**, administrator — `edit_theme_options` is what `/wp/v2/menus` and `/wp/v2/widgets` require) carries the one application password, named `next-frontend`. The frontend's copy lives in `.env.stage`, which `.gitignore` already covers via `.env*`, and `node --env-file=.env.stage …` is how every probe below read it without the value passing through a terminal. Revoke with `wp user application-password delete 5367 --all`.
 4. ~~**Category ids (B5).**~~ **Closed 2026-08-20 — no code change needed.** Measured on the clone: every id the frontend hardcodes is *identical* to od-dev's, because od-dev is itself a prod clone. `«Видео»` **85** is still the parent, and its children are **581** `movies` «Фильмы» (26 published), **580** `mult` «Мультфильмы» (10), **86** `roliki` «Ролики» (15), **559** `famous` «Известные люди» (36); news is **47** `novosti` «Новости» (7937) and **578** `articles` «Статьи» (19), with `«Видео события»` **52** (115) correctly outside the catalogue. So `filmCategories.ts`, `newsCategories.ts` and `scripts/lib/wp.mjs` all stay as they are. Worth knowing for the next reader: the **slugs differ from our URL segments** (`movies` ≠ `filmy`, `mult` ≠ `multy`, `famous` ≠ `famous-people`) — the config is keyed by URL segment on purpose, so that is not a mismatch to "fix".
 5. ~~**Media origin (B6).**~~ **Verified 2026-08-20.** The `.htaccess` rule is one line, `^wp-content/uploads/20(09|1[0-9]|2[0-3])/…` → `https://obshee-delo.website.yandexcloud.net/…` [R=301], which is **exactly** `DEFAULT_WP_MEDIA_CDN` in `src/shared/api/mediaCdn.ts`. Probed both sides: a 2015 upload 301s to the bucket and serves 200 / 174 KB there, a 2026 upload serves 200 locally and is **not** in the bucket (it 301s away) — which is the behaviour `resolveMediaUrl` is built for, since it only prefers the CDN copy when a direct HEAD returns 200.
@@ -224,22 +224,26 @@ Re-run §1.1 to confirm, and check **both** switches are off before concluding t
 
 > Basic auth also requires the **application password** to exist on the target env — generate one per environment ([WP guide](https://make.wordpress.org/core/2020/11/05/application-passwords-integration-guide/)) and never reuse od-dev's.
 
-**2.2 Install ACF free (B3).**
+**2.2 Install ACF free (B3).** Done on od-stage 2026-08-20 — version **6.8.8**. Plain `wp` works there since §0.6 step 05, so the skip flags are gone; the `-d` flags only silence CF7 5.4.2 / leyka 3.30.3's PHP 8.2 deprecations, which otherwise interleave with WP-CLI's own output.
 ```bash
-ssh timeweb 'cd ~/od-stage/public_html && wp --skip-plugins=clearfy-pro --skip-themes plugin install advanced-custom-fields --activate'
+ssh timeweb 'php -d display_errors=0 -d error_reporting=0 /usr/local/bin/wp \
+  --path=$HOME/od-stage/public_html plugin install advanced-custom-fields \
+  --activate --url=https://od.webtm.ru'
 ```
 
 **2.3 Create the field group, then migrate legacy download meta.** Both scripts live in the ops repo at `servers-agent/tasks/2026-06-04-od-dev-film-acf-recon/` and are idempotent. **Order matters, and only these two:**
 ```bash
 cd ~/Projects/servers-agent/tasks/2026-06-04-od-dev-film-acf-recon
-ssh timeweb 'cd ~/od-stage/public_html && wp eval-file - --url=https://od.webtm.ru' < setup-film-acf.php
-ssh timeweb 'cd ~/od-stage/public_html && wp eval-file - --url=https://od.webtm.ru' < migrate-download-slots.php
+W='php -d display_errors=0 -d error_reporting=0 /usr/local/bin/wp --path=$HOME/od-stage/public_html'
+ssh timeweb "$W eval-file - --url=https://od.webtm.ru" < setup-film-acf.php
+ssh timeweb "$W eval-file - --url=https://od.webtm.ru" < migrate-download-slots.php
 ```
+Ran 2026-08-20: `OK: imported 'group_film_meta' (ID 80414) with 18 fields, show_in_rest=1`, then `DONE: 0 posts migrated`.
 - `setup-film-acf.php` — 18 flat url/text fields, `show_in_rest`, location `post_format == video`. Safe to re-run: same field keys ⇒ existing postmeta survives.
 - `migrate-download-slots.php` — folds any legacy `download_full_*`/`download_short_*` meta into `download_{1..5}_{url,label}` with composed labels.
 - ⚠️ **Do NOT run `apply-film-downloads.php`** — retired 2026-07-03; it writes the old field keys.
 
-**2.4 Gate.** REST must return all 18 keys:
+**2.4 Gate.** REST must return all 18 keys. Passed on od-stage 2026-08-20, and check `meta.od_card_cover` in the same breath — that is [`od-film-meta.php`](../wp/mu-plugins/od-film-meta.php), which has to be installed for a programme card to have a cover:
 ```bash
 curl -s -u "$WP_USER:$WP_PASSWORD" "https://od.webtm.ru/wp-json/wp/v2/posts?format=video&per_page=1&_fields=acf" | head -c 600
 ```
@@ -513,6 +517,10 @@ It is idempotent by detection — a page already in its target shape is skipped 
 
 The source of truth is `.scratch/film-worksheet-filled.csv` (107 rows: 99 od-dev catalogue films + 8 that exist only on prod). It is gitignored — regenerate or copy it forward; §3.7 covers rebuilding it from scratch.
 
+**Applied to od-stage 2026-08-20 — the numbers, and the one thing they reveal.** §3.1–3.4 ran end to end against the clone: **84 of 107 source rows matched a target row, 309 cells were written across 74 films**, and a second dry run reports `0 field(s)` — the idempotence guarantee holding. Coverage on the clone's **85** published catalogue films: `kinescope_id` **74**, any `share_*` 32, a download slot 35, `poster_image_url` 11, `watch_url` 0. Since the whole sheet came from od-dev, **that is also the measure of how far od-dev's film data travels to prod: most of it does**, which is the point of remapping by title rather than by id.
+
+The 23 rows that did **not** land are the interesting part, and none of them is a lost value — see §3.3. Two mechanics to know before reading that list: `pnpm film:export` scopes to the **four catalogue categories** and to **`publish`**, so a film that is a draft or sits outside them has no row to remap onto; and exporting with `--all` (every `format=video` post — **187** on the clone) changes nothing here, because all 74 writes landed inside the catalogue anyway.
+
 **3.1 Export the target environment's own sheet.** Point `.env` at the target first (`WP_BASE`, `WP_USER`, `WP_PASSWORD`):
 ```bash
 pnpm film:export -- --out .scratch/film-worksheet-stage.csv
@@ -527,8 +535,14 @@ pnpm film:remap -- --from .scratch/film-worksheet-filled.csv \
 Joins by normalised title, rewrites ids, fills only cells the target leaves empty, and **lists everything it refused to guess**. Read that output — it is the manual work-list for 3.3.
 
 **3.3 Resolve by hand what remap wouldn't guess.**
-- **The 8 prod-only films** (they have no od-dev post): «Правда и ложь про сухой закон 1985 года», «День рождения», «Как найти призвание», «Алкоголь. Взгляд изнутри», «Большая опасность маленьких размеров», «Папуасы», «Три секрета, как раскрыть призвание», «Сахар атакует». On prod they should match by title automatically; if they don't, paste the post id into the `id` column.
-- **Two duplicate-title pairs** — `38424`/`32168` «Влияние кино на общество … Николай Бурляев» and `38420`/`31445` «История трезвеннических движений в России!» (each an «Известные люди» post duplicated as «Видео события»). Remap skips them by design. Neither carries Telegram data today, so they're safe to leave empty — or dedupe them editorially.
+- **The 8 prod-only films** (they have no od-dev post): «Правда и ложь про сухой закон 1985 года», «День рождения», «Как найти призвание», «Алкоголь. Взгляд изнутри», «Большая опасность маленьких размеров», «Папуасы», «Три секрета, как раскрыть призвание», «Сахар атакует». **Four of the eight matched by title on the clone** («Сахар атакует» 74794, «Алкоголь. Взгляд изнутри» 73084, «Большая опасность…» 73381, «Как найти призвание» 72705); the other four are in the list below.
+- **Two duplicate-title pairs** — `38424`/`32168` «Влияние кино на общество … Николай Бурляев» and `38420`/`31445` «История трезвеннических движений в России!» (each an «Известные люди» post duplicated as «Видео события»). Remap skips them by design. Neither carries Telegram data today, so they're safe to leave empty — or dedupe them editorially. On the clone `38420` is a **draft** and `31445` is published, so the pair is less symmetric than it looks.
+
+  **What the clone actually reported (2026-08-20), and why it is editorial rather than a fix.** Of the 23 rows that found no target, **13 are the same film, published on od-dev and left a `draft` on prod** — all `format=video` in «Известные люди» (559), title-identical, so the sheet's data is ready the moment someone publishes them: **38428** Липовой, **37635** Федоров (алкоголь), **37632** Мышкин, **37509** Федоров (ювенальная юстиция), **37506** Жданов, **34001** Хасьминский, **29715** Минин, **29711** Вакулинская, **29705** Деревянко, **29224** Бхакти Расамрита Свами, **20810** Сати Казанова, **20803** Задорнов, **20788** «Зачем России гомосексуализм?». The clone carries **19** such drafts inside the catalogue categories («Известные люди» 36 published / 19 draft, «Фильмы» 26 / 1), which is the whole gap between od-dev's 99 catalogue films and the clone's 85. **Publishing them is an editorial call, not a migration step** — the same shape as the two `profile` drafts §0.6 item 9 found.
+  - **Two of those drafts have a published twin, so publishing them would duplicate a page**: `37509` vs **15068** «… Депутат Евгений Федоров» (`video`, already in the catalogue — it took the sheet's data), and `29711` vs **21035**, which is `standard`/«Новости». Merge before publishing.
+  - **Some films are plain news posts on prod**, not catalogue films: **18776** «Секреты успеха. Дмитрий Чугунов», **18978** «Павел Деревянко о наркотиках», **20954** «Как бросить курить? Денис Минин», **12808** «Зачем России гомосексуализм?» — all `standard` in «Новости» (47), which is why the catch-all renders them as articles and not as films. Changing `post_format` is editorial too.
+  - **19894 «День рожденья» is published `video` but carries only category 85**, the parent «Видео» — so it is invisible to the catalogue, which queries the four children. The sheet spells it «День рождения», hence no title match either. One category fixes both.
+  - **No post on the clone at all**: «Ведущий педиатр России …», «Социальный ролик Папуасы», «Три секрета, как раскрыть призвание». «Правда и ложь про сухой закон 1985 года» has only a near-namesake, **60862** «… про сухой закон Горбачева», `standard` in «Статьи» — same subject, different post, so do not assume they are the same film.
 
 **3.4 Dry run, read it, then apply.**
 ```bash
@@ -563,7 +577,7 @@ The stored value is the **short id from `play_link`** (`https://kinescope.io/<sh
   - **28749 «The Mystery of the Deadly Smoke»** is the English cut; three Russian «Тайна едкого дыма» versions exist, no English one. (An English «Istoriy s ushami» does exist, so English uploads are sporadic rather than absent.)
   - **37626 / 14590 / 32168** duplicate other WP posts (26122 / 38406 / 38424) — merging the posts is the better fix than assigning the same video twice.
 - **`watch_url`: 0 of 99.**
-- The 8 films missing from od-dev should be confirmed present on prod.
+- ~~The 8 films missing from od-dev should be confirmed present on prod.~~ **Checked on the clone 2026-08-20:** four are there and took their data (74794, 73084, 73381, 72705); «День рождения» is **19894** «День рожденья» with no catalogue category, and three have no post at all — §3.3.
 - **67400 «Курение. Взгляд изнутри» has a mislabelled download** — `disk.yandex.ru/i/-5L5AfVOrXQFlw` is stored as «Сокр. версия» but is the 35-минутная полная версия.
 - **39664 «Как научиться любить?» has no `share_youtube`** — the channel gives it the same link as 71933, which belongs to 71933.
 
