@@ -1343,17 +1343,19 @@ od_test( 'about: its three sentences keep the space the `<br />`s stood for', fa
 od_test( 'about: the films are a list of twelve under their own lead', 12 === substr_count( $read, '<!-- wp:list-item -->' ) && false !== strpos( $read, '<p>Общественной организацией «Общее дело» созданы следующие фильмы' ) );
 od_test( 'about: a film keeps its whole sentence', false !== strpos( $read, '<li>«Тайна едкого дыма. Команда Познавалова» - мультфильм' ) );
 
-/* The cards: every destination the page had, plus the mock's own two. */
-od_test( 'about: eleven cards — one wide row of eight, one portrait row of three', 1 === substr_count( $built, '<!-- wp:columns {"className":"od-tiles od-tiles--wide"}' ) && 1 === substr_count( $built, '<!-- wp:columns {"className":"od-tiles"}' ) && 11 === substr_count( $built, '"className":"od-tile od-tile--about-' ) );
+/* The cards. */
+od_test( 'about: eight cards — one wide row of five, one portrait row of three', 1 === substr_count( $built, '<!-- wp:columns {"className":"od-tiles od-tiles--wide"}' ) && 1 === substr_count( $built, '<!-- wp:columns {"className":"od-tiles"}' ) && 8 === substr_count( $built, '"className":"od-tile od-tile--about-' ) );
 
-foreach ( array( '/team/', '/about/experts-review/', '/about/docs/', '/about/ustav/', '/about/supervisory/', '/about/smi/', '/about/ostavit-otziv/', '/about/activist-stories/', '/about/reviews/', '/about/udostoverenie/', '/about/nashi_partnery/' ) as $href ) {
+foreach ( array( '/team/', '/about/experts-review/', '/about/docs/', '/about/ustav/', '/about/smi/', '/about/activist-stories/', '/about/reviews/', '/about/udostoverenie/', '/about/nashi_partnery/' ) as $href ) {
 	od_test( "about: «{$href}» is reachable from the page", false !== strpos( $built, sprintf( '<a href="%s">', $href ) ) );
 }
 
 od_test( 'about: the tile\'s stale /smi/ is written as the page\'s real address', false === strpos( $built, '<a href="/smi/">' ) );
-od_test( 'about: the statistics site keeps its own address', false !== strpos( $built, 'xn--80a7adb' ) );
+od_test( 'about: the council is the team card, not a second card of its own', false !== strpos( $built, '>Команда и наблюдательный совет</h3>' ) && false === strpos( $built, '/about/supervisory/' ) );
+od_test( 'about: the statistics site is not linked until it is rebuilt', false === strpos( $built, 'xn--80a7adb' ) );
+od_test( 'about: «Оставь свой отзыв» is left to the footer', false === strpos( $built, '/about/ostavit-otziv/' ) );
 od_test( 'about: no card points at the private «Наши отчеты»', false === strpos( $built, '/about/reports/' ) && false === strpos( $built, '>Отчеты</h3>' ) );
-od_test( 'about: «Видеопрезентация» is the hero, not a card', 1 === substr_count( $built, '<!-- wp:embed' ) && false === strpos( $built, 'youtube.com/watch' ) && false === strpos( $built, '>Видеопрезентация</h3>' ) );
+od_test( 'about: the hero plays from Kinescope, not YouTube', 1 === substr_count( $built, 'kinescope.io/embed/54cb9a3e-b852-4c61-938f-b0b77d05d192' ) && false === strpos( $built, 'youtube' ) && false === strpos( $built, '>Видеопрезентация</h3>' ) );
 
 /* The partner strip, and what it is the top of. */
 od_test( 'about: four logos inside one card, named', 1 === substr_count( $built, '"className":"od-figures od-figures--4 od-figures--logos"' ) && false !== strpos( $built, '<figcaption class="wp-element-caption">Правительство Республики Татарстан</figcaption>' ) );
@@ -1388,6 +1390,9 @@ foreach ( array_merge( OD_ABOUT_CARDS, OD_ABOUT_CARDS_SMALL ) as $card ) {
 foreach ( OD_ABOUT_TASK_ICONS as $icon ) {
 	od_test( "about: `.od-task--{$icon}` has an icon", false !== strpos( $css, ".od-task--{$icon}::before" ) );
 }
+/* The other half of the disclosure: the closed label is content, the open one
+   can only be the stylesheet's — a `<details>` cannot swap its own summary. */
+od_test( 'about: the stylesheet carries the label the summary cannot', false !== strpos( $css, "content: 'Свернуть'" ) );
 
 /* --------------------------------------------------------- the about helpers */
 
