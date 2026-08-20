@@ -4744,9 +4744,24 @@ function od_branch_compound(string $line): ?array
  */
 function od_branch_person_rows(string $line): ?string
 {
-    if (!preg_match('~^<(?:strong|b)>\s*([^<]*?)\s*</(?:strong|b)>\s*:?\s*(.*)$~si', $line, $found)) {
+    // **Every** bold run at the head of the line is the role, not just the first:
+    // `/contacts/moscow/` writes «<strong>Руководитель департамента
+    // профилактики</strong>, <strong>Руководитель Московского городского
+    // отделения</strong> Моисеев Олег Олегович», and reading one of them left the
+    // comma and the second title inside the man's name.
+    $roles = [];
+    $rest  = $line;
+
+    while (preg_match('~^<(strong|b)>\s*([^<]*?)\s*</\1>\s*[,;:.]?\s*~si', $rest, $bold)) {
+        $roles[] = od_line_text($bold[2]);
+        $rest    = substr($rest, strlen($bold[0]));
+    }
+
+    if ($roles === []) {
         return null;
     }
+
+    $found = [1 => implode(', ', array_filter($roles, 'strlen')), 2 => $rest];
 
     $role = od_line_text($found[1]);
     // The role word need not open the line: `/contacts/samarskaya/` bolds
@@ -4755,7 +4770,9 @@ function od_branch_person_rows(string $line): ?string
         return null;
     }
 
-    $name = od_line_text($found[2]);
+    // A name never opens with punctuation — what does is a line that stated its
+    // role in two pieces.
+    $name = trim(od_line_text($found[2]), " \t,;:.\u{00a0}");
 
     // «<strong>Председатель правления</strong> Владислав Круть тел.: +7 (938)
     // 403-57-70 e-mail: vlad.krut@obshee-delo.ru» — one line holding the role, the
