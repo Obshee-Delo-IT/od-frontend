@@ -1,5 +1,9 @@
 apis:
   wp@v2.0.0:
-    root: https://od-dev.tmweb.ru/wp-json-openapi
+    # od-stage, a clone of live production — the install the shipped types must
+    # describe. od-dev is the development backend but not the source of truth,
+    # and its `wp-openapi` is a version behind. `pnpm generate:types -- --from
+    # <url>` overrides this without editing the file.
+    root: https://od.webtm.ru/wp-json-openapi
     x-openapi-ts:
       output: ./src/types/generated/wp-json-openapi.ts
