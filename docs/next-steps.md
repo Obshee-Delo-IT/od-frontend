@@ -384,6 +384,66 @@ od-dev. Its other post types were not re-registered — deliberately, they are d
 re-registers and D3 reads. Worth doing before a prod dump/restore, not before
 launch.
 
+## 38 orphan tables from deleted plugins — and one of them is a live mailing list
+
+**Measured on od-stage 2026-08-21**, the prod clone, after the headless prep
+deleted 22 plugins ([`prod-migration-runbook.md` §0.6](./prod-migration-runbook.md)
+step 04) and after the dead-meta sweep took 215 469 rows out of `wp_postmeta`
+(item 10 there). The tables those plugins created are still in the database —
+**40 non-core tables, 38 of them orphaned** — and they were deliberately *not*
+dropped, because reading them first turned one of them into a decision.
+
+**The one that matters: MailPoet 2 (`wp_wysija_*`, 16 tables).** The plugin is
+long deleted, and the list is not dead:
+
+| | rows |
+| --- | ---: |
+| `wp_wysija_user` — subscribers | **10 954** (5 249 confirmed, 5 705 not) |
+| `wp_wysija_user_list` — memberships | 11 354, across 3 lists |
+| `wp_wysija_email` — campaigns ever sent | 3 |
+
+Two facts from the same table decide what happens next. **It is still being
+written to:** the newest `created_at` is **2026-08-20 11:25**, the day the clone
+was taken, and **830 addresses arrived in the last year** — so the signup form on
+the live site works and people are still using it. And **nothing was ever mailed
+to them**: `last_opened` is `NULL` on all 10 954 rows, against three campaigns in
+ten years (the oldest subscriber is from 2016-05-04).
+
+**So the cutover silently ends a thing the current site does.** MailPoet goes
+with the plugin prune; `NEWSLETTER_SIGNUP_ENABLED` is `false` in
+`src/shared/config/features.ts` and `NewsletterSignup`'s `handleSubmit` only
+calls `preventDefault()` (wiring is issue #54 / B6). After the domain moves there
+is no subscription form at all, and the 830-a-year stream stops. That is a
+product decision, not a database chore.
+
+**What to do, in this order:**
+
+1. **Export `wp_wysija_user` + `wp_wysija_user_list` before anything is dropped.**
+   It is the only copy, it is 10 954 real addresses with IPs and names, and that
+   makes it personal data under 152-ФЗ — so the export needs a home as careful as
+   the site's own backups, not a CSV in a scratch directory.
+2. **Decide where the newsletter lives** — B6's form backend, an external sender,
+   or an explicit «we don't do this any more» and the form stays hidden. Until
+   that is answered the export is the only thing standing between the list and
+   the prune.
+3. **Then drop the tables.** The other 22 are safe and merely large: nothing can
+   reach them without the plugin that made them, and none of it is editorial.
+
+| tables | rows | what it was |
+| --- | ---: | --- |
+| `wp_ewwwio_images`, `wp_ewwwio_queue` | **428 675** | EWWW image-optimiser cache — derived data, regenerable by definition |
+| `wp_revslider_*` ×7, `wp_layerslider` ×2 | ~170 | slider content for two plugins that are gone; the pages that used them are migrated |
+| `wp_actionscheduler_*` ×4 | ~50 | WooCommerce's scheduler; Woo's own tables went in §0.5 |
+| `wp_wpr_rucss_resources`, `wp_wpr_rucss_used_css` | — | WP Rocket's used-CSS cache |
+| `wp_hugeit_lightbox`, `wp_all_in_one_bannerWithPlaylist_*` ×4 | ~75 | a lightbox and a banner-playlist plugin |
+
+**`wp_leyka_donations` and `wp_leyka_donations_meta` stay** — leyka is one of the
+two plugins that remain active, and those rows are donation records.
+
+Note for whoever runs it: a single `DROP TABLE` naming all 22 is one
+irreversible statement over a database, and it is worth doing per family with a
+`~/od-backup.sh` snapshot in front of it rather than in one line.
+
 ## ~~Linkify the contacts inside `profile` bodies — the other 128~~ — done 2026-08-20
 
 **Eleven were done with D3** (2026-08-18): `od_canonical_tel_links()` in
