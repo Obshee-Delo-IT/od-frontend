@@ -4,8 +4,17 @@ services:
     build:
       target: runner
       context: .
+      # Build-time only, and required: see the Dockerfile's builder stage.
+      # Compose interpolates these from the file `--env-file` names, so one flag
+      # points both the build and the runtime at the same tier.
+      args:
+        WP_BASE: ${WP_BASE}
+        WP_MEDIA_CDN: ${WP_MEDIA_CDN:-}
+        SITE_URL: ${SITE_URL}
+        WP_USER: ${WP_USER}
+        WP_PASSWORD: ${WP_PASSWORD}
     restart: always
     ports:
-      - 3000:3000
+      - ${PORT:-3000}:3000
     env_file:
-      - .env
+      - ${ENV_FILE:-.env}

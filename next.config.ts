@@ -7,6 +7,15 @@ const mediaCdn = getWpMediaCdn();
 const nextConfig: NextConfig = {
   output: 'standalone',
 
+  // `pnpm-workspace.yaml` at the repo root makes Next trace files from the
+  // workspace root rather than from here, and the standalone build then nests
+  // itself one directory deep — `/app/app/server.js` inside the image, while the
+  // Dockerfile's `CMD node server.js` looks in `/app`. The container exited on
+  // `Cannot find module '/app/server.js'` and never served a request. Pinning
+  // the trace root to this directory flattens the output, which is what every
+  // `COPY --from=builder /app/.next/standalone ./` in the world assumes.
+  outputFileTracingRoot: import.meta.dirname,
+
   // The live site serves every URL with a trailing slash. Matching it means the
   // ~59 % of entries that land on a legacy URL are served directly rather than
   // through a 308 — and a rollback to the old site keeps working. Note this
