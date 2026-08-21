@@ -8,6 +8,13 @@
         "@vkhanhqui/figma-mcp-go@latest"
       ],
       "env": {}
+    },
+    "coolify": {
+      "type": "http",
+      "url": "https://coolify.obshee-delo.ru/mcp",
+      "headers": {
+        "Authorization": "Bearer ${COOLIFY_MCP_TOKEN}"
+      }
     }
   }
 }
