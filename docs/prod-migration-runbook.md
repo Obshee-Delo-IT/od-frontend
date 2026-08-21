@@ -128,6 +128,67 @@ Related: [`implementation-plan.md`](./implementation-plan.md) (task state) · [`
 
 ---
 
+## 0.7 Traps — symptom first
+
+**Read this section on the day, not the prose.** Every row below is something
+that actually happened on od-dev or on the prod clone, and almost all of them
+**answer 200, or exit 0, while being wrong** — which is why they cost hours the
+first time. The columns are what you *see*, what it *is*, and what to do; the
+detail is in the section named. Ordered by when in the procedure it bites.
+
+### On the WordPress side
+
+| you see | it is | do |
+| --- | --- | --- |
+| WP-CLI output interleaved with `Deprecated:` walls | CF7 5.4.2 and leyka 3.30.3 under PHP 8.2 CLI. Not an error, but it corrupts `--format=csv` and hides the real line | run WP-CLI as `php -d display_errors=0 -d error_reporting=0 /usr/local/bin/wp …` (§1) |
+| WP-CLI aborts with a redirect backtrace | `clearfy-pro` sees an empty host and 301s to `https://` | `--url=https://<host>` on **every** command, or `--skip-plugins=clearfy-pro` (§1) |
+| any WP-CLI command that loads WordPress fatals | timeweb's CLI PHP is 8.2 and `welfare` dies there | `--skip-themes`, or the site's own binary `/opt/php7.4/bin/php /usr/local/bin/wp …` (§1) |
+| `wp theme activate` fatals in `widgets.php:1265` | **core** 5.5.5, not the theme — `_wp_sidebars_changed` under PHP 8.2 on `after_switch_theme`. `--skip-themes` was masking a core bug | run that one command under PHP 7.4 (§0.6 step 02) |
+| REST still 404s after `clearfy-pro` is off | there are **two** switches, and the theme's is in code with no option behind it — `remove_action('parse_request','rest_api_loaded')` in `welfare/functions.php` | delete the theme on the clone; on a live install use the mu-plugin sketch (§2.1) |
+| REST 500s on every post after the theme is gone | `cmsms_divpdel()` is defined **in the theme**, so `the_content` over any cmsms body throws | deactivate `cmsms-content-composer` in the same window — it is forced, not tidying (§0.6 step 03) |
+| `profile` records vanish from REST | their post type was registered by the plugin you just switched off | [`od-profile.php`](../wp/mu-plugins/od-profile.php) goes up **first**, at `init` priority 20 (§2.6) |
+| the migrator's `wp:query` blocks render as an empty `<div>`, at 200 | WordPress 5.5.5 does not know the block | core update **before** the migration, never after (§2 order, row 3) |
+| **the header renders empty** | `HeaderServer` looks up the nav by slug `main-navigation`; production's menu 39 is called `footer-navigation` and the name lies — menu 40 `home` is the CMSMasters demo | `wp term update nav_menu 39 --slug=main-navigation` (§0.6 item 6) |
+| **the footer renders empty** | `fetchFooter` asks for `sidebar=sidebar_bottom`, one of eleven areas the deleted theme registered; its widgets went to `wp_inactive_widgets` | [`od-sidebars.php`](../wp/mu-plugins/od-sidebars.php) re-registers the id **with `welfare`'s wrappers** — `Footer.module.css` lays the footer out by `aside:nth-child(N)` (§0.6 item 6) |
+| `wp widget list` shows an empty sidebar you just filled | WP-CLI does not understand `widget_block` instances at all, and `wp widget move` silently drops them into `wp_inactive_widgets` | create them over REST, assign `sidebars_widgets` with `wp eval-file`, verify over REST (§0.6 item 6) |
+| the footer's columns are in the wrong order | `wp widget move` **prepends** | `--position=N` |
+| `/contacts/` shows no regions | the accordion transform found no `wp:details` — production never had od-dev's 50 hand-made spoilers | it now falls back to the dead `[pagelist]`, then to the map (§0.6 item 8) |
+| a `wp eval-file` transform warns «unexpected input» and the page is untouched, at 200 | the transform was written against od-dev's shape | five known cases, all now read both shapes; a sixth means recapture the body as a `*.prod.html` fixture ([`wp-page-redesign.md`](./wp-page-redesign.md)) |
+| a page transform reports «no such page» | `od-pages.php` addresses records **by path**; production's page set is not od-dev's (148 published against 168) | check the path exists before assuming the transform is broken ([`page-inventory.md` §1a](./page-inventory.md)) |
+| the runner cannot find an attachment it needs | `wp media import` takes the slug from `--title`, not from the filename, so a Cyrillic title gives a Cyrillic slug | `wp post update <id> --post_name=<slug>` after the import (§0.6 item 8) |
+| a query block on a programme page lists nothing | its term did not exist when the page was written | **`od-wp.php` before `od-pages.php`**, always (§0.6 item 8) |
+| ACF fields are missing from `/wp/v2/posts?format=video` | the field group was never imported, or `show_in_rest` is off | `setup-film-acf.php` (§2.2–2.4); the gate is 18 keys **and** `meta.od_card_cover` |
+| a programme card has no cover | `od_card_cover` is a *registered* meta key, and ACF's own fields are not registered | [`od-film-meta.php`](../wp/mu-plugins/od-film-meta.php) must be installed (§2.4) |
+| `pnpm film:export` writes an empty worksheet | `scripts/lib/wp.mjs` keeps its **own** copy of the film category ids | fix it during §1.3, not at §4.3 |
+| the worksheet has rows for films the target has none of | the exporter scopes to `publish` and to the four catalogue categories; production keeps **19** of those films as drafts | editorial, not a bug — the list is §3.3 |
+| `wp db query` says `Table 'wp_…' doesn't exist` | the prefix is `wp_`, and `nvp_content_copy` is a **meta key**, not a table | `wp db prefix` first |
+| `/wp/v2/profile` loses its region field after the meta sweep | `cmsms_profile_subtitle` was deleted with its siblings | the sweep must exclude it — 193 rows ([`wp-backend.md` §4.4 step 8](./wp-backend.md)) |
+
+### On the frontend side
+
+| you see | it is | do |
+| --- | --- | --- |
+| `pnpm generate:types` refuses the document | WP 7.1's `view-config` declares **eight** properties as `[]` where a schema object belongs | `scripts/generate-wp-types.mjs` patches them; do not hand-edit the output (§0.6 item 3) |
+| the generated types describe the wrong install | `redocly.yml` wins over any path or URL argument, silently | the wrapper runs the generator from a scratch directory; use `-- --from <url>` to repoint |
+| `pnpm map:generate` throws «href matches no published page» | production's region page for that code is in the trash — 57 region pages against od-dev's 75 | an alias with no page now greys its region; a *matched* page that vanished is still fatal (§0.6 item 8) |
+| a category page answers 200 with everything, or with nothing | a redirect or a config id points at a filter value the destination does not recognise. **Status cannot catch this** | compare the card count against WP (§5 gates 1–2, 7) |
+| `/health` is a 308 | `trailingSlash: true` | probe `/health/` (§4.6) |
+| **the container exits on start**, `Cannot find module '/app/server.js'` | `pnpm-workspace.yaml` makes Next trace from the workspace root, so the standalone output nests one level deep | `outputFileTracingRoot` is pinned in `next.config.ts`; do not remove it (§4.5) |
+| **every prerendered page has an empty header and footer**, `x-nextjs-cache: HIT` | the image was built without WP credentials, so `httpClient` used its stub and the root layout's fetches returned nothing — baked into the HTML for the whole hour of `revalidate` | `WP_USER`/`WP_PASSWORD` are build args too, in the `builder` stage only (§4.5, §4.7) |
+| `getaddrinfo EAI_AGAIN` part way through the prerender | musl does not retry and does not cache; the prerender makes hundreds of requests from four workers | the base image is `node:22.16.0-slim`, not Alpine (§4.5) |
+| every `next/image` request 400s on the deployed site | `WP_BASE` was not a build arg, so `images.remotePatterns` was built against `https://wp.invalid` | pass all five build args (§4.7) |
+| the deploy advertises production's URLs from a non-prod tier | `SITE_URL` defaults to `https://obshee-delo.ru` | set it explicitly on every tier — it feeds `metadataBase`, every canonical, the sitemap and `robots.txt` (§4.1) |
+| the legacy fallback 404s fleet-wide | `WP_LEGACY_BASE` unset, or the container has no egress to it | boot logs say which — every line starts `[legacy] ` (§5 gate 12) |
+| the legacy fallback embeds the site inside itself | after cutover `WP_LEGACY_BASE` is this deployment's own origin | it must be the frozen copy; the app warns but does not stop (§5.5) |
+| legacy pages send visitors to live production | the frozen copy still emits `obshee-delo.ru` links, and the transform rewrites by comparing against the origin it fetched from | clone it with the usual domain search-replace (§4.1) |
+| a legacy page shows the old chrome | the transform found no `section#middle`, or unbalanced markup | `[legacy] boundary miss` / `unbalanced` in the logs; `pnpm legacy:sweep` over all 172 |
+| editors publish and nothing changes for an hour | `REVALIDATE_SECRET` or `OD_REVALIDATE_URL` is unset. One WP install notifies **one** frontend | §4.8, and [`wp-backend.md` §6.5](./wp-backend.md) |
+| a style is right in `next dev` and wrong in `next start` | source order — `@radix-ui/themes` CSS must be imported at the top of `app/layout.tsx`, not behind a component | never move those imports; compare `dev` against `start` (CLAUDE.md, C12) |
+| the certificate does not cover the apex | a wildcard matches **one** label and not the bare domain | get apex + `www` on the vhost **before** the DNS change (§5.5) |
+| the frozen copy fatals | `welfare` under PHP 8.x | leave that install on **PHP 7** forever (§2.7, §5.5) |
+
+---
+
 ## 1. Recon — read-only, do this before touching anything
 
 **On stage this no longer applies** — since §0.6 plain `wp --path=~/od-stage/public_html <command>` works, because the theme and clearfy are both gone and core is 7.1. Keep reading for **prod**, and for re-running §1 against a fresh clone.
@@ -137,6 +198,16 @@ On an un-prepped prod clone, use the alias and **both** skip flags. Without `--s
 ```bash
 ssh timeweb 'cd ~/od-stage/public_html && wp --skip-plugins=clearfy-pro --skip-themes core version'
 ```
+
+**On a prepped install, this is the invocation to use for everything** — the flags are gone but two `-d` switches are not cosmetic. `contact-form-7` 5.4.2 and `leyka` 3.30.3 throw PHP 8.2 deprecations on every load, which interleave with WP-CLI's own stdout: `--format=csv` output becomes unparseable and a real error scrolls past unread.
+
+```bash
+W='php -d display_errors=0 -d error_reporting=0 /usr/local/bin/wp --path=$HOME/od-stage/public_html'
+ssh timeweb "$W post list --post_type=page --format=csv"
+ssh timeweb "$W eval-file ~/od-stage/od-pages.php --url=https://od.webtm.ru"   # dry run
+```
+
+Keep `--url=` even where it is not strictly needed: it costs nothing and it is required the moment `clearfy-pro` is in play (§0.7).
 
 **1.1 REST reachability.** From your machine, not the server:
 ```bash
@@ -180,7 +251,7 @@ od-dev: 203 `format=video` posts, 99 in the four film sub-categories.
 
 ## 2. WordPress preparation
 
-> **Read the order before the steps.** The numbering below is historical — other docs link to §2.1, §2.5, §2.6 and §2.8 by number, so they keep them. The **execution order is not the numbering**, and the rehearsal on od-stage (§0.6) is what settled it:
+> **Read the order before the steps.** The numbering below is historical — other docs link to §2.1, §2.5, §2.6 and §2.8 by number, so they keep them. The **execution order is not the numbering**, and the whole rehearsal on od-stage (§0.6, 2026-08-20/21) is what settled it. This table is the master checklist: nineteen steps, and the ones that are not obvious are not obvious for a reason given in the right-hand column.
 >
 > | # | do this | why here |
 > |---|---|---|
@@ -193,8 +264,16 @@ od-dev: 203 `format=video` posts, 99 in the four film sub-categories.
 > | 7 | cmsms off and deleted (**§2.6** step 4) | **Forced, not tidying,** if step 6 removed the theme: `cmsms_divpdel()` lives in `welfare`, so with the theme gone every shortcode render throws `Call to undefined function` and REST 500s. |
 > | 8 | Plugin prune ([`wp-backend.md` §4.3](./wp-backend.md)) | After the conversion, so a plugin whose shortcodes are still in a body is measured before it is dropped, not after. |
 > | 9 | Re-register what the theme owned, and author the footer (**§0.6** item 6) | `wp term update nav_menu 39 --slug=main-navigation`, [`od-sidebars.php`](../wp/mu-plugins/od-sidebars.php) with `welfare`'s wrappers, then the six `sidebar_bottom` block widgets — the design's structure, prod's texts — created over REST and assigned by writing the option directly. **Not optional and easy to miss:** without them the header and the footer both render *empty*, at 200, because the frontend looks up the nav by a slug only od-dev carries and the footer by a widget area only `welfare` registered. |
-> | 10 | ACF and the film group (**§2.2–2.4**) | Independent of all of the above; last only because nothing else waits on it. |
-> | 11 | `od-revalidate.php` (**§2.5**), page fixes (**§2.8**) | Both want the final content in place. |
+> | 10 | An **application password** for the frontend, on a service account | Everything below reads REST as the frontend does. Every admin on this install is a real person, so `od-frontend` is a user of its own — and `edit_theme_options` is what `/wp/v2/menus` and `/wp/v2/widgets` require. |
+> | 11 | `wp-openapi`, then `pnpm generate:types -- --from https://<new host>/wp-json-openapi` | The types must describe the install that is about to serve. The schema needs patching on WP 7.1 and the wrapper does it (§0.6 item 3). |
+> | 12 | ACF and the film group (**§2.2–2.4**), then [`od-film-meta.php`](../wp/mu-plugins/od-film-meta.php) | Independent of all of the above. The mu-plugin is not optional: a programme card's cover is a *registered* meta key and ACF's fields are not registered. |
+> | 13 | Film data (**§3**) — export, remap onto this install's ids, import; then `film:kinescope`, then `film:covers` | Needs the field group (step 12) and nothing else. Remap by title, never by id: ids are per-install. |
+> | 14 | [`od-regions.php`](../wp/mu-plugins/od-regions.php), then **`od-wp.php`**, then **`od-pages.php`** (**§2.8**) | Three things in one row because the order inside it matters. The shortcode has to exist before `/contacts/` is rewritten to use it; `od-wp.php` creates the terms `od-pages.php`'s query blocks read, and a page cannot query a term that is not there yet. Run `od-pages.php` a third time and expect `0 writes, 0 warnings`. |
+> | 15 | `pnpm map:generate` and `pnpm pages:inventory`, **against the new install** | Both are generated from what WordPress actually holds. The map refuses to emit a link no page answers for, and production's region page set is not od-dev's — 57 against 75. |
+> | 16 | `od-revalidate.php` (**§2.5**), inert | Wants the final content in place, and its two defines are deploy-time config (§4.8). |
+> | 17 | Hygiene (**§0.6** item 10) | Last on the WordPress side, and **after** every gate: `nvp_content_copy` *is* the migration rollback. The orphan tables wait on one export — see [`next-steps.md`](./next-steps.md). |
+> | 18 | Build the image with **five** build args, deploy, run **§5** | Two of the five are secrets and the image is wrong without them (§4.5). |
+> | 19 | Cutover (**§5.5**) | The first step the public sees, and the only one whose rollback is a DNS record. |
 >
 > **This runs against the new install, never against live prod (§0.4).** Which is what makes it one procedure: nobody is reading the target, so the window between steps 6 and 7 — bodies rendering as literal `[cmsms_…]` text under a stock theme — costs nothing, exactly as it cost nothing on od-stage. Steps 1 and 2 are the ones with no second chance; the rest are re-runnable on a fresh clone, which is how §0.4 proposes to close the content gap.
 
@@ -708,6 +787,22 @@ Post detail lives at the bare **`/<id>`** since A8 — that is the *only* addres
     **Also verify what the site advertises** (F4, shipped with A8): `/sitemap.xml` is a well-formed XML with ~8 000 `<loc>` entries, every one slash-terminated and none of them a URL that redirects; `/robots.txt` names that sitemap at the **production** host — which comes from `SITE_URL` (§4.1), so a missing env var here publishes 8 000 canonical URLs pointing at the wrong domain.
 
     **Baseline to beat — localhost against od-dev, 2026-08-13: `84.2 %` coverage** (125/200 URLs, 17 606/20 907 visits), zero shape failures. It was 83.7 % before the `/materials/articles/` alias route added its 114 visits. The 15.8 % that failed is 3 076 visits of not-yet-redesigned sections (Materials still biggest at 1 166) plus 225 visits of five post ids absent from od-dev (`73381`, `73084`, `72705`, `74794`, `74557` — all `rest_post_invalid_id`). **Against prod those five should resolve, so a prod run before A6 should land near 85 %, and near 100 % after it.** A number materially below that means something is wrong with the URL layer, not with the content.
+
+13. **The shell is in the *prerendered* HTML, not only in a live render.** This is the gate the rehearsal had to invent, because every other gate passed while it failed:
+    ```bash
+    curl -s https://<target>/ | grep -c '<aside id="block-'      # expect 6
+    curl -s https://<target>/ | grep -o 'ГЛАВНАЯ\|ФИЛЬМЫ\|КОНТАКТЫ' | sort -u | wc -l   # expect 3
+    curl -sI https://<target>/ | grep -i x-nextjs-cache          # HIT means you are reading the build's copy
+    ```
+    Check `/` (prerendered) **and** a route that renders on demand. If the second has a header and footer and the first does not, the image was built without WP credentials — §4.5. An empty shell on the busiest URL of the site, for an hour, at status 200.
+14. **No shortcode soup left.** `[cmsms_` on published pages and posts must be **0**:
+    ```bash
+    ssh <wp> "$W db query \"SELECT COUNT(*) FROM wp_posts WHERE post_content LIKE '%[cmsms\_%' AND post_status='publish' AND post_type IN ('page','post')\" --skip-column-names"
+    ```
+    Drafts, revisions, trash and the dead CPTs still carry it and that is fine — nothing renders them.
+15. **Both content scripts are fixed points.** `od-pages.php` with no `apply` reports `already in shape` for every record, `0 writes` and — the part that is easy to miss — **`0 warnings`**; `od-wp.php` reports `skipped` on every line. A warning means one page was silently left as the editor's original, at 200 (§0.7).
+16. **`pnpm pages:inventory` against the target**, and read the `no page — 404` bucket rather than the headline. Every entry there is a URL real traffic lands on; on the clone they are `/sms/` (a page production never had) and eighteen regional URLs the live site links from its own map and 404s on today ([`page-inventory.md` §1a](./page-inventory.md)).
+17. **`pnpm map:generate --dry-run`** exits 0, and the linked/unlinked split is the one you expect — 52/30 on the clone. A throw here means a region page moved or was trashed; a *bigger* grey count than expected means several did.
 
 ---
 

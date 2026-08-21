@@ -67,6 +67,15 @@ Without that flag the output is unusable. With it, all commands run cleanly.
 
 ⚠️ `--skip-themes` was also masking something that is *not* the theme: on **WP 5.5.5 under PHP 8.2, core itself** fatals at `wp-includes/widgets.php:1265` (`_wp_sidebars_changed`, reached from `after_switch_theme`). A flag cannot help there — switching a theme on 5.5.5 has to run under the site's own PHP, `/opt/php7.4/bin/php /usr/local/bin/wp …`. Found on od-stage 2026-08-20.
 
+**On a prepped install the flags are gone and two others take their place.** `contact-form-7` 5.4.2 and `leyka` 3.30.3 throw PHP 8.2 deprecations on every load, and they interleave with WP-CLI's own stdout — which makes `--format=csv` unparseable and scrolls a real error past unread. So the canonical invocation on od-stage, and on the new install after it, is:
+
+```bash
+W='php -d display_errors=0 -d error_reporting=0 /usr/local/bin/wp --path=$HOME/od-stage/public_html'
+ssh timeweb "$W post list --post_type=page --format=csv --url=https://od.webtm.ru"
+```
+
+Every trap of this kind is collected symptom-first in [`prod-migration-runbook.md` §0.7](./prod-migration-runbook.md) — read that before debugging anything on a fresh install, because most of these answer 200 or exit 0 while being wrong.
+
 ```bash
 ssh od-root 'cd ~/public_html && wp --skip-plugins --skip-themes <command>'   # live prod, BeGet
 ```

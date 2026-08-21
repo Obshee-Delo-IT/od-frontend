@@ -94,6 +94,39 @@ Stop at the first rung that holds.
 8. **Purge the page, then check in a browser at 1440 and 375**, against the mock. The dev server keeps serving the copy it fetched before the write — the fastest purge is the B4 endpoint against localhost (`POST /api/revalidate/` with `{"postId": <id>, "paths": ["/<slug>/"]}`; source `.env` for the secret rather than printing it). Deleting `.next/cache` does **not** do it.
 9. **Commit the block** — CSS, script, tests and the doc change together, one commit, per `CLAUDE.md`.
 
+## 3a. Applying the whole workstream to another install
+
+Not the per-page flow but the one-off: everything in these two files, against an
+install that has never seen them. Done for the first time on the prod clone
+2026-08-21, and the order is not negotiable.
+
+1. **`od-regions.php` first.** `/contacts/` is rewritten to `[od_regions]`, and a
+   shortcode that no plugin defines renders as literal text.
+2. **`od-wp.php` second.** It creates the three programme tags; a `core/query`
+   row cannot be written against a term that does not exist, and the runner
+   refuses the entry with `term … is missing — run od-wp.php apply first`.
+3. **`od-pages.php` third**, then **a third run** to see `already in shape` — and
+   read the warnings, not just the successes. A warning means that page was left
+   exactly as the editor had it, at status 200, and it is the failure mode this
+   whole file is easiest to be wrong about.
+4. **Then the generated artefacts, against that install**: `pnpm map:generate`
+   (the region table is derived from the region pages, and their set differs
+   between installs) and `pnpm pages:inventory` (the census is derived from
+   `od_pages_registry()` and from `/wp/v2/pages`).
+
+Three things that cost time the first time:
+
+- **Records are addressed by path or slug, and a path can simply not be there.**
+  Production has 148 published pages against od-dev's 168. `no such page` is
+  information, not a defect — check before debugging the transform.
+- **`wp media import` takes the attachment slug from `--title`**, not from the
+  filename, so a Cyrillic title gives a percent-encoded Cyrillic slug and the
+  runner's `get_page_by_path()` never finds it. Follow the import with
+  `wp post update <id> --post_name=<slug>`.
+- **An unbounded `sweep` entry must name its `post_type`.** The test enforces it:
+  `page` by default would put every published page through, say, a profile
+  transform. One bounded by `parent` is already scoped.
+
 ## 4. What to look for in a page's content
 
 Measured over od-dev's 170 published pages, 2026-08-17:
