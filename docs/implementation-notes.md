@@ -39,9 +39,29 @@ Nothing is deleted here — superseded reasoning is marked *historical* rather t
 
 ### A3. CI pipeline — DONE
 
-Deploy is wired via the Coolify GitHub app (triggers on push). `.github/workflows/ci.yml` runs `pnpm lint`, `pnpm type-check`, `pnpm test`, `pnpm build` on `pull_request` (any base) **and** on `push` to `main`. Concurrency cancels in-flight PR runs (latest commit wins) but lets every main-branch commit complete, so each deploy has its own pass/fail. pnpm pinned to 11.3.0 matching the Dockerfile; Node read from `.nvmrc`; JavaScript actions opted into the Node 24 runtime via `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24=true` ahead of the 2026-06-16 default flip.
+`.github/workflows/ci.yml` runs `pnpm lint`, `pnpm type-check`, `pnpm test`, `pnpm build` on `pull_request` (any base) **and** on `push` to `main`. Concurrency cancels in-flight PR runs (latest commit wins) but lets every main-branch commit complete, so each deploy has its own pass/fail. pnpm pinned to 11.3.0 matching the Dockerfile; Node read from `.nvmrc`; JavaScript actions opted into the Node 24 runtime via `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24=true` ahead of the 2026-06-16 default flip.
 
 The build runs **without** WP secrets — `httpClient` and `next.config.ts` detect missing/empty `WP_BASE`/`WP_USER`/`WP_PASSWORD` and substitute a stub fetch returning `[]`, so compilation + RSC boundaries are still validated end-to-end. Real-data builds are Coolify's job, where the secrets live. The `lint · type-check · test · build` check is a required status check on `main` via a Rulesets entry, so Coolify never auto-deploys a red commit.
+
+### A3b. Image build → GHCR → Coolify — DONE 2026-08-21
+
+The deploy half of A3. `.github/workflows/ci.yml` gained a second job, `image`, which runs **only** after the `ci` job is green and **only** on `main`, so a red commit cannot reach a tier. It builds the Dockerfile, pushes `ghcr.io/obshee-delo-it/od-frontend` as both `:stage` and `:<sha>`, then tells Coolify to deploy. The VPS still never builds — it pulls.
+
+**Five build-args, three of them variables and two secrets** (`vars.WP_BASE`, `vars.WP_MEDIA_CDN`, `vars.SITE_URL`, `secrets.WP_USER`, `secrets.WP_PASSWORD`). The last two are the ones the runbook's §4.7 warning is about: without them the build succeeds and prerenders an empty header and footer into every static page. `provenance: false` is not cosmetic — a buildx provenance attestation records the build args, and on a public package that publishes the application password.
+
+**The deploy step pins the immutable tag rather than trusting a re-pull of `:stage`.** It `PATCH`es the application's `docker_registry_image_tag` to the commit sha, `POST`s `/api/v1/deploy?uuid=…`, then polls `/api/v1/deployments/<uuid>` to `finished`/`failed` — the API answers as soon as the job is queued, so without the poll the workflow goes green on a failed deploy. Rollback is the same PATCH with an older sha.
+
+**Three Dockerfile changes came with it:**
+
+- the `deps` stage copies **only** `package.json` + `pnpm-lock.yaml` + `pnpm-workspace.yaml`, so the install layer survives source-only commits and the GitHub Actions layer cache (`type=gha`) can actually restore it. `builder` copies the tree itself and the `dev` target mounts the repo, so nothing lost a file it needed;
+- **`curl` is installed in `runner`.** Coolify runs the health probe *inside* the container and `node:22.16.0-slim` ships neither curl nor wget — with neither, the probe fails on a container that serves fine;
+- `.next/cache` is created and `chown`ed to `nextjs` in the image. Docker seeds a fresh named volume from the image directory *including its ownership*; without the directory the ISR volume mounts root-owned and every ISR write fails at runtime.
+
+**Coolify side — `od-frontend-stage` on `od-vps`** (`na9us4ncw8nypov0irwkhozp`, project `obshee-delo` / environment `stage`), created headless through the API: image from GHCR, `ports_exposes 3000`, `limits_memory 1g`, `NODE_OPTIONS=--max-old-space-size=384`, health check on **`/health/`**, persistent volume on `/app/.next/cache`, domain **https://new.obshee-delo.ru** — which is also listed in `noindex_domains`, so Traefik adds `X-Robots-Tag: noindex, nofollow` and the stage tier cannot be indexed whatever `robots.txt` says. Runtime env points at the prod clone: `WP_BASE=https://od.webtm.ru`, `SITE_URL=https://new.obshee-delo.ru` (set explicitly, or the tier advertises prod's canonicals), `WP_LEGACY_BASE=https://obshee-delo.ru`. **`REVALIDATE_SECRET` is deliberately unset** — `POST /api/revalidate/` 503s and WP edits land on the hour; setting it is a per-tier decision that also needs `OD_REVALIDATE_URL` on the WordPress side (`wp-backend.md` §6.5).
+
+**The GHCR package is public**, which is why the VPS needs no registry credentials at all: the repo is public, and nothing from the `builder` stage reaches `runner`, so the image carries no secret. A private package would mean a `read:packages` PAT in `/root/.docker/config.json` and its rotation — one more thing between a merge and a running container.
+
+**Repo configuration** (GitHub → Settings → Secrets and variables → Actions): variables `WP_BASE`, `WP_MEDIA_CDN`, `SITE_URL`, `COOLIFY_APP_UUID`; secrets `WP_USER`, `WP_PASSWORD`, `COOLIFY_TOKEN`. The Coolify token is a dedicated `gh-actions-deploy` token scoped to `write` + `deploy` (not the root token), minted with `php artisan tinker` and kept on the server at `/root/.coolify-ci-token`. ⚠ Coolify's `PATCH …/envs/bulk` still creates every key **twice** (the ops repo's known bug) — the duplicates were deleted by hand after the one bulk call.
 
 ### A8. URL compatibility with the live site — DONE 2026-08-13
 

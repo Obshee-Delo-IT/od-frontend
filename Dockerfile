@@ -9,9 +9,13 @@ ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
 RUN corepack enable pnpm && corepack use pnpm@11.3.0
 
+# Only the manifests, so this layer survives every source-only commit — the CI
+# build restores it from the GitHub Actions cache instead of re-installing
+# ~1500 packages on each push. The `dev` target mounts the repo over /app, and
+# `builder` copies the tree in itself, so nothing else needs the sources here.
 FROM base AS deps
 WORKDIR /app
-COPY . .
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 RUN pnpm install --frozen-lockfile
 
 FROM deps AS dev
@@ -58,10 +62,20 @@ RUN pnpm build
 
 FROM base AS runner
 WORKDIR /app
+# curl is the health probe's only requirement: Coolify runs the check *inside*
+# the container, and node:*-slim ships neither curl nor wget — with neither, the
+# probe fails on a container that serves fine.
+RUN apt-get update && apt-get install -y --no-install-recommends curl \
+  && rm -rf /var/lib/apt/lists/*
 RUN addgroup --system --gid 1001 nodejs && adduser --system --uid 1001 nextjs
 COPY --from=builder --chown=nextjs:nodejs /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+# The ISR cache is a Docker volume in production. Docker seeds a fresh named
+# volume from the image's directory — including its ownership — so the directory
+# has to exist here and belong to `nextjs`, or the mount lands root-owned and
+# every ISR write fails at runtime.
+RUN mkdir -p .next/cache && chown nextjs:nodejs .next/cache
 USER nextjs
 ENV HOSTNAME="0.0.0.0"
 CMD ["node", "server.js"]

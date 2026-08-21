@@ -55,3 +55,87 @@ jobs:
         # secrets. The httpClient stub kicks in when env is missing so
         # the build still validates compilation + RSC boundaries.
         run: pnpm build
+
+  image:
+    name: image → GHCR → Coolify (stage)
+    # Only after the gate above is green, and only for main: a red commit must
+    # never reach a deployed tier.
+    needs: ci
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    env:
+      IMAGE: ghcr.io/obshee-delo-it/od-frontend
+      COOLIFY: https://coolify.obshee-delo.ru/api/v1
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: |
+            ${{ env.IMAGE }}:stage
+            ${{ env.IMAGE }}:${{ github.sha }}
+          # All five are build-time, not runtime, and all five matter:
+          # `images.remotePatterns` and every canonical/sitemap URL are baked
+          # into the bundle, and without the credentials `httpClient` falls back
+          # to its stub — which prerenders an empty header and footer into every
+          # static page for the whole hour of `revalidate = 3600`. They stay in
+          # the `builder` stage, which nothing in `runner` inherits.
+          build-args: |
+            WP_BASE=${{ vars.WP_BASE }}
+            WP_MEDIA_CDN=${{ vars.WP_MEDIA_CDN }}
+            SITE_URL=${{ vars.SITE_URL }}
+            WP_USER=${{ secrets.WP_USER }}
+            WP_PASSWORD=${{ secrets.WP_PASSWORD }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          # Provenance attestations record build args, and two of ours are
+          # secrets — on a public package that is a published password.
+          provenance: false
+
+      - name: Deploy on Coolify
+        env:
+          TOKEN: ${{ secrets.COOLIFY_TOKEN }}
+          APP: ${{ vars.COOLIFY_APP_UUID }}
+        run: |
+          set -euo pipefail
+          api() { curl -fsS -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' "$@"; }
+          # Pin the app to this commit's immutable tag rather than trusting a
+          # re-pull of `stage`: a deploy that silently serves the previous image
+          # is indistinguishable from a successful one. It also makes rollback
+          # "set the tag back".
+          api -X PATCH "$COOLIFY/applications/$APP" \
+            -d '{"docker_registry_image_tag":"${{ github.sha }}"}' > /dev/null
+          deployment=$(api -X POST "$COOLIFY/deploy?uuid=$APP" | jq -r '.deployments[0].deployment_uuid')
+          echo "deployment $deployment"
+          # Poll to completion — the API answers as soon as the job is queued, so
+          # without this the workflow goes green on a deploy that failed.
+          for _ in $(seq 60); do
+            status=$(api "$COOLIFY/deployments/$deployment" | jq -r '.status')
+            echo "  $status"
+            case $status in
+              finished) exit 0 ;;
+              failed|cancelled-by-user) exit 1 ;;
+            esac
+            sleep 10
+          done
+          echo "still $status after 10 min — check https://coolify.obshee-delo.ru"
+          exit 1
