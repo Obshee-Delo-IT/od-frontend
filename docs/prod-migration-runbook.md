@@ -715,7 +715,7 @@ pnpm lint && pnpm type-check && pnpm test && pnpm build
 
 **4.6 Deploy target — Beget VPS running Coolify (A2, decided).** Rationale and sizing live in [`servers-agent/docs/vps-coolify-plan.md`](../../servers-agent/docs/vps-coolify-plan.md) §od-frontend.
 
-**The VPS exists as of 2026-08-21: `ssh od-vps`, panel https://coolify.obshee-delo.ru.** The stage tier runs there — application `od-frontend-stage`, domain **https://new.obshee-delo.ru**, pointed at the od-stage clone. Server facts, backups and DR live in the ops repo ([`servers-agent/docs/vps-coolify.md`](../../servers-agent/docs/vps-coolify.md)); what this repo puts on it is [`implementation-notes.md` §A3b](./implementation-notes.md).
+**The VPS exists as of 2026-08-21: `ssh od-vps`, panel https://coolify.obshee-delo.ru.** The stage tier runs there — application `od-frontend-stage`, domain **https://new.obshee-delo.ru**, pointed at the od-stage clone, deployed from CI and measured at **99.7 %** entry-traffic coverage (gate 12) on that domain. Server facts, backups and DR live in the ops repo ([`servers-agent/docs/vps-coolify.md`](../../servers-agent/docs/vps-coolify.md)); what this repo puts on it is [`implementation-notes.md` §A3b](./implementation-notes.md).
 
 - **The VPS never builds.** Next 16 + React Compiler needs ~1.5–3 GB and would OOM next to Coolify/Outline. Images are built in **GitHub Actions → GHCR**; Coolify only pulls.
 - **Pass `WP_BASE` and `WP_MEDIA_CDN` as build-args** — `images.remotePatterns` is evaluated at build time, so a wrong value here makes `next/image` return 400 for every production image. `WP_USER`/`WP_PASSWORD` are **not** needed at build; CI builds against a stub client with no WP secrets, so no content is baked in.
