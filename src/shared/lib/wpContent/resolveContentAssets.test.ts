@@ -65,6 +65,34 @@ describe('resolveContentAssets', () => {
     expect(second).not.toContain('fetchPriority');
   });
 
+  /**
+   * The regression behind the `loading="lazy"` default: `/about/` comes back from
+   * WordPress with images carrying no `loading` at all, which is eager, which puts
+   * a preload hint in the route's flight payload — so the App Router's prefetch of
+   * the nav link downloaded seven bucket images on every page of the site.
+   */
+  it('lazy-loads an image WordPress left without a loading attribute', async () => {
+    const html = '<img src="https://wp.test/hero.jpg" alt="a"/><img src="https://wp.test/logo.png" alt="b"/>';
+    const [first, second] = ((await resolveContentAssets(html, true)).match(/<img\b[^>]*>/g) ?? []) as string[];
+
+    expect(first).toContain('loading="eager"');
+    expect(second).toContain('loading="lazy"');
+  });
+
+  it('lazy-loads a widget image WordPress left without a loading attribute', async () => {
+    const html = '<img src="https://wp.test/logo.png" alt=""/>';
+    const out = await resolveContentAssets(html);
+
+    expect(out).toContain('loading="lazy"');
+    expect(out).not.toContain('fetchPriority');
+  });
+
+  it('never puts loading on an <audio>', async () => {
+    const html = '<audio controls src="/wp-content/uploads/a.mp3"></audio>';
+
+    expect(await resolveContentAssets(html)).not.toContain('loading=');
+  });
+
   it('leaves lazy loading alone by default — a footer widget is not a main body', async () => {
     const html = '<img src="https://wp.test/logo.png" loading="lazy" alt=""/>';
 

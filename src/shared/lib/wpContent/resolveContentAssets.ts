@@ -23,20 +23,35 @@ const MEDIA_HREF = /<a\b[^>]*\bhref=["']([^"']*\/wp-content\/uploads\/[^"']*)["'
 const HREF_ATTR = /\bhref=["']([^"']+)["']/i;
 
 /**
+ * Whether an `<img>` already carries a `loading` attribute. Absence is the
+ * problem this file has to fix, not a neutral default — see `resolveContentAssets`.
+ */
+const LOADING_ATTR = /\bloading=["'][^"']*["']/i;
+
+/**
  * Rewrite every `<img>`, `<audio>` and media `<a href>` in a WordPress post's
  * rendered HTML to the resolved full-size / CDN URL — the same logic the card thumbnails use (see
  * resolveMediaUrl) — and strip `srcset`/`sizes` so the browser can't fall back
  * to a small variant (which is blurry, and on this install missing from the
  * CDN). Returns the HTML unchanged when there is no such media.
  *
- * **`eagerFirstImage` opts a body's first image out of lazy loading.** WordPress
- * marks every image in a body `loading="lazy"` (`wp_filter_content_tags`, at
- * render time — the attribute is not in `post_content`, so no content script can
- * reach it), and in a page's *main* body the first image is the largest thing
- * under the title: the left-hand cover on `/materials/metodichki/`, the hero on a
- * news article, the poster on a film page. That makes it the LCP candidate, and
- * lazy-loading the element the page is measured by is the one case the attribute
- * costs instead of saves. Everything below it stays lazy.
+ * **Every image below the first is forced `loading="lazy"`.** WordPress *usually*
+ * lazy-loads a body's images (`wp_filter_content_tags`, at render time — the
+ * attribute is not in `post_content`, so no content script can reach it), but not
+ * always: `/about/` comes back with six `<img>` carrying no `loading` at all, and
+ * an image without the attribute is eager. That is not merely a slower image. Next
+ * ships preload hints for non-lazy images inside the route's flight payload, so
+ * the App Router's prefetch of a nav link executes them — measured 2026-08-21,
+ * every page on the site fetched `/about/`'s seven partner logos and certificates
+ * from the media bucket, up to 1.6 s each, for images the visitor never sees.
+ * Blocking `/about/?_rsc=` alone took it to zero. Setting the attribute ourselves
+ * is what makes that independent of whatever WordPress decided.
+ *
+ * **`eagerFirstImage` opts a body's first image out of it.** In a page's *main*
+ * body the first image is the largest thing under the title: the left-hand cover
+ * on `/materials/metodichki/`, the hero on a news article, the poster on a film
+ * page. That makes it the LCP candidate, and lazy-loading the element the page is
+ * measured by is the one case the attribute costs instead of saves.
  *
  * It is off by default because not every body is a main body — a footer widget
  * also runs through here, and its logo is the last thing on the page.
@@ -88,18 +103,24 @@ export const resolveContentAssets = async (html?: string | null, eagerFirstImage
       .replace(/\s+srcset=["'][^"']*["']/i, '')
       .replace(/\s+sizes=["'][^"']*["']/i, '');
 
-    if (!eagerFirstImage || !first || !/^<img\b/i.test(tag)) {
+    // `<audio>` rides this path too, and `loading` means nothing on it.
+    if (!/^<img\b/i.test(tag)) {
       return rewritten;
     }
-    first = false;
 
-    return (
-      rewritten
-        .replace(/\s+loading=["'][^"']*["']/i, '')
-        // `fetchPriority`, not `fetchpriority`: this HTML is never injected raw —
-        // every consumer runs it through `html-react-parser`, and React 19 logs
-        // «Invalid DOM property» for the lowercase spelling before rendering it.
-        .replace(/<img\b/i, '<img loading="eager" fetchPriority="high"')
-    );
+    if (eagerFirstImage && first) {
+      first = false;
+
+      return (
+        rewritten
+          .replace(/\s+loading=["'][^"']*["']/i, '')
+          // `fetchPriority`, not `fetchpriority`: this HTML is never injected raw —
+          // every consumer runs it through `html-react-parser`, and React 19 logs
+          // «Invalid DOM property» for the lowercase spelling before rendering it.
+          .replace(/<img\b/i, '<img loading="eager" fetchPriority="high"')
+      );
+    }
+
+    return LOADING_ATTR.test(rewritten) ? rewritten : rewritten.replace(/<img\b/i, '<img loading="lazy"');
   });
 };
