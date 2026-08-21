@@ -38,7 +38,7 @@ Related: [`implementation-plan.md`](./implementation-plan.md) (task state) · [`
 1. **§2 is one procedure, not two.** Everything in it runs against an install that nobody is reading yet, so there is no window to protect: delete `welfare`, deactivate cmsms, prune, upgrade core, convert. The clone/prod fork an earlier draft of §2.1 carried is void — and so is the mu-plugin that was going to restore REST without removing the theme. Nothing needs it.
 2. **B1 and B10 stop being prod blockers.** Prod's core is never upgraded, its `clearfy-pro` is never touched, its theme never deleted. Both are properties of the *clone*, resolved once during prep and never again. What survives of B1 is a narrower decision: the new install's REST is public once it holds the prod domain — see §2.1's warning, which still applies to *it*.
 3. **Prod's PHP version stops blocking anything, and the constraint inverts.** We never run WP 7.1's `php >= 7.4` check against prod, so its `mod_php7` minor is irrelevant. The new install's PHP is a thing we *choose* — od-stage is on 8.2.32 and that is the target. But the old install must **stay on PHP 7**: `welfare/functions.php:754` fatals under PHP 8 (§2.7), and the old install is what the A6 fallback renders. Moving it to 8.x after cutover would kill the frozen copy.
-4. **The A6 frozen copy costs nothing now.** It is the old install, given a subdomain instead of the apex. No capture step, no separate snapshot to keep in sync, and it keeps `welfare` + cmsms because we never touched them. Four edits are needed at cutover, listed in §5.5 and already documented in §0.5 from doing them twice: `WP_HOME`/`WP_SITEURL`, the `.htaccess` canonical-host 301, a database search-replace, and the `siteurl`/`home` option rows the defines mask. Skip the second and every request to the frozen copy 301s straight back at the apex. It also wants `noindex`, which `app/legacy/[...slug]/route.ts` already sends on our side.
+4. **The A6 frozen copy costs nothing now.** It is the old install, given a subdomain instead of the apex. No capture step, no separate snapshot to keep in sync, and it keeps `welfare` + cmsms because we never touched them. Four edits are needed at cutover, listed in §5.5 and already documented in §0.5 from doing them twice: `WP_HOME`/`WP_SITEURL`, the `.htaccess` canonical-host 301, a database search-replace, and the `siteurl`/`home` option rows the defines mask. Skip the second and every request to the frozen copy 301s straight back at the apex. It also wants shutting off from the public — `Require ip` for the frontend VPS plus `X-Robots-Tag: noindex`, and **not** a 301, which would render the home page into all six iframes at 200. §5.6 has both hosts' rules and why `wp.obshee-delo.ru` must *not* get the same allowlist.
 5. **Rollback becomes trivial, and that is the point of the model.** Every gate in §5 runs before the domain moves. If something is wrong afterwards, the domain moves back to an install that was never modified. Compare the in-place version of this plan, where the return path was a database snapshot taken before 5669 bodies were rewritten.
 6. **Ids settle once.** The clone carries prod's own post and category ids, so §1.3's numbers, `filmCategories.ts` (B5) and `film:remap` (B4) are resolved against the clone and stay correct through the swap. There is no per-tier id dance after cutover.
 
@@ -186,6 +186,10 @@ detail is in the section named. Ordered by when in the procedure it bites.
 | a style is right in `next dev` and wrong in `next start` | source order — `@radix-ui/themes` CSS must be imported at the top of `app/layout.tsx`, not behind a component | never move those imports; compare `dev` against `start` (CLAUDE.md, C12) |
 | the certificate does not cover the apex | a wildcard matches **one** label and not the bare domain | get apex + `www` on the vhost **before** the DNS change (§5.5) |
 | the frozen copy fatals | `welfare` under PHP 8.x | leave that install on **PHP 7** forever (§2.7, §5.5) |
+| **every legacy page renders the frozen copy's home page**, at 200 | a blanket `frozen/* → frozen/` 301: the loader follows same-origin redirects | never 301 the frozen copy — close it with `Require ip` instead (§5.6) |
+| the legacy fallback 404s fleet-wide *after* it worked | the frontend VPS's outbound IP changed and `Require ip` no longer matches it | re-read the IP from inside the container and update the frozen copy's `.htaccess` (§5.6) |
+| in-article images from 2024 onward break for visitors | `wp.obshee-delo.ru` was given the frozen copy's IP allowlist; those uploads have no bucket copy and are fetched by the **browser** | `noindex` only on the WordPress host, never an allowlist (§5.6) |
+| the new WordPress host ranks against the apex | no `X-Robots-Tag` on `wp.obshee-delo.ru` — it is a full crawlable second copy of the content | set the header at cutover and verify with `curl -sI` (§5.6) |
 
 ---
 
@@ -834,6 +838,61 @@ Under §0.4 this is the whole of "going live", and it happens only after every �
 **Get the certificate for the apex and `www` onto the frontend's vhost *before* the DNS change,** not after. A wildcard is not automatically enough: `*.obshee-delo.ru` covers the subdomains above but **not the apex**, and it covers exactly one label, which is the trap §0.5 already walked into once with `stage.od.webtm.ru`.
 
 **Then, and only then, move DNS.** Everything above is reversible by moving it back; the DNS change is the first step that the public sees.
+
+---
+
+## 5.6 Locking the two WordPress hosts down
+
+After cutover the apex is the frontend and **two WordPress hosts sit behind it**, neither of which should ever appear in a search result. They need *different* treatment, and the difference is not cosmetic — giving `wp.obshee-delo.ru` the frozen copy's lockdown breaks the site.
+
+### `frozen.obshee-delo.ru` — closed to everything but the frontend
+
+Its only consumer is `loadLegacyDocument`, server-side, from the Coolify container. Nothing else — no browser, no editor, no crawler — has a reason to reach it, so shut the whole host to everything else. In its `.htaccess`, above the WordPress block:
+
+```apache
+# The A6 frozen copy is fetched server-side by the Next container and by
+# nothing else. Belt: only that host may reach it. Braces: if the allowlist
+# ever has to come off, the noindex still stands on its own.
+Require ip <frontend VPS outbound IP>
+Header always set X-Robots-Tag "noindex, nofollow"
+```
+
+**Get the IP from the container, not from DNS.** `obshee-delo.ru`'s A record is the shared-hosting front (`45.130.41.70`); the VPS's *outbound* address is a different thing and is what Apache sees:
+
+```bash
+docker exec <frontend-container> curl -s https://api.ipify.org
+```
+
+Three things to know before doing this:
+
+- **`Require ip` is what breaks the fallback if the VPS IP ever changes** — a second replica on another host, a VPS rebuild, an egress NAT. The failure is total and silent-ish: every legacy page 404s and the log fills with `[legacy] upstream error` (§0.7). Re-run `pnpm url:check` after any move of the frontend, not just after routing changes.
+- **A 301 to the apex is not an alternative to this, and would be a live bug.** `loadLegacyDocument` follows same-origin redirects up to `MAX_REDIRECTS` (`loadLegacyDocument.ts`), so a blanket `frozen/* → frozen/` 301 makes all six iframe pages render the frozen copy's *home page* at 200 — a content failure no status check sees. A 301 off-origin is refused (`upstream redirect refused` → 404), which kills the fallback outright and, pointed at the apex, builds the §5.5 loop. Neither shape removes anything from an index either: 301 says "moved", not "do not index".
+- **Order matters if `robots.txt` ever enters this.** `Disallow: /` forbids crawling, and a crawler that cannot fetch the page cannot see `X-Robots-Tag: noindex` — already-indexed URLs then stay in results without a snippet. Serve `noindex` *unblocked* until the pages drop out; only then consider `Disallow`. With the `Require ip` allowlist in place `robots.txt` is moot, since no crawler gets a response at all.
+
+The old install's `google-sitemap-generator` will also start emitting `frozen.*` URLs after the §5.5 search-replace. Under the allowlist that is unreachable and harmless; deactivate the plugin if the allowlist is ever lifted.
+
+### `wp.obshee-delo.ru` — `noindex` only, **never** an IP allowlist
+
+The same lockdown here breaks two things, both of which reach WordPress from a *visitor's or editor's* browser rather than from the container:
+
+1. **Uploads from 2024 onward are served by WordPress itself.** The bucket offload is one `.htaccess` `RewriteRule` covering `wp-content/uploads/2009…2023` only (§6.4 of [`wp-backend.md`](./wp-backend.md)); 2024, 2025 and 2026 — some 700 MB — have no bucket copy. `resolveMediaUrl` falls back to the WP origin whenever its CDN HEAD probe is not a direct 200, and `resolveContentAssets` writes that URL straight into the body's `<img src>`, which the **browser** then fetches. An allowlist blanks every recent in-article image.
+2. **The block editor is a REST client.** Editors need `/wp-admin/`, and Gutenberg drives `/wp-json/` from their own browsers — so neither the admin nor REST can be narrowed to the container's IP. (The frontend is otherwise the only REST consumer: there is no client-side WP fetch anywhere in `src/`.)
+
+So `wp.obshee-delo.ru` gets the header and nothing else:
+
+```apache
+Header always set X-Robots-Tag "noindex, nofollow"
+```
+
+That is the part that actually matters for search: without it the new install is a full second copy of the site's content on a crawlable host, competing with the apex for exactly the queries A8 exists to keep.
+
+**Verify both after cutover**, before the DNS TTL expires and crawlers arrive:
+
+```bash
+curl -sI https://wp.obshee-delo.ru/ | grep -i x-robots-tag
+curl -sI https://frozen.obshee-delo.ru/team/            # expect 403 from anywhere but the VPS
+docker exec <frontend-container> curl -sI https://frozen.obshee-delo.ru/team/ | head -1   # expect 200
+```
 
 ---
 
