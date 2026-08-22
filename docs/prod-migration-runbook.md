@@ -190,6 +190,9 @@ detail is in the section named. Ordered by when in the procedure it bites.
 | the legacy fallback 404s fleet-wide *after* it worked | the frontend VPS's outbound IP changed and `Require ip` no longer matches it | re-read the IP from inside the container and update the frozen copy's `.htaccess` (§5.6) |
 | in-article images from 2024 onward break for visitors | `wp.obshee-delo.ru` was given the frozen copy's IP allowlist; those uploads have no bucket copy and are fetched by the **browser** | `noindex` only on the WordPress host, never an allowlist (§5.6) |
 | the new WordPress host ranks against the apex | no `X-Robots-Tag` on `wp.obshee-delo.ru` — it is a full crawlable second copy of the content | set the header at cutover and verify with `curl -sI` (§5.6) |
+| `X-Robots-Tag: noindex` is set and the host is indexed anyway | a `robots.txt` `Disallow` (the crawler never sees the header), or a plugin's own `<meta name="robots">` — Yandex takes the *permissive* value when two directives disagree | never pair `Disallow` with `noindex`; grep the HTML for the meta tag as well as the header (§5.6) |
+| the frontend goes blind on every WP request, 401 | HTTP Basic was added to `wp.obshee-delo.ru`; Apache validates the same `Authorization` header the application password travels in | never Basic on that host — IP plus session cookie instead (§5.6) |
+| editors cannot save in the block editor although they are logged in | same cause: WordPress reads the Apache Basic credentials as an application password, fails, and answers REST 401 | as above (§5.6) |
 
 ---
 
@@ -843,7 +846,7 @@ Under §0.4 this is the whole of "going live", and it happens only after every �
 
 ## 5.6 Locking the two WordPress hosts down
 
-After cutover the apex is the frontend and **two WordPress hosts sit behind it**, neither of which should ever appear in a search result. They need *different* treatment, and the difference is not cosmetic — giving `wp.obshee-delo.ru` the frozen copy's lockdown breaks the site.
+After cutover the apex is the frontend and **two WordPress hosts sit behind it**, neither of which should ever appear in a search result. Both end up closed, but not by the same rule and not on the same day — giving `wp.obshee-delo.ru` the frozen copy's blanket `Require ip` breaks the site, and giving it HTTP Basic breaks it differently.
 
 ### `frozen.obshee-delo.ru` — closed to everything but the frontend
 
@@ -867,32 +870,75 @@ Three things to know before doing this:
 
 - **`Require ip` is what breaks the fallback if the VPS IP ever changes** — a second replica on another host, a VPS rebuild, an egress NAT. The failure is total and silent-ish: every legacy page 404s and the log fills with `[legacy] upstream error` (§0.7). Re-run `pnpm url:check` after any move of the frontend, not just after routing changes.
 - **A 301 to the apex is not an alternative to this, and would be a live bug.** `loadLegacyDocument` follows same-origin redirects up to `MAX_REDIRECTS` (`loadLegacyDocument.ts`), so a blanket `frozen/* → frozen/` 301 makes all six iframe pages render the frozen copy's *home page* at 200 — a content failure no status check sees. A 301 off-origin is refused (`upstream redirect refused` → 404), which kills the fallback outright and, pointed at the apex, builds the §5.5 loop. Neither shape removes anything from an index either: 301 says "moved", not "do not index".
-- **Order matters if `robots.txt` ever enters this.** `Disallow: /` forbids crawling, and a crawler that cannot fetch the page cannot see `X-Robots-Tag: noindex` — already-indexed URLs then stay in results without a snippet. Serve `noindex` *unblocked* until the pages drop out; only then consider `Disallow`. With the `Require ip` allowlist in place `robots.txt` is moot, since no crawler gets a response at all.
+- **Do not add `Disallow: /` alongside the header.** It cancels it — see the four ways `noindex` does nothing, under `wp.obshee-delo.ru` below. With the `Require ip` allowlist in place `robots.txt` is moot here anyway, since no crawler gets a response at all.
 
 The old install's `google-sitemap-generator` will also start emitting `frozen.*` URLs after the §5.5 search-replace. Under the allowlist that is unreachable and harmless; deactivate the plugin if the allowlist is ever lifted.
 
-### `wp.obshee-delo.ru` — `noindex` only, **never** an IP allowlist
+### `wp.obshee-delo.ru` — `noindex` at cutover, an allowlist only later, and never HTTP Basic
 
-The same lockdown here breaks two things, both of which reach WordPress from a *visitor's or editor's* browser rather than from the container:
+Two things reach this host from a *visitor's or editor's* browser rather than from the container, and they are what rules out the frozen copy's blanket `Require ip`:
 
-1. **Uploads from 2024 onward are served by WordPress itself.** The bucket offload is one `.htaccess` `RewriteRule` covering `wp-content/uploads/2009…2023` only (§6.4 of [`wp-backend.md`](./wp-backend.md)); 2024, 2025 and 2026 — some 700 MB — have no bucket copy. `resolveMediaUrl` falls back to the WP origin whenever its CDN HEAD probe is not a direct 200, and `resolveContentAssets` writes that URL straight into the body's `<img src>`, which the **browser** then fetches. An allowlist blanks every recent in-article image.
-2. **The block editor is a REST client.** Editors need `/wp-admin/`, and Gutenberg drives `/wp-json/` from their own browsers — so neither the admin nor REST can be narrowed to the container's IP. (The frontend is otherwise the only REST consumer: there is no client-side WP fetch anywhere in `src/`.)
+1. **Uploads from 2024 onward are served by WordPress itself.** The bucket offload is one `.htaccess` `RewriteRule` covering `wp-content/uploads/2009…2023` only (§6.4 of [`wp-backend.md`](./wp-backend.md)); 2024, 2025 and 2026 — some 700 MB — have no bucket copy. `resolveMediaUrl` falls back to the WP origin whenever its CDN HEAD probe is not a direct 200, and `resolveContentAssets` writes that URL straight into the body's `<img src>`, which the **browser** then fetches.
+2. **The block editor is a REST client.** Editors need `/wp-admin/`, and Gutenberg drives `/wp-json/` from their own browsers — so neither the admin nor REST can be narrowed to the container's IP.
 
-So `wp.obshee-delo.ru` gets the header and nothing else:
+**At cutover, do the header and only the header.**
 
 ```apache
 Header always set X-Robots-Tag "noindex, nofollow"
 ```
 
-That is the part that actually matters for search: without it the new install is a full second copy of the site's content on a crawlable host, competing with the apex for exactly the queries A8 exists to keep.
-
-**Verify both after cutover**, before the DNS TTL expires and crawlers arrive:
+Without it the new install is a full second copy of the site's content on a crawlable host, competing with the apex for exactly the queries A8 exists to keep. **Both checks below are required, not one** — the second catches a failure mode the first cannot see:
 
 ```bash
 curl -sI https://wp.obshee-delo.ru/ | grep -i x-robots-tag
+curl -s  https://wp.obshee-delo.ru/ | grep -o '<meta name="robots"[^>]*>'
+```
+
+Because **`noindex` is a request, not a fact**, and it has four documented ways to do nothing:
+
+- **`robots.txt` `Disallow` cancels it.** Google: "If the page is blocked by a robots.txt file or the crawler can't access the page, the crawler will never see the `noindex` rule, and the page can still appear in search results." Yandex says the same in one line: «Если страница запрещена в файле robots.txt, то директива метатега или заголовка не действует». Serve `noindex` *unblocked*; never pair the two. ([Google](https://developers.google.com/search/docs/crawling-indexing/block-indexing), [Яндекс](https://yandex.ru/support/webmaster/ru/controlling-robot/meta-robots))
+- **A permissive directive beats it, and Yandex is explicit about the tiebreak** — «Разрешающие директивы имеют приоритет в сочетании с запрещающими»: given `all` and `noindex` together, the robot takes `all`. WordPress and SEO plugins print their own `<meta name="robots">`, and `clearfy-pro` carries an SEO block, so the header from Apache and a tag from PHP are two sources that can disagree. That is what the second `curl` is for.
+- **It applies only after a recrawl.** Still listed a week later is normal, not a failure.
+- **The header may simply not be sent** — `Header always set` needs `mod_headers`, and PHP can override it. That is what the first `curl` is for.
+
+**Later — not at cutover — close the host to everyone but the frontend and logged-in editors.** This is the step that does not depend on a crawler's cooperation. It is deferred deliberately: it is four rules landing on the same day the domain moves and `WP_BASE`, `WP_LEGACY_BASE`, `SITE_URL` and the certificates all change, and if images disappear afterwards nothing tells you which change did it. Give the move a week, then:
+
+Root `.htaccess`:
+
+```apache
+SetEnvIf Cookie "wordpress_logged_in_" wp_session
+<RequireAny>
+  Require ip <frontend VPS outbound IP>
+  Require env wp_session
+</RequireAny>
+Header always set X-Robots-Tag "noindex, nofollow"
+
+# Otherwise there is nowhere to obtain a session from.
+<Files "wp-login.php">
+  Require all granted
+</Files>
+```
+
+`wp-content/uploads/.htaccess` — a child `.htaccess` overrides the parent, which is the only way to carve an exception out on shared hosting:
+
+```apache
+Require all granted
+```
+
+**One directory is genuinely all that has to stay open.** Measured 2026-08-22 against a production build: eight pages (home, `/news/`, `/video/`, a film, `/about/`, `/contacts/`, `/materials/`, `/materials/plakati/`), each scrolled to the bottom so lazy images fired, made **24 browser-side requests to the WordPress host and every one of them was under `/wp-content/uploads/`** — no `wp-includes`, no theme assets, no ajax. Client components make no `fetch()` at all, so no form posts to WordPress from a visitor's browser either. Re-measure rather than trusting this line if the frontend ever gains a client-side call: drive those pages headless, scroll each to the bottom, and group every request whose **host** is `WP_BASE`'s by top-level path. Match on the host, not on the URL string — `/_next/image/?url=https://wp…` carries the WordPress host in its query and is a *server-side* fetch, so a substring match reports it as browser traffic and roughly triples the count.
+
+**Never HTTP Basic for this**, however natural "password-protect the staging host" sounds. `Authorization` is one header with two consumers here: `httpClient.ts` sends `Basic base64(WP_USER:WP_PASSWORD)`, a WordPress **application password**, and Apache's own Basic would validate that same header against `.htpasswd`, where it does not appear — 401 before PHP runs, and the frontend goes blind. Putting matching credentials in `.htpasswd` only couples the rotation of two secrets. It breaks editors too: their browser would send the Apache credentials, WordPress would read `PHP_AUTH_USER` / `PHP_AUTH_PW` as an application password, fail, and answer REST 401 while their session is perfectly valid — the block editor stops saving. The IP-plus-cookie form above touches the `Authorization` header not at all.
+
+**And be honest about what the cookie rule is worth.** `SetEnvIf Cookie "wordpress_logged_in_"` tests for the *presence* of a cookie, not for a valid session — anyone can set one, WordPress will then reject them, but Apache will have let them through. It stops crawlers and casual traffic, which is the whole job here; it is not an authentication boundary and must not be relied on as one.
+
+**Verify the frozen copy after cutover**, before the DNS TTL expires and crawlers arrive (the two `wp.` checks are above):
+
+```bash
 curl -sI https://frozen.obshee-delo.ru/team/            # expect 403 from anywhere but the VPS
 docker exec <frontend-container> curl -sI https://frozen.obshee-delo.ru/team/ | head -1   # expect 200
 ```
+
+Then load a page that is still on the A6 iframe and confirm it renders — a 403 the container cannot pass turns every one of them into a blank frame, and `curl` against the apex still answers 200.
 
 ---
 
