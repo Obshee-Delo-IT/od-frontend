@@ -101,7 +101,7 @@ export const catalogueMetadata = (segment: FilmCategorySegment | null, page = 1)
   };
 };
 
-export interface VideoCatalogueProps {
+interface VideoCatalogueProps {
   /** `null` renders «Все» — the union of the four sub-categories. */
   segment: FilmCategorySegment | null;
   page: number;

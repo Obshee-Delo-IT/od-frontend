@@ -3,7 +3,7 @@ import clsx from 'clsx';
 import { Breadcrumbs, type BreadcrumbItem } from '../Breadcrumbs';
 import css from './PageHeader.module.css';
 
-export interface PageHeaderProps {
+interface PageHeaderProps {
   /** Page title — rendered as the red uppercase H1. */
   title: string;
   /** Breadcrumb trail; omitted where a page draws none. */

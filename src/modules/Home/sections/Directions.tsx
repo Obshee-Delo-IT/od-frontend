@@ -3,7 +3,7 @@ import { Carousel } from '@/shared/ui/components/Carousel';
 import { IllustratedCard } from '@/shared/ui/components/IllustratedCard';
 import css from './Directions.module.css';
 
-export interface DirectionCardData {
+interface DirectionCardData {
   id: string | number;
   title: string;
   href: string;

@@ -14,7 +14,7 @@ export interface VideoFilterOption {
   href: string;
 }
 
-export interface VideoFilterProps {
+interface VideoFilterProps {
   options: VideoFilterOption[];
   active: string;
   className?: string;

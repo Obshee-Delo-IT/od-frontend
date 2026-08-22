@@ -39,13 +39,13 @@ export interface VideoSummary {
   posterDownloadUrl: string | null;
 }
 
-export interface VideoListResult {
+interface VideoListResult {
   items: VideoSummary[];
   totalPages: number;
   total: number;
 }
 
-export interface FetchVideoListParams {
+interface FetchVideoListParams {
   page?: number;
   perPage?: number;
   /**

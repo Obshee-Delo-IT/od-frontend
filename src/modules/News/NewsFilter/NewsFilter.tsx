@@ -8,7 +8,7 @@ export interface NewsFilterOption {
   value: string | null;
 }
 
-export interface NewsFilterProps {
+interface NewsFilterProps {
   options: NewsFilterOption[];
   active: string | null;
   buildHref: (value: string | null) => string;

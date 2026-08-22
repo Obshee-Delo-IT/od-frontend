@@ -5,7 +5,7 @@ import css from './Checkbox.module.css';
 
 type RadixOwn = Omit<RadixCheckboxProps, 'size' | 'variant'>;
 
-export interface CheckboxProps extends RadixOwn {
+interface CheckboxProps extends RadixOwn {
   label?: ReactNode;
   id?: string;
 }

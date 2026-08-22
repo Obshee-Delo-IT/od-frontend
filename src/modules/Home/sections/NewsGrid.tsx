@@ -5,7 +5,7 @@ import { Button } from '@/shared/ui/components/Button';
 import { NewsCard } from '@/shared/ui/components/NewsCard';
 import css from './NewsGrid.module.css';
 
-export interface NewsItem {
+interface NewsItem {
   id: string | number;
   title: string;
   date?: string;

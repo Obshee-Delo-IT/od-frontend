@@ -5,13 +5,13 @@ import { resolveMediaUrl } from './mediaUrl';
 import { stripHtml } from './newsPreview';
 import type { NewsSummary } from './fetchLatestNews';
 
-export interface NewsListResult {
+interface NewsListResult {
   items: NewsSummary[];
   totalPages: number;
   total: number;
 }
 
-export interface FetchNewsListParams {
+interface FetchNewsListParams {
   page?: number;
   perPage?: number;
   /** WP category id; omit for «Все». */

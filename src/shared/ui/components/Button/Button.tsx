@@ -2,12 +2,12 @@ import { Button as RadixButton, ButtonProps as RadixButtonProps } from '@radix-u
 import clsx from 'clsx';
 import css from './Button.module.css';
 
-export type ButtonVariant = 'contained' | 'outline' | 'white';
-export type ButtonSize = 'large' | 'small' | 'xs';
+type ButtonVariant = 'contained' | 'outline' | 'white';
+type ButtonSize = 'large' | 'small' | 'xs';
 
 type RadixOwn = Omit<RadixButtonProps, 'variant' | 'size' | 'color'>;
 
-export interface ButtonProps extends RadixOwn {
+interface ButtonProps extends RadixOwn {
   variant?: ButtonVariant;
   size?: ButtonSize;
 }

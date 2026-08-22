@@ -6,7 +6,7 @@ import { Button } from '@/shared/ui/components/Button';
 import { Carousel } from '@/shared/ui/components/Carousel';
 import css from './FilmsCarousel.module.css';
 
-export interface FilmCardData {
+interface FilmCardData {
   id: string | number;
   title: string;
   href: string;

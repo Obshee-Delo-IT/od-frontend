@@ -8,7 +8,7 @@ import { resolveShareLinks } from '../sharePlatforms';
 import css from './VideoCard.module.css';
 import type { VideoDownload, VideoShareLinks } from '@/shared/api';
 
-export interface VideoCardProps {
+interface VideoCardProps {
   title: string;
   /** Detail/permalink — wraps the poster and the «О фильме» button. */
   href: string;

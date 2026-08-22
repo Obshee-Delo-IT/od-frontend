@@ -17,8 +17,3 @@ export const LEGACY_MAX_HEIGHT = 50_000;
 
 /** The starting height, so a frame whose sync never arrives still shows content. */
 export const LEGACY_INITIAL_HEIGHT = '60vh';
-
-export interface LegacyHeightMessage {
-  type: typeof LEGACY_HEIGHT_MESSAGE;
-  height: number;
-}

@@ -5,14 +5,14 @@ import { wpBaseUrl, wpFetch } from './httpClient';
 import { resolveMediaUrl } from './mediaUrl';
 import { stripHtml } from './newsPreview';
 
-export interface FilmSummary {
+interface FilmSummary {
   id: number;
   title: string;
   link: string;
   thumbnailUrl: string | null;
 }
 
-export interface FilmsResult {
+interface FilmsResult {
   items: FilmSummary[];
   /**
    * How many videos the **catalogue** holds — all four categories, not the

@@ -46,7 +46,7 @@ import type { LegacyDocument } from './types';
  * it is added once.
  */
 
-export interface TransformOptions {
+interface TransformOptions {
   /** The origin the document came from, e.g. `https://obshee-delo.ru`. */
   origin: string;
   /** The page's own path on that origin, e.g. `/materials/plakati/`. */
@@ -55,7 +55,7 @@ export interface TransformOptions {
   siteOrigin: string;
 }
 
-export interface TransformResult extends LegacyDocument {
+interface TransformResult extends LegacyDocument {
   /**
    * `section#middle` was not found. Informational only: since the transform
    * removes chrome rather than keeping the content section, a page without it

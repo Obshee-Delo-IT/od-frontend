@@ -4,7 +4,7 @@ import NextLink from 'next/link';
 import { CirclePlayIcon } from '@/shared/ui/components/Icons';
 import css from './FilmPlayer.module.css';
 
-export interface FilmPlayerProps {
+interface FilmPlayerProps {
   /** Accessible name for the player / poster. */
   title: string;
   /** Kinescope video id — renders the on-site embed when set (E4). */

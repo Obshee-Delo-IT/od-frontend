@@ -4,7 +4,7 @@ import { ChevronLeftIcon, ChevronRightIcon } from '@/shared/ui/components/Icons'
 import { DOTS, getPaginationRange } from './getPaginationRange';
 import css from './Pagination.module.css';
 
-export interface PaginationProps {
+interface PaginationProps {
   currentPage: number;
   totalPages: number;
   /** Maps a page number to its href (query string is the caller's concern). */

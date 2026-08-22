@@ -1,6 +1,6 @@
 export const DOTS = '…';
 
-export type PaginationItem = number | typeof DOTS;
+type PaginationItem = number | typeof DOTS;
 
 const range = (start: number, end: number): number[] =>
   Array.from({ length: Math.max(end - start + 1, 0) }, (_, i) => start + i);

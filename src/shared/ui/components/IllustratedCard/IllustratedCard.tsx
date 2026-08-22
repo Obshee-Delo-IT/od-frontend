@@ -1,7 +1,7 @@
 import { Link } from '@/shared/ui/components/Link';
 import css from './IllustratedCard.module.css';
 
-export interface IllustratedCardProps {
+interface IllustratedCardProps {
   title: string;
   href: string;
   /** The card's drawing, imported as a component by `@svgr/webpack`. */
