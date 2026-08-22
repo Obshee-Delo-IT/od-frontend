@@ -190,6 +190,13 @@ var nonce = '<?php echo wp_create_nonce('nv-plugin'); ?>';
 var currentPost = -1;
 var parms;
 
+//-- каждый запрос к admin-ajax.php должен нести nonce --
+function nvParams(fields) {
+    var p = new URLSearchParams(fields);
+    p.set('_ajax_nonce', nonce);
+    return p;
+}
+
 jQuery(document).ready(function () {
     jQuery( "#tabs-1" ).tabs();
     jQuery( "#tabs-2" ).tabs();
@@ -207,7 +214,7 @@ function TransformWelfare2() {
         headers: {
             'Content-Type': 'application/x-www-form-urlencoded',
         },
-        body: new URLSearchParams({
+        body: nvParams({
             action: 'transform_gutenberg_cmsms',
         })
     })
@@ -242,7 +249,7 @@ function TransformGutenberg2() {
         headers: {
             'Content-Type': 'application/x-www-form-urlencoded',
         },
-        body: new URLSearchParams({
+        body: nvParams({
             action: 'transform_cmsms_gutenberg',
         })
     })
@@ -277,7 +284,7 @@ function MoveProfileCategoriesToTags() {
         headers: {
             'Content-Type': 'application/x-www-form-urlencoded',
         },
-        body: new URLSearchParams({
+        body: nvParams({
             action: 'copy_profile_categories_to_tags',
         })
     })
@@ -311,7 +318,7 @@ function saveCopy() {
         headers: {
             'Content-Type': 'application/x-www-form-urlencoded',
         },
-        body: new URLSearchParams({
+        body: nvParams({
             action: 'save_copy',
             id: currentPost
         })
@@ -346,7 +353,7 @@ function restoreOriginal() {
         headers: {
             'Content-Type': 'application/x-www-form-urlencoded',
         },
-        body: new URLSearchParams({
+        body: nvParams({
             action: 'restore_original_content',
             id: currentPost
         })
@@ -378,7 +385,7 @@ function CopyContent2() {
         headers: {
             'Content-Type': 'application/x-www-form-urlencoded',
         },
-        body: new URLSearchParams({
+        body: nvParams({
             action: 'copy_records_content',
         })
     })
@@ -404,7 +411,7 @@ function CopyContent1() {
 //--
 function getShortcodeRecords(tag) {
     jQuery( "#tabs-1" ).tabs( "option", "active", 1 );
-    parms = new URLSearchParams({
+    parms = nvParams({
         action: 'get_posts_pages',
         tag: tag
     });
@@ -416,7 +423,7 @@ function getRecordId() {
     jQuery('#IdIn').val(jQuery('#IdIn').val().trim());
     let id = jQuery('#IdIn').val().trim();
     if (Number.isInteger(Number(id)) && id > 0) {
-        parms = new URLSearchParams({
+        parms = nvParams({
             action: 'get_posts_pages',
             id: id
         });
@@ -431,7 +438,7 @@ jQuery(document).on('click', '.my-pagination a', function(e) {
     if (page) {
         parms.set('page', page);
         /*
-        let parms = new URLSearchParams({
+        let parms = nvParams({
             action: 'get_posts_pages',
             page: page
         });
@@ -442,7 +449,7 @@ jQuery(document).on('click', '.my-pagination a', function(e) {
 
 //--
 function getAllRecords() {
-    parms = new URLSearchParams({
+    parms = nvParams({
         action: 'get_posts_pages'
     });
     getRecords(parms);
@@ -490,7 +497,7 @@ function viewItem(id) {
         headers: {
             'Content-Type': 'application/x-www-form-urlencoded',
         },
-        body: new URLSearchParams({
+        body: nvParams({
             action: 'get_cmsms_gutenberg',
             id: id
         })
@@ -533,7 +540,7 @@ function GetTreeOldEditor() {
         headers: {
             'Content-Type': 'application/x-www-form-urlencoded',
         },
-        body: new URLSearchParams({
+        body: nvParams({
             action: 'get_tree_old_editor',
         })
     })

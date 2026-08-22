@@ -70,9 +70,18 @@ add_action('save_post', function ($post_ID, $post, $update) {
     }
 }, 10, 3);
 
+//-- Общая проверка прав и nonce для всех AJAX-обработчиков плагина --
+function nv_gu_check_ajax_access() {
+    if ( ! current_user_can( 'manage_options' ) ) {
+        wp_send_json( array( 'success' => false, 'error' => 'Недостаточно прав.' ), 403 );
+    }
+    check_ajax_referer( 'nv-plugin' );
+}
+
 //--
 add_action('wp_ajax_save_copy', 'save_copy');
 function save_copy() {
+    nv_gu_check_ajax_access();
     global $wpdb;
     $rez = [];
     if (!empty($_POST['id'])) {
@@ -116,6 +125,7 @@ function save_copy() {
 //--
 add_action('wp_ajax_restore_original_content', 'restore_original_content');
 function restore_original_content() {
+    nv_gu_check_ajax_access();
     global $wpdb;
     $rez = [];
     if (!empty($_POST['id'])) {
@@ -157,6 +167,7 @@ function restore_original_content() {
 //--
 add_action('wp_ajax_transform_gutenberg_cmsms', 'transform_gutenberg_cmsms');
 function transform_gutenberg_cmsms() {
+    nv_gu_check_ajax_access();
     global $wpdb;
     $sql = "
         UPDATE {$wpdb->posts} p
@@ -179,6 +190,7 @@ function transform_gutenberg_cmsms() {
 //--
 add_action('wp_ajax_transform_cmsms_gutenberg', 'transform_cmsms_gutenberg');
 function transform_cmsms_gutenberg() {
+    nv_gu_check_ajax_access();
     global $wpdb;
 
     $results = $wpdb->get_results(
@@ -228,6 +240,7 @@ function transform_cmsms_gutenberg() {
 //--
 add_action('wp_ajax_copy_records_content', 'copy_records_content');
 function copy_records_content() {
+    nv_gu_check_ajax_access();
     global $wpdb;
 
     $sql = "
@@ -267,6 +280,7 @@ function copy_records_content() {
 //--
 add_action('wp_ajax_get_cmsms_gutenberg', 'get_cmsms_gutenberg');
 function get_cmsms_gutenberg() {
+    nv_gu_check_ajax_access();
     global $wpdb;
     
     $tree = [];
@@ -990,6 +1004,7 @@ function welfare_to_gutenberg($content) {
 //--
 add_action('wp_ajax_get_tree_old_editor', 'get_tree_old_editor');
 function get_tree_old_editor() {
+    nv_gu_check_ajax_access();
     global $wpdb;
     $posts = $wpdb->get_results("
         SELECT ID, post_content 
@@ -1276,14 +1291,18 @@ if (defined('WP_CLI') && WP_CLI) {
 add_action('wp_ajax_get_posts_pages', 'get_posts_pages');
 // add_action('wp_ajax_nopriv_load_my_table', 'load_my_table_callback');
 function get_posts_pages() {
+    nv_gu_check_ajax_access();
     global $wpdb;
     
     $where = '';
+    $where_args = array();
     if (!empty($_POST['id']) && filter_var($_POST['id'], FILTER_VALIDATE_INT, ["options" => ["min_range" => 1]]) !== false) {
-        $where = 'AND ID = ' . $_POST['id'];
+        $where = 'AND ID = %d';
+        $where_args[] = (int) $_POST['id'];
     }
     else if (!empty($_POST['tag'])) {
-        $where = "AND post_content LIKE '%{$_POST['tag']}%'";
+        $where = 'AND post_content LIKE %s';
+        $where_args[] = '%' . $wpdb->esc_like( wp_unslash( $_POST['tag'] ) ) . '%';
     }
     
     $page = isset($_POST['page']) ? max(1, intval($_POST['page'])) : 1;
@@ -1296,9 +1315,10 @@ function get_posts_pages() {
          WHERE post_type IN ('post', 'page') AND post_status = 'publish' {$where}
          ORDER BY ID DESC
          LIMIT %d OFFSET %d
-    ", $per_page, $offset));
+    ", array_merge($where_args, array($per_page, $offset))));
 
-    $total = $wpdb->get_var("SELECT COUNT(*) FROM {$wpdb->posts} WHERE post_type IN ('post', 'page') AND post_status='publish' {$where}");
+    $total_sql = "SELECT COUNT(*) FROM {$wpdb->posts} WHERE post_type IN ('post', 'page') AND post_status='publish' {$where}";
+    $total = $where_args ? $wpdb->get_var($wpdb->prepare($total_sql, $where_args)) : $wpdb->get_var($total_sql);
     $total_pages = ceil($total / $per_page);
 
     ob_start();
