@@ -1,6 +1,6 @@
 # Documentation map
 
-Thirteen documents, each with one job. Start here to find the right one.
+Fourteen documents, each with one job. Start here to find the right one.
 
 **The first two are a pair.** The plan holds what is still open; the notes hold everything that closed. If an item ships, it moves from one to the other — so the plan stays short enough to read in one sitting.
 
@@ -12,6 +12,7 @@ Thirteen documents, each with one job. Start here to find the right one.
 | [`page-mocks.md`](./page-mocks.md) | **Page mocks**: the Figma `design` page ↔ routes map, section by section, with the node ids to jump to and which mocks are canonical vs. legacy scratch. | You're about to build a page and need to find its mock. |
 | [`wp-backend.md`](./wp-backend.md) | **The WordPress side**: hosting and SSH access, the content model (CPTs, taxonomies, the film ACF group, the category ids we hardcode), the plugin cleanup plan, the API surface, the media-offload pipeline. | You're writing a fetcher, chasing a data question, or touching WP. |
 | [`prod-migration-runbook.md`](./prod-migration-runbook.md) | **od-dev → od-stage → prod**, in execution order: blockers, the rehearsal log, **§0.7's symptom-first list of every trap**, the nineteen-step order table in §2, recon commands, WP prep, applying the film worksheet, env + config, verification gates, cutover, rollback. | You're promoting anything to another environment — **start at §0.7 and §2's table, not at §1**. |
+| [`test-scenarios.md`](./test-scenarios.md) | **What to test, from eleven lenses.** 177 scenarios — routing, data, cache, SEO, accessibility, cascade, security, performance, the WordPress side, delivery, and the visitor's own journey — each with the failure mode it catches and either the test that covers it or the word **gap**. | You're about to release, or you're deciding what the test suite is missing. |
 | [`wp-page-passthrough.md`](./wp-page-passthrough.md) | **How a post and a page actually reach the browser**: the two branches of the catch-all, the shared content pipeline, the three stylesheets that meet inside `.gutenberg`, why author CSS from the old theme breaks pages but not posts, and the bugs that came out of it. | A WP page renders wrong, or you're about to change `gutenberg.css`, `WpPage` or `fetchWpPage`. |
 | [`wp-page-redesign.md`](./wp-page-redesign.md) | **How to work on a WP page** (workstream D): why every WordPress-side change is a script rather than a click, the ladder deciding whether a fix is repo CSS / a `className` / a page style / a registered block style, the per-page procedure, and what to look for in a page's content. | You're about to redesign a page that WordPress serves. **Read it first.** |
 | [`page-inventory.md`](./page-inventory.md) | **Where every page is served from**, as of the last `pnpm pages:inventory` run: which WordPress pages are redesigned, which pass through un-redesigned, which are still on the A6 iframe, and how much traffic each group carries. | You're asking "what's left to redesign?", or you need a current traffic split rather than the launch-era one. |
