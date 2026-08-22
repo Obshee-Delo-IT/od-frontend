@@ -11,10 +11,20 @@ services:
         WP_BASE: ${WP_BASE}
         WP_MEDIA_CDN: ${WP_MEDIA_CDN:-}
         SITE_URL: ${SITE_URL}
-        WP_USER: ${WP_USER}
-        WP_PASSWORD: ${WP_PASSWORD}
+      # The credentials are build-time too, but never args — an arg lands in the
+      # build record, which buildx publishes. See the Dockerfile's `RUN
+      # --mount=type=secret`.
+      secrets:
+        - wp_user
+        - wp_password
     restart: always
     ports:
       - ${PORT:-3000}:3000
     env_file:
       - ${ENV_FILE:-.env}
+
+secrets:
+  wp_user:
+    environment: WP_USER
+  wp_password:
+    environment: WP_PASSWORD

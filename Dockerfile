@@ -41,8 +41,8 @@ ENV WP_BASE=$WP_BASE
 ENV WP_MEDIA_CDN=$WP_MEDIA_CDN
 ENV SITE_URL=$SITE_URL
 
-# The credentials are build args too, and this is not optional for a deployed
-# image. Without them `httpClient` falls back to its stub, `pnpm build` still
+# The credentials are needed *during* the build and are deliberately NOT build
+# args. Without them `httpClient` falls back to its stub, `pnpm build` still
 # succeeds — and every prerendered page ships with an **empty header and footer**
 # baked in, because the nav menu and the widget area are fetched in the root
 # layout. Measured 2026-08-21 on this image: `/` answered 200 with
@@ -50,15 +50,24 @@ ENV SITE_URL=$SITE_URL
 # which renders on demand, had both. `revalidate = 3600`, so that is an hour of
 # an empty shell on the busiest URL of the site.
 #
-# They are safe here and only here: this is a multi-stage build and nothing from
-# `builder` reaches `runner`, so neither the value nor its ARG shows up in the
-# shipped image's history. Never move them below.
-ARG WP_USER
-ARG WP_PASSWORD
-ENV WP_USER=$WP_USER
-ENV WP_PASSWORD=$WP_PASSWORD
-
-RUN pnpm build
+# **Why a secret mount and not an ARG.** A build arg is recorded in the build's
+# `frontendAttrs`, and `docker/build-push-action@v6` uploads that record as a
+# workflow artifact by default — on this public repo that published the od-stage
+# application password, in cleartext, on every push to `main` until 2026-08-23.
+# `provenance: false` closes a different channel and did not help; the value was
+# also inside an SLSA predicate embedded in the same bundle. A secret mount
+# exists only for the lifetime of this RUN: no attestation, no build record, no
+# layer, nothing to leave out of `runner`.
+#
+# The mounts are optional (BuildKit's default), so a build that supplies neither
+# still succeeds — on the stub, with the empty shell described above. That is the
+# right failure mode for a local `--target builder` smoke test and the wrong one
+# for a deploy, so the CI job passes both.
+RUN --mount=type=secret,id=wp_user \
+    --mount=type=secret,id=wp_password \
+    WP_USER="$(cat /run/secrets/wp_user 2>/dev/null)" \
+    WP_PASSWORD="$(cat /run/secrets/wp_password 2>/dev/null)" \
+    pnpm build
 
 FROM base AS runner
 WORKDIR /app

@@ -87,14 +87,26 @@ const nativeWpPath = (slug: string[] | undefined): string | null => {
  *
  * A raw `wpFetch` (not the openapi client) because the client's middleware
  * throws on a non-2xx — here a 404 is an expected answer, not an error.
+ *
+ * **`status` is not decoration.** `httpClient` signs every request with the
+ * `od-frontend` application password, and that account is an administrator; the
+ * *single-item* post route registers no `status` argument (only the collection
+ * route does, defaulting to `publish`), so `check_read_permission()` falls
+ * through to `current_user_can('read_post')` and hands back drafts, pending,
+ * private and future-dated posts with a full `content.rendered`. Without the
+ * guard below every one of them rendered publicly at its bare `/<id>/` —
+ * confirmed on od-stage 2026-08-22, where `/73790/` served a draft's title and
+ * body to an anonymous visitor and `revalidate = 3600` then cached it. Ids are
+ * sequential, so the sitemap doubles as the list of what to enumerate against.
+ * This is the one gate both the page and `generateMetadata` pass through.
  */
 const resolvePostKind = cache(async (id: string): Promise<'film' | 'news' | null> => {
-  const res = await wpFetch(`/wp/v2/posts/${id}?_fields=id,format`, wpCache([WP_TAGS.posts, postTag(id)]));
+  const res = await wpFetch(`/wp/v2/posts/${id}?_fields=id,format,status`, wpCache([WP_TAGS.posts, postTag(id)]));
   if (!res.ok) {
     return null;
   }
-  const post = (await res.json()) as { id?: number; format?: string } | null;
-  if (!post?.id) {
+  const post = (await res.json()) as { id?: number; format?: string; status?: string } | null;
+  if (!post?.id || post.status !== 'publish') {
     return null;
   }
   return post.format === 'video' ? 'film' : 'news';
