@@ -854,17 +854,20 @@ union `/video/`'s «Все» tab uses, so the two agree by construction. It was 
 only unscoped `format=video` query left: the catch-all's SSG seed already
 filtered, and `fetchVideoList` takes the categories from its caller.
 
-**Then narrowed once more, same day.** The row now reads
-`HOME_FILM_CATEGORY_IDS` — the catalogue **minus «Ролики»** (13 short promo
-clips, which beside a full-length film read as filler), so 71 posts rather than
-83. `/video/`'s «Все» is untouched and still means all four. Two other things
-changed with it, because a carousel of six out of 71 gives the visitor no way to
-tell it is a slice: it shows **12** (`FILMS_ON_HOME` in `app/page.tsx`), and
-`fetchFilms` now returns `{ items, total }` — `total` off `X-WP-Total` — which
-the CTA prints, «Все фильмы (71)». Showing all 71 was the alternative and is
-worse: 71 slides, 71 remote images resolved through `resolveMediaUrl`, and a
-Swiper pagination strip of 69 bullets. Load-more inside the carousel would need
-a client route and its own pagination, for a row whose job is to send people to
+**Then narrowed to films proper, same day.** The row reads
+`HOME_FILM_CATEGORY_IDS` — **«Фильмы» + «Мультфильмы» only**, 35 posts of the
+83. Out go «Ролики» (13 short promo clips) and «Известные люди» (36, the
+largest of the four — so «newest» filled the row with talking heads); both read
+as filler beside a full-length film. `/video/`'s «Все» is untouched and still
+means all four, and the heading follows the scope: «Наши фильмы и
+мультфильмы». Two other things changed with it, because a carousel of six out
+of 35 gives the visitor no way to tell it is a slice: it shows **12**
+(`FILMS_ON_HOME` in `app/page.tsx`), and `fetchFilms` returns
+`{ items, total }` — `total` off `X-WP-Total` — which the CTA prints, «Все
+фильмы (35)». Rendering the whole scope was the alternative and is worse: 35
+slides, 35 remote images resolved through `resolveMediaUrl`, and a Swiper
+pagination strip of 33 bullets. Load-more inside the carousel would need a
+client route and its own pagination, for a row whose job is to send people to
 `/video/`.
 
 **Production carried the same three, and is done — applied 2026-08-22.** They

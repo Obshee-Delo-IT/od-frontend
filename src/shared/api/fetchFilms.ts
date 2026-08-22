@@ -30,7 +30,8 @@ interface RawPost {
 /**
  * The newest films for the home page's «Фильмы» row, plus how many there are.
  *
- * **Scoped to the catalogue categories minus «Ролики»** (`HOME_FILM_CATEGORY_IDS`).
+ * **Scoped to «Фильмы» and «Мультфильмы»** (`HOME_FILM_CATEGORY_IDS`) — 35 of the
+ * catalogue's 83.
  * `format=video` on its own is not «a film»: «Видео события» — event reports
  * with a video attached — carry the same post format, and there are more of them
  * (115) than there are films (83), so an unscoped query returns whichever posts
@@ -39,7 +40,7 @@ interface RawPost {
  * were a report from Serbia and a slёt in Yakutia.
  *
  * `total` comes from `X-WP-Total` and exists so the CTA can say how many films
- * the row is a slice of — a carousel gives no clue that it holds 12 of 71.
+ * the row is a slice of — a carousel gives no clue that it holds 12 of 35.
  */
 export const fetchFilms = async (limit = 6): Promise<FilmsResult> => {
   const res = await wpFetch(

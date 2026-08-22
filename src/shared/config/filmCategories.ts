@@ -64,15 +64,12 @@ export const catalogueHref = ({
 };
 
 /**
- * The home page's «Фильмы» row: the catalogue minus «Ролики».
+ * The home page's «Фильмы» row: «Фильмы» and «Мультфильмы» only.
  *
- * The row is six-odd newest posts out of 83, and «Ролики» (13) are short promo
- * clips — beside a full-length film they read as filler. The catalogue is
- * unchanged: the row's CTA leads to `/video/`, where «Все» is still all four
- * categories, «Ролики» included.
+ * 35 posts of the catalogue's 83. The two categories left out are «Ролики» (13
+ * short promo clips) and «Известные люди» (36 — the largest of the four, so an
+ * unfiltered «newest» row was mostly talking heads); both read as filler beside
+ * a full-length film. The catalogue is unchanged: the row's CTA leads to
+ * `/video/`, where «Все» is still all four categories.
  */
-export const HOME_FILM_CATEGORY_IDS: number[] = [
-  FILM_CATEGORIES.filmy,
-  FILM_CATEGORIES.multy,
-  FILM_CATEGORIES['famous-people'],
-];
+export const HOME_FILM_CATEGORY_IDS: number[] = [FILM_CATEGORIES.filmy, FILM_CATEGORIES.multy];
