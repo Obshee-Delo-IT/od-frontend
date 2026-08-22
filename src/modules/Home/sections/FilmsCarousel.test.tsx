@@ -29,7 +29,7 @@ describe('<FilmsCarousel />', () => {
   it('renders the section heading', () => {
     renderInTheme(<FilmsCarousel films={FILMS} />);
 
-    expect(screen.getByRole('heading', { level: 2, name: 'Наши фильмы и мультфильмы' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 2, name: 'Наши фильмы, мультфильмы и ролики' })).toBeInTheDocument();
   });
 
   it('renders a card per film linking to its href', () => {
@@ -74,7 +74,7 @@ describe('<FilmsCarousel />', () => {
   it('still renders heading and CTA when there are no films', () => {
     renderInTheme(<FilmsCarousel films={[]} />);
 
-    expect(screen.getByRole('heading', { level: 2, name: 'Наши фильмы и мультфильмы' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 2, name: 'Наши фильмы, мультфильмы и ролики' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Все видео' })).toHaveAttribute('href', '/video');
     expect(screen.queryByRole('link', { name: 'Спасибо за жизнь' })).not.toBeInTheDocument();
   });

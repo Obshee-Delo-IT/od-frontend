@@ -22,7 +22,7 @@ interface FilmsCarouselProps {
 export const FilmsCarousel: React.FC<FilmsCarouselProps> = ({ films, catalogueTotal }) => (
   <section className={css.section} aria-labelledby="films-heading">
     <Heading as="h2" id="films-heading" size="9" className={css.heading}>
-      Наши фильмы и мультфильмы
+      Наши фильмы, мультфильмы и ролики
     </Heading>
 
     <Carousel
