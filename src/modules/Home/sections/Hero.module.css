@@ -73,13 +73,33 @@
   }
 }
 
-/* The track holds two copies of the row's tiles; translating it by exactly one
-   copy's width (-50%) wraps seamlessly. Each tile carries its own trailing gap
-   (margin-right) so the wrap-around spacing stays uniform. */
+/* The track holds four copies of the row's tiles; translating it by exactly
+   half its width (-50%, two copies) wraps seamlessly. Each tile carries its own
+   trailing gap (margin-right) so the wrap-around spacing stays uniform.
+
+   The width is computed from the tile metrics rather than left as
+   `max-content`, because Firefox sizes a `max-content` flex container without
+   honouring its items' `flex-basis`: the box measured 288px — the margins
+   alone — against Chrome's 2952. `-50%` is a share of that box, so the marquee
+   crawled at a tenth of the intended speed and jumped at every wrap. `--tiles`
+   (copies × the row's photo count) comes from `Hero.tsx`, which owns both
+   numbers. */
 .track {
+  --tile: 222px;
+  --gap: 24px;
+
   display: flex;
-  width: max-content;
+  width: calc((var(--tile) + var(--gap)) * var(--tiles));
   animation: marquee var(--dur, 60s) linear infinite;
+
+  @media (--small-desktop) {
+    --tile: 200px;
+  }
+
+  @media (--mobile) {
+    --tile: 180px;
+    --gap: 16px;
+  }
 }
 
 .row[data-row='0'] .track {
@@ -110,23 +130,16 @@
   }
 }
 
+/* Sized off the same `--tile`/`--gap` the track's width is computed from, so
+   the two can't drift apart and desync the wrap. */
 .tile {
   position: relative;
   overflow: hidden;
-  flex: 0 0 222px;
+  flex: 0 0 var(--tile);
   border-radius: 12px;
-  margin-right: 24px;
+  margin-right: var(--gap);
   aspect-ratio: 222 / 163;
   background: var(--gray-3);
-
-  @media (--small-desktop) {
-    flex-basis: 200px;
-  }
-
-  @media (--mobile) {
-    flex-basis: 180px;
-    margin-right: 16px;
-  }
 }
 
 .tileImage {
