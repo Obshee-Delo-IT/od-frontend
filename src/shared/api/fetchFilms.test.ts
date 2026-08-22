@@ -33,20 +33,26 @@ describe('fetchFilms', () => {
     expect(ALL_FILM_CATEGORY_IDS).toContain(FILM_CATEGORIES.roliki);
   });
 
-  it('reports the scope total from X-WP-Total, not the page length', async () => {
-    wpFetch.mockResolvedValue(
-      new Response('[{"id":1,"title":{"rendered":"Фильм"}}]', { headers: { 'x-wp-total': '35' } })
-    );
+  it('counts the whole catalogue for the CTA, not the row it renders', async () => {
+    // Second call: a count-only probe over all four categories. The CTA says
+    // «Все видео (83)» and leads to /video/, so 35 — the row's own scope —
+    // would be the wrong number to print.
+    wpFetch
+      .mockResolvedValueOnce(
+        new Response('[{"id":1,"title":{"rendered":"Фильм"}}]', { headers: { 'x-wp-total': '35' } })
+      )
+      .mockResolvedValueOnce(new Response('[{"id":1}]', { headers: { 'x-wp-total': '83' } }));
 
-    const { items, total } = await fetchFilms(12);
+    const { items, catalogueTotal } = await fetchFilms(12);
 
     expect(items).toHaveLength(1);
-    expect(total).toBe(35);
+    expect(catalogueTotal).toBe(83);
+    expect(wpFetch.mock.calls[1][0]).toContain(`categories=${ALL_FILM_CATEGORY_IDS.join(',')}`);
   });
 
   it('falls back to an empty result when WordPress answers non-2xx', async () => {
     wpFetch.mockResolvedValue(new Response('', { status: 500 }));
 
-    expect(await fetchFilms(12)).toEqual({ items: [], total: 0 });
+    expect(await fetchFilms(12)).toEqual({ items: [], catalogueTotal: 0 });
   });
 });
