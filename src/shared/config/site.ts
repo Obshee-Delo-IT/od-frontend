@@ -26,6 +26,20 @@ export const siteUrl = (process.env.SITE_URL || DEFAULT_SITE_URL).replace(/\/$/,
 export const SITE_NAME = 'ОБЩЕЕ ДЕЛО';
 
 /**
+ * The fallback social-card image — the wordmark on brand red, 1200×630,
+ * served from `public/`. Relative on purpose: `metadataBase` absolutises it, so
+ * each tier advertises its own host.
+ *
+ * **Every route that declares `openGraph` has to name an image**, which is why
+ * this is a constant and not an `app/opengraph-image.png`. Next merges metadata
+ * *shallowly*: a segment's `openGraph` replaces the parent's object wholesale,
+ * so nothing is inherited from the root layout. And a file-convention image
+ * outranks config metadata, so the file form would stamp this logo over a film's
+ * own poster and a news post's own photo — the two cards that matter most.
+ */
+export const OG_DEFAULT_IMAGE = '/og-default.png';
+
+/**
  * The organisation's *other* domain for the same site — `общее-дело.рф`, stored
  * everywhere in Punycode.
  *

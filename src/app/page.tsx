@@ -9,7 +9,7 @@ import {
   PROGRAMS_TITLE,
   SPLIT_HOME_SECTIONS,
 } from '@/shared/config/programSections';
-import { canonicalUrl } from '@/shared/config/site';
+import { canonicalUrl, OG_DEFAULT_IMAGE } from '@/shared/config/site';
 import { formatDate } from '@/shared/lib/formatDate';
 import { Box } from '@/shared/ui/components/Box';
 import type { Metadata } from 'next';
@@ -28,6 +28,7 @@ export const metadata: Metadata = {
     url: canonicalUrl('/'),
     title: TITLE,
     description: DESCRIPTION,
+    images: [OG_DEFAULT_IMAGE],
   },
 };
 

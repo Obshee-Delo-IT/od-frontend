@@ -1,6 +1,9 @@
 import { CONTACTS_INDEX_PATH, RussiaMap } from '@/modules/RussiaMap';
+import { extractFirstImage } from '@/shared/api/extractFirstImage';
+import { wpBaseUrl } from '@/shared/api/httpClient';
+import { toFullSizeImageUrl } from '@/shared/api/imageUrl';
 import { resolvePageSection } from '@/shared/config/pageSections';
-import { canonicalUrl, SITE_NAME } from '@/shared/config/site';
+import { canonicalUrl, OG_DEFAULT_IMAGE, SITE_NAME } from '@/shared/config/site';
 import { paginatedPath, parsePost, resolveContentHtml, resolveQueryPagination } from '@/shared/lib/wpContent';
 import { Box } from '@/shared/ui/components/Box';
 import { ImagePreviewClient } from '@/shared/ui/components/ImagePreview';
@@ -50,7 +53,16 @@ export const wpPageMetadata = ({ page, path, pageNumber = 1 }: WpPageProps): Met
     title,
     description,
     alternates: { canonical: url },
-    openGraph: { type: 'article', url, locale: 'ru_RU', title, description },
+    openGraph: {
+      type: 'article',
+      url,
+      locale: 'ru_RU',
+      title,
+      description,
+      // A page carries no featured image, so the card takes the body's first
+      // one — full-size, since the `-WxH` variants 500 on the media CDN.
+      images: [toFullSizeImageUrl(extractFirstImage(page.contentHtml, wpBaseUrl)) ?? OG_DEFAULT_IMAGE],
+    },
   };
 };
 

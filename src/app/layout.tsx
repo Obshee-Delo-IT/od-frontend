@@ -14,7 +14,7 @@ import '@/shared/ui/theme/radix/theme-override.css';
 import { PT_Sans as PTSans, PT_Sans_Narrow as PtSansNarrow } from 'next/font/google';
 import { Footer } from '@/modules/Footer';
 import { HeaderServer } from '@/modules/Header';
-import { SITE_NAME, siteUrl } from '@/shared/config/site';
+import { OG_DEFAULT_IMAGE, SITE_NAME, siteUrl } from '@/shared/config/site';
 import { RadixProvider } from '@/shared/ui/theme';
 import css from './layout.module.css';
 import type { Metadata } from 'next';
@@ -53,7 +53,15 @@ export const metadata: Metadata = {
     // Open Graph wants the underscore form; `ru-RU` is silently ignored.
     locale: 'ru_RU',
     countryName: 'Russia',
+    images: [OG_DEFAULT_IMAGE],
   },
+  /**
+   * VK, Telegram and Odnoklassniki — where this site's sharing happens — read
+   * Open Graph, so these three lines only serve Twitter/X. They cost nothing
+   * because `title`/`description`/`images` fall back to the OG ones; without
+   * `card`, X renders the link as a thumbnail strip instead of a card.
+   */
+  twitter: { card: 'summary_large_image' },
   /**
    * Carried over from the live WP template (confirmed against the production
    * host, not the dev copy) — Yandex Webmaster ownership is verified by this
