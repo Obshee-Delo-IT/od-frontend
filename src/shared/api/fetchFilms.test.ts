@@ -11,7 +11,7 @@ vi.mock('./mediaUrl', () => ({
   resolveMediaUrl: vi.fn(async (url: string | null) => url),
 }));
 
-import { FILM_CATEGORIES, HOME_FILM_CATEGORY_IDS } from '@/shared/config/filmCategories';
+import { ALL_FILM_CATEGORY_IDS, FILM_CATEGORIES, HOME_FILM_CATEGORY_IDS } from '@/shared/config/filmCategories';
 import { fetchFilms } from './fetchFilms';
 
 describe('fetchFilms', () => {
@@ -27,19 +27,21 @@ describe('fetchFilms', () => {
     expect(url).toContain('per_page=12');
   });
 
-  it('leaves «Ролики» out of the row while the catalogue keeps them', () => {
+  it('leaves «Ролики» and «Известные люди» out of the row while the catalogue keeps them', () => {
     expect(HOME_FILM_CATEGORY_IDS).not.toContain(FILM_CATEGORIES.roliki);
+    expect(HOME_FILM_CATEGORY_IDS).not.toContain(FILM_CATEGORIES['famous-people']);
+    expect(ALL_FILM_CATEGORY_IDS).toContain(FILM_CATEGORIES.roliki);
   });
 
   it('reports the scope total from X-WP-Total, not the page length', async () => {
     wpFetch.mockResolvedValue(
-      new Response('[{"id":1,"title":{"rendered":"Фильм"}}]', { headers: { 'x-wp-total': '71' } })
+      new Response('[{"id":1,"title":{"rendered":"Фильм"}}]', { headers: { 'x-wp-total': '35' } })
     );
 
     const { items, total } = await fetchFilms(12);
 
     expect(items).toHaveLength(1);
-    expect(total).toBe(71);
+    expect(total).toBe(35);
   });
 
   it('falls back to an empty result when WordPress answers non-2xx', async () => {

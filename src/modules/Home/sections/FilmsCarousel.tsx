@@ -22,7 +22,7 @@ interface FilmsCarouselProps {
 export const FilmsCarousel: React.FC<FilmsCarouselProps> = ({ films, total }) => (
   <section className={css.section} aria-labelledby="films-heading">
     <Heading as="h2" id="films-heading" size="9" className={css.heading}>
-      Наши фильмы, мультфильмы и ролики
+      Наши фильмы и мультфильмы
     </Heading>
 
     <Carousel
@@ -55,7 +55,7 @@ export const FilmsCarousel: React.FC<FilmsCarouselProps> = ({ films, total }) =>
     <div className={css.cta}>
       {/* `catalogueHref` keeps the trailing slash — `/video` is a 301 hop under
           `trailingSlash: true`. The count is the row's only signal that it holds
-          a slice: a carousel looks the same at 12 films as at 71. */}
+          a slice: a carousel looks the same at 12 films as at 35. */}
       <Button variant="outline" size="large" asChild>
         <NextLink href={catalogueHref({ segment: null })}>
           {(total ?? 0) > films.length ? `Все фильмы (${total})` : 'Все фильмы'}

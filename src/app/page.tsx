@@ -41,8 +41,8 @@ export const metadata: Metadata = {
 
 /* Twice the six the row shipped with: at three cards per view the carousel was
    two swipes deep, which reads as «that's all of them». The count on the CTA
-   says how many more there are; showing all 71 would mean 71 slides, 71 remote
-   images and a pagination strip of 69 bullets. */
+   says how many more there are; showing the whole scope would mean 35 slides,
+   35 remote images and a pagination strip of 33 bullets. */
 const FILMS_ON_HOME = 12;
 
 const HomePage = async () => {
