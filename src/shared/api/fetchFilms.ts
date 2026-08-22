@@ -1,4 +1,4 @@
-import { HOME_FILM_CATEGORY_IDS } from '@/shared/config/filmCategories';
+import { ALL_FILM_CATEGORY_IDS, HOME_FILM_CATEGORY_IDS } from '@/shared/config/filmCategories';
 import { WP_TAGS, wpCache } from './cacheTags';
 import { extractFirstImage } from './extractFirstImage';
 import { wpBaseUrl, wpFetch } from './httpClient';
@@ -14,8 +14,12 @@ export interface FilmSummary {
 
 export interface FilmsResult {
   items: FilmSummary[];
-  /** How many films the scope holds in total — the row shows `limit` of them. */
-  total: number;
+  /**
+   * How many videos the **catalogue** holds — all four categories, not the
+   * row's narrower scope. It labels the CTA, and the CTA goes to `/video/`,
+   * so it has to count what the visitor finds there.
+   */
+  catalogueTotal: number;
 }
 
 interface RawPost {
@@ -28,7 +32,7 @@ interface RawPost {
 }
 
 /**
- * The newest films for the home page's «Фильмы» row, plus how many there are.
+ * The newest films for the home page's «Фильмы» row, plus the catalogue's size.
  *
  * **Scoped to «Фильмы» and «Мультфильмы»** (`HOME_FILM_CATEGORY_IDS`) — 35 of the
  * catalogue's 83.
@@ -39,16 +43,25 @@ interface RawPost {
  * That is what it did until 2026-08-22, and the two visible on the home page
  * were a report from Serbia and a slёt in Yakutia.
  *
- * `total` comes from `X-WP-Total` and exists so the CTA can say how many films
- * the row is a slice of — a carousel gives no clue that it holds 12 of 35.
+ * The second request is a count-only probe (`per_page=1`, headers read, body
+ * discarded) over `ALL_FILM_CATEGORY_IDS`: the CTA says «Все видео (83)» and
+ * leads to `/video/`, so the number has to be the catalogue's, not this row's.
+ * Hard-coding it is not an option — the ids and the counts are per-environment.
  */
 export const fetchFilms = async (limit = 6): Promise<FilmsResult> => {
-  const res = await wpFetch(
-    `/wp/v2/posts?format=video&categories=${HOME_FILM_CATEGORY_IDS.join(',')}&per_page=${limit}&_embed=1`,
-    wpCache([WP_TAGS.posts, WP_TAGS.films])
-  );
+  const [res, countRes] = await Promise.all([
+    wpFetch(
+      `/wp/v2/posts?format=video&categories=${HOME_FILM_CATEGORY_IDS.join(',')}&per_page=${limit}&_embed=1`,
+      wpCache([WP_TAGS.posts, WP_TAGS.films])
+    ),
+    wpFetch(
+      `/wp/v2/posts?format=video&categories=${ALL_FILM_CATEGORY_IDS.join(',')}&per_page=1&_fields=id`,
+      wpCache([WP_TAGS.posts, WP_TAGS.films])
+    ),
+  ]);
+  const catalogueTotal = countRes.ok ? Number(countRes.headers.get('x-wp-total') ?? 0) : 0;
   if (!res.ok) {
-    return { items: [], total: 0 };
+    return { items: [], catalogueTotal };
   }
   const data = (await res.json()) as RawPost[];
   const items = await Promise.all(
@@ -61,5 +74,5 @@ export const fetchFilms = async (limit = 6): Promise<FilmsResult> => {
       ),
     }))
   );
-  return { items, total: Number(res.headers.get('x-wp-total') ?? items.length) };
+  return { items, catalogueTotal };
 };

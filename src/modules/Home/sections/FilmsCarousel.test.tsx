@@ -53,29 +53,29 @@ describe('<FilmsCarousel />', () => {
   // The rendered href is slashless here on purpose: the component asks
   // `catalogueHref` for `/video/`, and next/link normalises it against
   // `trailingSlash`, which is app config the test runtime doesn't load.
-  it('links the "Все фильмы" CTA to the video index', () => {
+  it('links the "Все видео" CTA to the video index', () => {
     renderInTheme(<FilmsCarousel films={FILMS} />);
 
-    expect(screen.getByRole('link', { name: 'Все фильмы' })).toHaveAttribute('href', '/video');
+    expect(screen.getByRole('link', { name: 'Все видео' })).toHaveAttribute('href', '/video');
   });
 
   it('puts the catalogue total on the CTA when the row is a slice of it', () => {
-    renderInTheme(<FilmsCarousel films={FILMS} total={35} />);
+    renderInTheme(<FilmsCarousel films={FILMS} catalogueTotal={83} />);
 
-    expect(screen.getByRole('link', { name: 'Все фильмы (35)' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Все видео (83)' })).toBeInTheDocument();
   });
 
   it('leaves the CTA bare when the row already shows everything', () => {
-    renderInTheme(<FilmsCarousel films={FILMS} total={2} />);
+    renderInTheme(<FilmsCarousel films={FILMS} catalogueTotal={2} />);
 
-    expect(screen.getByRole('link', { name: 'Все фильмы' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Все видео' })).toBeInTheDocument();
   });
 
   it('still renders heading and CTA when there are no films', () => {
     renderInTheme(<FilmsCarousel films={[]} />);
 
     expect(screen.getByRole('heading', { level: 2, name: 'Наши фильмы и мультфильмы' })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Все фильмы' })).toHaveAttribute('href', '/video');
+    expect(screen.getByRole('link', { name: 'Все видео' })).toHaveAttribute('href', '/video');
     expect(screen.queryByRole('link', { name: 'Спасибо за жизнь' })).not.toBeInTheDocument();
   });
 });

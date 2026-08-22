@@ -53,7 +53,7 @@ const HomePage = async () => {
       <Hero />
       <StatsRow />
       <FilmsCarousel
-        total={films.total}
+        catalogueTotal={films.catalogueTotal}
         films={films.items.map((film) => ({
           id: film.id,
           title: film.title,

@@ -15,11 +15,11 @@ export interface FilmCardData {
 
 interface FilmsCarouselProps {
   films: FilmCardData[];
-  /** Films in the catalogue behind the row; shown on the CTA so the slice is visible. */
-  total?: number;
+  /** Videos in the catalogue behind the row; shown on the CTA so the slice is visible. */
+  catalogueTotal?: number;
 }
 
-export const FilmsCarousel: React.FC<FilmsCarouselProps> = ({ films, total }) => (
+export const FilmsCarousel: React.FC<FilmsCarouselProps> = ({ films, catalogueTotal }) => (
   <section className={css.section} aria-labelledby="films-heading">
     <Heading as="h2" id="films-heading" size="9" className={css.heading}>
       Наши фильмы и мультфильмы
@@ -55,10 +55,11 @@ export const FilmsCarousel: React.FC<FilmsCarouselProps> = ({ films, total }) =>
     <div className={css.cta}>
       {/* `catalogueHref` keeps the trailing slash — `/video` is a 301 hop under
           `trailingSlash: true`. The count is the row's only signal that it holds
-          a slice: a carousel looks the same at 12 films as at 35. */}
+          a slice, and it counts the *catalogue* — «Ролики» and «Известные люди»
+          are not in the row but are waiting behind the link. */}
       <Button variant="outline" size="large" asChild>
         <NextLink href={catalogueHref({ segment: null })}>
-          {(total ?? 0) > films.length ? `Все фильмы (${total})` : 'Все фильмы'}
+          {(catalogueTotal ?? 0) > films.length ? `Все видео (${catalogueTotal})` : 'Все видео'}
         </NextLink>
       </Button>
     </div>

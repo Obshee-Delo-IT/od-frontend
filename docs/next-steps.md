@@ -863,8 +863,11 @@ means all four, and the heading follows the scope: «Наши фильмы и
 мультфильмы». Two other things changed with it, because a carousel of six out
 of 35 gives the visitor no way to tell it is a slice: it shows **12**
 (`FILMS_ON_HOME` in `app/page.tsx`), and `fetchFilms` returns
-`{ items, total }` — `total` off `X-WP-Total` — which the CTA prints, «Все
-фильмы (35)». Rendering the whole scope was the alternative and is worse: 35
+`{ items, catalogueTotal }`. The count is the **catalogue's**, off a second
+count-only request (`per_page=1`) over `ALL_FILM_CATEGORY_IDS`, because the CTA
+reads «Все видео (83)» and leads to `/video/` — printing the row's own 35 there
+would undercount what the link opens, and hard-coding 83 breaks the moment
+`WP_BASE` is repointed. Rendering the whole scope was the alternative and is worse: 35
 slides, 35 remote images resolved through `resolveMediaUrl`, and a Swiper
 pagination strip of 33 bullets. Load-more inside the carousel would need a
 client route and its own pagination, for a row whose job is to send people to
