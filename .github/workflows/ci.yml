@@ -93,23 +93,36 @@ jobs:
           tags: |
             ${{ env.IMAGE }}:stage
             ${{ env.IMAGE }}:${{ github.sha }}
-          # All five are build-time, not runtime, and all five matter:
-          # `images.remotePatterns` and every canonical/sitemap URL are baked
-          # into the bundle, and without the credentials `httpClient` falls back
-          # to its stub — which prerenders an empty header and footer into every
-          # static page for the whole hour of `revalidate = 3600`. They stay in
-          # the `builder` stage, which nothing in `runner` inherits.
+          # Build-time, not runtime: `images.remotePatterns` and every
+          # canonical/sitemap URL are baked into the bundle. None of the three is
+          # a secret — they are `vars`, and they are readable in the build record.
           build-args: |
             WP_BASE=${{ vars.WP_BASE }}
             WP_MEDIA_CDN=${{ vars.WP_MEDIA_CDN }}
             SITE_URL=${{ vars.SITE_URL }}
-            WP_USER=${{ secrets.WP_USER }}
-            WP_PASSWORD=${{ secrets.WP_PASSWORD }}
+          # The credentials are needed at build time too — without them
+          # `httpClient` stubs and every prerendered page ships an empty header
+          # and footer for the hour of `revalidate = 3600`. They must never be
+          # build-args: buildx records those in `frontendAttrs`, which is
+          # uploaded as a `.dockerbuild` workflow artifact, and this repo is
+          # public. That published the od-stage application password on every
+          # push to `main` until 2026-08-23. A secret mount is recorded nowhere.
+          secrets: |
+            wp_user=${{ secrets.WP_USER }}
+            wp_password=${{ secrets.WP_PASSWORD }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
-          # Provenance attestations record build args, and two of ours are
-          # secrets — on a public package that is a published password.
+          # Provenance attestations record build args. Nothing secret is passed
+          # that way any more, but an attestation on a public package still buys
+          # nothing here.
           provenance: false
+        env:
+          # Defence in depth, not the fix: the fix is that no credential is a
+          # build arg. This stops the build record being published at all, so a
+          # future `build-args:` line cannot quietly leak the way the last one
+          # did. It costs the job-summary build graph.
+          DOCKER_BUILD_RECORD_UPLOAD: false
+          DOCKER_BUILD_SUMMARY: false
 
       - name: Deploy on Coolify
         env:
