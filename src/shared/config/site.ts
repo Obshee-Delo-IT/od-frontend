@@ -40,6 +40,16 @@ export const SITE_NAME = 'ОБЩЕЕ ДЕЛО';
 export const OG_DEFAULT_IMAGE = '/og-default.png';
 
 /**
+ * The same card with the section named under the wordmark, for the indexes that
+ * have no image of their own. A listing is not one photograph, and picking a
+ * post's would advertise that post; naming the section is what tells a reader
+ * where the link goes. The film catalogue's five live in `CATALOGUE_COPY`
+ * alongside the rest of its per-segment copy.
+ */
+export const OG_NEWS_IMAGE = '/og-news.png';
+export const OG_ARTICLES_IMAGE = '/og-articles.png';
+
+/**
  * The organisation's *other* domain for the same site — `общее-дело.рф`, stored
  * everywhere in Punycode.
  *

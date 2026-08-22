@@ -6,7 +6,7 @@ import {
   FILM_CATEGORIES,
   type FilmCategorySegment,
 } from '@/shared/config/filmCategories';
-import { canonicalUrl, OG_DEFAULT_IMAGE } from '@/shared/config/site';
+import { canonicalUrl } from '@/shared/config/site';
 import { Box } from '@/shared/ui/components/Box';
 import { PageHeader } from '@/shared/ui/components/PageHeader';
 import { Pagination } from '@/shared/ui/components/Pagination';
@@ -29,6 +29,8 @@ interface CatalogueCopy {
   heading: string;
   title: string;
   description: string;
+  /** The social card, with this section named on it (`public/og-*.png`). */
+  card: string;
 }
 
 /**
@@ -42,30 +44,35 @@ const CATALOGUE_COPY: Record<CatalogueKey, CatalogueCopy> = {
     heading: 'Фильмы Общего дела',
     title: 'Видеоматериалы — ОБЩЕЕ ДЕЛО',
     description: 'Фильмы, мультфильмы и видеоролики общероссийской общественной организации «Общее дело»',
+    card: '/og-video.png',
   },
   filmy: {
     label: 'Фильмы',
     heading: 'Фильмы',
     title: 'Фильмы — ОБЩЕЕ ДЕЛО',
     description: 'Фильмы общероссийской общественной организации «Общее дело»',
+    card: '/og-filmy.png',
   },
   multy: {
     label: 'Мультфильмы',
     heading: 'Мультфильмы',
     title: 'Мультфильмы — ОБЩЕЕ ДЕЛО',
     description: 'Мультфильмы общероссийской общественной организации «Общее дело»',
+    card: '/og-multy.png',
   },
   roliki: {
     label: 'Ролики',
     heading: 'Ролики',
     title: 'Видеоролики — ОБЩЕЕ ДЕЛО',
     description: 'Видеоролики общероссийской общественной организации «Общее дело»',
+    card: '/og-roliki.png',
   },
   'famous-people': {
     label: 'Известные люди',
     heading: 'Известные люди',
     title: 'Известные люди — ОБЩЕЕ ДЕЛО',
     description: 'Видео с участием известных людей — общероссийская общественная организация «Общее дело»',
+    card: '/og-famous-people.png',
   },
 };
 
@@ -97,7 +104,7 @@ export const catalogueMetadata = (segment: FilmCategorySegment | null, page = 1)
        Next merges metadata *shallowly*: a segment that declares `openGraph`
        replaces the parent's object whole, so it inherits no image either and
        the fallback card has to be named here. */
-    openGraph: { url, title: copy.title, description: copy.description, images: [OG_DEFAULT_IMAGE] },
+    openGraph: { url, title: copy.title, description: copy.description, images: [copy.card] },
   };
 };
 
