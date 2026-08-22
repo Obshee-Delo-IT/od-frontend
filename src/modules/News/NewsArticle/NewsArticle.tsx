@@ -1,6 +1,7 @@
 import { Text } from '@radix-ui/themes';
 import { NewsletterSignup } from '@/modules/NewsletterSignup';
 import { extractFirstImage } from '@/shared/api/extractFirstImage';
+import { cachedFetchFeaturedImage } from '@/shared/api/fetchFeaturedImage';
 import { cachedFetchNews } from '@/shared/api/fetchNews';
 import { wpBaseUrl } from '@/shared/api/httpClient';
 import { resolveMediaUrl } from '@/shared/api/mediaUrl';
@@ -35,12 +36,17 @@ export const newsMetadata = async (
   // back to the body for the many posts that have no manual excerpt.
   const description = buildNewsPreview(post?.excerpt?.rendered, post?.content?.rendered) ?? undefined;
   const url = canonicalUrl(`/${id}/`);
-  /* Through the same resolution pipeline every rendered image takes, not the
-     raw body URL: the WordPress origin **301s** an offloaded upload to the
-     Yandex bucket (`/about/`'s image does, measured 2026-08-22), and a social
-     crawler that doesn't follow the hop shows no image at all. `resolveMediaUrl`
-     hands back the direct-200 copy and strips the `-WxH` variant on the way. */
-  const image = await resolveMediaUrl(extractFirstImage(post?.content?.rendered, wpBaseUrl));
+  /* The editor's own lead image, with the body's first image only as a fallback.
+     Measured on od-stage: **100 of 100 posts carry `featured_media`** (against 1
+     of 100 pages), so this is a picture someone chose for the post, where the
+     body's first image is whatever the layout happens to open with.
+
+     Both go through the resolution pipeline rather than the raw URL: the
+     WordPress origin **301s** an offloaded upload to the Yandex bucket, and a
+     social crawler that doesn't follow the hop shows no image at all. */
+  const image =
+    (await cachedFetchFeaturedImage(post?.featured_media, id)) ??
+    (await resolveMediaUrl(extractFirstImage(post?.content?.rendered, wpBaseUrl)));
 
   return {
     title,
