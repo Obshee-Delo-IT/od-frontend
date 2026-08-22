@@ -94,6 +94,29 @@ describe('fetchVideoList', () => {
     expect(film.downloads).toEqual([{ url: 'https://disk.yandex.ru/i/full', label: 'Скачать фильм' }]);
   });
 
+  it('falls back to the Kinescope poster when WordPress holds no artwork at all', async () => {
+    wpFetch.mockResolvedValue(
+      makeResponse([
+        { id: 20728, title: { rendered: 'Юрий Куклачёв' }, acf: { kinescope_id: 'kQ7' } },
+        { id: 38424, title: { rendered: 'Николай Бурляев' }, acf: {} },
+        {
+          id: 70570,
+          title: { rendered: 'Деньги с дымком' },
+          acf: { kinescope_id: 'kQ8' },
+          _embedded: { 'wp:featuredmedia': [{ source_url: 'https://wp.test/cover.jpg' }] },
+        },
+      ])
+    );
+
+    const [noArtwork, noPlayerEither, withCover] = (await fetchVideoList()).items;
+
+    expect(noArtwork.thumbnailUrl).toBe('https://kinescope.io/kQ7/poster.jpg');
+    // Nothing to fall back to: 5 of the 36 artwork-less films have no player.
+    expect(noPlayerEither.thumbnailUrl).toBeNull();
+    // A cover in WordPress always wins — the poster is a video frame, not key art.
+    expect(withCover.thumbnailUrl).toBe('https://wp.test/cover.jpg');
+  });
+
   it('passes the category filter through to the query', async () => {
     wpFetch.mockResolvedValue(makeResponse([], { 'x-wp-total': '0', 'x-wp-totalpages': '0' }));
 

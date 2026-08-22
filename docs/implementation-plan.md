@@ -110,6 +110,8 @@ A redesigned route auto-shadows its fallback, so Tier 3 is reversible page-by-pa
 
   **What editors must supply, in priority order:** (1) a **YouTube / VK Видео / Rutube link per film** — each converts straight into a `kinescope_id`; (2) `poster_image_url` / `poster_download_url` for the 83–88 films with no плакат; (3) featured images for the 70 without one; (4) `watch_url`, if «Смотреть онлайн» should point somewhere other than the embed.
 
+  **A card with no artwork at all is no longer blank (2026-08-22).** On od-stage **36 of the 86 catalogue films** had neither a featured image nor an image in the body, so `/video/` rendered a third of its cards as empty boxes. `mapVideoSummary` now falls back to `https://kinescope.io/<id>/poster.jpg` — the player's own still, public and token-free, following one 302 to the CDN — which covers **31 of the 36**; the other five have no player either. It does not close item (3): a video frame is not key art, and a real cover still wins wherever WordPress holds one.
+
   **Then re-run, in order** (all idempotent, dry-run by default, an empty cell never clears): `pnpm film:export` → edit → `pnpm film:kinescope` → `pnpm film:import --apply` → `pnpm film:covers --apply`. Caveats in [`prod-migration-runbook.md` §3](./prod-migration-runbook.md).
 
   **Cases links won't fix:**
