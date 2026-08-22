@@ -1264,6 +1264,16 @@ Freshness needed no wiring: `od-revalidate.php` queues the coarse `wp:pages` tag
 
 **The PHP floor is not what `CLAUDE.md` said.** Measured 2026-08-20: od-dev serves the *site* on `apache2handler` **PHP 7.4.33** while its CLI is 8.2.32, and production's mu-plugin runtime is **8.2**. An mu-plugin loads on every site request, so od-dev is the binding constraint and `od-regions.php` targets 7.4 — the doc's «PHP 7.0, prod is still `mod_php7`» was wrong in both directions.
 
+### D7. The «Смотреть в Ютубе/Рутубе/ВК» lines out of the film bodies — 2026-08-23
+
+`group_film_meta`'s `share_vk` / `share_youtube` / `share_rutube` / `trailer_url` render as the player's own buttons (`modules/Video/FilmActions`), so the same links written into the body are a second copy — and the older ones came with a base64 favicon `<img>` pasted beside them. `od_pages_film_watch_links()` removes them: measured on od-stage, **40 such lines across 35 of the 83 films**, and every one of them a line of its own, never mid-sentence. That is why the unit removed is a **line** — a `<br />`-separated segment of a `<p>`, since the migrator writes a whole legacy column as one `wp:paragraph` — and not an anchor: dropping the anchor alone would leave «Смотреть в Ютубе:» standing with nothing behind it. Three shapes exist and all three are handled: the anchor whose whole text is the wording, the wording followed by a bare URL after a `<br />`, and the wording in one paragraph with the URL in the next.
+
+**The ACF values are the safety catch, and the runner reads them per record** (the registry's new `meta` key). A URL the fields do not hold is the only copy of it, so that line stays: on od-stage that kept four links — three films with an empty `group_film_meta` (`19869`, `19871`, `22414`) and one whose body points at a different rutube upload than its field (`31892`). Fill those fields and re-run. Prose is the other thing that must survive: film descriptions say «смотри» constantly, and `/42025/` alone has «Смотреть, почему именно этот человек…» plus «Пожалуйста, для просмотра фильма переходите в YouTube.» above a real YouTube link — all still there, which the length bound and the `[^.!?]` in the label pattern are for.
+
+Two things this run also taught the file. A `trim($text, " .,:;–—-")` charlist holding «–» strips its **bytes**, and `0x80` ends «р» too — the result is invalid UTF-8 and every `/u` pattern after it returns `false` rather than no-match, which reads as «this line is not a label». It is a `preg_replace('~[\s.,:;–—-]+$~u', …)` now. And the film entry is the registry's first `post` sweep, filtered by `post_format` because film **category** ids are per-environment.
+
+Applied on od-stage 2026-08-23: **28 films written**, the re-run reports zero, and a re-survey over the REST bodies finds the four guarded links and nothing else. Prod gets it with the rest of workstream D — `eval-file od-pages.php apply D7` runs it alone.
+
 ### F4. SEO — the URL-facing half, 2026-08-13 (`ea290ac`)
 
 It shipped with A8 because a URL layer nothing advertises is only half a migration — and because the live site's `sitemap.xml` comes from a WP plugin that stops answering the moment the frontend takes the domain, removing the discovery path for the whole archive at exactly the moment the URL set changes.

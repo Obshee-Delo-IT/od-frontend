@@ -2018,4 +2018,70 @@ try {
 }
 od_test( 'dead shortcodes: a form tag with no CF7 id is refused', $threw );
 
+/* ---------------------------------------- od_pages_film_watch_links ------- */
+
+/* The two fixtures are films from od-stage 2026-08-23, and between them they hold
+   every shape the 40 watch lines on that install come in: three anchors whose
+   whole text is «Смотреть в …» plus a «Смотреть трейлер:» label над its bare URL
+   (`73381`), and a label paragraph whose URL sits in the paragraph after it,
+   next to prose that says «смотри» eleven times (`42025`). */
+$film_razmerov = file_get_contents( __DIR__ . '/fixtures/film-malenkih-razmerov.prod.html' );
+$film_geroya   = file_get_contents( __DIR__ . '/fixtures/film-put-geroya.prod.html' );
+
+$razmerov_acf = array(
+	'https://vkvideo.ru/video-41817979_456241829',
+	'https://youtu.be/leYq_Qg990s',
+	'https://rutube.ru/video/720ba8a510043e4dc8664ef9baabc704/',
+	'https://dzen.ru/video/watch/67f50580c7b80502c689534b',
+);
+$razmerov = od_pages_film_watch_links( $film_razmerov, 0, $razmerov_acf );
+
+od_test( 'watch links: the fixture really carries five of them', 5 === substr_count( $film_razmerov, 'мотреть в' ) + substr_count( $film_razmerov, 'мотреть трейлер' ) );
+od_test( 'watch links: every one is gone', false === str_contains( $razmerov, 'мотреть в' ) && false === str_contains( $razmerov, 'мотреть трейлер' ) );
+od_test( 'watch links: and so is the bare trailer URL under the label', false === str_contains( $razmerov, 'dzen.ru' ) );
+od_test( 'watch links: the description the same paragraph held stays', str_contains( $razmerov, 'ОПИСАНИЕ МУЛЬТФИЛЬМА' ) );
+od_test( 'watch links: nothing else was touched', str_contains( $razmerov, 'Зачем мыть руки?' ) );
+od_test_idempotent(
+	'od_pages_film_watch_links',
+	static fn( string $content ): string => od_pages_film_watch_links( $content, 0, $razmerov_acf ),
+	$film_razmerov
+);
+
+$geroya_acf = array(
+	'https://vkvideo.ru/video-41817979_456241678',
+	'https://youtu.be/Xda2b-R4t18',
+	'https://rutube.ru/video/cff991c503a319b1fb08e48b44be41e0/',
+	'',
+);
+$geroya = od_pages_film_watch_links( $film_geroya, 0, $geroya_acf );
+
+od_test( 'watch links: a label with no link of its own goes', false === str_contains( $geroya, 'росмотреть на rutube' ) );
+od_test( 'watch links: with the URL paragraph that followed it', false === str_contains( $geroya, 'rutube.ru/video/cff991c503a319b1fb08e48b44be41e0' ) );
+od_test( 'watch links: «смотри» in the prose is prose', str_contains( $geroya, 'Только вперед смотри,' ) );
+od_test( 'watch links: so is a sentence that opens with «Смотреть,»', str_contains( $geroya, 'Смотреть, почему именно этот человек' ) );
+od_test( 'watch links: and so is a YouTube link a sentence introduces', str_contains( $geroya, 'для просмотра фильма переходите в YouTube' ) );
+od_test_idempotent(
+	'od_pages_film_watch_links (label + URL)',
+	static fn( string $content ): string => od_pages_film_watch_links( $content, 0, $geroya_acf ),
+	$film_geroya
+);
+
+/* The safety catch: ACF is what the buttons render, so a URL it does not hold is
+   the only copy and the line stays. Three films on od-stage are in exactly that
+   state (`19869`, `19871`, `22414` — an empty `group_film_meta`). */
+od_test( 'watch links: no ACF values, nothing removed', od_pages_film_watch_links( $film_razmerov, 0, array() ) === $film_razmerov );
+od_test(
+	'watch links: an ACF set that misses one URL keeps that line',
+	str_contains( od_pages_film_watch_links( $film_razmerov, 0, array( 'https://youtu.be/leYq_Qg990s' ) ), 'Смотреть в ВК:' )
+);
+
+$mid_sentence = '<!-- wp:paragraph --><p>Фильм можно <a href="https://rutube.ru/video/abc/">посмотреть на rutube</a> и обсудить с классом.</p><!-- /wp:paragraph -->';
+od_test(
+	'watch links: an anchor inside a sentence is left alone',
+	od_pages_film_watch_links( $mid_sentence, 0, array( 'https://rutube.ru/video/abc/' ) ) === $mid_sentence
+);
+
+/* A sweep runs over every published film; «not this one» must be byte-exact. */
+od_test( 'watch links: a body with no such wording is returned as it is', od_pages_film_watch_links( $page, 0, array( 'https://youtu.be/x' ) ) === $page );
+
 od_test_summary();

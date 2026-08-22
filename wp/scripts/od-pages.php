@@ -5269,6 +5269,234 @@ function od_pages_dead_shortcodes(string $content, int $_termId = 0): string
 }
 
 /**
+ * Video hosts a film's «Смотреть в …» line points at.
+ *
+ * `vkvideo.ru` and `vk.com` are the same video under two names — the editors
+ * used both, and ACF holds whichever they pasted last, so
+ * {@see od_film_watch_url_key()} folds them together.
+ */
+const OD_FILM_WATCH_HOSTS = '~(?:youtube\.com|youtu\.be|rutube\.ru|vk\.com|vkvideo\.ru|ok\.ru|dzen\.ru|zen\.yandex\.ru)~i';
+
+/** The platform a label with no link of its own names («Смотреть трейлер:», «Просмотреть на rutube:»). */
+const OD_FILM_WATCH_PLATFORMS = '~(?:youtube|ютуб|rutube|рутуб|вконтакте|вк|vk|дзен|dzen|одноклассник|трейлер)~iu';
+
+/**
+ * A URL reduced to what identifies the video: no scheme, no `www.`, no query, no
+ * trailing slash, `vkvideo.ru` folded onto `vk.com`.
+ *
+ * The body and the ACF field disagree on all four — `rutube.ru/video/<hash>` vs
+ * `…/<hash>/`, `vkvideo.ru/video-…` vs `vk.com/video-…`,
+ * `dzen.ru/video/watch/<id>?share_to=link` vs the same without the parameter —
+ * and every one of those pairs is one video.
+ */
+function od_film_watch_url_key(string $url): string
+{
+    $url = html_entity_decode(trim($url), ENT_QUOTES, 'UTF-8');
+    $url = preg_replace('~^https?://(?:www\.)?~i', '', $url);
+    $url = preg_replace('~[?#].*$~', '', $url);
+    $url = preg_replace('~^vkvideo\.ru/~i', 'vk.com/', $url);
+
+    return rtrim(strtolower($url), '/');
+}
+
+/** Whether every URL in `$urls` is one of the `$keep` keys — i.e. ACF has it. */
+function od_film_watch_known(array $urls, array $keep): bool
+{
+    foreach ($urls as $url) {
+        if (!isset($keep[od_film_watch_url_key($url)])) {
+            return false;
+        }
+    }
+
+    return $urls !== [];
+}
+
+/**
+ * What one `<br />`-separated line of a paragraph is:
+ *
+ * - `watch` — a «Смотреть в Ютубе» link, and ACF holds its URL: droppable.
+ * - `label` — the same wording with no link, the half of a legacy
+ *   «Смотреть трейлер:<br />https://…» pair: droppable *with* its URL line.
+ * - `url` — nothing but a video URL ACF holds; droppable only under a `label`.
+ * - `empty` — `&nbsp;` and other spacing, transparent to the pairing above.
+ * - `keep` — everything else, prose included.
+ *
+ * Prose is what the length bound and the `[^.!?]` are for: film descriptions are
+ * full of «смотри», «посмотришь на себя по-другому» and one «Смотреть, почему
+ * именно этот человек тебя мотивирует…» (`42025`), and none of them is a link.
+ */
+function od_film_watch_kind(string $segment, array $keep): string
+{
+    $text = trim(preg_replace('~\s+~u', ' ', str_replace('&nbsp;', ' ', strip_tags($segment))));
+    if ($text === '') {
+        return 'empty';
+    }
+
+    preg_match_all('~href="([^"]+)"~i', $segment, $found);
+    $hrefs = $found[1];
+    $video = array_values(array_filter($hrefs, static fn(string $href): bool => (bool) preg_match(OD_FILM_WATCH_HOSTS, $href)));
+
+    // «Посмотреть на rutube .», «Смотреть в Ютубе:» — the punctuation is theirs,
+    // not a sentence's. `preg_replace` and not `trim()`: a charlist holding «–»
+    // strips its *bytes*, and 0x80 ends «р» too — that leaves invalid UTF-8 and
+    // every /u pattern below then returns false rather than no-match.
+    $bare = preg_replace('~[\s.,:;–—-]+$~u', '', $text);
+
+    if (preg_match('~^(?:по|про)?смотреть\b[^.!?]{0,40}$~iu', $bare)) {
+        if ($hrefs !== []) {
+            // Every href a video, and every one of them in ACF: the buttons say
+            // it all. One link ACF does not have keeps the whole line — the body
+            // is then the only copy, and this script never deletes that.
+            return count($video) === count($hrefs) && od_film_watch_known($video, $keep) ? 'watch' : 'keep';
+        }
+
+        return preg_match(OD_FILM_WATCH_PLATFORMS, $bare) ? 'label' : 'keep';
+    }
+
+    if (preg_match('~^https?://\S+$~', $bare)) {
+        $urls = $hrefs !== [] ? $hrefs : [$bare];
+        foreach ($urls as $url) {
+            if (!preg_match(OD_FILM_WATCH_HOSTS, $url)) {
+                return 'keep';
+            }
+        }
+
+        return od_film_watch_known($urls, $keep) ? 'url' : 'keep';
+    }
+
+    return 'keep';
+}
+
+/**
+ * Every film — the «Смотреть в Ютубе / Рутубе / ВК» lines the body carries, now
+ * that `group_film_meta`'s `share_*` and `trailer_url` render them as the
+ * player's own buttons ({@see src/modules/Video/FilmActions}).
+ *
+ * Measured on od-stage 2026-08-23: 40 such lines across 35 of the 83 films, and
+ * every one of them a line of its own — an anchor whose whole text is the
+ * wording, or that wording followed by a bare URL. Nothing mid-sentence, which
+ * is why a line and not an anchor is the unit removed: taking the anchor alone
+ * would leave «Смотреть в Ютубе:» standing with nothing behind it.
+ *
+ * **The ACF values are the safety catch, not decoration.** A link the fields do
+ * not hold is the only copy of that URL, and the line stays — three films
+ * (`19869`, `19871`, `22414`) have an empty `group_film_meta` and are skipped
+ * whole because of it. Fill their fields and re-run.
+ *
+ * @param string        $content Stored `post_content`.
+ * @param int           $_termId Unused — the runner passes the term id to every transform.
+ * @param array<string> $acfUrls The film's `share_*`/`trailer_url` values, from the runner.
+ * @return string Rewritten content, or `$content` unchanged when nothing is droppable.
+ */
+function od_pages_film_watch_links(string $content, int $_termId = 0, array $acfUrls = []): string
+{
+    if (!preg_match('~смотр~iu', $content)) {
+        return $content; // No such wording anywhere in the body.
+    }
+
+    $keep = [];
+    foreach ($acfUrls as $url) {
+        $key = od_film_watch_url_key((string) $url);
+        if ($key !== '') {
+            $keep[$key] = true;
+        }
+    }
+
+    if ($keep === []) {
+        return $content; // Nothing in ACF to fall back on — never drop the only copy.
+    }
+
+    // The migrator writes a whole legacy column as one `wp:paragraph` holding
+    // several `<p>`s, so the addressable unit is a `<p>` and, inside it, a
+    // `<br />`-separated line. `PREG_SPLIT_DELIM_CAPTURE` keeps the separators so
+    // a surviving line is re-joined exactly as it was written.
+    if (!preg_match_all('~<p\b[^>]*>(.*?)</p>~s', $content, $paragraphs, PREG_SET_ORDER | PREG_OFFSET_CAPTURE)) {
+        return $content;
+    }
+
+    $parts = [];
+    $lines = [];
+    foreach ($paragraphs as $p => $paragraph) {
+        $parts[$p] = preg_split('~(<br\s*/?>\s*)~i', $paragraph[1][0], -1, PREG_SPLIT_DELIM_CAPTURE);
+        foreach ($parts[$p] as $s => $segment) {
+            if ($s % 2 === 0) {
+                $lines[] = ['p' => $p, 's' => $s, 'kind' => od_film_watch_kind($segment, $keep)];
+            }
+        }
+    }
+
+    $drop = [];
+    $total = count($lines);
+    for ($i = 0; $i < $total; $i++) {
+        if ($lines[$i]['kind'] === 'watch') {
+            $drop[$i] = true;
+            continue;
+        }
+
+        if ($lines[$i]['kind'] !== 'label') {
+            continue;
+        }
+
+        // A label with no link of its own is only a label if the URL follows it.
+        $next = $i + 1;
+        while ($next < $total && $lines[$next]['kind'] === 'empty') {
+            $next++;
+        }
+
+        if ($next < $total && $lines[$next]['kind'] === 'url') {
+            $drop[$i] = true;
+            $drop[$next] = true;
+        }
+    }
+
+    if ($drop === []) {
+        return $content;
+    }
+
+    $dropped = [];
+    foreach ($drop as $i => $_yes) {
+        $dropped[$lines[$i]['p']][$lines[$i]['s']] = true;
+    }
+
+    // Last paragraph first: rewriting by offset invalidates every offset after it.
+    foreach (array_reverse($paragraphs, true) as $p => $paragraph) {
+        if (!isset($dropped[$p])) {
+            continue;
+        }
+
+        $inner = '';
+        foreach ($parts[$p] as $s => $segment) {
+            if ($s % 2 === 0) {
+                $inner .= isset($dropped[$p][$s]) ? '' : $segment;
+                continue;
+            }
+
+            // A separator belongs to the line before it and goes with it.
+            $inner .= isset($dropped[$p][$s - 1]) ? '' : $segment;
+        }
+
+        $inner = preg_replace('~(?:<br\s*/?>\s*)+$~i', '', $inner);
+        $whole = trim(str_replace('&nbsp;', ' ', strip_tags($inner))) === '' && !str_contains($inner, '<img');
+        $replacement = $whole ? '' : str_replace($paragraph[1][0], $inner, $paragraph[0][0]);
+
+        // A dropped `<p>` takes the newline the migrator wrote after it, so the
+        // block does not keep a blank line per removed line.
+        $length = strlen($paragraph[0][0]);
+        if ($whole && substr($content, $paragraph[0][1] + $length, 1) === "\n") {
+            $length++;
+        }
+
+        $content = substr_replace($content, $replacement, $paragraph[0][1], $length);
+    }
+
+    // A paragraph block that held nothing but those lines, and then a group whose
+    // columns hold nothing but such blocks — the same residue an editor leaves.
+    $content = preg_replace('~\s*<!--\s*wp:paragraph\b[^>]*-->\s*<!--\s*/wp:paragraph\s*-->~', '', $content);
+
+    return od_drop_empty_layout_groups($content);
+}
+
+/**
  * Every record workstream D rewrites, newest last.
  *
  * `path` is resolved with `get_page_by_path()` — exact and hierarchy-aware.
@@ -5293,6 +5521,12 @@ function od_pages_dead_shortcodes(string $content, int $_termId = 0): string
  * appends to those args — an upload's id and its `/uploads/YYYY/MM/` path are
  * both per-environment, so neither can be written into a transform.
  *
+ * `format` narrows a sweep to one `post_format` term — `video`, which is what
+ * every film is and what the per-environment category ids cannot address — and
+ * `meta` names postmeta keys the runner reads **per record**, appending their
+ * values as one array argument. The tag and the attachment are resolved once,
+ * before the loop; a film's own ACF values cannot be.
+ *
  * ⚠️ **`title` needs WordPress 5.7 and production runs 5.5.5.** The query var did
  * not exist before then, so 5.5 ignores it, `get_posts()` returns the two newest
  * records of that type and the runner refuses the entry rather than writing to the
@@ -5300,7 +5534,7 @@ function od_pages_dead_shortcodes(string $content, int $_termId = 0): string
  * record by `path` where it matters on production; the slug is a valid address
  * even when it names the wrong person.
  *
- * @return array<int, array{label: string, fix: callable-string, path?: string, title?: string, post_type?: string, sweep?: bool, parent?: string, tag?: string, taxonomy?: string, args?: array<int, mixed>}>
+ * @return array<int, array{label: string, fix: callable-string, path?: string, title?: string, post_type?: string, sweep?: bool, parent?: string, format?: string, meta?: array<int, string>, tag?: string, taxonomy?: string, args?: array<int, mixed>}>
  */
 function od_pages_registry(): array
 {
@@ -5587,6 +5821,19 @@ function od_pages_registry(): array
         'fix' => 'od_pages_dead_shortcodes',
     ];
 
+    // The one entry that is not about pages: films are `post`s, addressed by the
+    // `post-format-video` term because the film category ids are per-environment.
+    // `meta` is read per record — the ACF values are what makes the removal safe,
+    // see the transform.
+    $registry[] = [
+        'label' => 'D7 · every film — the «Смотреть в Ютубе/Рутубе/ВК» lines the ACF buttons render',
+        'post_type' => 'post',
+        'sweep' => true,
+        'format' => 'video',
+        'meta' => ['share_vk', 'share_youtube', 'share_rutube', 'trailer_url'],
+        'fix' => 'od_pages_film_watch_links',
+    ];
+
     return $registry;
 }
 
@@ -5603,7 +5850,20 @@ global $wpdb; // `eval-file` runs the script in a function scope, where it is no
 $apply = in_array('apply', $args ?? [], true);
 WP_CLI::log($apply ? 'Applying changes.' : 'Dry run — pass `apply` to write.');
 
+// Any other positional narrows the run to the entries whose label contains it —
+// `… od-pages.php apply D7` is one workstream item, which is how a tier takes a
+// single fix without re-running the other hundred (same idea as `od-wp.php`'s
+// task names, matched against the label because that is what an entry has).
+$only = implode(' ', array_values(array_diff($args ?? [], ['apply'])));
+if ($only !== '') {
+    WP_CLI::log(sprintf('Only entries whose label contains «%s».', $only));
+}
+
 foreach (od_pages_registry() as $entry) {
+    if ($only !== '' && !str_contains($entry['label'], $only)) {
+        continue;
+    }
+
     $postType = $entry['post_type'] ?? 'page';
 
     if (!empty($entry['sweep'])) {
@@ -5619,6 +5879,16 @@ foreach (od_pages_registry() as $entry) {
             'order' => 'ASC',
             'suppress_filters' => false,
         ];
+
+        if (isset($entry['format'])) {
+            // By term slug, not by id: `post_format` ids differ per install, and
+            // the film categories differ too — the format is what every film has.
+            $query['tax_query'] = [[
+                'taxonomy' => 'post_format',
+                'field' => 'slug',
+                'terms' => 'post-format-' . $entry['format'],
+            ]];
+        }
 
         if (isset($entry['parent'])) {
             $parent = get_page_by_path($entry['parent'], OBJECT, $postType);
@@ -5678,8 +5948,15 @@ foreach (od_pages_registry() as $entry) {
     }
 
     foreach ($posts as $post) {
+        // A per-record argument, unlike the two above: `meta` names postmeta keys
+        // whose values the transform needs for *this* record.
+        $args = $extra;
+        if (isset($entry['meta'])) {
+            $args[] = array_map(static fn(string $key): string => (string) get_post_meta($post->ID, $key, true), $entry['meta']);
+        }
+
         try {
-            $new = $entry['fix']($post->post_content, $filmTag ? (int) $filmTag->term_id : 0, ...$extra);
+            $new = $entry['fix']($post->post_content, $filmTag ? (int) $filmTag->term_id : 0, ...$args);
         } catch (Throwable $e) {
             WP_CLI::warning(sprintf('%s (#%d): %s', $entry['label'], $post->ID, $e->getMessage()));
             continue;
