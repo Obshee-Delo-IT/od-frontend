@@ -859,8 +859,10 @@ filtered, and `fetchVideoList` takes the categories from its caller.
 83. Out go «Ролики» (13 short promo clips) and «Известные люди» (36, the
 largest of the four — so «newest» filled the row with talking heads); both read
 as filler beside a full-length film. `/video/`'s «Все» is untouched and still
-means all four, and the heading follows the scope: «Наши фильмы и
-мультфильмы». Two other things changed with it, because a carousel of six out
+means all four, and the heading stays as Figma wrote it, «Наши фильмы,
+мультфильмы и ролики» — it names what the CTA opens, «Все видео (83)», not the
+narrower row beneath it. (It briefly followed the scope instead; reverted the
+same day.) Two other things changed with it, because a carousel of six out
 of 35 gives the visitor no way to tell it is a slice: it shows **12**
 (`FILMS_ON_HOME` in `app/page.tsx`), and `fetchFilms` returns
 `{ items, catalogueTotal }`. The count is the **catalogue's**, off a second
