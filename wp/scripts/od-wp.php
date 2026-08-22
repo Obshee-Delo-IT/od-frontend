@@ -19,12 +19,12 @@
  * **Adding a task.** One function, called from the runner at the bottom, taking
  * `$apply` and doing nothing but logging when it is false. Whatever it needs to
  * know goes in a registry function above it, so the data can be read and tested
- * without WordPress. There are seven today — {@see od_wp_tag_programme_films()},
+ * without WordPress. There are eight today — {@see od_wp_tag_programme_films()},
  * {@see od_wp_rename_pages()}, {@see od_wp_order_pages()},
  * {@see od_wp_draft_empty_branches()}, {@see od_wp_edit_menu()},
- * {@see od_wp_create_profiles()} and {@see od_wp_untag_video_events()} — and
- * still no framework between them, because seven calls in a row is not a thing
- * that needs one.
+ * {@see od_wp_create_profiles()}, {@see od_wp_untag_video_events()} and
+ * {@see od_wp_rehost_posters()} — and still no framework between them, because
+ * eight calls in a row is not a thing that needs one.
  *
  * House rules, same as `od-pages.php`: dry run by default, writing takes the
  * positional argument `apply`, everything is idempotent, and **posts are
@@ -891,6 +891,86 @@ function od_wp_untag_video_events(bool $apply): void
     }
 }
 
+/**
+ * A `poster_image_url` rehosted onto `$home`, or null when it already belongs
+ * there — or is not this install's business at all.
+ *
+ * Only an absolute URL whose path starts with `/wp-content/` is touched: that is
+ * a WordPress upload, and every install has its own copy of the same path
+ * because each tier is a clone of the one before it. Anything else — a
+ * Яндекс.Диск link, a root-relative path, an external image someone pasted —
+ * is left exactly as the editor wrote it.
+ *
+ * The path is carried over as a substring rather than re-assembled, so its
+ * percent-encoding survives: these filenames are Cyrillic, and re-encoding one
+ * is how a working URL becomes a 404.
+ */
+function od_wp_rehost_url(string $url, string $home): ?string
+{
+    $url = trim($url);
+    $home = rtrim($home, '/');
+
+    if (!preg_match('#^https?://#i', $url)) {
+        return null;
+    }
+
+    $at = strpos($url, '/wp-content/');
+    if ($at === false || strpos($url, $home . '/') === 0) {
+        return null;
+    }
+
+    return $home . substr($url, $at);
+}
+
+/**
+ * Point every film's плакат at this install's own media, not another tier's.
+ *
+ * **Why this exists.** The film worksheet was filled against od-dev and carried
+ * onto od-stage by `pnpm film:remap`, which rewrites post ids — they differ per
+ * environment — but not the URLs inside the cells. So ten films arrived on the
+ * clone with a `poster_image_url` on `od-dev.tmweb.ru`, and `next/image`
+ * allowlists this tier's `WP_BASE` and the media CDN, not another tier's host:
+ * the плакат card rendered and its image 400ed. The same sheet promotes to
+ * production, so this is a step of the promotion, not a one-off repair.
+ *
+ * Reads `home_url()` rather than a registry — there is nothing per-film to know,
+ * and that is what makes it safe to re-run on any tier.
+ */
+function od_wp_rehost_posters(bool $apply): void
+{
+    $home = home_url();
+    $films = get_posts([
+        'post_type' => 'post',
+        'post_status' => 'any',
+        'numberposts' => -1,
+        'fields' => 'ids',
+        'meta_query' => [['key' => 'poster_image_url', 'value' => '', 'compare' => '!=']],
+    ]);
+
+    $moved = 0;
+    foreach ($films as $id) {
+        $current = (string) get_post_meta($id, 'poster_image_url', true);
+        $rehosted = od_wp_rehost_url($current, $home);
+
+        if ($rehosted === null) {
+            continue;
+        }
+
+        WP_CLI::log(sprintf('#%d «%s»: плакат on %s', $id, get_the_title($id), wp_parse_url($current, PHP_URL_HOST)));
+        $moved++;
+
+        if (!$apply) {
+            continue;
+        }
+
+        update_post_meta($id, 'poster_image_url', $rehosted);
+        update_post_meta($id, '_poster_image_url', 'field_film_poster_image_url');
+        WP_CLI::success(sprintf('#%d: плакат rehosted', $id));
+    }
+
+    WP_CLI::log(sprintf('%d плакат(ов) %s.', $moved, $apply ? 'rehosted' : 'to rehost'));
+}
+
 // ---------------------------------------------------------------------------
 // Runner. Everything above is a function; this is the only thing that runs.
 // ---------------------------------------------------------------------------
@@ -909,3 +989,4 @@ od_wp_draft_empty_branches($apply);
 od_wp_edit_menu($apply);
 od_wp_create_profiles($apply);
 od_wp_untag_video_events($apply);
+od_wp_rehost_posters($apply);

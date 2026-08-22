@@ -833,3 +833,32 @@ curl -s 'https://od.webtm.ru/wp-json/wp/v2/posts?categories=581,580,86,559&per_p
 Add the slug to the registry, re-run the script. Not coded as a frontend filter
 on purpose: the frontend would then disagree with WordPress about what a film
 is, and the editor who filed it would get no signal.
+
+---
+
+## `film:remap` rewrites ids, not URLs — 11 плакаты pointed at od-dev
+
+**Found on new.obshee-delo.ru 2026-08-22, fixed the same day.** The film
+worksheet was filled against od-dev and carried onto the prod clone with
+`pnpm film:remap`, which joins the two sheets by title and rewrites the **post
+ids** — they differ per environment. It does not touch the URLs *inside* the
+cells, so ten films arrived on od-stage with a `poster_image_url` on
+`od-dev.tmweb.ru`, and one more on `общее-дело.рф`.
+
+`next/image` allowlists this tier's `WP_BASE` and the media CDN, not another
+tier's host, and `resolveMediaUrl` only maps a URL that already starts with
+`WP_BASE` — so the плакат card rendered with a **400 on its image**. The visible
+symptom is a film that looks like it has no плакат while WordPress says it has
+one, which is why this was mistaken for the editorial gap.
+
+`od_wp_rehost_posters()` in [`wp/scripts/od-wp.php`](../wp/scripts/od-wp.php)
+moves the origin of any `poster_image_url` whose path starts with `/wp-content/`
+onto `home_url()`, carrying the path over byte for byte — these filenames are
+Cyrillic and re-encoding one is how a working URL becomes a 404. It reads
+`home_url()` and needs no registry, so it is safe on every tier and is a step of
+the promotion rather than a repair. Applied: **od-stage 11, od-dev 1**.
+
+**The same sheet promotes to production**, so run `od-wp.php` there after the
+import — or teach `film:remap` to rehost, which would make this task find
+nothing. Left undone deliberately: the task is three lines of PHP and the remap
+flag would need its own tests and a target origin the CSV tool has no way to know.
