@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation';
 import { cachedFetchProfile } from '@/shared/api/fetchProfile';
-import { canonicalUrl } from '@/shared/config/site';
+import { canonicalUrl, OG_DEFAULT_IMAGE } from '@/shared/config/site';
 import { parsePost, resolveContentHtml, stripProfileCardFields } from '@/shared/lib/wpContent';
 import { Box } from '@/shared/ui/components/Box';
 import { ImagePreviewClient } from '@/shared/ui/components/ImagePreview';
@@ -36,7 +36,14 @@ export const generateMetadata = async ({ params }: ProfilePageProps): Promise<Me
     title: `${profile.name} — ОБЩЕЕ ДЕЛО`,
     description,
     alternates: { canonical: url },
-    openGraph: { type: 'profile', url, locale: 'ru_RU', title: profile.name, description },
+    openGraph: {
+      type: 'profile',
+      url,
+      locale: 'ru_RU',
+      title: profile.name,
+      description,
+      images: [profile.photo?.src ?? OG_DEFAULT_IMAGE],
+    },
   };
 };
 

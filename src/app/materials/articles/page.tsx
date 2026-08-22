@@ -2,7 +2,7 @@ import { NewsGrid } from '@/modules/News';
 import { NewsletterSignup } from '@/modules/NewsletterSignup';
 import { fetchNewsList } from '@/shared/api';
 import { ARTICLES_HREF, NEWS_CATEGORIES } from '@/shared/config/newsCategories';
-import { canonicalUrl } from '@/shared/config/site';
+import { canonicalUrl, OG_DEFAULT_IMAGE } from '@/shared/config/site';
 import { Box } from '@/shared/ui/components/Box';
 import { PageHeader } from '@/shared/ui/components/PageHeader';
 import type { Metadata } from 'next';
@@ -28,7 +28,7 @@ export const generateMetadata = (): Metadata => {
     title: `${TITLE} — ОБЩЕЕ ДЕЛО`,
     description: DESCRIPTION,
     alternates: { canonical: url },
-    openGraph: { url, title: TITLE, description: DESCRIPTION },
+    openGraph: { url, title: TITLE, description: DESCRIPTION, images: [OG_DEFAULT_IMAGE] },
   };
 };
 

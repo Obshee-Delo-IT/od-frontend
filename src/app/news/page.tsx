@@ -2,7 +2,7 @@ import { NewsFilter, NewsGrid, type NewsFilterOption } from '@/modules/News';
 import { NewsletterSignup } from '@/modules/NewsletterSignup';
 import { fetchNewsList } from '@/shared/api';
 import { ARTICLES_HREF, NEWS_CATEGORIES, resolveNewsCategory } from '@/shared/config/newsCategories';
-import { canonicalUrl } from '@/shared/config/site';
+import { canonicalUrl, OG_DEFAULT_IMAGE } from '@/shared/config/site';
 import { Box } from '@/shared/ui/components/Box';
 import { PageHeader } from '@/shared/ui/components/PageHeader';
 import { Pagination } from '@/shared/ui/components/Pagination';
@@ -83,7 +83,7 @@ export const generateMetadata = async ({ searchParams }: NewsPageProps): Promise
     title,
     description: DESCRIPTION,
     alternates: { canonical: url },
-    openGraph: { url, title, description: DESCRIPTION },
+    openGraph: { url, title, description: DESCRIPTION, images: [OG_DEFAULT_IMAGE] },
   };
 };
 
