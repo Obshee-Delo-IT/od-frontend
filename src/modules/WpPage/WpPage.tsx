@@ -37,6 +37,17 @@ interface WpPageProps {
   pageNumber?: number;
 }
 
+/**
+ * Pages whose body opens with a row of partner logos, so the first image in it —
+ * and the second, and the fourth — is another organisation's mark. `/about/`
+ * leads with АСИ, ФСИН, МО and Татарстан, then scans of the registration
+ * certificates; there is no image in it that should represent the page, so
+ * these take the branded card instead. Measured 2026-08-23 over 30 pages: the
+ * body's first image is a sensible one on 22 of the 26 that have one, which is
+ * why the heuristic stays and this is a list rather than a policy.
+ */
+const LOGO_STRIP_PAGES = new Set(['/about/', '/about/nashi_partnery/']);
+
 export const wpPageMetadata = async ({ page, path, pageNumber = 1 }: WpPageProps): Promise<Metadata> => {
   // Self-canonical per page, the same rule `/materials/articles/?page=2` follows:
   // page 2 is its own set of posts, so pointing it at page 1 would ask the index
@@ -48,6 +59,9 @@ export const wpPageMetadata = async ({ page, path, pageNumber = 1 }: WpPageProps
   // The page number goes in it too: 18 pages of `/about/smi/` under one title
   // is a duplicate-title report waiting to happen.
   const title = `${page.title}${pageNumber > 1 ? ` — страница ${pageNumber}` : ''} — ${SITE_NAME}`;
+  const image = LOGO_STRIP_PAGES.has(path)
+    ? null
+    : await resolveMediaUrl(extractFirstImage(page.contentHtml, wpBaseUrl));
 
   return {
     title,
@@ -59,11 +73,13 @@ export const wpPageMetadata = async ({ page, path, pageNumber = 1 }: WpPageProps
       locale: 'ru_RU',
       title,
       description,
-      /* A page carries no featured image, so the card takes the body's first
-         one — through the resolution pipeline, because the WordPress origin
-         301s an offloaded upload to the Yandex bucket and a crawler that
-         doesn't follow the hop shows no image. */
-      images: [(await resolveMediaUrl(extractFirstImage(page.contentHtml, wpBaseUrl))) ?? OG_DEFAULT_IMAGE],
+      /* A page carries no featured image (1 of 100 on od-stage does), so the
+         card takes the body's first one — through the resolution pipeline,
+         because the WordPress origin 301s an offloaded upload to the Yandex
+         bucket and a crawler that doesn't follow the hop shows no image.
+         `/contacts/` ends up on the branded card by the same route: all four of
+         its images are the truncated base64 blobs `extractFirstImage` skips. */
+      images: [image ?? OG_DEFAULT_IMAGE],
     },
   };
 };

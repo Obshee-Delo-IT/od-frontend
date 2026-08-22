@@ -56,8 +56,9 @@ describe('catalogueMetadata', () => {
 
     expect(new Set(cards.map((card) => card?.title)).size).toBe(cards.length);
     expect(new Set(cards.map((card) => card && 'url' in card && card.url)).size).toBe(cards.length);
-    cards.forEach((card) => {
-      expect(card?.images).toBeDefined();
-    });
+    // Distinct images too, not just distinct words: the five shared one card
+    // until each segment got its own, and a reader cannot tell «Фильмы» from
+    // «Мультфильмы» in a feed by the title alone.
+    expect(new Set(cards.map((card) => JSON.stringify(card?.images))).size).toBe(cards.length);
   });
 });
