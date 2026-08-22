@@ -834,6 +834,26 @@ Add the slug to the registry, re-run the script. Not coded as a frontend filter
 on purpose: the frontend would then disagree with WordPress about what a film
 is, and the editor who filed it would get no signal.
 
+**Production carries the same three, and needs the same fix — still open.**
+Verified off prod's own HTML (its REST is closed, so the category slugs are read
+out of the post pages): `73220` links `category/video/movies/`, `52442` and
+`38960` link `category/video/roliki/`. The cutover clones production, so leaving
+them there means the fresh install inherits them and the fix has to be applied
+twice. **Run only the named task** — production is not migrated, and the full
+runner would create the programme tags, rename its indexes and draft its empty
+regional branches, none of which production has asked for:
+
+```sh
+scp wp/scripts/od-wp.php od-root:~/od-wp.php
+ssh od-root 'cd ~/public_html && wp --skip-plugins --skip-themes eval-file ~/od-wp.php untag-video-events'
+ssh od-root 'cd ~/public_html && wp --skip-plugins --skip-themes eval-file ~/od-wp.php untag-video-events apply'
+```
+
+`rehost-posters` finds nothing there — ACF is absent on production, so no film
+carries a `poster_image_url` yet. If WP Rocket is active, purge after: prod's
+category listings are page-cached (`wp rocket clean --confirm`, or
+`rocket_clean_domain()` from `wp eval`).
+
 ---
 
 ## `film:remap` rewrites ids, not URLs — 11 плакаты pointed at od-dev

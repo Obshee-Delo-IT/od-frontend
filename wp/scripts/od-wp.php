@@ -3,8 +3,13 @@
  * od-wp.php — the WordPress-side data workstream D needs, everything that is not
  * a page's own markup.
  *
- *     wp --url=https://od-dev.tmweb.ru eval-file od-wp.php           # dry run
- *     wp --url=https://od-dev.tmweb.ru eval-file od-wp.php apply     # write
+ *     wp --url=https://od-dev.tmweb.ru eval-file od-wp.php           # dry run, every task
+ *     wp --url=https://od-dev.tmweb.ru eval-file od-wp.php apply     # write, every task
+ *     wp eval-file od-wp.php apply untag-video-events                # one task only
+ *
+ * The task names are the keys of the `$tasks` map in the runner at the bottom.
+ * Naming one is how a tier takes a single fix without the rest of workstream D —
+ * which is what production needs until it is migrated.
  *
  * Separate from `od-pages.php` on purpose, and the line between them is what a
  * change is *made of*: that one rewrites a page's `post_content` and is re-run
@@ -979,14 +984,46 @@ if (!defined('WP_CLI') || !WP_CLI) {
     return;
 }
 
-$apply = in_array('apply', $args ?? [], true);
-WP_CLI::log($apply ? 'Applying changes.' : 'Dry run — pass `apply` to write.');
+/**
+ * Task name => the function that runs it. Naming them is what lets a tier take
+ * *some* of workstream D: production is not migrated yet, so running the whole
+ * runner there would create the programme tags, rename its indexes and draft its
+ * empty branches — none of which production has asked for. A named task is one
+ * fix, applied where it belongs.
+ */
+$tasks = [
+    'tag-programme-films' => 'od_wp_tag_programme_films',
+    'rename-pages' => 'od_wp_rename_pages',
+    'order-pages' => 'od_wp_order_pages',
+    'draft-empty-branches' => 'od_wp_draft_empty_branches',
+    'edit-menu' => 'od_wp_edit_menu',
+    'create-profiles' => 'od_wp_create_profiles',
+    'untag-video-events' => 'od_wp_untag_video_events',
+    'rehost-posters' => 'od_wp_rehost_posters',
+];
 
-od_wp_tag_programme_films($apply);
-od_wp_rename_pages($apply);
-od_wp_order_pages($apply);
-od_wp_draft_empty_branches($apply);
-od_wp_edit_menu($apply);
-od_wp_create_profiles($apply);
-od_wp_untag_video_events($apply);
-od_wp_rehost_posters($apply);
+$positional = $args ?? [];
+$apply = in_array('apply', $positional, true);
+$named = array_values(array_diff($positional, ['apply']));
+$unknown = array_diff($named, array_keys($tasks));
+
+// Refuse rather than silently run everything: a typo'd task name on production
+// would apply all eight.
+if ($unknown) {
+    WP_CLI::error(sprintf(
+        "unknown task(s): %s\nKnown: %s",
+        implode(', ', $unknown),
+        implode(', ', array_keys($tasks))
+    ));
+}
+
+$run = $named ?: array_keys($tasks);
+WP_CLI::log(sprintf(
+    '%s %s.',
+    $apply ? 'Applying' : 'Dry run —',
+    $named ? implode(', ', $named) : 'every task' . ($apply ? '' : '; pass `apply` to write')
+));
+
+foreach ($run as $name) {
+    $tasks[$name]($apply);
+}
