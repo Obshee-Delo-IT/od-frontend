@@ -48,4 +48,16 @@ describe('catalogueMetadata', () => {
       expect(title).toMatch(/ОБЩЕЕ ДЕЛО$/);
     });
   });
+
+  it('gives every catalogue page its own social card, image included', () => {
+    // Without an `openGraph` of its own each of these five inherited the root
+    // layout's, so all five unfurled as the same «ОБЩЕЕ ДЕЛО» card.
+    const cards = [null, ...SEGMENTS].map((segment) => catalogueMetadata(segment).openGraph);
+
+    expect(new Set(cards.map((card) => card?.title)).size).toBe(cards.length);
+    expect(new Set(cards.map((card) => card && 'url' in card && card.url)).size).toBe(cards.length);
+    cards.forEach((card) => {
+      expect(card?.images).toBeDefined();
+    });
+  });
 });

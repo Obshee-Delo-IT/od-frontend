@@ -6,7 +6,7 @@ import {
   FILM_CATEGORIES,
   type FilmCategorySegment,
 } from '@/shared/config/filmCategories';
-import { canonicalUrl } from '@/shared/config/site';
+import { canonicalUrl, OG_DEFAULT_IMAGE } from '@/shared/config/site';
 import { Box } from '@/shared/ui/components/Box';
 import { PageHeader } from '@/shared/ui/components/PageHeader';
 import { Pagination } from '@/shared/ui/components/Pagination';
@@ -82,15 +82,22 @@ export const cataloguePage = (value: string | string[] | undefined): number => {
 
 export const catalogueMetadata = (segment: FilmCategorySegment | null, page = 1): Metadata => {
   const copy = copyFor(segment);
+  // Paginated views self-canonicalise: page 2 holds different films, and
+  // pointing it at page 1 would leave everything past the tenth film with no
+  // indexable address at all.
+  const url = canonicalUrl(catalogueHref({ segment, page }));
   return {
     title: copy.title,
     description: copy.description,
-    alternates: {
-      // Paginated views self-canonicalise: page 2 holds different films, and
-      // pointing it at page 1 would leave everything past the tenth film with
-      // no indexable address at all.
-      canonical: canonicalUrl(catalogueHref({ segment, page })),
-    },
+    alternates: { canonical: url },
+    /* Five URLs come through here, and none of them declared `openGraph` — so
+       all five inherited the root layout's, and a `/video/filmy/` link shared
+       into Telegram unfurled as «ОБЩЕЕ ДЕЛО» with the home page's description,
+       indistinguishable from `/video/multy/` and from the home page itself.
+       Next merges metadata *shallowly*: a segment that declares `openGraph`
+       replaces the parent's object whole, so it inherits no image either and
+       the fallback card has to be named here. */
+    openGraph: { url, title: copy.title, description: copy.description, images: [OG_DEFAULT_IMAGE] },
   };
 };
 
