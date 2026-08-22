@@ -39,15 +39,22 @@ export const metadata: Metadata = {
   },
 };
 
+/* Twice the six the row shipped with: at three cards per view the carousel was
+   two swipes deep, which reads as «that's all of them». The count on the CTA
+   says how many more there are; showing all 71 would mean 71 slides, 71 remote
+   images and a pagination strip of 69 bullets. */
+const FILMS_ON_HOME = 12;
+
 const HomePage = async () => {
-  const [films, news] = await Promise.all([fetchFilms(6), fetchLatestNews(5)]);
+  const [films, news] = await Promise.all([fetchFilms(FILMS_ON_HOME), fetchLatestNews(5)]);
 
   return (
     <Box display="flex" flexDirection="column" gap={48} py={48}>
       <Hero />
       <StatsRow />
       <FilmsCarousel
-        films={films.map((film) => ({
+        total={films.total}
+        films={films.items.map((film) => ({
           id: film.id,
           title: film.title,
           href: `/${film.id}`,

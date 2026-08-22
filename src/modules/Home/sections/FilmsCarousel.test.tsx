@@ -50,10 +50,25 @@ describe('<FilmsCarousel />', () => {
     expect(withoutThumb.querySelector('img')).toBeNull();
   });
 
+  // The rendered href is slashless here on purpose: the component asks
+  // `catalogueHref` for `/video/`, and next/link normalises it against
+  // `trailingSlash`, which is app config the test runtime doesn't load.
   it('links the "Все фильмы" CTA to the video index', () => {
     renderInTheme(<FilmsCarousel films={FILMS} />);
 
     expect(screen.getByRole('link', { name: 'Все фильмы' })).toHaveAttribute('href', '/video');
+  });
+
+  it('puts the catalogue total on the CTA when the row is a slice of it', () => {
+    renderInTheme(<FilmsCarousel films={FILMS} total={71} />);
+
+    expect(screen.getByRole('link', { name: 'Все фильмы (71)' })).toBeInTheDocument();
+  });
+
+  it('leaves the CTA bare when the row already shows everything', () => {
+    renderInTheme(<FilmsCarousel films={FILMS} total={2} />);
+
+    expect(screen.getByRole('link', { name: 'Все фильмы' })).toBeInTheDocument();
   });
 
   it('still renders heading and CTA when there are no films', () => {

@@ -62,3 +62,17 @@ export const catalogueHref = ({
   const path = segment ? `/video/${segment}/` : '/video/';
   return page > 1 ? `${path}?page=${page}` : path;
 };
+
+/**
+ * The home page's «Фильмы» row: the catalogue minus «Ролики».
+ *
+ * The row is six-odd newest posts out of 83, and «Ролики» (13) are short promo
+ * clips — beside a full-length film they read as filler. The catalogue is
+ * unchanged: the row's CTA leads to `/video/`, where «Все» is still all four
+ * categories, «Ролики» included.
+ */
+export const HOME_FILM_CATEGORY_IDS: number[] = [
+  FILM_CATEGORIES.filmy,
+  FILM_CATEGORIES.multy,
+  FILM_CATEGORIES['famous-people'],
+];
