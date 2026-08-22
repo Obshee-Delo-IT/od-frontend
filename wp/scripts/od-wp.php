@@ -19,11 +19,12 @@
  * **Adding a task.** One function, called from the runner at the bottom, taking
  * `$apply` and doing nothing but logging when it is false. Whatever it needs to
  * know goes in a registry function above it, so the data can be read and tested
- * without WordPress. There are six today — {@see od_wp_tag_programme_films()},
+ * without WordPress. There are seven today — {@see od_wp_tag_programme_films()},
  * {@see od_wp_rename_pages()}, {@see od_wp_order_pages()},
- * {@see od_wp_draft_empty_branches()}, {@see od_wp_edit_menu()} and
- * {@see od_wp_create_profiles()} — and still no framework between them, because
- * six calls in a row is not a thing that needs one.
+ * {@see od_wp_draft_empty_branches()}, {@see od_wp_edit_menu()},
+ * {@see od_wp_create_profiles()} and {@see od_wp_untag_video_events()} — and
+ * still no framework between them, because seven calls in a row is not a thing
+ * that needs one.
  *
  * House rules, same as `od-pages.php`: dry run by default, writing takes the
  * positional argument `apply`, everything is idempotent, and **posts are
@@ -808,6 +809,88 @@ function od_wp_profile_photo(WP_Post $post, string $photo, bool $apply): void
     WP_CLI::success(sprintf('%s (#%d): photograph imported as attachment %s', $post->post_name, $post->ID, trim($result->stdout)));
 }
 
+/**
+ * Post slug => the catalogue categories that post must not carry.
+ *
+ * `/video/` and its four segment pages are a query over «Фильмы» (`movies`),
+ * «Мультфильмы» (`mult`), «Ролики» (`roliki`) and «Известные люди» (`famous`) —
+ * so a category is the whole of what puts a post in the film catalogue. These
+ * three are «Видео события»: an event report, a volunteers' meet-up and a news
+ * item about posters on Petersburg screens, each filed under a film category by
+ * hand. Every one keeps its other categories, so it stays where it belongs in
+ * «Новости»; nothing here strips a post's last category.
+ *
+ * How the three were found, and how to find the next one: a catalogue post that
+ * carries a category outside {the four, «Видео события» 52, «Видео» 85,
+ * «Новости» 47} is a news post wearing a film's clothes — a region, a country,
+ * a programme. That test picked out exactly these three of the 86 published
+ * catalogue posts and no film. It is not a rule the site enforces, so it is
+ * written down here rather than coded: re-run it against `/wp/v2/posts` before
+ * assuming the list is still complete.
+ *
+ * @return array<string, string[]>
+ */
+function od_wp_miscategorised_videos(): array
+{
+    return [
+        // «"ПОЖИРАТЕЛИ МОЗГА" В СЕРБСКОМ ОПОВЕ» — a screening in Serbia.
+        'пожиратели-мозга-в-сербском-опове' => ['movies'],
+        // «Межрегиональный слёт волонтёров «Общее дело — 2019»».
+        'межрегиональный-слёт-волонтёров-общ' => ['roliki'],
+        // «Размещение видео роликов «Общее дело» на видео экранах Петербурга».
+        'размещение-видео-ролико-общее-дело-н' => ['roliki'],
+    ];
+}
+
+/**
+ * Take the film category off the «Видео события» posts that carry one, which is
+ * what puts a news item in the film catalogue ({@see od_wp_miscategorised_videos()}).
+ *
+ * Idempotent by reading the post's terms first, so a second run says «already»
+ * rather than warning. A category the post does not carry is not an error — the
+ * registry is a list of what must not be there, not a description of today.
+ */
+function od_wp_untag_video_events(bool $apply): void
+{
+    foreach (od_wp_miscategorised_videos() as $path => $categories) {
+        $post = get_page_by_path($path, OBJECT, 'post')
+            ?: get_page_by_path(sanitize_title($path), OBJECT, 'post');
+
+        if (!$post) {
+            WP_CLI::warning(sprintf('%s: no post with that slug', $path));
+            continue;
+        }
+
+        foreach ($categories as $category) {
+            $term = get_term_by('slug', $category, 'category');
+
+            if (!$term) {
+                WP_CLI::warning(sprintf('%s: no «%s» category on this install', $path, $category));
+                continue;
+            }
+
+            if (!has_term($term->term_id, 'category', $post->ID)) {
+                WP_CLI::log(sprintf('%s (#%d): already out of «%s», skipped', $path, $post->ID, $term->name));
+                continue;
+            }
+
+            WP_CLI::log(sprintf('%s (#%d) «%s»: -«%s»', $path, $post->ID, get_the_title($post), $term->name));
+
+            if (!$apply) {
+                continue;
+            }
+
+            $removed = wp_remove_object_terms($post->ID, [$term->term_id], 'category');
+            if (is_wp_error($removed)) {
+                WP_CLI::warning(sprintf('%s: %s', $path, $removed->get_error_message()));
+                continue;
+            }
+
+            WP_CLI::success(sprintf('%s (#%d): out of «%s»', $path, $post->ID, $term->name));
+        }
+    }
+}
+
 // ---------------------------------------------------------------------------
 // Runner. Everything above is a function; this is the only thing that runs.
 // ---------------------------------------------------------------------------
@@ -825,3 +908,4 @@ od_wp_order_pages($apply);
 od_wp_draft_empty_branches($apply);
 od_wp_edit_menu($apply);
 od_wp_create_profiles($apply);
+od_wp_untag_video_events($apply);

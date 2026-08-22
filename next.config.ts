@@ -58,6 +58,11 @@ const nextConfig: NextConfig = {
       // Media offloaded to object storage (see resolveMediaUrl). Defaulted in
       // mediaCdn.ts so the host is always allowlisted; disable with WP_MEDIA_CDN="".
       ...(mediaCdn ? [new URL('/**', mediaCdn)] : []),
+      // The player's own poster, the fallback for a film with no artwork in
+      // WordPress (kinescopePosterUrl). `/<id>/poster.jpg` 302s to the CDN, and
+      // the optimizer follows that itself — only the src it is given is matched
+      // here, so the edge host needs no entry of its own.
+      new URL('/**', 'https://kinescope.io'),
     ],
     // Keep optimized images cached for a day. Re-uploads get a new filename
     // (new URL → new cache key) so this doesn't stale edits; on expiry Next

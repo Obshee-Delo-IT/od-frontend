@@ -59,6 +59,20 @@ export interface FetchVideoListParams {
 /** How many generic `download_N_*` slots the ACF group defines. */
 const DOWNLOAD_SLOTS = 5;
 
+/**
+ * Kinescope's own poster for a video — the still its player shows before play.
+ * Public and token-free: the URL 302s to the CDN copy, so nothing has to be
+ * uploaded to WordPress and a re-encoded video brings its new still with it.
+ *
+ * The fallback of last resort for a card's artwork. **36 of the 86 catalogue
+ * films have none at all** — no featured image and no image in the body — and
+ * 31 of those have a player, so this fills all but five (B-VIDEO2). It is not a
+ * substitute for the editorial gap: a plain video frame is worse than key art,
+ * and `pnpm film:covers` still wants running when covers arrive.
+ */
+const kinescopePosterUrl = (kinescopeId: string | null): string | null =>
+  kinescopeId ? `https://kinescope.io/${kinescopeId}/poster.jpg` : null;
+
 /** ACF group `group_film_meta` — all fields are flat url/text, empty string when unset. */
 interface RawAcf {
   kinescope_id?: string;
@@ -109,17 +123,19 @@ const toDownloads = (acf: RawAcf): VideoDownload[] => {
  */
 export const mapVideoSummary = async (post: RawVideoPost): Promise<VideoSummary> => {
   const acf = post.acf ?? {};
+  const kinescopeId = trimOrNull(acf.kinescope_id);
   return {
     id: post.id ?? 0,
     title: stripHtml(post.title?.rendered),
     link: post.link ?? '#',
     date: post.date ?? null,
-    thumbnailUrl: await resolveMediaUrl(
-      post._embedded?.['wp:featuredmedia']?.[0]?.source_url ?? extractFirstImage(post.content?.rendered, wpBaseUrl)
-    ),
+    thumbnailUrl:
+      (await resolveMediaUrl(
+        post._embedded?.['wp:featuredmedia']?.[0]?.source_url ?? extractFirstImage(post.content?.rendered, wpBaseUrl)
+      )) ?? kinescopePosterUrl(kinescopeId),
     excerpt: buildNewsPreview(post.excerpt?.rendered, post.content?.rendered),
     categories: post.categories ?? [],
-    kinescopeId: trimOrNull(acf.kinescope_id),
+    kinescopeId,
     watchUrl: trimOrNull(acf.watch_url),
     trailerUrl: trimOrNull(acf.trailer_url),
     downloads: toDownloads(acf),
