@@ -841,6 +841,19 @@ Add the slug to the registry, re-run the script. Not coded as a frontend filter
 on purpose: the frontend would then disagree with WordPress about what a film
 is, and the editor who filed it would get no signal.
 
+**The home page had the same problem for a different reason, fixed 2026-08-22.**
+Its «Фильмы» row is `fetchFilms`, and that query was `format=video` with **no
+category filter at all** — so it returned the six newest video posts of any kind
+and the row filled with «Видео события». Nothing to do with the three
+mis-categorised posts: `73220` still appeared there after its category was
+removed, and beside it sat `73141` «ДУШЕВНЫЙ СЛЕТ ДОБРОВОЛЬЦЕВ ЯКУТИИ», which
+never carried a film category and never will. `format=video` is not «a film» —
+there are **115** «Видео события» against 83 films, so an unscoped query is
+mostly not films. `fetchFilms` now scopes to `ALL_FILM_CATEGORY_IDS`, the same
+union `/video/`'s «Все» tab uses, so the two agree by construction. It was the
+only unscoped `format=video` query left: the catch-all's SSG seed already
+filtered, and `fetchVideoList` takes the categories from its caller.
+
 **Production carried the same three, and is done — applied 2026-08-22.** They
 were found off prod's own HTML, since its REST is closed and the category slugs
 are only readable out of the post pages: `73220` linked `category/video/movies/`,
