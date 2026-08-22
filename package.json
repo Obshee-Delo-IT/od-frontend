@@ -21,6 +21,7 @@
     "film:export": "node --env-file=.env scripts/export-film-worksheet.mjs",
     "film:import": "node --env-file=.env scripts/import-film-acf.mjs",
     "film:covers": "node --env-file=.env scripts/upload-film-covers.mjs",
+    "film:posters": "node --env-file=.env scripts/import-film-posters.mjs",
     "film:remap": "node scripts/remap-worksheet.mjs",
     "film:kinescope": "node --env-file=.env scripts/match-kinescope.mjs",
     "url:check": "node scripts/check-legacy-urls.mjs",
