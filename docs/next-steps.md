@@ -854,6 +854,19 @@ union `/video/`'s «Все» tab uses, so the two agree by construction. It was 
 only unscoped `format=video` query left: the catch-all's SSG seed already
 filtered, and `fetchVideoList` takes the categories from its caller.
 
+**Then narrowed once more, same day.** The row now reads
+`HOME_FILM_CATEGORY_IDS` — the catalogue **minus «Ролики»** (13 short promo
+clips, which beside a full-length film read as filler), so 71 posts rather than
+83. `/video/`'s «Все» is untouched and still means all four. Two other things
+changed with it, because a carousel of six out of 71 gives the visitor no way to
+tell it is a slice: it shows **12** (`FILMS_ON_HOME` in `app/page.tsx`), and
+`fetchFilms` now returns `{ items, total }` — `total` off `X-WP-Total` — which
+the CTA prints, «Все фильмы (71)». Showing all 71 was the alternative and is
+worse: 71 slides, 71 remote images resolved through `resolveMediaUrl`, and a
+Swiper pagination strip of 69 bullets. Load-more inside the carousel would need
+a client route and its own pagination, for a row whose job is to send people to
+`/video/`.
+
 **Production carried the same three, and is done — applied 2026-08-22.** They
 were found off prod's own HTML, since its REST is closed and the category slugs
 are only readable out of the post pages: `73220` linked `category/video/movies/`,
