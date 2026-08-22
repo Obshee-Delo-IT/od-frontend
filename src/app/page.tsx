@@ -18,7 +18,14 @@ export const revalidate = 3600;
 export const dynamicParams = true;
 
 const TITLE = 'ОБЩЕЕ ДЕЛО — общероссийская общественная организация';
-const DESCRIPTION = 'Поддержка президентских инициатив в области здоровьесбережения нации';
+/* Describes what the organisation *does*, not what it is called. The previous
+   text — «Поддержка президентских инициатив в области здоровьесбережения
+   нации» — is a slice of the registered legal name, which still has to appear
+   verbatim wherever the law wants it (the footer's СМИ line, the privacy
+   policy); a search snippet is not one of those places, and there it reads as a
+   political statement rather than as a description of films and lessons. */
+const DESCRIPTION =
+  'Профилактика зависимостей и здоровый образ жизни: фильмы, методические материалы и занятия для школьников, студентов и родителей';
 
 export const metadata: Metadata = {
   title: TITLE,

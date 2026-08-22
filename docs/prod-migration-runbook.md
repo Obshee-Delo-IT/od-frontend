@@ -842,6 +842,8 @@ Under §0.4 this is the whole of "going live", and it happens only after every �
 
 **Then, and only then, move DNS.** Everything above is reversible by moving it back; the DNS change is the first step that the public sees.
 
+**After the move, the social networks still hold the stage tier's card.** `og:image` is a relative path resolved against `metadataBase`, i.e. against `SITE_URL` — so every link shared before cutover carries `https://new.obshee-delo.ru/og-default.png`, and that host is `noindex` today and gone later. The platforms re-fetch on their own schedule (Telegram and ВК in days, Facebook/WhatsApp up to a month), so the apex's own links unfurl correctly from day one and only the already-shared ones are stale. Force the ones that matter — the apex, `/news/`, `/video/` and whatever the org is about to post: Telegram **@WebpageBot** (send the URL, ~10 a day), ВК `https://vk.com/dev/pages.clearCache`, Facebook/WhatsApp `developers.facebook.com/tools/debug` → Scrape Again. Yandex has no such button — it re-reads on its next crawl.
+
 ---
 
 ## 5.6 Locking the two WordPress hosts down
