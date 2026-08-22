@@ -805,3 +805,31 @@ ever sees. Full recon:
    renders as its own source text.
 4. **Whichever way that goes, add Flamingo or an equivalent** so submissions
    survive a mail failure — unless B6 stores them itself.
+
+---
+
+## «Видео события» in the film catalogue — three found, applied 2026-08-22
+
+**A category is the whole of what puts a post on `/video/`.** The catalogue and
+its four segment pages query «Фильмы» / «Мультфильмы» / «Ролики» / «Известные
+люди» (`src/shared/config/filmCategories.ts`), so a news post filed under one by
+hand lands between the films — which is what «ПОЖИРАТЕЛИ МОЗГА» В СЕРБСКОМ
+ОПОВЕ», a report on a screening in Serbia, was doing on page 1.
+
+`od_wp_untag_video_events()` in [`wp/scripts/od-wp.php`](../wp/scripts/od-wp.php)
+takes the category off, by post slug, and is applied to **od-stage** and
+**od-dev** (73220 does not exist on od-dev — the warning is correct). The
+catalogue went from 85 films to 83.
+
+**How to find the next one, since nothing enforces this:** a catalogue post
+carrying a category outside {the four, «Видео события» 52, «Видео» 85, «Новости»
+47} is a news post wearing a film's clothes — a region, a country, a programme.
+That test picked out exactly these three of 86 and no film:
+
+```sh
+curl -s 'https://od.webtm.ru/wp-json/wp/v2/posts?categories=581,580,86,559&per_page=100&_fields=id,title,categories'
+```
+
+Add the slug to the registry, re-run the script. Not coded as a frontend filter
+on purpose: the frontend would then disagree with WordPress about what a film
+is, and the editor who filed it would get no signal.

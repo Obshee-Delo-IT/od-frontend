@@ -15,7 +15,7 @@ Five files, split by lifetime:
 | file | what | when it runs | PHP floor |
 | --- | --- | --- | --- |
 | `wp/scripts/od-pages.php` ✅ | one-shot content fixes — strip a page's `<style>`, rewrite blocks, set a `className` | by hand, `wp eval-file` | CLI PHP (8.2 on prod) — modern syntax fine |
-| `wp/scripts/od-wp.php` ✅ | WordPress-side data that is not page markup — terms, postmeta, attachment metadata. One task today: the films a programme's query row lists, their covers' alt text and their плакат | by hand, `wp eval-file` | same |
+| `wp/scripts/od-wp.php` ✅ | WordPress-side data that is not page markup — terms, postmeta, attachment metadata. Seven tasks: the films a programme's query row lists with their covers' alt text and their плакат, two page renames, the `/contacts/` order, the contactless regional branches, the nav-menu edits, the three profile records, and the film categories taken off three «Видео события» posts | by hand, `wp eval-file` | same |
 | `wp/mu-plugins/od-film-meta.php` ✅ | runtime registration — the one meta key a query loop's cover binding reads | every request, forever | **PHP 7.0 syntax only** |
 | `wp/mu-plugins/od-profile.php` ✅ | runtime registration — the `profile` post type, its taxonomy and its one meta key (B8a) | every request, forever | **PHP 7.0 syntax only** |
 | `wp/mu-plugins/od-regions.php` ✅ | runtime rendering — `[od_regions]`, the `/contacts/` accordion built from the region pages (D4) | every request, forever | **PHP 7.4** — od-dev's site PHP |

@@ -174,4 +174,25 @@ od_test('both query terms are read off the body', ['pl-categs' => 506, 'category
 // must not count as a reason to keep the page.
 od_test('the «match nothing» placeholder is not a term', [] === od_wp_branch_query_terms('<!-- wp:query {"query":{"taxQuery":{"pl-categs":[-1]}}} -->'));
 
+/* -------------------- the film categories taken off news posts ------------- */
+
+$miscategorised = od_wp_miscategorised_videos();
+od_test('at least one post is un-categorised', $miscategorised !== []);
+
+foreach ($miscategorised as $path => $categories) {
+    od_test($path . ': a post slug, not a path', $path !== '' && !str_contains($path, '/'));
+    od_test($path . ': slugs are written decoded, sanitize_title() encodes them', !str_contains($path, '%'));
+    od_test($path . ': names at least one category', $categories !== []);
+    od_test($path . ': no category listed twice', count($categories) === count(array_unique($categories)));
+
+    foreach ($categories as $category) {
+        // Only the four catalogue categories put a post on `/video/`; stripping
+        // anything else here would quietly edit «Новости» instead.
+        od_test(
+            $path . ': «' . $category . '» is one of the four catalogue categories',
+            in_array($category, ['movies', 'mult', 'roliki', 'famous'], true)
+        );
+    }
+}
+
 od_test_summary();
