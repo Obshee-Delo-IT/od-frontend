@@ -195,4 +195,21 @@ foreach ($miscategorised as $path => $categories) {
     }
 }
 
+/* ------------------ плакаты pointed back at this install's media ----------- */
+
+$home = 'https://od.webtm.ru';
+$dev = 'https://od-dev.tmweb.ru/wp-content/uploads/2023/01/%D0%9F%D0%BB%D0%B0%D0%BA%D0%B0%D1%82-A2.jpg';
+
+od_test('another tier\'s upload is rehosted', od_wp_rehost_url($dev, $home) === $home . '/wp-content/uploads/2023/01/%D0%9F%D0%BB%D0%B0%D0%BA%D0%B0%D1%82-A2.jpg');
+// The filenames are Cyrillic; re-encoding one turns a working URL into a 404.
+od_test('the path is carried over byte for byte', str_contains((string) od_wp_rehost_url($dev, $home), '%D0%9F%D0%BB%D0%B0%D0%BA%D0%B0%D1%82'));
+od_test('a trailing slash on home does not double', od_wp_rehost_url($dev, $home . '/') === $home . '/wp-content/uploads/2023/01/%D0%9F%D0%BB%D0%B0%D0%BA%D0%B0%D1%82-A2.jpg');
+od_test('this install\'s own upload is left alone', od_wp_rehost_url($home . '/wp-content/uploads/a.jpg', $home) === null);
+// Only `/wp-content/` is a path every clone shares. Everything else an editor
+// pasted means what it says.
+od_test('a Яндекс.Диск link is not an upload', od_wp_rehost_url('https://disk.yandex.ru/i/abc', $home) === null);
+od_test('an external image is not this install\'s business', od_wp_rehost_url('https://example.org/poster.jpg', $home) === null);
+od_test('a root-relative path is not absolute', od_wp_rehost_url('/wp-content/uploads/a.jpg', $home) === null);
+od_test('and neither is an empty field', od_wp_rehost_url('', $home) === null);
+
 od_test_summary();
