@@ -1,7 +1,7 @@
 import { CONTACTS_INDEX_PATH, RussiaMap } from '@/modules/RussiaMap';
 import { extractFirstImage } from '@/shared/api/extractFirstImage';
 import { wpBaseUrl } from '@/shared/api/httpClient';
-import { toFullSizeImageUrl } from '@/shared/api/imageUrl';
+import { resolveMediaUrl } from '@/shared/api/mediaUrl';
 import { resolvePageSection } from '@/shared/config/pageSections';
 import { canonicalUrl, OG_DEFAULT_IMAGE, SITE_NAME } from '@/shared/config/site';
 import { paginatedPath, parsePost, resolveContentHtml, resolveQueryPagination } from '@/shared/lib/wpContent';
@@ -37,7 +37,7 @@ export interface WpPageProps {
   pageNumber?: number;
 }
 
-export const wpPageMetadata = ({ page, path, pageNumber = 1 }: WpPageProps): Metadata => {
+export const wpPageMetadata = async ({ page, path, pageNumber = 1 }: WpPageProps): Promise<Metadata> => {
   // Self-canonical per page, the same rule `/materials/articles/?page=2` follows:
   // page 2 is its own set of posts, so pointing it at page 1 would ask the index
   // to drop content nothing else links to.
@@ -59,9 +59,11 @@ export const wpPageMetadata = ({ page, path, pageNumber = 1 }: WpPageProps): Met
       locale: 'ru_RU',
       title,
       description,
-      // A page carries no featured image, so the card takes the body's first
-      // one — full-size, since the `-WxH` variants 500 on the media CDN.
-      images: [toFullSizeImageUrl(extractFirstImage(page.contentHtml, wpBaseUrl)) ?? OG_DEFAULT_IMAGE],
+      /* A page carries no featured image, so the card takes the body's first
+         one — through the resolution pipeline, because the WordPress origin
+         301s an offloaded upload to the Yandex bucket and a crawler that
+         doesn't follow the hop shows no image. */
+      images: [(await resolveMediaUrl(extractFirstImage(page.contentHtml, wpBaseUrl))) ?? OG_DEFAULT_IMAGE],
     },
   };
 };

@@ -3,7 +3,7 @@ import { NewsletterSignup } from '@/modules/NewsletterSignup';
 import { extractFirstImage } from '@/shared/api/extractFirstImage';
 import { cachedFetchNews } from '@/shared/api/fetchNews';
 import { wpBaseUrl } from '@/shared/api/httpClient';
-import { toFullSizeImageUrl } from '@/shared/api/imageUrl';
+import { resolveMediaUrl } from '@/shared/api/mediaUrl';
 import { buildNewsPreview, stripHtml } from '@/shared/api/newsPreview';
 import { canonicalUrl, OG_DEFAULT_IMAGE } from '@/shared/config/site';
 import { formatDate } from '@/shared/lib/formatDate';
@@ -26,12 +26,21 @@ export interface NewsArticleProps {
  * the legacy `/<id>/` this route was reached by — the same address the sitemap
  * publishes and `/news/<id>` redirects to.
  */
-export const newsMetadata = (post: Awaited<ReturnType<typeof cachedFetchNews>>, id: string): Metadata => {
+export const newsMetadata = async (
+  post: Awaited<ReturnType<typeof cachedFetchNews>>,
+  id: string
+): Promise<Metadata> => {
   const title = stripHtml(post?.title?.rendered) || undefined;
   // Same source as the film page: WP's excerpt, stripped of markup, falling
   // back to the body for the many posts that have no manual excerpt.
   const description = buildNewsPreview(post?.excerpt?.rendered, post?.content?.rendered) ?? undefined;
   const url = canonicalUrl(`/${id}/`);
+  /* Through the same resolution pipeline every rendered image takes, not the
+     raw body URL: the WordPress origin **301s** an offloaded upload to the
+     Yandex bucket (`/about/`'s image does, measured 2026-08-22), and a social
+     crawler that doesn't follow the hop shows no image at all. `resolveMediaUrl`
+     hands back the direct-200 copy and strips the `-WxH` variant on the way. */
+  const image = await resolveMediaUrl(extractFirstImage(post?.content?.rendered, wpBaseUrl));
 
   return {
     title,
@@ -51,9 +60,8 @@ export const newsMetadata = (post: Awaited<ReturnType<typeof cachedFetchNews>>, 
       /* The body's first image rather than `featured_media`: that is an id, and
          resolving it costs a second request on a route that has to stay
          statically generatable — while `content.rendered` is already here, and
-         on this site's posts the lead photo is the first thing in it. Full-size,
-         because the `-WxH` variants 500 on the media CDN. */
-      images: [toFullSizeImageUrl(extractFirstImage(post?.content?.rendered, wpBaseUrl)) ?? OG_DEFAULT_IMAGE],
+         on this site's posts the lead photo is the first thing in it. */
+      images: [image ?? OG_DEFAULT_IMAGE],
     },
   };
 };
