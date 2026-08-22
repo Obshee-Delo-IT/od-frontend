@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Button } from '@/shared/ui/components/Button';
 import css from './CollapsibleBody.module.css';
 
-export interface CollapsibleBodyProps {
+interface CollapsibleBodyProps {
   children: React.ReactNode;
   /** Height the content is clamped to while collapsed. */
   collapsedHeight?: number;

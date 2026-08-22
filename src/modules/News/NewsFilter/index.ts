@@ -1,2 +1,2 @@
 export { NewsFilter } from './NewsFilter';
-export type { NewsFilterProps, NewsFilterOption } from './NewsFilter';
+export type { NewsFilterOption } from './NewsFilter';

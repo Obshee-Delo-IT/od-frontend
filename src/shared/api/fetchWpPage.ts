@@ -21,7 +21,7 @@ import { buildNewsPreview, stripHtml } from './newsPreview';
  * payload to what the page renders.
  */
 
-export interface WpPageAncestor {
+interface WpPageAncestor {
   title: string;
   href: string;
 }

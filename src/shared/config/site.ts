@@ -56,7 +56,7 @@ export const OG_DEFAULT_IMAGE = '/og-default.png';
  * (`xn--d1aadek5agm.…`) is the donation host the header CTA points at, and
  * `xn--80a7adb.…` is the statistics site.
  */
-export const SITE_ALIAS_ORIGINS = ['https://xn----9sbkcac6brh7h.xn--p1ai'];
+const SITE_ALIAS_ORIGINS = ['https://xn----9sbkcac6brh7h.xn--p1ai'];
 
 /**
  * Every origin whose absolute URLs are really paths on this site — the

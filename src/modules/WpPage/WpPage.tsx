@@ -25,7 +25,7 @@ import type { Metadata } from 'next';
  * carries its title outside the body — the post body supplies its own.
  */
 
-export interface WpPageProps {
+interface WpPageProps {
   page: WpPageContent;
   /** The page's own path — the canonical URL, unchanged from the old site. */
   path: string;

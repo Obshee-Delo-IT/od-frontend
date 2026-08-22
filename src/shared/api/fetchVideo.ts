@@ -3,7 +3,7 @@ import { postTag, WP_TAGS, wpCache } from './cacheTags';
 import { mapVideoSummary, type RawVideoPost, type VideoSummary } from './fetchVideoList';
 import { wpFetch } from './httpClient';
 
-export interface VideoDetail extends VideoSummary {
+interface VideoDetail extends VideoSummary {
   /** Rendered post body — the «О фильме» description (Gutenberg HTML). */
   contentHtml: string;
 }

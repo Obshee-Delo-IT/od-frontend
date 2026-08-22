@@ -26,7 +26,7 @@ import type { LegacyLoad } from './types';
  */
 
 /** Node's `fetch` has no default timeout; an origin that accepts and never answers would hold a request forever. */
-export const LEGACY_TIMEOUT_MS = 8000;
+const LEGACY_TIMEOUT_MS = 8000;
 
 /** Followed only when the `Location` stays on the configured origin, and only once. */
 const MAX_REDIRECTS = 1;

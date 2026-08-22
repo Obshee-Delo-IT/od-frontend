@@ -2,7 +2,7 @@ import clsx from 'clsx';
 import NextLink from 'next/link';
 import css from './Tabs.module.css';
 
-export type TabsSize = 'large' | 'small';
+type TabsSize = 'large' | 'small';
 
 export interface TabItem {
   /** Visible label. */
@@ -15,7 +15,7 @@ export interface TabItem {
   disabled?: boolean;
 }
 
-export interface TabsProps {
+interface TabsProps {
   items: TabItem[];
   /** `value` of the active tab; renders the red «Primary» fill. */
   activeValue?: string | null;

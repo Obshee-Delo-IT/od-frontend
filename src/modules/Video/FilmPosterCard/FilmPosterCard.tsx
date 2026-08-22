@@ -5,7 +5,7 @@ import { Button } from '@/shared/ui/components/Button';
 import { DownloadIcon } from '@/shared/ui/components/Icons';
 import css from './FilmPosterCard.module.css';
 
-export interface FilmPosterCardProps {
+interface FilmPosterCardProps {
   /** Film title — used as the poster's alt text. */
   title: string;
   imageUrl?: string | null;

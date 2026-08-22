@@ -43,7 +43,7 @@ import type { TabItem } from '@/shared/ui/components/Tabs';
  * adds is what matters, and it is here. (Design still owes an answer on which
  * convention wins site-wide; see `docs/next-steps.md`.)
  */
-export interface PageSection {
+interface PageSection {
   /** Replaces the WP title in the H1 only — metadata and `<title>` keep the real one. */
   title?: string;
   /** The full trail, the page's own crumb included. */

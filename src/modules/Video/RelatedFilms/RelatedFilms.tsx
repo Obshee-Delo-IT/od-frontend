@@ -6,7 +6,7 @@ import { resolveShareLinks } from '../sharePlatforms';
 import css from './RelatedFilms.module.css';
 import type { VideoShareLinks } from '@/shared/api';
 
-export interface RelatedFilmData {
+interface RelatedFilmData {
   id: number;
   title: string;
   href: string;
@@ -14,7 +14,7 @@ export interface RelatedFilmData {
   share?: VideoShareLinks;
 }
 
-export interface RelatedFilmsProps {
+interface RelatedFilmsProps {
   films: RelatedFilmData[];
   heading?: string;
 }

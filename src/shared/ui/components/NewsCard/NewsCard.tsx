@@ -4,7 +4,7 @@ import Image from 'next/image';
 import NextLink from 'next/link';
 import css from './NewsCard.module.css';
 
-export interface NewsCardProps {
+interface NewsCardProps {
   href: string;
   title: string;
   date?: string;

@@ -16,7 +16,7 @@ import { SimilarNews } from '../SimilarNews';
 import css from './NewsArticle.module.css';
 import type { Metadata } from 'next';
 
-export interface NewsArticleProps {
+interface NewsArticleProps {
   /** WP post id, from the legacy `/<id>` URL. */
   id: string;
 }

@@ -72,7 +72,7 @@ const fallbackLabel = (href: string, kind: PersonContactKind): string =>
  */
 const readableLabel = (label: string): string => label.replace(/^https?:\/\/(?:www\.)?/i, '').replace(/\/+$/, '');
 
-export interface ProfileBodyFields {
+interface ProfileBodyFields {
   /** The bolded first line — the role, e.g. «Координатор по городу Магнитогорску». */
   role: string | null;
   contacts: PersonContact[];

@@ -10,7 +10,7 @@ export interface DropdownOption {
   value: string;
 }
 
-export interface DropdownProps {
+interface DropdownProps {
   options: DropdownOption[];
   value?: string;
   onValueChange?: (value: string) => void;

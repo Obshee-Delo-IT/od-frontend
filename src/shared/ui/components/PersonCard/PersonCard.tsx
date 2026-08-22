@@ -20,7 +20,7 @@ export interface PersonContact {
   label: string;
 }
 
-export interface PersonPhoto {
+interface PersonPhoto {
   src: string;
   alt: string;
 }

@@ -1,10 +1,10 @@
-export interface FilmDownloadLink {
+interface FilmDownloadLink {
   url: string;
   /** Parenthetical part of the anchor, «•»-joined: «656 Мб • 35 мин». */
   label: string;
 }
 
-export interface ExtractFilmPosterResult {
+interface ExtractFilmPosterResult {
   html: string;
   /** Full-size poster image URL (the figure's link target when it points at an image). */
   posterImageUrl: string | null;

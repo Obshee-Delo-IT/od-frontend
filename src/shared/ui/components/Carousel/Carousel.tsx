@@ -8,7 +8,7 @@ import { ChevronLeftIcon, ChevronRightIcon } from '@/shared/ui/components/Icons'
 import css from './Carousel.module.css';
 import type { Swiper as SwiperType } from 'swiper';
 
-export interface CarouselProps {
+interface CarouselProps {
   items: React.ReactNode[];
   ariaLabel: string;
   slidesPerView?: SwiperProps['slidesPerView'];

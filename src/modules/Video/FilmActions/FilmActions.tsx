@@ -8,7 +8,7 @@ import { resolveShareLinks } from '../sharePlatforms';
 import css from './FilmActions.module.css';
 import type { VideoDownload, VideoShareLinks } from '@/shared/api';
 
-export interface FilmActionsProps {
+interface FilmActionsProps {
   trailerUrl?: string | null;
   /** Download pills — ACF slots first, plus any body-lifted fallback variants. */
   downloads?: VideoDownload[];

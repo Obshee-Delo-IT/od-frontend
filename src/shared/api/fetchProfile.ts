@@ -20,7 +20,7 @@ import { parseProfileBody } from './profileCard';
  * has since been unpublished, and a miss has to be an answer (the link is left
  * as a link) rather than a throw that takes the whole page down.
  */
-export interface ProfileCard {
+interface ProfileCard {
   id: number;
   /** Plain text — WP renders titles with entities. */
   name: string;

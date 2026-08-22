@@ -2,12 +2,12 @@ import { IconButton as RadixIconButton, IconButtonProps as RadixIconButtonProps 
 import clsx from 'clsx';
 import css from './IconButton.module.css';
 
-export type IconButtonVariant = 'contained' | 'outline';
-export type IconButtonRadius = 'curved' | 'circle';
+type IconButtonVariant = 'contained' | 'outline';
+type IconButtonRadius = 'curved' | 'circle';
 
 type RadixOwn = Omit<RadixIconButtonProps, 'variant' | 'size' | 'color' | 'radius'>;
 
-export interface IconButtonProps extends RadixOwn {
+interface IconButtonProps extends RadixOwn {
   variant?: IconButtonVariant;
   radius?: IconButtonRadius;
   'aria-label': string;

@@ -17,7 +17,7 @@ import { absolutizeWpMedia, aspectRatioFromUrl, extractFilmPoster } from '../uti
 import css from './FilmPage.module.css';
 import type { Metadata } from 'next';
 
-export interface FilmPageProps {
+interface FilmPageProps {
   /** WP post id, from the legacy `/<id>` URL. */
   id: string;
 }
