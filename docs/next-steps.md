@@ -35,12 +35,19 @@ and the outbound-HTTP note in [`implementation-notes.md`](./implementation-notes
 **Still open — measurements, not paths.** These were taken on the twin and
 carry over only by assumption: prod's plugin inventory and versions, §2.5's
 PHP/mod_php and no-`fastcgi_finish_request` notes with the save-time budget,
-the WP Rocket cache-directory observation (`wp-rocket.off-2026-08-14` exists on
-Timeweb; BeGet was not inspected), and the `upload_url_path` / media-offload
-answer. Re-run each on `od-root` before the migration depends on it. The two
-places already re-verified on BeGet: `clearfy_option.disable_json_rest_api` is
-still `'on'`, and `wp --skip-plugins --skip-themes` is still the invocation that
-works.
+and the `upload_url_path` / media-offload answer. Re-run each on `od-root`
+before the migration depends on it. Three places already re-verified on BeGet:
+`clearfy_option.disable_json_rest_api` is still `'on'`,
+`wp --skip-plugins --skip-themes` is still the invocation that works, and
+**WP Rocket is active and serving cached HTML on the live host** — established
+2026-08-22 off the page footer (`Debug: cached@…`), which retires the
+«BeGet was not inspected» half of the old Timeweb observation. The consequence
+is a step, not a note: **a `wp eval-file` that edits terms leaves stale HTML on
+every cached URL**, and `--skip-plugins` means Rocket is not even loaded to
+notice. Purge what you touched afterwards —
+`wp --skip-plugins=clearfy-pro --skip-themes eval 'rocket_clean_post( <id> );'`,
+which takes the post's own page *and* its category archives — or leave it, if
+nothing on those pages is urgent.
 
 The A6 frozen copy is unaffected — it's `WP_LEGACY_BASE`, not a WP-CLI target.
 
@@ -834,14 +841,14 @@ Add the slug to the registry, re-run the script. Not coded as a frontend filter
 on purpose: the frontend would then disagree with WordPress about what a film
 is, and the editor who filed it would get no signal.
 
-**Production carries the same three, and needs the same fix — still open.**
-Verified off prod's own HTML (its REST is closed, so the category slugs are read
-out of the post pages): `73220` links `category/video/movies/`, `52442` and
-`38960` link `category/video/roliki/`. The cutover clones production, so leaving
-them there means the fresh install inherits them and the fix has to be applied
-twice. **Run only the named task** — production is not migrated, and the full
-runner would create the programme tags, rename its indexes and draft its empty
-regional branches, none of which production has asked for:
+**Production carried the same three, and is done — applied 2026-08-22.** They
+were found off prod's own HTML, since its REST is closed and the category slugs
+are only readable out of the post pages: `73220` linked `category/video/movies/`,
+`52442` and `38960` linked `category/video/roliki/`. Applying it there rather
+than only on the clone is what stops the cutover from inheriting them. **Only
+the named task was run** — production is not migrated, and the full runner would
+create the programme tags, rename its indexes and draft its empty regional
+branches, none of which production has asked for:
 
 ```sh
 scp wp/scripts/od-wp.php od-root:~/od-wp.php
@@ -850,9 +857,13 @@ ssh od-root 'cd ~/public_html && wp --skip-plugins --skip-themes eval-file ~/od-
 ```
 
 `rehost-posters` finds nothing there — ACF is absent on production, so no film
-carries a `poster_image_url` yet. If WP Rocket is active, purge after: prod's
-category listings are page-cached (`wp rocket clean --confirm`, or
-`rocket_clean_domain()` from `wp eval`).
+carries a `poster_image_url` yet. **The database is right and the HTML lags:**
+WP Rocket is active on the live host (above) and `--skip-plugins` keeps it from
+noticing the write, so afterwards the three post pages and
+`/category/video/roliki/` still listed the old categories. That it is only the
+cache was confirmed by asking for the same URLs with a query string, which
+Rocket does not serve from cache — those render clean. Left to expire rather
+than purged, deliberately: nothing on those pages is urgent.
 
 ---
 
