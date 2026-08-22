@@ -18,7 +18,9 @@ const ROWS = [
 // The track holds 4 copies of the row's set; the animation translates by 50%
 // (two copies), so the second half is an exact duplicate of the first and the
 // wrap is seamless. Four copies also guarantee the track overflows the widest
-// viewport for the shorter (3-photo) rows.
+// viewport for the shorter (3-photo) rows. The tile count goes to the CSS as
+// `--tiles`, which is what the track's width is computed from — `max-content`
+// is sized differently by Firefox, see `Hero.module.css`.
 const TRACK_COPIES = 4;
 
 const PhotoTile: React.FC<{ photo: number }> = ({ photo }) => (
@@ -38,7 +40,7 @@ export const Hero: React.FC = () => (
     <div className={css.photos} aria-hidden="true">
       {ROWS.map((row, rowIndex) => (
         <div key={rowIndex} className={css.row} data-row={rowIndex}>
-          <div className={css.track}>
+          <div className={css.track} style={{ '--tiles': row.length * TRACK_COPIES } as React.CSSProperties}>
             {Array.from({ length: TRACK_COPIES }, () => row)
               .flat()
               .map((photo, i) => (
