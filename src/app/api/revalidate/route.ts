@@ -43,11 +43,9 @@ interface RevalidateBody {
   paths?: string[];
 }
 
+/** `Response.json` already serialises and sets `content-type`; only the no-store is ours. */
 const json = (body: unknown, status: number) =>
-  new Response(JSON.stringify(body), {
-    status,
-    headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' },
-  });
+  Response.json(body, { status, headers: { 'cache-control': 'no-store' } });
 
 /**
  * Constant-time secret comparison. Hashed first so the comparison is over two
