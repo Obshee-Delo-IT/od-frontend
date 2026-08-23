@@ -1,6 +1,10 @@
 services:
   frontend-local:
     extends:
+      # Compose looks for the named service inside *this* file unless the
+      # `file:` key points elsewhere — without it `docker-compose up
+      # frontend-local` refuses to resolve.
+      file: docker-compose-prod.yaml
       service: frontend
     build:
       target: dev
@@ -10,3 +14,11 @@ services:
       - /app/node_modules
     ports:
       - 3000:3000
+
+# `extends` inherits the build's secret *mounts* but not their definitions, so
+# the same two have to be declared here as well.
+secrets:
+  wp_user:
+    environment: WP_USER
+  wp_password:
+    environment: WP_PASSWORD
