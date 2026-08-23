@@ -601,7 +601,7 @@ on any version.
 
 It is idempotent by detection — a page already in its target shape is skipped — so a re-run after further work is safe.
 
-**2.9 The frontend's service account — a role of two capabilities, not an administrator.** The frontend authenticates every WP request with one application password, so whatever that account can do, anyone holding the password can do. Measure what it actually needs before granting anything — on od-stage, anonymously versus authenticated:
+**2.9 The frontend's service account — a role of two capabilities, not an administrator. Applied to od-stage 2026-08-23.** `od_frontend` exists there (`read`, `level_0`, `edit_theme_options`) and user 5367 was moved onto it from `administrator`; the application password was not reissued, because a role change does not invalidate it. Verified immediately after: `menus`, `menu-items`, `widgets`, `sidebars` and all four public routes still 200, while `posts/<draft-id>` went 200 → **403**, `posts?status=draft` → 400, `plugins` → 403 and `users?context=edit` → 403. A cache-busted `https://new.obshee-delo.ru/news/` then rendered fresh with all six footer widgets and the nav, so the frontend is unaffected. Rollback is `wp user set-role od-frontend administrator`. The frontend authenticates every WP request with one application password, so whatever that account can do, anyone holding the password can do. Measure what it actually needs before granting anything — on od-stage, anonymously versus authenticated:
 
 | endpoint | anonymous | needs auth |
 | --- | --- | --- |
