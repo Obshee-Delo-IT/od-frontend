@@ -927,3 +927,104 @@ the promotion rather than a repair. Applied: **od-stage 11, od-dev 1**.
 import — or teach `film:remap` to rehost, which would make this task find
 nothing. Left undone deliberately: the task is three lines of PHP and the remap
 flag would need its own tests and a target origin the CSV tool has no way to know.
+
+---
+
+## What the 2026-08-23 scenario run left open, because it needs a decision
+
+The run executed all 178 scenarios in [`test-scenarios.md`](./test-scenarios.md)
+and 34 of the defects it confirmed were fixed the same day (search that file for
+`Fixed 2026-08-23`). These are the rest: each one is measured and real, and each
+turns on a choice that is not the fixer's to make.
+
+**152-FZ consent, and Kinescope before it (`SEC-11`).** A clean browser profile
+on `/71933/` contacts three Kinescope hosts — `kinescope.io`,
+`player.kinescope.io`, `edge-msk-8.kinescopecdn.net` — before any consent
+exists, and the frame is granted `autoplay`, `encrypted-media`, `gyroscope`,
+`accelerometer` and `clipboard-write`. **Production shows a consent banner
+today; this site has none at all.** Deciding it means deciding what the banner
+says, whether the player is gated behind it (a click-to-load poster) or merely
+disclosed, and who owns the text — see also the consent line stored with a
+newsletter submission in [`newsletter-unisender.md`](./newsletter-unisender.md).
+
+**WordPress `<script>` passes straight through `parsePost` (`SEC-05`).** The
+replace callback special-cases only comment nodes, so an author's `<script>` and
+`<style>` reach the browser verbatim — live on `/webinar/` and
+`/socialnye-seti/`, whose served HTML carries an executing
+`<script src="//vk.com/js/api/openapi.js">`. Stripping scripts is one line; it
+also removes the VK widget those two pages are *for*. The choice is: strip and
+re-add the widget as a component, allowlist the hosts an editor may embed, or
+keep the passthrough and accept that an editor can run code on this origin.
+
+**`/video/`, `/video/<segment>/` and `/news/` are `ƒ Dynamic` (`PERF-01`,
+`PERF-10`, `CACHE-14`).** They `await searchParams` for `?page=`/`?category=`,
+which opts the route out of static generation: they ship
+`cache-control: private, no-cache, no-store`, carry no `x-nextjs-cache` at all
+and re-render on every visit — on the #2 and #3 entry pages of the site (mobile
+LCP 4 208 ms and 3 764 ms). The fixes are all architectural: PPR, a client-side
+filter over a static first page, or `generateStaticParams` over the page
+numbers. Accepting it is also a decision, and should be a written one.
+
+**`/about/` ships 6.5 MB of body images to a phone (`PERF-06`).** A
+4 671 618-byte and a 1 856 823-byte JPEG (intrinsic 2528 px and 2550 px) land in
+242 px and 227 px boxes, because `parsePost` has no `<img>` handling at all — no
+body image on any page reaches `next/image`, and `resolveContentAssets` strips
+the `srcset` WordPress wrote. Routing body images through the optimizer is the
+obvious answer and it is a real change: it needs a width to ask for (there is
+none in the HTML), and it changes every WordPress body on the site at once.
+
+**The eager first image re-creates the prefetch preload (`PERF-07`).** Sitting on
+`/` at 1440 px produced 9 cross-origin media requests, 8 of them for images that
+appear nowhere in `/`'s own HTML — `аси.jpg` among them, which is `/about/`'s
+first body image. That is the flight-payload preload hint commit f6ef5e7
+removed, back at one image per prefetched route. Keeping the LCP win and losing
+the prefetch cost needs a rule about which routes may promote an image.
+
+**A film with no cover shows a bare grey rectangle (`JRN-12`).** `VideoCard`
+renders `{imageSrc ? <Image/> : null}` with no placeholder — 5 of the 10 cards on
+`/video/famous-people/` page 1, 11 poster boxes across the 15 catalogue pages. A
+placeholder is a design asset, not a code fix.
+
+**The hero marquee has no pause control (`A11Y-09`).** Three tracks run at
+64s/52s/72s under `prefers-reduced-motion: no-preference`, far past the 5s WCAG
+2.2.2 allows without a mechanism to pause, stop or hide it. Adding a control puts
+a button in the busiest frame of the site's own mock.
+
+**Both search controls are live and do nothing (`A11Y-14`).** Neither carries
+`disabled` nor `aria-disabled`, neither sits in a form, and activating either
+changes nothing measurable — a reader who cannot see the field gets no signal
+that the feature is unbuilt. Either mark them unavailable until B7's `/search/`
+route lands, or land it.
+
+**`.od-more[open] summary { font-size: 0 }` keeps its label in the accessibility
+tree (`A11Y-15`).** The open state's accessible name is the concatenation
+«Узнать больше Свернуть». No CSS fixes it: the closed label is a bare text node
+in `<summary>`, so hiding it from assistive technology needs an element around it
+— i.e. a WordPress-side content change in
+[`od-pages.php`](../wp/scripts/od-pages.php), run against a real install.
+
+**Three title collisions across six indexable pages (`SEO-09`).** All six answer
+200, all six self-canonicalise and all six are in the sitemap. Which of each pair
+is canonical is an editorial call about the *pages*, not a routing bug.
+
+**`og:image` lives on the WordPress origin (`SEO-07`).** 12 of 12 sampled posts
+publish a card image on the WP host, so the `Require ip` allowlist the runbook
+plans for `wp.obshee-delo.ru` would blank every social card site-wide. The
+decision is whether media is exempted from the allowlist or the cards are
+rehosted before it goes on.
+
+**The ISR cache volume survives a redeploy (`CACHE-04`).** The named volume held
+entries written 2026-08-21 23:48 while the running container was created
+2026-08-22 21:32 — new code can serve old data out of `/app/.next/cache`. Either
+the deploy flushes it or that is documented as intended.
+
+**Restoring `WP_LEGACY_BASE` needs an explicit purge (`OPS-09`).** Turning the
+fallback off is clean — 404s, one warning, native routes untouched — but turning
+it back on left the pages 404ing from the ISR entries written while it was off.
+The rollback in the runbook needs the purge step, or the disable path needs to
+stop writing cache entries.
+
+**The stage container has no CA bundle at all.** `ls /etc/ssl/certs` inside
+`na9us4ncw8nypov0irwkhozp-*` is «no such directory», so every documented
+`docker exec … curl https://…` in the runbook fails from inside it. Worth fixing
+in the image or rewriting those steps to run from the host.
