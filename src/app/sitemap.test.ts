@@ -26,7 +26,7 @@ const postsPage = (ids: number[], headers: Record<string, string> = {}) =>
  * that let it fall through to the post fixture would be counting the wrong
  * requests.
  */
-const isPagesRequest = (path: string) => path.startsWith('/wp/v2/pages');
+const isPagesRequest = (path: string) => path.startsWith('/wp/v2/pages') || path.startsWith('/wp/v2/profile');
 const noPages = () => new Response('[]', { status: 200, headers: { 'x-wp-totalpages': '1' } });
 
 const pagesIndex = (links: string[]) =>
@@ -157,6 +157,43 @@ describe('sitemap', () => {
     expect(urls.filter((url) => url === `${siteUrl}/news/`)).toHaveLength(1);
     // Matched decoded, published encoded: `<loc>` has to be URL-escaped.
     expect(urls.some((url) => url.includes('%D0%B4%D0%BE'))).toBe(false);
+  });
+
+  /**
+   * A sitemap URL that redirects is worse than a missing one: it spends crawl
+   * budget to say «not here». WP page «Короткометражные» lives at
+   * `/video/short/`, which `src/proxy.ts` 301s to `/video/` (SEO-02).
+   */
+  it('never publishes a path the proxy redirects', async () => {
+    wpFetch.mockImplementation(async (path: string) => {
+      if (isPagesRequest(path)) {
+        return pagesIndex(['https://wp.test/video/short/', 'https://wp.test/healthy-russia/']);
+      }
+      return postsPage([], { 'x-wp-totalpages': '1', 'x-wp-total': '0' });
+    });
+
+    const urls = (await sitemap()).map((entry) => entry.url);
+
+    expect(urls).not.toContain(`${siteUrl}/video/short/`);
+    expect(urls).toContain(`${siteUrl}/healthy-russia/`);
+  });
+
+  /** 135 records the WP plugin sitemap used to list, and nothing else links from (SEO-11). */
+  it('lists the profile records alongside the pages', async () => {
+    wpFetch.mockImplementation(async (path: string) => {
+      if (path.startsWith('/wp/v2/profile')) {
+        return pagesIndex(['https://wp.test/profile/ivanov/']);
+      }
+      if (path.startsWith('/wp/v2/pages')) {
+        return pagesIndex(['https://wp.test/healthy-russia/']);
+      }
+      return postsPage([], { 'x-wp-totalpages': '1', 'x-wp-total': '0' });
+    });
+
+    const urls = (await sitemap()).map((entry) => entry.url);
+
+    expect(urls).toContain(`${siteUrl}/profile/ivanov/`);
+    expect(urls).toContain(`${siteUrl}/healthy-russia/`);
   });
 
   it('publishes only the static URLs when WordPress is unconfigured', async () => {

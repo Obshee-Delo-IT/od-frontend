@@ -37,6 +37,16 @@ describe('catalogueMetadata', () => {
     expect(canonicalOf(null, 1)).toBe(`${siteUrl}/video/`);
   });
 
+  /**
+   * All four `/video/filmy/?page=N` URLs used to share one `<title>` — a
+   * collision search engines resolve by dropping pages (SEO-10).
+   */
+  it('numbers a paginated title, the way /news/ does', () => {
+    expect(catalogueMetadata('filmy', 1).title).toBe('Фильмы — ОБЩЕЕ ДЕЛО');
+    expect(catalogueMetadata('filmy', 3).title).toBe('Фильмы, страница 3 — ОБЩЕЕ ДЕЛО');
+    expect(catalogueMetadata('filmy', 3).openGraph?.title).toBe('Фильмы, страница 3 — ОБЩЕЕ ДЕЛО');
+  });
+
   it('gives every catalogue page its own title and description', () => {
     const pages = [null, ...SEGMENTS].map((segment) => catalogueMetadata(segment));
     const titles = pages.map((page) => page.title);

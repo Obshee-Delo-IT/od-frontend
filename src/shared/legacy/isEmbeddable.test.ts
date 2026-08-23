@@ -15,6 +15,22 @@ describe('isEmbeddable (LPF-001)', () => {
     expect(isEmbeddable([first.toUpperCase(), 'team'])).toBe(false);
   });
 
+  /**
+   * A post's only address here is the bare `/<id>/`. WordPress answers any
+   * `/news/…` path with its «Наши дела» archive at 200, so the fallback used to
+   * embed that archive under every integer and canonicalise it onto itself
+   * (ROUTE-01).
+   */
+  it('rejects the post shapes this site deliberately does not serve', () => {
+    expect(isEmbeddable(['news', '60862'])).toBe(false);
+    expect(isEmbeddable(['news', '99999999'])).toBe(false);
+    expect(isEmbeddable(['video', '67400'])).toBe(false);
+    // The section index itself, and a real page under it, are unaffected.
+    expect(isEmbeddable(['news'])).toBe(true);
+    expect(isEmbeddable(['news', 'kak-eto-bylo'])).toBe(true);
+    expect(isEmbeddable(['about', '2024'])).toBe(true);
+  });
+
   it('rejects a dotted last segment, which names a file rather than a page', () => {
     expect(isEmbeddable(['favicon.png'])).toBe(false);
     expect(isEmbeddable(['apple-touch-icon.png'])).toBe(false);

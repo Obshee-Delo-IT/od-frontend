@@ -1,3 +1,4 @@
+import { notFound } from 'next/navigation';
 import { NewsletterSignup } from '@/modules/NewsletterSignup';
 import { fetchVideoList } from '@/shared/api';
 import {
@@ -87,14 +88,21 @@ export const cataloguePage = (value: string | string[] | undefined): number => {
   return Number.isFinite(raw) && raw > 1 ? Math.floor(raw) : 1;
 };
 
+/** Every catalogue title ends with it, and a page number goes *before* it. */
+const TITLE_SUFFIX = ' — ОБЩЕЕ ДЕЛО';
+
 export const catalogueMetadata = (segment: FilmCategorySegment | null, page = 1): Metadata => {
   const copy = copyFor(segment);
+  // Numbered the way `/news/` numbers its own: all four `/video/filmy/?page=N`
+  // URLs shared one `<title>`, which is the collision search engines dedupe by
+  // dropping pages (SEO-10).
+  const title = page > 1 ? `${copy.title.replace(TITLE_SUFFIX, '')}, страница ${page}${TITLE_SUFFIX}` : copy.title;
   // Paginated views self-canonicalise: page 2 holds different films, and
   // pointing it at page 1 would leave everything past the tenth film with no
   // indexable address at all.
   const url = canonicalUrl(catalogueHref({ segment, page }));
   return {
-    title: copy.title,
+    title,
     description: copy.description,
     alternates: { canonical: url },
     /* Five URLs come through here, and none of them declared `openGraph` — so
@@ -104,7 +112,7 @@ export const catalogueMetadata = (segment: FilmCategorySegment | null, page = 1)
        Next merges metadata *shallowly*: a segment that declares `openGraph`
        replaces the parent's object whole, so it inherits no image either and
        the fallback card has to be named here. */
-    openGraph: { url, title: copy.title, description: copy.description, images: [copy.card] },
+    openGraph: { url, title, description: copy.description, images: [copy.card] },
   };
 };
 
@@ -126,6 +134,14 @@ export const VideoCatalogue = async ({ segment, page }: VideoCatalogueProps) => 
     perPage: PER_PAGE,
     category: segment ? FILM_CATEGORIES[segment] : ALL_FILM_CATEGORY_IDS,
   });
+
+  // A page past the end is not a page: `?page=999` answered 200 with zero
+  // cards, a self-canonical and no `noindex` — an unbounded family of indexable
+  // near-empties. Page 1 still renders «Фильмов не найдено», which is a real
+  // answer about a real category (SEO-10).
+  if (page > 1 && items.length === 0) {
+    notFound();
+  }
 
   const copy = copyFor(segment);
   const catalogueRoot = catalogueHref({ segment: null });

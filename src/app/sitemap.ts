@@ -3,6 +3,7 @@ import { WP_TAGS, wpCache } from '@/shared/api/cacheTags';
 import { wpFetch } from '@/shared/api/httpClient';
 import { catalogueHref, FILM_CATEGORIES, type FilmCategorySegment } from '@/shared/config/filmCategories';
 import { isLegacyEmbedPage } from '@/shared/config/legacyEmbedPages';
+import { resolveLegacyUrl } from '@/shared/config/legacyRedirects';
 import { ARTICLES_HREF } from '@/shared/config/newsCategories';
 import { canonicalUrl } from '@/shared/config/site';
 import type { MetadataRoute } from 'next';
@@ -191,17 +192,20 @@ interface RawPageRef {
  * URL-escaped; the exception list is matched against the decoded form, which is
  * what the route compares too.
  */
-const collectPagePaths = async (): Promise<Array<{ path: string; lastModified?: Date }>> => {
+const collectLinks = async (
+  endpoint: 'pages' | 'profile',
+  tag: string
+): Promise<Array<{ path: string; lastModified?: Date }>> => {
   const collected: Array<{ path: string; lastModified?: Date }> = [];
 
   for (let page = 1; ; page += 1) {
     const res = await fetchWithRetries(
-      `/wp/v2/pages?per_page=${PER_PAGE}&page=${page}&_fields=link,modified_gmt&orderby=id&order=asc`,
-      WP_TAGS.pages
+      `/wp/v2/${endpoint}?per_page=${PER_PAGE}&page=${page}&_fields=link,modified_gmt&orderby=id&order=asc`,
+      tag
     );
     if (!res) {
       // eslint-disable-next-line no-console
-      console.warn(`[sitemap] page ${page} of the WP page index failed; publishing without the rest.`);
+      console.warn(`[sitemap] page ${page} of the WP ${endpoint} index failed; publishing without the rest.`);
       break;
     }
 
@@ -213,7 +217,12 @@ const collectPagePaths = async (): Promise<Array<{ path: string; lastModified?: 
       } catch {
         continue;
       }
-      if (!isLegacyEmbedPage(decodeURIComponent(pathname))) {
+      const decoded = decodeURIComponent(pathname);
+      // Never advertise a URL that redirects: WP page «Короткометражные» sits
+      // at `/video/short/`, which the proxy 301s to `/video/` — the sitemap
+      // published the 301 for months while the comment below claimed it was
+      // «absent by construction» (SEO-02).
+      if (!isLegacyEmbedPage(decoded) && !resolveLegacyUrl(decoded)) {
         collected.push({ path: pathname, lastModified: toLastModified(raw.modified_gmt) });
       }
     }
@@ -234,15 +243,16 @@ const sitemap = async (): Promise<MetadataRoute.Sitemap> => {
     // The «Статьи» collection's own address — a live-site URL with real search
     // traffic, and the canonical target of the index's «Статьи» chip.
     { url: canonicalUrl(ARTICLES_HREF), changeFrequency: 'monthly', priority: 0.6 },
-    // A WordPress page since D6g, so `collectPagePaths()` below would publish
+    // A WordPress page since D6g, so `collectLinks()` below would publish
     // it anyway — but at 0.7 and only when WP answers. It is a nav destination
     // with 794 views / 91 days, so it is pinned here and deduped there.
     { url: canonicalUrl('/projects/'), changeFrequency: 'monthly', priority: 0.8 },
     { url: canonicalUrl(catalogueHref({ segment: null })), changeFrequency: 'weekly', priority: 0.8 },
     // Enumerated from the shared map, and addressed through the same helper the
     // catalogue links with, so a new segment can't be forgotten here or drift
-    // into a URL that redirects. `/video/short/` is absent by construction: it
-    // names no category and 301s to «Все».
+    // into a URL that redirects. `/video/short/` names no category and 301s to
+    // «Все», so it is absent from here — and `collectLinks` drops it from the
+    // WP page crawl, which is where it used to slip back in.
     ...Object.keys(FILM_CATEGORIES).map((segment) => ({
       url: canonicalUrl(catalogueHref({ segment: segment as FilmCategorySegment })),
       changeFrequency: 'weekly' as const,
@@ -261,9 +271,17 @@ const sitemap = async (): Promise<MetadataRoute.Sitemap> => {
   // the rest are WP pages too, and a duplicate `<loc>` is a defect.
   const staticUrls = new Set(staticEntries.map((entry) => entry.url));
 
+  // The 135 `profile` records have no other discovery path either: they are
+  // linked from region pages the crawler may never reach, and the WP plugin
+  // sitemap that used to list them goes with the domain (SEO-11).
+  const [pages, profiles] = await Promise.all([
+    collectLinks('pages', WP_TAGS.pages),
+    collectLinks('profile', WP_TAGS.profiles),
+  ]);
+
   return [
     ...staticEntries,
-    ...(await collectPagePaths())
+    ...[...pages, ...profiles]
       .map((page) => ({
         url: canonicalUrl(page.path),
         lastModified: page.lastModified,
