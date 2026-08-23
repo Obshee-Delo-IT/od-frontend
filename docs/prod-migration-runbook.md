@@ -681,6 +681,8 @@ pnpm film:covers -- --export "/path/to/ChatExport_2026-08-03" --apply
 ```
 Uploads the Telegram key art as `film-cover-<postId>.jpg` and sets it as the featured image. Only touches films with **no** featured image and reuses an existing upload of the same filename, so re-running is a no-op. On od-dev this took featured-image coverage from 6 → 29 of 99.
 
+**Then `pnpm film:posters`**, which fills `poster_image_url` — the film page's poster card — from the best source the install already holds: the Яндекс.Диск плакат behind «Скачать плакат» (downloaded and uploaded), else a плакат-named image in the post body, else the featured image. Run it **after** 3.5, since the covers it falls back to are what 3.5 uploads. Dry-run by default; a плакат is never overwritten, a cover written as the fallback is recomputed each run, so a плакат arriving later still wins. ⚠ **It needs an account that can edit.** od-stage's `od-frontend` password is the two-capability role of §2.9 (`read` + `edit_theme_options`), so every write answers `403 rest_cannot_edit` and the run reports «0 set, N failure(s)» — read the summary, not the exit code, if you pipe it through `grep`. Any write pass on that tier (this, `film:import`, `film:covers`) needs an editor or administrator application password.
+
 **3.6 Fill `kinescope_id` from the Kinescope library.** Needs `KINESCOPE_TOKEN` in `.env` (API token from the Kinescope dashboard — the org's library already holds **261 videos**, so most films can be matched automatically rather than hand-entered).
 ```bash
 pnpm film:kinescope -- --in .scratch/film-worksheet-stage-filled.csv     # fills in place, prints the report
