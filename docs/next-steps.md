@@ -362,12 +362,33 @@ request. **Deactivating the plugin does not close them** — a deactivated plugi
 files are still served; measured on od-dev, where all three kept returning 200
 until the directory was deleted, and 404 immediately after.
 
-**What to do:** delete the plugin directory on prod. That is already step 3 of
-[`prod-migration-runbook.md` §2.6](./prod-migration-runbook.md), so this needs no
-separate work — but it is worth doing on its own schedule rather than waiting for
-the cutover, since it is live exposure on the public site. It costs nothing: the
-theme keeps the plugin as a `.zip` for reference, and `cmsms-gutenberg-upgrade`
-never calls into it.
+**Cut at the web server 2026-08-23, because deleting the directory is not an
+option yet.** The earlier advice here — «delete the plugin directory on prod, it
+costs nothing» — was measured on od-dev, whose content had already been
+migrated. On **production the plugin is active** (`active_plugins` carries
+`cmsms-content-composer/cmsms-content-composer.php`) and it is the only thing
+that registers the `cmsms_*` shortcodes every live page is built from: nothing
+else in `wp-content` calls `add_shortcode` for them, and the `welfare` theme
+registers none. Deleting it today blanks the content of the whole site. That
+deletion is step 3 of [`prod-migration-runbook.md` §2.6](./prod-migration-runbook.md)
+and belongs **after** the content migration, as the runbook has it.
+
+What is installed instead is
+[`wp/htaccess/cmsms-content-composer.htaccess`](../wp/htaccess/cmsms-content-composer.htaccess),
+copied to `~/public_html/wp-content/plugins/cmsms-content-composer/.htaccess`
+(`ssh od-root`, mode 644). It denies direct HTTP access to **every** `.php` in
+the tree — WordPress reaches them with `require`, which `.htaccess` does not
+touch — while leaving the css/js/images alone. The one exception is
+`cmsms-composer-templates-operator.php`, which the composer's own editor UI
+posts to (`cmsms-content-composer.php:1834` writes its URL into a hidden
+`cmsms_composer_url` input): it answers only a request carrying a
+`wordpress_logged_in_` cookie, which is the capability check the file itself is
+missing. Measured immediately after install: the three loaders and the plugin's
+main file 403 to an anonymous GET *and* POST, the operator 403 anonymous / 200
+with a session cookie, `css/jquery.cmsmsComposerLightbox.css` still 200, and
+`/`, `/about/`, `/contacts/`, `/wp-login.php` and `/wp-admin/admin-ajax.php` all
+still 200 with their `cmsms_`-rendered markup intact (280 / 733 / 182 matches,
+zero unrendered `[cmsms_` in the output). Reverting is deleting that one file.
 
 While looking: `wp-content/plugins/wp-optimize/vendor/mrclay/minify/server-info.php`
 is a second self-bootstrapping file, from a different plugin. Unchecked — worth

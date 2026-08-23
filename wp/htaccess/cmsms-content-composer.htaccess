@@ -1,0 +1,59 @@
+# Deny direct HTTP access to cmsms-content-composer's PHP files.
+#
+# Canonical copy: wp/htaccess/cmsms-content-composer.htaccess in od-frontend.
+# Installed on production as
+#   ~/public_html/wp-content/plugins/cmsms-content-composer/.htaccess
+# (`ssh od-root`). Nowhere else needs it — the plugin directory is already gone
+# from od-stage and od-dev, where all four paths 404.
+#
+# Why: three of the plugin's files bootstrap WordPress themselves from
+# $_SERVER['SCRIPT_FILENAME'] instead of going through admin-ajax.php, and read
+# $_POST with no nonce and no capability check —
+#   framework/inc/cmsms-composer-templates-operator.php
+#   inc/project/projects-loader.php
+#   inc/post/posts-loader.php
+# All three answered 200 to an anonymous request on the live site as of
+# 2026-08-23. Deactivating the plugin does not close them (a deactivated
+# plugin's files are still served) and **deleting the directory is not an
+# option here**: the plugin is active on production and registers every
+# `cmsms_*` shortcode the live pages are built from — removing it blanks their
+# content. So the cut is at the web server, and the plugin keeps loading.
+#
+# The rule is deliberately a superset: WordPress reaches every file in this
+# tree with `require`, which .htaccess does not touch, so no .php here has any
+# business answering an HTTP request. Assets (css/js/images) are untouched.
+#
+# The one exception is the templates operator, which the composer's own editor
+# UI posts to — `cmsms-content-composer.php:1834` puts its URL in a hidden
+# `cmsms_composer_url` input. It stays reachable, but only for a request
+# carrying a WordPress login cookie, which is the capability check the file
+# itself is missing. An anonymous POST is refused.
+#
+# To revert: delete this file. To retire it: delete the plugin directory, which
+# is step 3 of prod-migration-runbook.md §2.6 — after the content migration,
+# not before.
+
+<IfModule mod_setenvif.c>
+    SetEnvIf Cookie "wordpress_logged_in_" od_wp_logged_in
+</IfModule>
+
+<FilesMatch "^(?!cmsms-composer-templates-operator\.php$).+\.php$">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order allow,deny
+        Deny from all
+    </IfModule>
+</FilesMatch>
+
+<Files "cmsms-composer-templates-operator.php">
+    <IfModule mod_authz_core.c>
+        Require env od_wp_logged_in
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order deny,allow
+        Deny from all
+        Allow from env=od_wp_logged_in
+    </IfModule>
+</Files>
