@@ -632,6 +632,23 @@ describe('transformLegacyHtml — golden fingerprint (V18)', () => {
  * it.
  */
 describe('transformLegacyHtml — GATE 2 refuter findings', () => {
+  /**
+   * `findAttribute` hands back the **decoded** value, so a single-quoted
+   * `href='…/te&#39;st/'` carries a real apostrophe by the time it is rewritten
+   * — and `encodeAttributeValue` escaped only `& < > "`. Spliced back between
+   * its own single quotes the value closed the attribute early: a browser read
+   * `href='…/te'` followed by a bogus `st/'` attribute, which is
+   * attribute injection driven by an author-controlled legacy path (SEC-07).
+   */
+  it('cannot break out of a single-quoted attribute', () => {
+    const source = `<html><body><a href='${LEGACY}/te&#39;st/'>quoted</a></body></html>`;
+
+    const { html } = transformLegacyHtml(source, { origin: LEGACY, path: '/team/', siteOrigin: SITE });
+
+    // The whole tag, exactly: one attribute, its quotes intact.
+    expect(findTags(maskInertRegions(html), 'a')[0].text).toBe(`<a href='${SITE}/te&#39;st/'>`);
+  });
+
   it('rewrites a hard-coded http:// link to its own site', () => {
     const source = [
       '<html><body>',

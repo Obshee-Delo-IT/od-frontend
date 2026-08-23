@@ -30,7 +30,22 @@ export const proxy = (request: NextRequest) => {
    */
   const font = legacyFontTarget(request.nextUrl.pathname);
   if (font) {
-    return legacyOrigin ? NextResponse.rewrite(new URL(font, legacyOrigin)) : new NextResponse(null, { status: 404 });
+    if (!legacyOrigin) {
+      return new NextResponse(null, { status: 404 });
+    }
+    // A font is fetched with GET. Anything else was relayed verbatim, body and
+    // all, to an origin this deployment does not own (SEC-09).
+    if (request.method !== 'GET' && request.method !== 'HEAD') {
+      return new NextResponse(null, { status: 405, headers: { allow: 'GET, HEAD' } });
+    }
+    // And the visitor's own credentials are none of that origin's business:
+    // both a `Cookie` and an `Authorization` header arrived there untouched.
+    const headers = new Headers(request.headers);
+    for (const name of ['cookie', 'authorization', 'proxy-authorization']) {
+      headers.delete(name);
+    }
+
+    return NextResponse.rewrite(new URL(font, legacyOrigin), { request: { headers } });
   }
 
   const destination = resolveLegacyUrl(request.nextUrl.pathname);
