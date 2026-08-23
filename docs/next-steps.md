@@ -958,15 +958,26 @@ and 34 of the defects it confirmed were fixed the same day (search that file for
 `Fixed 2026-08-23`). These are the rest: each one is measured and real, and each
 turns on a choice that is not the fixer's to make.
 
-**152-FZ consent, and Kinescope before it (`SEC-11`).** A clean browser profile
-on `/71933/` contacts three Kinescope hosts — `kinescope.io`,
-`player.kinescope.io`, `edge-msk-8.kinescopecdn.net` — before any consent
-exists, and the frame is granted `autoplay`, `encrypted-media`, `gyroscope`,
-`accelerometer` and `clipboard-write`. **Production shows a consent banner
-today; this site has none at all.** Deciding it means deciding what the banner
-says, whether the player is gated behind it (a click-to-load poster) or merely
-disclosed, and who owns the text — see also the consent line stored with a
-newsletter submission in [`newsletter-unisender.md`](./newsletter-unisender.md).
+**No cookie notice, where production has one (`SEC-11`, re-scoped 2026-08-23).**
+The scenario was written as a 152-FZ finding about Kinescope, and that framing was
+wrong: 152-FZ governs the processing of personal data, the film page collects
+none, and Kinescope is a Russian service served from Moscow edges — so neither
+the cross-border-transfer article nor the localisation requirement is in play,
+and an IP plus User-Agent reaching a Russian video host is not what a consent
+gate exists for. **What production actually shows is Clearfy's cookie notice**
+(«Этот сайт использует cookie для хранения данных…», linking `/conf_politics/`),
+i.e. a statement about cookies, and the new site has nothing equivalent. Two real
+items are left inside the scenario: the cookie/analytics notice has to reach
+parity with prod before the domain moves (Metrica is the thing it is about), and
+the consent text stored **with** a submission is a genuine 152-FZ obligation for
+the newsletter form when it ships — see
+[`newsletter-unisender.md`](./newsletter-unisender.md).
+
+Separately, and as hygiene rather than law: the player iframe is granted
+`autoplay`, `fullscreen`, `picture-in-picture`, `encrypted-media`, `gyroscope`,
+`accelerometer`, `clipboard-write` and `screen-wake-lock`. The last three are
+what Kinescope's own docs ask for, so trimming the list needs a check that the
+player's copy-link and 360° controls still work — worth one pass, not a blocker.
 
 **WordPress `<script>` passes straight through `parsePost` (`SEC-05`).** The
 replace callback special-cases only comment nodes, so an author's `<script>` and
