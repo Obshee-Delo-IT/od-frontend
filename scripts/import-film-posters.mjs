@@ -2,8 +2,9 @@
  * Fill `poster_image_url` — the artwork of the film page's poster card — from the
  * best source the site already holds, in priority order:
  *
- *   1. the плакат the film links to on Яндекс.Диск (`poster_download_url`), which
- *      is not in the media library yet and gets uploaded;
+ *   1. the плакат the editor supplied on Яндекс.Диск — either a file the film links
+ *      to in `poster_download_url`, or a named file inside a shared folder, listed
+ *      in {@link FOLDER_POSTERS} below; both get downloaded and uploaded;
  *   2. a плакат-named image already in the post body (the legacy vertical А2 art);
  *   3. the editor's featured image — the 16∶9 cover `/video/` draws.
  *
@@ -52,6 +53,9 @@ const OPTIONS = {
 /** Yandex's public-resource API — no token, no account, just the share URL. */
 const YANDEX_API = 'https://cloud-api.yandex.net/v1/disk/public/resources';
 
+/** «Плакаты по фильмам» — the shared folder several films draw their плакат from. */
+const POSTER_LIBRARY = 'https://disk.yandex.ru/d/3jRhHMui3TdiSi';
+
 /** A readable, collision-proof media filename: `film-poster-<postId>.<ext>`. */
 const targetFilename = (postId, type = 'image/jpeg') => `film-poster-${postId}.${WEB_IMAGES[type]}`;
 
@@ -81,6 +85,71 @@ const SIZED_VARIANT = /-\d+x\d+(?=\.\w+(?:[?#].*)?$)/;
 const POSTER_NAME = /плакат|постер|plakat|poster/i;
 /** Ratio-preserving WP variants, largest first — `thumbnail` is a square crop, so never it. */
 const RATIO_SIZES = ['large', 'medium_large', 'medium'];
+
+/**
+ * Posters the editor supplied as Яндекс.Диск **folders** (Telegram, 2026-08-23):
+ * film id → `[folder share link, path of the file to use inside it]`.
+ *
+ * A folder holds one плакат in six renditions — А2, квадрат, ютюб, PSD, TIFF, RAR —
+ * so which file is the card's is a human call, not something to rank heuristically;
+ * hence a table rather than a heuristic. `poster_download_url` stays free for the
+ * single-file links it already holds, and a film that has an entry here needs no
+ * link at all.
+ *
+ * **Ids are prod's**, which od-stage shares as its clone; od-dev's differ, so
+ * nothing matches there and the pass simply falls through to the body/cover.
+ * Paths are matched **Unicode-normalised**: the folders were authored on macOS and
+ * their names are NFD, so a typed NFC copy of the same name does not resolve.
+ */
+const FOLDER_POSTERS = {
+  74794: ['https://disk.yandex.ru/d/r4FNKEDLkQkObA', 'sugar_attac_a2_full_res.jpg'],
+  73381: ['https://disk.yandex.ru/d/e1Uff2osPRUA2A', 'Познавалов Бактерии а2.jpg'],
+  19869: ['https://disk.yandex.ru/d/-sdTjV_A5TWOzw', 'Poster_02_RGB_high_res.jpg'],
+  19871: [POSTER_LIBRARY, 'плакат и заглушка Алкоголь Секреты манипуляции /Poster_03_HighRes.jpg'],
+  73084: [POSTER_LIBRARY, 'Плакат Алкоголь взгляд изнутри/alkohol_plakatA2.jpg'],
+  19123: [POSTER_LIBRARY, 'Команда Познавалова плакаты/Плакат Тайна едкого дыма.jpg'],
+  72705: [POSTER_LIBRARY, 'плакаты как найти призвание/knp1.jpg'],
+};
+// Deliberately absent: the library's `история одного обмана.png` (1509×663) and
+// `почему же они курят.png` (3298×1878) are landscape banners, not плакаты — 19864
+// and 34169 keep the featured cover, whose `-WxH` at least gives the card its own
+// shape instead of cropping a wide image into the portrait А2 frame.
+
+/** One listing page of a public folder; `path` is '' for the folder's own root. */
+const yandexList = async (link, path) => {
+  const query = `public_key=${encodeURIComponent(link)}&limit=200${path ? `&path=${encodeURIComponent(path)}` : ''}`;
+  const res = await fetch(`${YANDEX_API}?${query}`);
+  return res.ok ? ((await readJson(res))?._embedded?.items ?? []) : null;
+};
+
+/** A named file inside a public folder, walked segment by segment so NFD names resolve. */
+const folderFile = async (link, spec) => {
+  let path = '';
+  for (const segment of spec.split('/')) {
+    const items = await yandexList(link, path);
+    if (!items) {
+      return { error: `folder listing failed at «${segment}»` };
+    }
+    const hit = items.find((item) => item.name.normalize('NFC') === segment.normalize('NFC'));
+    if (!hit) {
+      return { error: `«${segment}» is not in the folder` };
+    }
+    path = hit.path;
+    if (hit.type === 'file') {
+      if (!WEB_IMAGES[hit.mime_type]) {
+        return { error: `${hit.name} is not a web image (${hit.mime_type})` };
+      }
+      const hrefRes = await fetch(
+        `${YANDEX_API}/download?public_key=${encodeURIComponent(link)}&path=${encodeURIComponent(path)}`
+      );
+      if (!hrefRes.ok) {
+        return { error: `download link refused (${hrefRes.status})` };
+      }
+      return { name: hit.name, size: hit.size, type: hit.mime_type, href: (await readJson(hrefRes))?.href };
+    }
+  }
+  return { error: `«${spec}» is a folder, not a file` };
+};
 
 /**
  * The public file behind a Яндекс.Диск share link: its name, type and a
@@ -222,14 +291,6 @@ const main = async () => {
     const body = bodyPoster(film.content?.rendered);
     const bodyUrl = body && ownHostUrl(body, env.base);
 
-    // A плакат on the legacy domain: leave the field empty rather than write that
-    // host into it — `extractFilmPoster` already draws this one from the body.
-    if (body && !bodyUrl) {
-      console.log(`· ${label} — плакат on ${new URL(body).host}, left to the body parser`);
-      skipped += 1;
-      continue;
-    }
-
     const featured = await featuredPoster(env, film.featured_media);
 
     // A filled field is left alone unless it holds the plain featured cover: a плакат
@@ -242,10 +303,11 @@ const main = async () => {
       continue;
     }
 
-    if (link) {
-      const file = await yandexFile(link);
+    const chosen = FOLDER_POSTERS[film.id];
+    if (chosen || link) {
+      const file = chosen ? await folderFile(chosen[0], chosen[1]) : await yandexFile(link);
       if (file.error) {
-        console.log(`· ${label} — плакат link: ${file.error}`);
+        console.log(`· ${label} — плакат ${chosen ? 'folder' : 'link'}: ${file.error}`);
       } else {
         console.log(
           `${args.apply ? '→' : '·'} ${label} — плакат ${file.name} (${Math.round(file.size / 1024)} КБ) → ${targetFilename(film.id, file.type)}`
@@ -266,6 +328,14 @@ const main = async () => {
         }
         continue;
       }
+    }
+
+    // A плакат on the legacy domain: leave the field empty rather than write that
+    // host into it — `extractFilmPoster` already draws this one from the body.
+    if (body && !bodyUrl) {
+      console.log(`· ${label} — плакат on ${new URL(body).host}, left to the body parser`);
+      skipped += 1;
+      continue;
     }
 
     const fallback = bodyUrl ?? featured;
