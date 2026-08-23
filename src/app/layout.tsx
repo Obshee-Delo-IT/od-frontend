@@ -34,6 +34,9 @@ const ptSansNarrow = PtSansNarrow({
 
 const SITE_DESCRIPTION = 'Общероссийская общественная организация';
 
+/** The skip link's target, and the only id the layout owns. */
+const MAIN_ID = 'main';
+
 export const metadata: Metadata = {
   /**
    * Without this, a relative `alternates.canonical` is emitted relative *and*
@@ -78,8 +81,16 @@ const RootLayout = ({
   <html lang="ru" className="rt-reset">
     <body className={`${ptSansNarrow.variable} ${ptSans.variable}`}>
       <RadixProvider>
+        {/* WCAG 2.4.1. There was no bypass mechanism anywhere on the site, and
+            the header is 11 tab stops before the page's own content — 63 on
+            `/contacts/`, where 52 of them are the map's region links (A11Y-06). */}
+        <a href={`#${MAIN_ID}`} className={css.skipLink}>
+          Перейти к содержимому
+        </a>
         <HeaderServer />
-        <main className={css.main}>{children}</main>
+        <main id={MAIN_ID} className={css.main}>
+          {children}
+        </main>
         <Footer />
       </RadixProvider>
     </body>

@@ -1,4 +1,4 @@
-import { Text } from '@radix-ui/themes';
+import { Text, VisuallyHidden } from '@radix-ui/themes';
 import { NewsletterSignup } from '@/modules/NewsletterSignup';
 import { extractFirstImage } from '@/shared/api/extractFirstImage';
 import { cachedFetchFeaturedImage } from '@/shared/api/fetchFeaturedImage';
@@ -82,11 +82,8 @@ export const NewsArticle = async ({ id }: NewsArticleProps) => {
 
   const [category, region] = data?.categories ?? [];
 
-  const breadcrumbItems = [
-    { label: 'Главная', href: '/' },
-    { label: 'Новости', href: '/news' },
-    { label: stripHtml(data?.title?.rendered) },
-  ];
+  const title = stripHtml(data?.title?.rendered);
+  const breadcrumbItems = [{ label: 'Главная', href: '/' }, { label: 'Новости', href: '/news' }, { label: title }];
 
   const parsed = parsePost(await resolveContentHtml(data?.content?.rendered, true));
   const date = formatDate(data?.date);
@@ -104,6 +101,15 @@ export const NewsArticle = async ({ id }: NewsArticleProps) => {
         desktop: 64,
       }}
     >
+      {/* The design shows the post's title in the breadcrumb trail and nowhere
+          else, so the page exposed **no h1 at all** and its first heading was
+          «Похожие новости» at h3 — a reader navigating by heading found nothing
+          naming the article they had opened (A11Y-01). Hidden rather than drawn:
+          where the title appears is the mock's decision, and this is the same
+          string the `<title>` and the last crumb already carry. */}
+      <VisuallyHidden>
+        <h1>{title}</h1>
+      </VisuallyHidden>
       <Box
         mb={{
           mobile: 24,

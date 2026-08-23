@@ -105,6 +105,42 @@ describe('<HeaderClient />', () => {
     expect(screen.getByRole('button', { name: 'Открыть меню' })).toBeInTheDocument();
   });
 
+  /**
+   * The drawer covers the page, so it has to behave like one: announced as a
+   * dialog, focus moved into it, and focus put back on the button that opened it
+   * when it closes. Before this, Escape dropped focus to `<body>` and a keyboard
+   * user Tabbed from the top of the document again (A11Y-03).
+   */
+  it('is a modal dialog, and gives focus back to the button that opened it', async () => {
+    const user = userEvent.setup();
+    renderHeader();
+    const toggle = screen.getByRole('button', { name: 'Открыть меню' });
+
+    await user.click(toggle);
+
+    const drawer = screen.getByRole('dialog', { name: 'Меню' });
+    expect(drawer).toHaveAttribute('aria-modal', 'true');
+    expect(drawer.contains(document.activeElement)).toBe(true);
+
+    await user.keyboard('{Escape}');
+
+    expect(screen.getByRole('button', { name: 'Открыть меню' })).toHaveFocus();
+  });
+
+  it('keeps Tab inside the drawer while it is open', async () => {
+    const user = userEvent.setup();
+    renderHeader();
+
+    await user.click(screen.getByRole('button', { name: 'Открыть меню' }));
+    const drawer = screen.getByRole('dialog', { name: 'Меню' });
+    const stops = drawer.querySelectorAll('a[href], button');
+
+    (stops[stops.length - 1] as HTMLElement).focus();
+    await user.keyboard('{Tab}');
+
+    expect(document.activeElement).toBe(stops[0]);
+  });
+
   it('closes the drawer when a row is tapped, including the page already open', async () => {
     const user = userEvent.setup();
     renderHeader();

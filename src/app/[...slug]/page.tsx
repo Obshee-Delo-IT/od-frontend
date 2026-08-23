@@ -259,7 +259,16 @@ const Page = async ({ params }: { params: Promise<{ slug: string[] }> }) => {
     // remounts it. Without the key React reuses the instance, the frame reloads
     // but the measured `height` state does not, and the new page renders at the
     // old page's height until its first report arrives.
-    return <LegacyEmbed key={legacyPathname(slug)} slug={slug} />;
+    // Named by the page it frames. All six embedded pages carried the same
+    // generic «Содержимое страницы», so a reader listing the frames could not
+    // tell them apart (A11Y-08).
+    return (
+      <LegacyEmbed
+        key={legacyPathname(slug)}
+        slug={slug}
+        title={legacy.status === 'ok' ? (legacy.document.title ?? undefined) : undefined}
+      />
+    );
   }
 
   const kind = await resolvePostKind(id);

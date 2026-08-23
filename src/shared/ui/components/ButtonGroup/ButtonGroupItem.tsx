@@ -10,15 +10,21 @@ interface ButtonGroupItemProps {
   active?: boolean;
   href: string;
   content?: ReactNode;
+  /** The controlled open value this item answers to — see `ButtonGroup`. */
+  value: string;
+  /** Set when this item has a flyout: focusing the trigger opens it (GAP-03). */
+  onFocus?: () => void;
 }
 
 export const ButtonGroupItem: React.FC<PropsWithChildren<ButtonGroupItemProps>> = ({
   content,
   href,
   children,
+  value,
+  onFocus,
   active = false,
 }) => (
-  <NavigationMenuItem className={css.item}>
+  <NavigationMenuItem value={value} className={css.item}>
     <NavigationMenuTrigger asChild>
       <Text
         size="3"
@@ -27,7 +33,7 @@ export const ButtonGroupItem: React.FC<PropsWithChildren<ButtonGroupItemProps>> 
           [css.baseActive]: active,
         })}
       >
-        <NextLink href={href} className={css.link} aria-current={active ? 'page' : undefined}>
+        <NextLink href={href} className={css.link} aria-current={active ? 'page' : undefined} onFocus={onFocus}>
           <div className={css.text}>{children}</div>
           {!!content && <ChevronDownIcon className={css.icon} width={20} height={20} />}
         </NextLink>
