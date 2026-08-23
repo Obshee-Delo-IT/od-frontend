@@ -75,6 +75,8 @@ const parseJson = (text) => {
 const readJson = async (res) => parseJson(await res.text().catch(() => ''));
 
 const IMG_SRC = /<img\b[^>]*\bsrc="([^"]+)"/gi;
+/** WordPress's `name-WIDTHxHEIGHT.ext` variant suffix — two URLs of one upload differ only by it. */
+const SIZED_VARIANT = /-\d+x\d+(?=\.\w+(?:[?#].*)?$)/;
 /** Same test `extractFilmPoster` uses on the frontend, so both pick the same figure. */
 const POSTER_NAME = /плакат|постер|plakat|poster/i;
 /** Ratio-preserving WP variants, largest first — `thumbnail` is a square crop, so never it. */
@@ -125,6 +127,9 @@ const ownHostUrl = (src, base) => {
   }
   return src.startsWith(`${base}/`) ? src : null;
 };
+
+/** The same upload, whichever sized variant each URL points at. */
+const sameUpload = (a, b) => Boolean(a) && Boolean(b) && a.replace(SIZED_VARIANT, '') === b.replace(SIZED_VARIANT, '');
 
 /** Source 3: the featured image, at its largest ratio-preserving variant. */
 const featuredPoster = async (env, mediaId) => {
@@ -225,10 +230,14 @@ const main = async () => {
       continue;
     }
 
-    const fallback = bodyUrl ?? (await featuredPoster(env, film.featured_media));
+    const featured = await featuredPoster(env, film.featured_media);
 
-    // Anything other than a cover this script wrote is the editor's плакат — leave it.
-    if (current && current !== fallback) {
+    // A filled field is left alone unless it holds the plain featured cover: a плакат
+    // — the editor's, one this script uploaded, or the one in the body — is already the
+    // best source there is, and re-running source 1 over it would upload the same
+    // artwork a second time. Compared ignoring the `-WxH` variant suffix, since the
+    // field and the body routinely point at two sizes of one upload.
+    if (current && !sameUpload(current, featured)) {
       skipped += 1;
       continue;
     }
@@ -239,7 +248,7 @@ const main = async () => {
         console.log(`· ${label} — плакат link: ${file.error}`);
       } else {
         console.log(
-          `${args.apply ? '→' : '·'} ${label} — плакат ${file.name} (${Math.round(file.size / 1024)} КБ) → ${targetFilename(film.id)}`
+          `${args.apply ? '→' : '·'} ${label} — плакат ${file.name} (${Math.round(file.size / 1024)} КБ) → ${targetFilename(film.id, file.type)}`
         );
         if (!args.apply) {
           filled += 1;
@@ -259,7 +268,8 @@ const main = async () => {
       }
     }
 
-    if (!fallback || current === fallback) {
+    const fallback = bodyUrl ?? featured;
+    if (!fallback || sameUpload(current, fallback)) {
       if (!current) {
         console.log(`· ${label} — no плакат, no cover, nothing to fill`);
       }
