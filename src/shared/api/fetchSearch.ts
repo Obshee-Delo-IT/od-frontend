@@ -1,6 +1,7 @@
 import { components } from '@/types/generated/wp-json-openapi';
 import { WP_TAGS, wpCache } from './cacheTags';
 import { wpFetch } from './httpClient';
+import { stripHtml } from './newsPreview';
 
 /** WP's own search payload — id, title, url, type, subtype and nothing else. */
 type RawSearchResult = components['schemas']['search-result'];
@@ -107,7 +108,9 @@ export const fetchSearch = async ({
   const items = data.map((result) => ({
     // `id` is `number | string` in the schema — terms report theirs as a string.
     id: Number(result.id ?? 0),
-    title: result.title ?? '',
+    // WP hands search titles back as HTML, the same as every other
+    // `title.rendered`: «&#171;Общее&nbsp;Дело&#187;» would print literally.
+    title: stripHtml(result.title),
     href: toHref(result),
     sourceUrl: result.url ?? '',
     subtype: result.subtype ?? null,

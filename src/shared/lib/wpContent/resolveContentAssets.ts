@@ -28,6 +28,9 @@ const HREF_ATTR = /\bhref=["']([^"']+)["']/i;
  */
 const LOADING_ATTR = /\bloading=["'][^"']*["']/i;
 
+/** Matches `experimental.staticGenerationMaxConcurrency` and every other pool aimed at this host. */
+const PROBE_CONCURRENCY = 4;
+
 /**
  * Rewrite every `<img>`, `<audio>` and media `<a href>` in a WordPress post's
  * rendered HTML to the resolved full-size / CDN URL — the same logic the card thumbnails use (see
@@ -79,11 +82,17 @@ export const resolveContentAssets = async (html?: string | null, eagerFirstImage
   }
 
   const resolved = new Map<string, string>();
-  await Promise.all(
-    [...sources].map(async (src) => {
+  // Gated, not a bare `Promise.all` over the whole set: each miss is a HEAD
+  // probe against the media host, and one real body fired 54 of them at once
+  // against the 4 that next.config.ts, sitemap.ts and legacyStore.ts all chose
+  // for the same host — which is where its 503s start (PERF-05).
+  const pending = [...sources];
+  const worker = async () => {
+    for (let src = pending.pop(); src !== undefined; src = pending.pop()) {
       resolved.set(src, (await resolveMediaUrl(src)) ?? src);
-    })
-  );
+    }
+  };
+  await Promise.all(Array.from({ length: Math.min(PROBE_CONCURRENCY, pending.length) }, worker));
 
   const withHrefs = html.replace(MEDIA_HREF, (tag) => {
     const href = tag.match(HREF_ATTR)?.[1];

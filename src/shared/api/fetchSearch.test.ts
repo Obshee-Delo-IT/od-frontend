@@ -47,6 +47,16 @@ describe('fetchSearch', () => {
     });
   });
 
+  it('prints titles as text — /wp/v2/search returns them entity-encoded', async () => {
+    wpFetch.mockResolvedValue(
+      makeResponse([{ id: 7, title: '&#171;Общее&nbsp;Дело&#187;', url: 'https://wp.test/7/' }])
+    );
+
+    const result = await fetchSearch({ query: 'дело' });
+
+    expect(result.items[0].title).toBe('«Общее Дело»');
+  });
+
   it('links posts to /<id>/, not to the WordPress permalink', async () => {
     // WP reports its own origin; following that would walk visitors off the
     // site and into the WordPress install.
