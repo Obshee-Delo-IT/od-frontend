@@ -290,4 +290,21 @@ od_test(
 
 od_test('and the only one when there are no children', ['Хабаровский край'] === $titles(od_regions_insert([], $khabarovsk)));
 
+// The page is found by path *and* may be a child of the index; the union of the
+// two used to draw it twice (WP-10).
+od_test(
+    'not inserted a second time when it is already a child',
+    ['Ульяновская область', 'Хабаровский край', 'Ярославская область']
+        === $titles(
+            od_regions_insert(
+                [
+                    new WP_Post('Ульяновская область', 'uliyanovskaya'),
+                    new WP_Post('Хабаровский край', 'khabarovskiy'),
+                    new WP_Post('Ярославская область', 'yaroslavskaya'),
+                ],
+                $khabarovsk
+            )
+        )
+);
+
 od_test_summary();
