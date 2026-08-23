@@ -3,8 +3,9 @@
  * best source the site already holds, in priority order:
  *
  *   1. the плакат the editor supplied on Яндекс.Диск — either a file the film links
- *      to in `poster_download_url`, or a named file inside a shared folder, listed
- *      in {@link FOLDER_POSTERS} below; both get downloaded and uploaded;
+ *      to in `poster_download_url`, or a named file inside a folder, listed in
+ *      {@link FOLDER_POSTERS} below; both get downloaded and uploaded, and a table
+ *      entry also fills «Скачать плакат» when that field is empty;
  *   2. a плакат-named image already in the post body (the legacy vertical А2 art);
  *   3. the editor's featured image — the 16∶9 cover `/video/` draws.
  *
@@ -96,8 +97,17 @@ const RATIO_SIZES = ['large', 'medium_large', 'medium'];
  * single-file links it already holds, and a film that has an entry here needs no
  * link at all.
  *
- * **Ids are prod's**, which od-stage shares as its clone; od-dev's differ, so
- * nothing matches there and the pass simply falls through to the body/cover.
+ * An entry also supplies **«Скачать плакат»** when the film's `poster_download_url`
+ * is empty: a deep link at the path the listing resolved, so the button matches the
+ * films whose link the editor filled by hand. That fill happens even when the image
+ * field already holds the плакат, which is how the seven films of 2026-08-23 got
+ * their button on a second run.
+ *
+ * **Ids are prod's**, which od-stage shares as its clone. od-dev descends from the
+ * same site, so its older posts carry the same ids and three of these entries match
+ * there too — the same плакат for the same film, which is right; ids minted since the
+ * fork simply don't match and fall through to the body/cover.
+ *
  * Paths are matched **Unicode-normalised**: the folders were authored on macOS and
  * their names are NFD, so a typed NFC copy of the same name does not resolve.
  */
@@ -145,7 +155,7 @@ const folderFile = async (link, spec) => {
       if (!hrefRes.ok) {
         return { error: `download link refused (${hrefRes.status})` };
       }
-      return { name: hit.name, size: hit.size, type: hit.mime_type, href: (await readJson(hrefRes))?.href };
+      return { name: hit.name, size: hit.size, type: hit.mime_type, path, href: (await readJson(hrefRes))?.href };
     }
   }
   return { error: `«${spec}» is a folder, not a file` };
@@ -251,21 +261,24 @@ const uploadPoster = async (env, postId, file) => {
   return media.source_url;
 };
 
-/** Write the field and read it back — ACF silently ignores an unknown key. */
-const writePoster = async (env, postId, url) => {
+/** Write the given ACF fields and read them back — ACF silently ignores an unknown key. */
+const writePoster = async (env, postId, fields) => {
   const write = await wpFetch(env, `/wp/v2/posts/${postId}`, {
     method: 'POST',
-    body: JSON.stringify({ acf: { poster_image_url: url } }),
+    body: JSON.stringify({ acf: fields }),
   });
   if (!write.ok) {
-    console.log(`  ✗ could not write poster_image_url (${write.status}): ${(await write.text()).slice(0, 160)}`);
+    console.log(`  ✗ could not write (${write.status}): ${(await write.text()).slice(0, 160)}`);
     return false;
   }
-  if (((await readJson(write))?.acf?.poster_image_url ?? '') !== url) {
-    console.log('  ✗ poster_image_url did not persist');
-    return false;
+  const acf = (await readJson(write))?.acf ?? {};
+  for (const [key, value] of Object.entries(fields)) {
+    if ((acf[key] ?? '') !== value) {
+      console.log(`  ✗ ${key} did not persist`);
+      return false;
+    }
+    console.log(`  ${key} ← ${value}`);
   }
-  console.log(`  poster_image_url ← ${url}`);
   return true;
 };
 
@@ -293,41 +306,62 @@ const main = async () => {
 
     const featured = await featuredPoster(env, film.featured_media);
 
-    // A filled field is left alone unless it holds the plain featured cover: a плакат
-    // — the editor's, one this script uploaded, or the one in the body — is already the
-    // best source there is, and re-running source 1 over it would upload the same
-    // artwork a second time. Compared ignoring the `-WxH` variant suffix, since the
-    // field and the body routinely point at two sizes of one upload.
-    if (current && !sameUpload(current, featured)) {
+    // A filled image field is left alone unless it holds the plain featured cover: a
+    // плакат — the editor's, one this script uploaded, or the one in the body — is
+    // already the best source there is, and re-running source 1 over it would upload
+    // the same artwork a second time. Compared ignoring the `-WxH` variant suffix,
+    // since the field and the body routinely point at two sizes of one upload.
+    const chosen = FOLDER_POSTERS[film.id];
+    const needsImage = !current || sameUpload(current, featured);
+    // A table film also gets «Скачать плакат», which its `poster_download_url` never
+    // held: a deep link at the path the listing resolved, so the button matches the
+    // films whose link the editor filled by hand.
+    const needsLink = Boolean(chosen) && !link;
+    if (!needsImage && !needsLink) {
       skipped += 1;
       continue;
     }
 
-    const chosen = FOLDER_POSTERS[film.id];
-    if (chosen || link) {
+    if (chosen || (needsImage && link)) {
       const file = chosen ? await folderFile(chosen[0], chosen[1]) : await yandexFile(link);
       if (file.error) {
         console.log(`· ${label} — плакат ${chosen ? 'folder' : 'link'}: ${file.error}`);
       } else {
-        console.log(
-          `${args.apply ? '→' : '·'} ${label} — плакат ${file.name} (${Math.round(file.size / 1024)} КБ) → ${targetFilename(film.id, file.type)}`
-        );
+        const fields = {};
+        if (needsImage) {
+          fields.poster_image_url = null; // filled from the upload below
+        }
+        if (needsLink) {
+          fields.poster_download_url = `${chosen[0]}?path=${encodeURIComponent(file.path)}`;
+        }
+        const what = needsImage ? `плакат ${file.name} (${Math.round(file.size / 1024)} КБ)` : 'плакат link only';
+        console.log(`${args.apply ? '→' : '·'} ${label} — ${what}${needsImage ? ` → ${targetFilename(film.id, file.type)}` : ''}`);
         if (!args.apply) {
           filled += 1;
           continue;
         }
-        const url = await uploadPoster(env, film.id, file);
-        if (!url) {
-          failed += 1;
-          continue;
+        if (needsImage) {
+          const url = await uploadPoster(env, film.id, file);
+          if (!url) {
+            failed += 1;
+            continue;
+          }
+          fields.poster_image_url = url;
         }
-        if (await writePoster(env, film.id, url)) {
+        if (await writePoster(env, film.id, fields)) {
           filled += 1;
         } else {
           failed += 1;
         }
         continue;
       }
+    }
+
+    // Reached only when the table/link source did not resolve; the image field is
+    // still a плакат, so nothing below may touch it.
+    if (!needsImage) {
+      skipped += 1;
+      continue;
     }
 
     // A плакат on the legacy domain: leave the field empty rather than write that
@@ -352,7 +386,7 @@ const main = async () => {
       filled += 1;
       continue;
     }
-    if (await writePoster(env, film.id, fallback)) {
+    if (await writePoster(env, film.id, { poster_image_url: fallback })) {
       filled += 1;
     } else {
       failed += 1;
