@@ -15,7 +15,11 @@ import { PT_Sans as PTSans, PT_Sans_Narrow as PtSansNarrow } from 'next/font/goo
 import { Footer } from '@/modules/Footer';
 import { HeaderServer } from '@/modules/Header';
 import { OG_DEFAULT_IMAGE, SITE_NAME, siteUrl } from '@/shared/config/site';
-import { RadixProvider } from '@/shared/ui/theme';
+/* From its own module, not the `theme` barrel: the barrel also exports
+   `GutenbergProvider`, whose module imports `gutenberg.css` — 167 KB / 21.9 KB
+   gzip that was render-blocking on every route, including the four that render
+   no WordPress body at all (PERF-08). */
+import { RadixProvider } from '@/shared/ui/theme/radix/radix-provider';
 import css from './layout.module.css';
 import type { Metadata } from 'next';
 

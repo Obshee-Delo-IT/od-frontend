@@ -119,17 +119,23 @@ export const NewsArticle = async ({ id }: NewsArticleProps) => {
       >
         <Breadcrumbs items={breadcrumbItems} />
       </Box>
-      <Box
-        mb={{
-          mobile: 20,
-          smallDesktop: 24,
-          desktop: 32,
-        }}
-      >
-        <ImagePreviewClient>
-          <GutenbergProvider>{parsed.header}</GutenbergProvider>
-        </ImagePreviewClient>
-      </Box>
+      {/* Only when there is one. A post with no carousel and no gallery shipped
+          an empty `<div class="gutenberg">` wearing the slot's 20/24/32px
+          bottom margin, i.e. a gap between the breadcrumbs and the date with
+          nothing in it (DATA-13). */}
+      {parsed.header ? (
+        <Box
+          mb={{
+            mobile: 20,
+            smallDesktop: 24,
+            desktop: 32,
+          }}
+        >
+          <ImagePreviewClient>
+            <GutenbergProvider>{parsed.header}</GutenbergProvider>
+          </ImagePreviewClient>
+        </Box>
+      ) : null}
       <Box
         mb={{
           mobile: 40,
@@ -158,7 +164,7 @@ export const NewsArticle = async ({ id }: NewsArticleProps) => {
         </ImagePreviewClient>
         <Box as="aside" position="relative" className={css.aside}>
           <Box display="flex" flexDirection="column" position="sticky" top={32} gap={20}>
-            <SimilarNews category={category} region={region} />
+            <SimilarNews category={category} region={region} currentId={Number(id)} />
             <NewsletterSignup variant="narrow" title="Подписаться" />
           </Box>
         </Box>

@@ -163,9 +163,12 @@ export const VideoCatalogue = async ({ segment, page }: VideoCatalogueProps) => 
 
       {items.length > 0 ? (
         <div className={css.list}>
-          {items.map((film) => (
+          {items.map((film, index) => (
             <VideoCard
               key={film.id}
+              // The first poster is the measured LCP element on both `/video/`
+              // and every `/video/<segment>/` (PERF-03).
+              priority={index === 0}
               title={film.title}
               href={`/${film.id}/`}
               imageSrc={film.thumbnailUrl}

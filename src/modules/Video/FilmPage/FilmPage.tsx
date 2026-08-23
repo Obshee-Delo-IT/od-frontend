@@ -84,7 +84,12 @@ export const FilmPage = async ({ id }: FilmPageProps) => {
     ...film.downloads,
     ...extracted.downloads.filter((download) => !knownDownloadUrls.has(download.url)),
   ];
-  const parsed = parsePost(await resolveContentHtml(extracted.html, true));
+  /* `false`, unlike the news article: this page's above-the-fold image is the
+     player's own poster, which `FilmPlayer` already renders with `priority`.
+     Promoting the body's first image too preloaded the *same* photo a second
+     time — the raw CDN full-size beside a `/_next/image` variant of it
+     (DATA-09). */
+  const parsed = parsePost(await resolveContentHtml(extracted.html, false));
   const rawPosterImageUrl = film.posterImageUrl ?? extracted.posterImageUrl;
   const posterImageUrl = rawPosterImageUrl ? await resolveMediaUrl(rawPosterImageUrl) : null;
   const posterAspectRatio = film.posterImageUrl ? aspectRatioFromUrl(film.posterImageUrl) : extracted.posterAspectRatio;
