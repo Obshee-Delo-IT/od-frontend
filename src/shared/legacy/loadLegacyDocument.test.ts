@@ -118,10 +118,10 @@ describe('the upstream request (LCP-002, LCP-003)', () => {
 });
 
 describe('redirects (LCP-003)', () => {
-  it('follows a same-origin redirect', async () => {
+  it('follows a same-origin redirect that only normalises the path', async () => {
     const { calls, impl } = recorder((_url, call) =>
       call === 1
-        ? new Response(null, { status: 301, headers: { location: `${ORIGIN}/team-new/` } })
+        ? new Response(null, { status: 301, headers: { location: `${ORIGIN}/Team/` } })
         : htmlResponse('<html><body><p>moved</p></body></html>')
     );
 
@@ -129,7 +129,27 @@ describe('redirects (LCP-003)', () => {
 
     expect(result.status).toBe('ok');
     expect(calls).toHaveLength(2);
-    expect(calls[1].url).toBe(`${ORIGIN}/team-new/`);
+    expect(calls[1].url).toBe(`${ORIGIN}/Team/`);
+  });
+
+  /**
+   * WordPress 301s a path it cannot resolve onto whatever page its canonical
+   * guessing thinks was meant — `/a/b/c/d/e/f/` → `/video/famous-people/` on
+   * the real origin. Following that answered 200 with an unrelated page's
+   * content under the invented address, for every path up to the depth limit
+   * (ROUTE-07).
+   */
+  it('refuses a same-origin redirect onto a different page', async () => {
+    const { calls, impl } = recorder((_url, call) =>
+      call === 1
+        ? new Response(null, { status: 301, headers: { location: `${ORIGIN}/video/famous-people/` } })
+        : htmlResponse('<html><body><p>Известные люди</p></body></html>')
+    );
+
+    const result = await loader(impl)(['a', 'b', 'c', 'd', 'e', 'f']);
+
+    expect(result.status).toBe('missing');
+    expect(calls).toHaveLength(1);
   });
 
   it('refuses a redirect that leaves the origin, and returns none of its body', async () => {

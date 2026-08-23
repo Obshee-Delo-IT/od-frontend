@@ -32,7 +32,7 @@ export const Carousel: React.FC<CarouselProps> = ({
   };
 
   return (
-    <div aria-roledescription="carousel" aria-label={ariaLabel} className={css.root}>
+    <div aria-roledescription="карусель" aria-label={ariaLabel} className={css.root}>
       <Swiper
         modules={[Navigation, Pagination, A11y]}
         slidesPerView={slidesPerView}
@@ -53,7 +53,19 @@ export const Carousel: React.FC<CarouselProps> = ({
         onBreakpoint={syncNav}
         onLock={syncNav}
         onUnlock={syncNav}
-        a11y={{ containerRoleDescriptionMessage: 'carousel', itemRoleDescriptionMessage: 'slide' }}
+        /* Russian, like every other string on `<html lang="ru">`: Swiper's
+           defaults are English, and this component announced «carousel»,
+           «slide» and «Go to slide 2» beside the WordPress adapter next to it,
+           which already says «карусель» / «слайд» (A11Y-04). */
+        a11y={{
+          containerRoleDescriptionMessage: 'карусель',
+          itemRoleDescriptionMessage: 'слайд',
+          prevSlideMessage: 'Предыдущий слайд',
+          nextSlideMessage: 'Следующий слайд',
+          firstSlideMessage: 'Это первый слайд',
+          lastSlideMessage: 'Это последний слайд',
+          paginationBulletMessage: 'Перейти к слайду {{index}}',
+        }}
       >
         {items.map((item, idx) => (
           <SwiperSlide key={idx}>{item}</SwiperSlide>

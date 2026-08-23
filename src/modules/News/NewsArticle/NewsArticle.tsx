@@ -1,4 +1,4 @@
-import { Text } from '@radix-ui/themes';
+import { Text, VisuallyHidden } from '@radix-ui/themes';
 import { NewsletterSignup } from '@/modules/NewsletterSignup';
 import { extractFirstImage } from '@/shared/api/extractFirstImage';
 import { cachedFetchFeaturedImage } from '@/shared/api/fetchFeaturedImage';
@@ -82,11 +82,8 @@ export const NewsArticle = async ({ id }: NewsArticleProps) => {
 
   const [category, region] = data?.categories ?? [];
 
-  const breadcrumbItems = [
-    { label: 'Главная', href: '/' },
-    { label: 'Новости', href: '/news' },
-    { label: stripHtml(data?.title?.rendered) },
-  ];
+  const title = stripHtml(data?.title?.rendered);
+  const breadcrumbItems = [{ label: 'Главная', href: '/' }, { label: 'Новости', href: '/news' }, { label: title }];
 
   const parsed = parsePost(await resolveContentHtml(data?.content?.rendered, true));
   const date = formatDate(data?.date);
@@ -104,6 +101,15 @@ export const NewsArticle = async ({ id }: NewsArticleProps) => {
         desktop: 64,
       }}
     >
+      {/* The design shows the post's title in the breadcrumb trail and nowhere
+          else, so the page exposed **no h1 at all** and its first heading was
+          «Похожие новости» at h3 — a reader navigating by heading found nothing
+          naming the article they had opened (A11Y-01). Hidden rather than drawn:
+          where the title appears is the mock's decision, and this is the same
+          string the `<title>` and the last crumb already carry. */}
+      <VisuallyHidden>
+        <h1>{title}</h1>
+      </VisuallyHidden>
       <Box
         mb={{
           mobile: 24,
@@ -113,17 +119,23 @@ export const NewsArticle = async ({ id }: NewsArticleProps) => {
       >
         <Breadcrumbs items={breadcrumbItems} />
       </Box>
-      <Box
-        mb={{
-          mobile: 20,
-          smallDesktop: 24,
-          desktop: 32,
-        }}
-      >
-        <ImagePreviewClient>
-          <GutenbergProvider>{parsed.header}</GutenbergProvider>
-        </ImagePreviewClient>
-      </Box>
+      {/* Only when there is one. A post with no carousel and no gallery shipped
+          an empty `<div class="gutenberg">` wearing the slot's 20/24/32px
+          bottom margin, i.e. a gap between the breadcrumbs and the date with
+          nothing in it (DATA-13). */}
+      {parsed.header ? (
+        <Box
+          mb={{
+            mobile: 20,
+            smallDesktop: 24,
+            desktop: 32,
+          }}
+        >
+          <ImagePreviewClient>
+            <GutenbergProvider>{parsed.header}</GutenbergProvider>
+          </ImagePreviewClient>
+        </Box>
+      ) : null}
       <Box
         mb={{
           mobile: 40,
@@ -152,7 +164,7 @@ export const NewsArticle = async ({ id }: NewsArticleProps) => {
         </ImagePreviewClient>
         <Box as="aside" position="relative" className={css.aside}>
           <Box display="flex" flexDirection="column" position="sticky" top={32} gap={20}>
-            <SimilarNews category={category} region={region} />
+            <SimilarNews category={category} region={region} currentId={Number(id)} />
             <NewsletterSignup variant="narrow" title="Подписаться" />
           </Box>
         </Box>

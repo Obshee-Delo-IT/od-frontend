@@ -1,3 +1,4 @@
+import { notFound } from 'next/navigation';
 import { NewsFilter, NewsGrid, type NewsFilterOption } from '@/modules/News';
 import { NewsletterSignup } from '@/modules/NewsletterSignup';
 import { fetchNewsList } from '@/shared/api';
@@ -95,6 +96,12 @@ const Page = async ({ searchParams }: NewsPageProps) => {
     perPage: PER_PAGE,
     category: activeCategory ? NEWS_CATEGORIES[activeCategory] : undefined,
   });
+
+  // Same as the film catalogue: a page past the end is a 404, not a 200 with an
+  // empty grid and a self-canonical (SEO-10).
+  if (currentPage > 1 && items.length === 0) {
+    notFound();
+  }
 
   const breadcrumbItems = [{ label: 'Главная', href: '/' }, { label: 'Новости' }];
 

@@ -36,6 +36,29 @@ const USER_AGENT = 'od-frontend/1.0 (legacy-page fallback)';
 
 const REDIRECT_STATUSES = new Set([301, 302, 303, 307, 308]);
 
+/** Trailing slashes, case and percent-encoding removed — the parts a normalising redirect changes. */
+const normalisePath = (pathname: string): string => {
+  let decoded = pathname;
+  try {
+    decoded = decodeURIComponent(pathname);
+  } catch (_error) {
+    // A malformed escape compares in its raw form; it is still a path.
+  }
+  return decoded.replace(/\/+$/, '').toLowerCase();
+};
+
+/**
+ * A same-origin redirect is followed only when it lands on the **same** page —
+ * a trailing-slash, case or encoding normalisation.
+ *
+ * WordPress also 301s a path it cannot resolve onto whatever page its canonical
+ * guessing thinks was meant: `/a/b/c/d/e/f/` → `/video/famous-people/`. Following
+ * that served an unrelated page at 200 under the invented address, an unbounded
+ * soft-404 family up to the depth limit (ROUTE-07).
+ */
+const isSamePage = (from: string, to: URL): boolean =>
+  normalisePath(new URL(from).pathname) === normalisePath(to.pathname);
+
 /**
  * The largest legacy page measured is 128 KB, so 5 MB is forty times the real
  * ceiling and still bounds the damage.
@@ -195,7 +218,7 @@ export const createLegacyLoader = (overrides: Partial<LegacyLoaderDeps> = {}) =>
       } catch (_error) {
         return null;
       }
-      if (next.origin !== deps.origin) {
+      if (next.origin !== deps.origin || !isSamePage(current, next)) {
         return null;
       }
       current = next.toString();

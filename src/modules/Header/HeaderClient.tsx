@@ -3,7 +3,7 @@
 import clsx from 'clsx';
 import Nextlink from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Button } from '@/shared/ui/components/Button';
 import { ButtonGroup } from '@/shared/ui/components/ButtonGroup';
 import { IconButton } from '@/shared/ui/components/IconButton';
@@ -48,7 +48,19 @@ const HeaderClient = ({ navItems }: HeaderClientProps) => {
   const [openedAt, setOpenedAt] = useState<string | null>(null);
   const isOpen = openedAt !== null && openedAt === pathname;
 
-  const setIsOpen = (open: boolean) => setOpenedAt(open ? pathname : null);
+  /**
+   * The button the drawer was opened from. Closing it — with Escape or the
+   * cross — used to leave focus on the removed subtree, i.e. on `<body>`, and a
+   * keyboard user then Tabbed from the top of the document again (A11Y-03).
+   */
+  const menuButton = useRef<HTMLButtonElement>(null);
+
+  const closeMenu = () => {
+    setOpenedAt(null);
+    menuButton.current?.focus();
+  };
+
+  const setIsOpen = (open: boolean) => (open ? setOpenedAt(pathname) : closeMenu());
 
   const items = (navItems ?? []).map((item) => ({
     ...item,
@@ -75,6 +87,7 @@ const HeaderClient = ({ navItems }: HeaderClientProps) => {
     const closeOnEscape = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
         setOpenedAt(null);
+        menuButton.current?.focus();
       }
     };
 
@@ -139,6 +152,7 @@ const HeaderClient = ({ navItems }: HeaderClientProps) => {
             <SearchIcon />
           </IconButton>
           <IconButton
+            ref={menuButton}
             aria-label={isOpen ? 'Закрыть меню' : 'Открыть меню'}
             aria-expanded={isOpen}
             aria-controls={MOBILE_MENU_ID}
@@ -149,9 +163,7 @@ const HeaderClient = ({ navItems }: HeaderClientProps) => {
         </div>
       </div>
 
-      {isOpen && (
-        <MobileMenu id={MOBILE_MENU_ID} items={items} donateUrl={DONATE_URL} onClose={() => setIsOpen(false)} />
-      )}
+      {isOpen && <MobileMenu id={MOBILE_MENU_ID} items={items} donateUrl={DONATE_URL} onClose={closeMenu} />}
     </header>
   );
 };

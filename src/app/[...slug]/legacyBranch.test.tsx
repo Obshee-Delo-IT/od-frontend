@@ -50,7 +50,9 @@ describe('the legacy branch renders (LPF-003)', () => {
     const element = await render(['branch-team']);
 
     expect(element.type).toBe(LegacyEmbed);
-    expect(element.props).toEqual({ slug: ['branch-team'] });
+    // Named by the page it frames, not by the shared default: all six embedded
+    // pages announced the same «Содержимое страницы» (A11Y-08).
+    expect(element.props).toEqual({ slug: ['branch-team'], title: 'Команда' });
   });
 
   it('passes a multi-segment path straight through', async () => {

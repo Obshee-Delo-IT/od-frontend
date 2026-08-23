@@ -19,6 +19,13 @@ interface VideoCardProps {
   downloads?: VideoDownload[];
   share?: VideoShareLinks;
   className?: string;
+  /**
+   * The card that holds the page's LCP element — the first one in the
+   * catalogue. Its poster used to render `loading="lazy"` with no
+   * `fetchPriority`, so the preload scanner never saw the largest image on the
+   * #2 and #3 entry pages and LCP landed at 4208 / 3764 ms (PERF-03).
+   */
+  priority?: boolean;
 }
 
 /**
@@ -38,6 +45,7 @@ export const VideoCard: React.FC<VideoCardProps> = ({
   downloads = [],
   share,
   className,
+  priority = false,
 }) => {
   const shareLinks = resolveShareLinks(share);
 
@@ -46,7 +54,14 @@ export const VideoCard: React.FC<VideoCardProps> = ({
       <div className={css.left}>
         <NextLink href={href} className={css.poster} aria-label={title}>
           {imageSrc ? (
-            <Image src={imageSrc} alt={imageAlt} fill className={css.image} sizes="(max-width: 900px) 100vw, 368px" />
+            <Image
+              src={imageSrc}
+              alt={imageAlt}
+              fill
+              className={css.image}
+              sizes="(max-width: 900px) 100vw, 368px"
+              priority={priority}
+            />
           ) : null}
         </NextLink>
 

@@ -232,10 +232,13 @@ const Page = async ({ params }: { params: Promise<{ slug: string[] }> }) => {
       }
     }
 
-    // A `/page/N/` WordPress could not serve is not a legacy address either —
-    // the old site paginated `/news/` and `/category/*`, and the proxy answers
-    // for both before this route sees them.
-    if (pageNumber > 1) {
+    // A `/page/N/` of a page **WordPress owns** and could not serve is not a
+    // legacy address either — the old site paginated `/news/` and `/category/*`,
+    // and the proxy answers for both before this route sees them. A page on the
+    // embed list is the other case: its pagination is the old site's own, which
+    // still serves it, so it goes to the fallback with the page number intact
+    // (ROUTE-15).
+    if (pageNumber > 1 && nativePath) {
       notFound();
     }
 
@@ -256,7 +259,16 @@ const Page = async ({ params }: { params: Promise<{ slug: string[] }> }) => {
     // remounts it. Without the key React reuses the instance, the frame reloads
     // but the measured `height` state does not, and the new page renders at the
     // old page's height until its first report arrives.
-    return <LegacyEmbed key={legacyPathname(slug)} slug={slug} />;
+    // Named by the page it frames. All six embedded pages carried the same
+    // generic «Содержимое страницы», so a reader listing the frames could not
+    // tell them apart (A11Y-08).
+    return (
+      <LegacyEmbed
+        key={legacyPathname(slug)}
+        slug={slug}
+        title={legacy.status === 'ok' ? (legacy.document.title ?? undefined) : undefined}
+      />
+    );
   }
 
   const kind = await resolvePostKind(id);

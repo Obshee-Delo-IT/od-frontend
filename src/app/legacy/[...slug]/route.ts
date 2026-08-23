@@ -63,3 +63,16 @@ export const GET = async (
 
   return new Response(result.document.html, { status: 200, headers: SUCCESS_HEADERS });
 };
+
+/**
+ * Read-only, and explicitly so: RFC 9110 requires `Allow` on a 405, and Next's
+ * own rejection of an unexported method sends none (SEC-08).
+ */
+const methodNotAllowed = (): Response =>
+  new Response(null, { status: 405, headers: { ...FAILURE_HEADERS, allow: 'GET, HEAD' } });
+
+export const POST = methodNotAllowed;
+export const PUT = methodNotAllowed;
+export const PATCH = methodNotAllowed;
+export const DELETE = methodNotAllowed;
+export const OPTIONS = methodNotAllowed;

@@ -136,6 +136,10 @@ function od_regions_records($parentId)
  * Хабаровский край put where the alphabet has it, rather than after the last
  * child of `/contacts/`.
  *
+ * A page that is *already* in the list is left alone rather than inserted
+ * twice: the extra page is found by path, and on an install where it is also a
+ * child of the index the two sources overlap.
+ *
  * The list arrives ordered by the database, `menu_order` then title under
  * MySQL's own collation, and **stays that way**: this walks it for the first row
  * the extra page sorts before and splices it in there. Re-sorting the whole
@@ -149,6 +153,17 @@ function od_regions_records($parentId)
  */
 function od_regions_insert(array $pages, $extra)
 {
+    // Already there: `/contacts/khabarovskiy/` is looked up by path *and* is a
+    // child of the index on some installs, and the union of the two had no
+    // membership check — the accordion then drew two «Хабаровский край»
+    // disclosures (WP-10).
+    foreach ($pages as $page) {
+        $sameId = isset($page->ID, $extra->ID) && (int) $page->ID === (int) $extra->ID;
+        if ($sameId || $page->post_name === $extra->post_name) {
+            return $pages;
+        }
+    }
+
     $index = count($pages);
 
     foreach ($pages as $position => $page) {

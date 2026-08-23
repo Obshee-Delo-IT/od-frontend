@@ -61,6 +61,23 @@ describe('ImagePreviewClient', () => {
   });
 
   /**
+   * The keyboard path, which had no coverage and did not work: a click generated
+   * by Enter on the focused anchor has the **anchor** as its target, so
+   * `closest('img')` found nothing, `open` bailed without `preventDefault`, and
+   * the browser navigated to the raw JPEG (A11Y-12).
+   */
+  it('opens the lightbox from the keyboard, on the anchor around the image', async () => {
+    render(linked('https://cdn.test/wp-content/uploads/2021/02/poster.jpg'));
+    asLoaded();
+
+    const anchor = screen.getByRole('link');
+    anchor.focus();
+    await userEvent.keyboard('{Enter}');
+
+    expect(dialog()).not.toBeNull();
+  });
+
+  /**
    * The whole reason for `preventDefault`: WordPress writes that href
    * root-relative, so following it lands on our own origin — a 404 — with the
    * modal open behind it.

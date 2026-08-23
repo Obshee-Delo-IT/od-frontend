@@ -16,6 +16,18 @@ import { decodeSegments } from './legacyPath';
 const RESERVED_FIRST_SEGMENTS = new Set(['legacy', '_next', 'api']);
 
 /**
+ * `/news/<id>/` and `/video/<id>/` are this project's own pre-launch post
+ * shapes — a post's only address here is the bare `/<id>/`, and CLAUDE.md keeps
+ * them 404 rather than adding a second address for one piece of content.
+ *
+ * Without this they were not 404 but **200**: WordPress answers any
+ * `/news/…` path with its «Наши дела» archive, the fallback embedded that, and
+ * the page canonicalised onto itself — so every integer, `/news/99999999/`
+ * included, was a live indexable duplicate of the archive (ROUTE-01).
+ */
+const POST_SHADOW_SECTIONS = new Set(['news', 'video']);
+
+/**
  * Deeper than any legacy page: the deepest measured is three segments
  * (`/materials/printed-products/`-shaped). The bound exists so a crafted path
  * cannot fan out indefinitely, not because six is meaningful.
@@ -33,6 +45,9 @@ export const isEmbeddable = (slug: readonly string[] | undefined): boolean => {
     return false;
   }
   if (RESERVED_FIRST_SEGMENTS.has(segments[0].toLowerCase())) {
+    return false;
+  }
+  if (segments.length === 2 && POST_SHADOW_SECTIONS.has(segments[0].toLowerCase()) && /^\d+$/.test(segments[1])) {
     return false;
   }
   // A dot in the last segment means a file, not a page — `/favicon.png/`,

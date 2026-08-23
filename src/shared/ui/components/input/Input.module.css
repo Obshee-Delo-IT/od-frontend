@@ -10,14 +10,19 @@
   color: var(--gray-6);
 }
 
+/* A real ring, not a border tint. `outline: none` above plus a focused border
+   equal to the unfocused one left the gray field with no focus cue at all, and
+   the red one with a 2.71:1 border against its own focused ground — under the
+   3:1 WCAG 1.4.11 floor (A11Y-02). The outline draws outside the box, so it
+   costs no layout. */
 .inputGray:focus-within {
   border: 1px solid var(--gray-4);
-  outline: none;
+  outline: 2px solid var(--gray-9);
+  outline-offset: 2px;
 }
 
 .inputGray:hover {
   border: 1px solid var(--gray-6);
-  outline: none;
 }
 
 .inputRed {
@@ -35,13 +40,13 @@
 .inputRed:focus-within {
   border: 1px solid var(--red-4);
   background: var(--red-7);
-  outline: none;
+  outline: 2px solid var(--red-1);
+  outline-offset: 2px;
 }
 
 .inputRed:hover {
   border: 1px solid var(--red-1);
   background: var(--red-5);
-  outline: none;
 }
 
 .icon {

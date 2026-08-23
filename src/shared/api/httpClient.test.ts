@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { WP_TAGS, wpCache } from './cacheTags';
 import { client } from './httpClient';
 
@@ -42,5 +42,51 @@ describe('the typed WP client', () => {
     await client.GET('/wp/v2/menus', { ...wpCache([WP_TAGS.menus]), fetch });
 
     expect(seen.request?.headers.get('authorization')).toMatch(/^Basic /);
+  });
+});
+
+/**
+ * A WordPress behind a WAF, in maintenance mode or redirecting to a login page
+ * answers **200 text/html**. Every fetcher here parses JSON, so that used to
+ * surface as an unhandled `SyntaxError` naming neither the URL nor the content
+ * type — and `/sitemap.xml` read the missing `X-WP-TotalPages` as the CI stub
+ * and published ten URLs at 200 rather than keeping the last good body (GAP-02).
+ */
+describe('a 200 that is not JSON', () => {
+  const htmlResponse = () =>
+    new Response('<html><body>Attention Required</body></html>', {
+      status: 200,
+      headers: { 'content-type': 'text/html; charset=UTF-8' },
+    });
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
+    vi.unstubAllGlobals();
+    vi.restoreAllMocks();
+    vi.resetModules();
+  });
+
+  it('throws out of the typed client, naming the content type', async () => {
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    await expect(client.GET('/wp/v2/menus', { fetch: async () => htmlResponse() })).rejects.toThrow(
+      /content-type text\/html/
+    );
+    expect(error).toHaveBeenCalledWith(expect.stringContaining('non-JSON 200'));
+  });
+
+  it('becomes a 502 out of wpFetch, which every caller already handles', async () => {
+    vi.stubEnv('WP_BASE', 'https://wp.test');
+    vi.stubEnv('WP_USER', 'user');
+    vi.stubEnv('WP_PASSWORD', 'password');
+    vi.stubGlobal('fetch', async () => htmlResponse());
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    vi.resetModules();
+
+    const { wpFetch } = await import('./httpClient');
+    const response = await wpFetch('/wp/v2/posts');
+
+    expect(response.status).toBe(502);
+    expect(response.ok).toBe(false);
   });
 });

@@ -25,9 +25,23 @@ import { decodeEntities } from '@/shared/lib/decodeEntities';
  */
 const TAG_TAIL = String.raw`(?:[^>"']|"[^"]*"|'[^']*')*`;
 
-/** Re-encode a value we computed so it is safe inside a double-quoted attribute. */
+/**
+ * Re-encode a value we computed so it is safe inside an attribute — in **either**
+ * quote style.
+ *
+ * `'` is not decoration here: the theme writes plenty of single-quoted
+ * attributes, and a rewritten `href` spliced back between single quotes used to
+ * close its own attribute — the browser read `href="…/te"` plus a bogus `st/'`
+ * attribute, turning an author-controlled legacy path into attribute injection
+ * (SEC-07).
+ */
 export const encodeAttributeValue = (value: string): string =>
-  value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
 
 const blank = (length: number): string => ' '.repeat(Math.max(0, length));
 

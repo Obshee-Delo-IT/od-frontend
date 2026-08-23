@@ -28,6 +28,8 @@
  * network.
  */
 
+import { origin, readArgs } from './lib/args.mjs';
+
 const DEFAULT_LEGACY = 'https://obshee-delo.ru';
 
 /**

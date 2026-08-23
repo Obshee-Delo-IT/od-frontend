@@ -15,7 +15,11 @@ import { PT_Sans as PTSans, PT_Sans_Narrow as PtSansNarrow } from 'next/font/goo
 import { Footer } from '@/modules/Footer';
 import { HeaderServer } from '@/modules/Header';
 import { OG_DEFAULT_IMAGE, SITE_NAME, siteUrl } from '@/shared/config/site';
-import { RadixProvider } from '@/shared/ui/theme';
+/* From its own module, not the `theme` barrel: the barrel also exports
+   `GutenbergProvider`, whose module imports `gutenberg.css` — 167 KB / 21.9 KB
+   gzip that was render-blocking on every route, including the four that render
+   no WordPress body at all (PERF-08). */
+import { RadixProvider } from '@/shared/ui/theme/radix/radix-provider';
 import css from './layout.module.css';
 import type { Metadata } from 'next';
 
@@ -33,6 +37,9 @@ const ptSansNarrow = PtSansNarrow({
 });
 
 const SITE_DESCRIPTION = 'Общероссийская общественная организация';
+
+/** The skip link's target, and the only id the layout owns. */
+const MAIN_ID = 'main';
 
 export const metadata: Metadata = {
   /**
@@ -78,8 +85,16 @@ const RootLayout = ({
   <html lang="ru" className="rt-reset">
     <body className={`${ptSansNarrow.variable} ${ptSans.variable}`}>
       <RadixProvider>
+        {/* WCAG 2.4.1. There was no bypass mechanism anywhere on the site, and
+            the header is 11 tab stops before the page's own content — 63 on
+            `/contacts/`, where 52 of them are the map's region links (A11Y-06). */}
+        <a href={`#${MAIN_ID}`} className={css.skipLink}>
+          Перейти к содержимому
+        </a>
         <HeaderServer />
-        <main className={css.main}>{children}</main>
+        <main id={MAIN_ID} className={css.main}>
+          {children}
+        </main>
         <Footer />
       </RadixProvider>
     </body>

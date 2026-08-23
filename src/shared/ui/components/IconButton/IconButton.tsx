@@ -11,6 +11,12 @@ interface IconButtonProps extends RadixOwn {
   variant?: IconButtonVariant;
   radius?: IconButtonRadius;
   'aria-label': string;
+  /**
+   * Declared because `React.FC` does not: React 19 passes `ref` to a function
+   * component as an ordinary prop, and the header needs one to put focus back
+   * on the menu button when the drawer closes.
+   */
+  ref?: React.Ref<HTMLButtonElement>;
 }
 
 const variantToRadix: Record<IconButtonVariant, RadixIconButtonProps['variant']> = {

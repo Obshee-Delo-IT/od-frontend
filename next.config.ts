@@ -71,6 +71,32 @@ const nextConfig: NextConfig = {
   },
   reactCompiler: true,
 
+  /**
+   * Frame policy for the public pages (SEC-10). The only frame policy this repo
+   * had was the one the `/legacy/*` proxy sets on its own fragment — so the
+   * indexable parent pages, the ones with the site's own links and the film
+   * player, could be framed by anyone.
+   *
+   * `frame-ancestors 'self'` and not a fuller CSP: this site renders
+   * WordPress-authored HTML, and a `script-src` here would need to describe
+   * every embed an editor may add. `X-Frame-Options` rides along for the
+   * crawlers and scanners that still only read that one.
+   *
+   * `/legacy/` is excluded because its route handler sets both headers itself,
+   * and two identical policies on one response is noise.
+   */
+  async headers() {
+    return [
+      {
+        source: '/((?!legacy/).*)',
+        headers: [
+          { key: 'x-frame-options', value: 'SAMEORIGIN' },
+          { key: 'content-security-policy', value: "frame-ancestors 'self'" },
+        ],
+      },
+    ];
+  },
+
   // od-dev WP is slow (~1.5s/request) and starts 503ing under the build's
   // parallel prerender of ~46 ISR seed pages — retry failed pages and keep
   // the export concurrency modest instead of failing the whole build.

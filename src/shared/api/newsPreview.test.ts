@@ -48,3 +48,21 @@ describe('buildNewsPreview', () => {
     expect(preview).not.toContain('wor…'); // cut on whitespace, not mid-word
   });
 });
+
+describe('buildNewsPreview, against the excerpts WordPress really sends', () => {
+  it("drops WP's own read-more link, which repeats the whole title", () => {
+    const excerpt =
+      '<p>Научно-познавательный мультфильм про сахар&hellip; ' +
+      '<a class="more-link" href="https://wp.test/74794/">Читать далее ' +
+      '<span class="screen-reader-text">САХАР АТАКУЕТ</span></a></p>';
+
+    expect(buildNewsPreview(excerpt, null)).toBe('Научно-познавательный мультфильм про сахар…');
+  });
+
+  it('bounds the excerpt at the same length as the content fallback', () => {
+    const preview = buildNewsPreview(`<p>${'слово '.repeat(120)}</p>`, null);
+
+    expect(preview?.length).toBeLessThanOrEqual(301);
+    expect(preview?.endsWith('…')).toBe(true);
+  });
+});
