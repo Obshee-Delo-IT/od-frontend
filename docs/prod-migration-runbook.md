@@ -378,7 +378,13 @@ ssh od-root 'cd ~/public_html && wp --skip-plugins --skip-themes eval "
   var_dump( OD_Revalidate::send( array( \"tags\" => array( \"wp:menus\" ) ) ) );"'
 
 # c. only then, a real edit — retitle a post to the same title and watch
-#    x-nextjs-cache on its page go HIT → MISS
+#    x-nextjs-cache on its page go HIT → MISS. That header is exposed (verified
+#    on the stage tier: `x-nextjs-cache: MISS`, `x-nextjs-prerender: 1`).
+#    Cheaper proof, and the one used on stage: append
+#    `define( 'OD_REVALIDATE_DEBUG', true );` to config.php, run the no-op
+#    update through WP-CLI — error_log goes to stderr there, so the purge line
+#    prints in the terminal without needing debug.log — then remove the define.
+#      [od-revalidate] {"postIds":[19864]} → HTTP 200 {"revalidated":{…}} [cli]
 ```
 
 **Rollback is deletion.** `rm ~/public_html/wp-content/mu-plugins/od-revalidate.php` and the `od-revalidate/` directory beside it; nothing else in WordPress references either, and the only DB row it can leave is one transient (`wp --skip-plugins --skip-themes transient delete od_revalidate_unreachable`). Deleting the config alone is enough to make it inert.
@@ -769,7 +775,12 @@ pnpm lint && pnpm type-check && pnpm test && pnpm build
 
 **4.8 ISR caveat.** The ISR cache lives on the container filesystem, so it is **per-replica**. Scaling past one instance needs a shared `cacheHandler` — and note the same applies to purges: `POST /api/revalidate/` clears the replica that receives it, so on more than one instance every replica has to be hit, or the shared handler must land first.
 
-`revalidate = 3600` everywhere. **On-demand revalidation is built on both sides and waits on one line of config** (B4): the app exposes `POST /api/revalidate/`, every WP fetch is tagged, and the mu-plugin is installed on od-dev — but with `OD_REVALIDATE_URL` commented out, because there was no deployment to purge. Per tier: set `REVALIDATE_SECRET` on the frontend, then point WP's `OD_REVALIDATE_URL` at `https://<that tier>/api/revalidate/` (trailing slash — the bare form is a 308 and WP does not re-POST). Verify the two secrets match by digest, never by printing them; the whole procedure is [`wp-backend.md` §6.5](./wp-backend.md). Skip it and WP edits take up to an hour to appear — tell the editors, or close the loop first. **Give each tier its own secret**; prod's on stage is access to prod's cache.
+`revalidate = 3600` everywhere. **On-demand revalidation is live on the stage tier since 2026-08-23** (B4), so the hop this section used to call untested — WP → a deployed frontend over the network — is now measured: od-stage's `config.php` points at `https://new.obshee-delo.ru/api/revalidate/`, the Coolify application `od-frontend-stage` holds `REVALIDATE_SECRET`, the route answered 503 → 401 → 200 in that order, and a no-op `wp post update` on od-stage logged `{"postIds":[19864]} → HTTP 200`. od-dev stays inert on purpose: `OD_REVALIDATE_URL` commented out, no deployment of its own to purge. Prod is the same two values, freshly generated. Per tier: set `REVALIDATE_SECRET` on the frontend, then point WP's `OD_REVALIDATE_URL` at `https://<that tier>/api/revalidate/` (trailing slash — the bare form is a 308 and WP does not re-POST). Verify the two secrets match by digest, never by printing them; the whole procedure is [`wp-backend.md` §6.5](./wp-backend.md). Skip it and WP edits take up to an hour to appear — tell the editors, or close the loop first. **Give each tier its own secret**; prod's on stage is access to prod's cache.
+
+**Two things the stage wiring taught, both of which apply to prod's tier:**
+
+- **A redeploy is not a cache flush.** The stage application mounts a Coolify persistent volume at `/app/.next/cache`, so a new container inherits every ISR entry. The only ways to refresh a stale page are the hourly window, a purge, or emptying that volume (`docker exec <container> sh -c 'rm -rf /app/.next/cache/*'` then restart). Decide deliberately whether prod's application gets the same volume: it survives deploys (good — no cold start on every release) at the cost of a deploy no longer being an escape hatch for a bad render.
+- **`REVALIDATE_SECRET` has to be added in the Coolify UI.** The Coolify MCP exposes no env-write tool (`list_env_keys`, `deploy`, `control` only), and a raw `curl` carrying the MCP token is refused by the permission classifier — so this one step cannot be automated from a session. Copy the value out of the tier's env file without printing it: `grep -m1 '^REVALIDATE_SECRET=' .env.stage | cut -d= -f2- | tr -d '\n' | wl-copy`. The variable is read per request, but env is injected at container start, so restart after adding it.
 
 ⚠️ **One WP install can only notify one frontend.** `OD_REVALIDATE_URL` is a single constant, so pointing od-dev at a stage deployment means a local dev server never gets purged — and pointing prod's WP at stage would silently leave prod stale. It is per-install config, not per-tier-pair.
 
