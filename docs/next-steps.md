@@ -97,9 +97,14 @@ the footer clicks that were removed.
    link back**, pointing straight at it · or **rebuild the page natively** with
    an outbound donate CTA, if the campaign is live and the content is worth
    keeping.
-4. Then decide leyka — open item 9 under B-PLUGINS in the plan. If donations
-   never come back to this WordPress, leyka and its `leyka_donation` /
-   `leyka_campaign` CPTs go at plugin cleanup.
+4. ~~Then decide leyka.~~ **Decided 2026-08-24: it goes** — deactivated and
+   deleted on the new install, procedure and numbers in
+   [runbook §2.10](./prod-migration-runbook.md). The `leyka_donation` /
+   `leyka_campaign` rows stay as an archive. Note the form is not merely
+   unprofitable, it is *collecting*: **2603** `submitted` records against
+   **467** `funded`, 200 of them in 2026, each leaving a name and an address in
+   `wp_postmeta`. That is an argument for switching it off ahead of the page
+   decision, not after it.
 
 **Rule that outlives this entry:** donations must not be routed back through
 WordPress — same reasoning as [`newsletter-unisender.md`](./newsletter-unisender.md).
@@ -465,8 +470,11 @@ product decision, not a database chore.
 | `wp_wpr_rucss_resources`, `wp_wpr_rucss_used_css` | — | WP Rocket's used-CSS cache |
 | `wp_hugeit_lightbox`, `wp_all_in_one_bannerWithPlaylist_*` ×4 | ~75 | a lightbox and a banner-playlist plugin |
 
-**`wp_leyka_donations` and `wp_leyka_donations_meta` stay** — leyka is one of the
-two plugins that remain active, and those rows are donation records.
+**`wp_leyka_donations` and `wp_leyka_donations_meta` can go with them** — both
+are **empty, 0 rows each** on prod and on the clone (measured 2026-08-24), and
+leyka itself is switched off ([runbook §2.10](./prod-migration-runbook.md)). The
+donation history is the `leyka_donation` CPT — 3070 posts and 42 641 meta rows,
+which no plugin removal touches.
 
 Note for whoever runs it: a single `DROP TABLE` naming all 22 is one
 irreversible statement over a database, and it is worth doing per family with a
