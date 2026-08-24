@@ -966,11 +966,13 @@ the cross-border-transfer article nor the localisation requirement is in play,
 and an IP plus User-Agent reaching a Russian video host is not what a consent
 gate exists for. **What production actually shows is Clearfy's cookie notice**
 («Этот сайт использует cookie для хранения данных…», linking `/conf_politics/`),
-i.e. a statement about cookies, and the new site has nothing equivalent. Two real
-items are left inside the scenario: the cookie/analytics notice has to reach
-parity with prod before the domain moves (Metrica is the thing it is about), and
-the consent text stored **with** a submission is a genuine 152-FZ obligation for
-the newsletter form when it ships — see
+i.e. a statement about cookies, and the new site had nothing equivalent. **The
+parity half shipped 2026-08-24** — `CookieNotice`, prod's copy and cookie in
+`edu.obshee-delo.ru`'s corner-card placement
+([notes §5](./implementation-notes.md#f6b-the-cookie-notice-in-the-app--2026-08-24)).
+Two items are left inside the scenario: the notice has to *gate* Metrica once a
+counter loads (A4), and the consent text stored **with** a submission is a genuine
+152-FZ obligation for the newsletter form when it ships — see
 [`newsletter-unisender.md`](./newsletter-unisender.md).
 
 Separately, and as hygiene rather than law: the player iframe is granted

@@ -25,7 +25,7 @@ Status legend: `[ ]` not started · `[~]` partial or blocked · `[x]` done.
 | **B2 · B3 · B7 · B-CPT** | Data layer: type generation unblocked · cache tags on every WP request · `fetchSearch` · the `profile`/`project` recon behind D3. |
 | **E3/E4** | Downloads ride in post content; Kinescope НКО approved and embedded. |
 | **F4** | Half: sitemap (8 248 URLs), robots, `metadataBase`, self-referential canonicals. |
-| **F6** | Half: prod `/conf_politics/` is correct and cookie consent is live on the legacy site; the footer's СМИ line + 12+ verified as WordPress data. |
+| **F6** | Half: prod `/conf_politics/` is correct, cookie consent is live on the legacy site and the app has its own notice; the footer's СМИ line + 12+ verified as WordPress data. |
 
 **Researched, not built:** the live site's shape and constraints (§6 of the notes) · 91 days of Yandex Metrica traffic (§7) · the WP content model and plugin landscape ([`wp-backend.md`](./wp-backend.md)) · the Figma token and page inventories ([`design-system.md`](./design-system.md), [`page-mocks.md`](./page-mocks.md)).
 
@@ -174,8 +174,8 @@ What the section leaves behind, tracked with the pages that need it rather than 
 - [ ] **F3. Core Web Vitals budget.** Targets (LCP ≤ 2.5s, INP ≤ 200ms, CLS ≤ 0.1) wired to CI as a gate.
 - [~] **F4. SEO.** Sitemap/robots/canonicals shipped; the favicon and the social card followed 2026-08-22 ([notes §5](./implementation-notes.md#f4b-the-favicon-and-the-social-card-2026-08-22)). **Left:** JSON-LD (`NewsArticle` per post, `VideoObject` per film, `Organization` site-wide).
 - [ ] **F5. Russian-specific polish.** Verify Cyrillic font fallbacks on Windows / older Android. Confirm typographic conventions (em-dashes, non-breaking spaces, `«…»` quotes — confirmed by the live privacy policy).
-- [~] **F6. 152-FZ compliance.** The privacy page and the legacy site's cookie consent are done, 2026-08-13 — what changed and why is [notes §5](./implementation-notes.md#f6-152-fz-compliance--the-privacy-page-and-the-legacy-consent-2026-08-13). **What's left rides on two other items:**
-  - **Consent banner in the app**, gating Metrica only — lands with **A4** (counter **34478865**). The legacy site has one now, so shipping the app without one would make §15.2 of the published policy false again.
+- [~] **F6. 152-FZ compliance.** The privacy page and the legacy site's cookie consent are done, 2026-08-13 — what changed and why is [notes §5](./implementation-notes.md#f6-152-fz-compliance--the-privacy-page-and-the-legacy-consent-2026-08-13) — and the app's own cookie notice shipped 2026-08-24 ([notes §5](./implementation-notes.md#f6b-the-cookie-notice-in-the-app--2026-08-24)). **What's left rides on two other items:**
+  - **Gating Metrica on that consent** — lands with **A4** (counter **34478865**). `CookieNotice` is a statement about cookies, like prod's; the moment a counter loads, the «OK» has to be what loads it.
   - **Per-form consent checkbox** — lands with **B6**. The wording is already in the policy, §8.2: «Заполняя соответствующие формы и/или отправляя свои персональные данные Оператору, Пользователь выражает свое согласие с данной Политикой».
   - **Two footer hrefs come from WordPress and break on this origin** — C9 renders widget markup verbatim, and `block-27`'s «Политика конфиденциальности» is the absolute `https://od-dev.tmweb.ru/conf_politics/`, while the СМИ выписка PDF is a root-relative `/wp-content/uploads/…` that only a WP origin answers (the file itself lives on the media CDN). Fix in od-dev's widget, not in `renderFooterWidget`.
   - No GDPR notice, and **Google Analytics does not come back** — it was removed from prod on 2026-08-07 precisely because it shipped visitor data abroad for no need.

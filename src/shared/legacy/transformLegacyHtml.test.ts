@@ -497,6 +497,14 @@ describe('transformLegacyHtml — injected stylesheet', () => {
     expect(styleSource(run('plakati').html)).toContain('.cmsms_row:has(.shortcode_wysija){display:none!important}');
   });
 
+  /**
+   * Ours is the only cookie notice on the page. Unconditional, so any fixture
+   * proves it — none of the three was captured with the bar in the markup.
+   */
+  it('hides the legacy cookie bar', () => {
+    expect(styleSource(run('faq').html)).toContain('#clearfy-cookie{display:none!important}');
+  });
+
   it('is added once, not once per pass', () => {
     const once = run('team').html;
     const twice = transformLegacyHtml(once, { origin: LEGACY, path: '/team/', siteOrigin: SITE }).html;
@@ -568,9 +576,9 @@ describe('transformLegacyHtml — golden fingerprint (V18)', () => {
         "anchors": 17,
         "bases": 1,
         "boundaryMiss": false,
-        "bytes": 76968,
+        "bytes": 77007,
         "description": null,
-        "digest": "656a03d128ee9f8f",
+        "digest": "f8c9de2ec732c7df",
         "downloads": 0,
         "externalScripts": 28,
         "inlineStyles": 11,
@@ -589,9 +597,9 @@ describe('transformLegacyHtml — golden fingerprint (V18)', () => {
         "anchors": 52,
         "bases": 1,
         "boundaryMiss": false,
-        "bytes": 119163,
+        "bytes": 119202,
         "description": null,
-        "digest": "f15c63907a56e6b6",
+        "digest": "68eed627099321af",
         "downloads": 32,
         "externalScripts": 38,
         "inlineStyles": 11,
@@ -610,9 +618,9 @@ describe('transformLegacyHtml — golden fingerprint (V18)', () => {
         "anchors": 34,
         "bases": 1,
         "boundaryMiss": false,
-        "bytes": 89702,
+        "bytes": 89741,
         "description": null,
-        "digest": "da216676c0c67be0",
+        "digest": "70962cb9f1e4eae9",
         "downloads": 3,
         "externalScripts": 35,
         "inlineStyles": 11,
