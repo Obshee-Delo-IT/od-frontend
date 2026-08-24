@@ -1340,6 +1340,18 @@ The plan called for porting the live privacy text into a new route with the Goog
 - **od-dev's page 36316 is a *different, older document***, last touched 2017-11-18: a generic template naming «**ООО** «Общее дело»» — not even the right legal form. The current legal text exists only on prod. Anything that serves `/conf_politics/` must read the frozen copy or prod, never od-dev.
 - **Prod still loads `fonts.googleapis.com` + `fonts.gstatic.com`** on every page. That is the same cross-border request pattern GA and the VK pixel were removed for, and it is not disclosed in the policy. Not fixed here — it is legacy-theme work with a short shelf life — but it is the honest next candidate if anyone revisits prod's compliance. The app is unaffected: `next/font` self-hosts at build time.
 
+### F6b. The cookie notice in the app — 2026-08-24
+
+Production's notice is Clearfy's (§F6 above): a full-width white bar across the bottom of every page, «Этот сайт использует cookie для хранения данных…» linking `/conf_politics/`, an «OK» button, consent stored for a year in a `clearfy_cookie_hide` cookie. The new site had nothing equivalent, which is what `SEC-11` in [`next-steps.md`](./next-steps.md) was left holding. `CookieNotice` in `src/shared/ui/components/` closes the parity half of it, rendered once from `app/layout.tsx` after the footer.
+
+**Same copy, same link, same cookie — different placement.** The copy is prod's verbatim (the plan already recorded that it needs no sign-off, being published text), and the placement is the small bottom-left card `edu.obshee-delo.ru` uses rather than prod's bar: 360px wide at 20px from the corner, spanning the column with 12px margins below 900. A bar across the bottom of a phone covers the CTA it sits on.
+
+**The cookie name is deliberately Clearfy's**, and that buys two things. A visitor who already accepted on production is not asked again after the domain moves — same domain, same cookie name, and the year-long expiry is still live for anyone who accepted since 2026-08-13. And the notice the A6 iframe carries hides *itself*: `/legacy/*` is served from our origin, so Clearfy's inline script reads the cookie we set. Before consent it would be a second notice inside the page, so `transformLegacyHtml`'s injected stylesheet gained a third rule, `#clearfy-cookie{display:none!important}` — the fixtures were captured without the bar in the markup, so the assertion is that the rule is emitted, not that a fixture changes.
+
+**No effect, and nothing in the server HTML.** The consent cookie can only be read on the client, and every route this renders on is statically generated, so a card in the HTML would flash at every visitor who has already accepted. The component holds `dismissed` state for the click and gets its client/server split from a subscription-free `useSyncExternalStore` mount check — `react-hooks/set-state-in-effect` is an error in this repo, and a `useEffect` that sets state was the first shape written. Verified against `next start` at 1440 and 375: the card renders bottom-left, «OK» removes it, and it stays gone across a reload.
+
+**What this does not do: it does not gate anything.** There is no analytics on the site yet, so the notice is a statement about cookies and not a consent gate — which is exactly what prod's is. The gating half still lands with **A4** (Metrica counter `34478865`), and the per-form consent record still lands with **B6**.
+
 ---
 
 ## 6. Research — the live site (2026-05-29)

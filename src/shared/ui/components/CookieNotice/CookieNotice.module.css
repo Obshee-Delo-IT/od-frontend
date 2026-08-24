@@ -1,0 +1,33 @@
+.root {
+  position: fixed;
+  z-index: 120;
+  bottom: 20px;
+  left: 20px;
+  display: flex;
+  max-width: 360px;
+  align-items: center;
+  padding: 16px;
+  border-radius: var(--radius-3);
+  background-color: var(--white);
+  box-shadow: var(--shadow-sm), 0 0 0 1px var(--gray-3);
+  gap: 12px;
+}
+
+.text {
+  color: var(--gray-6);
+}
+
+.accept {
+  flex-shrink: 0;
+}
+
+/* Below 900 there is no room beside the card, so it spans the column instead —
+   still a card, not the full-bleed bar production shows. */
+@media (--mobile) {
+  .root {
+    right: 12px;
+    bottom: 12px;
+    left: 12px;
+    max-width: none;
+  }
+}

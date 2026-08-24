@@ -110,11 +110,18 @@ const STYLE_MARKER = 'data-od-legacy-style';
  *   heading («Хотите быть в курсе…») with it rather than leaving it stranded
  *   above a gap.
  *
+ * - Clearfy's cookie bar, which the legacy template prints on every page and
+ *   which our own `CookieNotice` now asks in. It hides itself once accepted —
+ *   the iframe is served from our origin, so it reads the same
+ *   `clearfy_cookie_hide` cookie we set — but before that it is a second notice
+ *   sitting inside the page.
+ *
  * CSS rather than DOM surgery on purpose: `:has()` states the relationship in
  * one line, and a browser without it drops this rule alone and shows the block,
  * which is exactly today's behaviour.
  */
-const LEGACY_STYLE = '#middle{padding-top:0!important}.cmsms_row:has(.shortcode_wysija){display:none!important}';
+const LEGACY_STYLE =
+  '#middle{padding-top:0!important}.cmsms_row:has(.shortcode_wysija){display:none!important}#clearfy-cookie{display:none!important}';
 
 interface ChromeResult {
   html: string;
