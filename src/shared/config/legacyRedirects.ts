@@ -58,6 +58,28 @@ const newsHref = (page: number): string => (page > 1 ? `/news/?page=${page}` : '
  * Returns the destination path (**with** its trailing slash, so Next has
  * nothing left to normalise), or `null` to let the request through untouched.
  */
+/**
+ * WordPress's own search URL — `/?s=<term>` — onto ours (B7).
+ *
+ * Separate from {@link resolveLegacyUrl} because it is the one legacy shape
+ * that lives in the **query string**, and giving that function a second
+ * argument would make every caller (the sitemap, the page index) pass a
+ * parameter they have no opinion about.
+ *
+ * The term is carried over rather than dropped: a redirect to a bare search box
+ * is a dead end for someone arriving from a search result. An empty or
+ * whitespace-only `?s=` — which WP answers with the whole archive — lands on
+ * the empty search page instead.
+ */
+export const resolveLegacySearch = (pathname: string, term: string | null): string | null => {
+  if (term === null || pathname.replace(/\/+$/, '') !== '') {
+    return null;
+  }
+
+  const query = term.trim();
+  return query ? `/search/?q=${encodeURIComponent(query)}` : '/search/';
+};
+
 export const resolveLegacyUrl = (pathname: string): string | null => {
   const [first, second, third, fourth, fifth] = pathname.split('/').filter(Boolean);
 

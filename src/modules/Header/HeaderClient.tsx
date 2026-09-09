@@ -24,6 +24,9 @@ const DONATE_URL = 'https://xn--d1aadek5agm.xn----9sbkcac6brh7h.xn--p1ai/';
 
 const MOBILE_MENU_ID = 'header-mobile-menu';
 
+/** Slash-terminated: `trailingSlash: true` makes the slashless twin a 301. */
+const SEARCH_URL = '/search/';
+
 /**
  * Figma `header-v2` (`1229:4371`) plus its 1200 / 900 demos, and `header-mob`
  * (`1248:4486`) with the menu open state (`1336:10127`).
@@ -32,9 +35,11 @@ const MOBILE_MENU_ID = 'header-mobile-menu';
  * so the two layouts are separate subtrees swapped at `--mobile`, not one tree
  * restyled.
  *
- * The search field is presentational until B7 lands a `/search/` route — the
- * data layer (`fetchSearch`) exists, the page does not, so submitting it would
- * only 404.
+ * **The search field is a plain GET form** at `/search/` (B7), not a controlled
+ * input with a router push: submitting it is a navigation, which the platform
+ * already does — including with JavaScript off, and including the Enter key the
+ * field would otherwise swallow. The mobile bar has no room for a field, so its
+ * magnifier is a link to the same page, which carries one.
  */
 const HeaderClient = ({ navItems }: HeaderClientProps) => {
   const pathname = usePathname();
@@ -121,15 +126,17 @@ const HeaderClient = ({ navItems }: HeaderClientProps) => {
               <Logo size="lg" />
             </Nextlink>
             <div className={css.actions}>
-              <div className={css.search}>
+              <form className={css.search} action={SEARCH_URL} method="get" role="search">
                 <Input
                   color="red"
                   id="headerSearch"
+                  name="q"
+                  type="search"
                   placeholder="Поиск по сайту"
                   aria-label="Поиск по сайту"
                   rightIcon={<SearchIcon />}
                 />
-              </div>
+              </form>
               <Button asChild variant="white" size="large">
                 <Nextlink href={DONATE_URL} target="_blank" rel="noopener noreferrer">
                   Оказать помощь
@@ -148,8 +155,10 @@ const HeaderClient = ({ navItems }: HeaderClientProps) => {
           <Logo size="sm" />
         </Nextlink>
         <div className={css.mobileActions}>
-          <IconButton aria-label="Поиск по сайту" variant="contained" className={css.searchButton}>
-            <SearchIcon />
+          <IconButton asChild aria-label="Поиск по сайту" variant="contained" className={css.searchButton}>
+            <Nextlink href={SEARCH_URL}>
+              <SearchIcon />
+            </Nextlink>
           </IconButton>
           <IconButton
             ref={menuButton}

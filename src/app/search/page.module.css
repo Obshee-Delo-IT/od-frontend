@@ -1,0 +1,73 @@
+/* The page's own form, not the header's: this one is the fallback the header
+   submits into, so it has to work with no JavaScript and read as part of the
+   page rather than as the red bar's field. */
+.form {
+  display: flex;
+  max-width: 640px;
+  gap: 12px;
+
+  @media (--mobile) {
+    flex-direction: column;
+  }
+}
+
+.field {
+  min-width: 0;
+  flex: 1;
+  padding: 10px 16px;
+  border: 1px solid var(--gray-6);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--gray-12);
+  font-family: inherit;
+  font-size: var(--font-size-3);
+
+  &:focus-visible {
+    outline: 2px solid var(--red-7);
+    outline-offset: 1px;
+  }
+}
+
+.submit {
+  padding: 10px 24px;
+  border: 0;
+  border-radius: 8px;
+  background: var(--red-7);
+  color: #fff;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: var(--font-size-3);
+  font-weight: 700;
+}
+
+.note {
+  margin: 0;
+  color: var(--gray-11);
+}
+
+.results {
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  margin: 0;
+  gap: 16px;
+  list-style: none;
+}
+
+.result {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/* Doubled, because a Radix `Link` sets its own size and weight through a
+   `:where()` rule that ties with a single class and wins on source order. */
+.title.title {
+  font-size: var(--font-size-4);
+  font-weight: 700;
+}
+
+.kind {
+  color: var(--gray-10);
+  font-size: var(--font-size-2);
+}

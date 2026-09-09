@@ -47,3 +47,19 @@ describe('the legacy font relay', () => {
     expect(response?.headers.get('allow')).toBe('GET, HEAD');
   });
 });
+
+describe("WordPress's own search URL", () => {
+  it('301s `/?s=<term>` onto the search page, term and all', () => {
+    const response = proxy(request('/?s=%D1%82%D0%B0%D0%B1%D0%B0%D0%BA'));
+
+    expect(response?.status).toBe(301);
+    expect(response?.headers.get('location')).toBe('https://site.test/search/?q=%D1%82%D0%B0%D0%B1%D0%B0%D0%BA');
+  });
+
+  it('leaves an ordinary home-page request untouched', () => {
+    const response = proxy(request('/'));
+
+    expect(response?.status).toBe(200);
+    expect(response?.headers.get('location')).toBeNull();
+  });
+});
