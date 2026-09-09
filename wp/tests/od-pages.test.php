@@ -2048,6 +2048,30 @@ foreach ( array( 'Касатиков Александр Юрьевич', 'Бал
 	od_test( sprintf( 'moscow (prod): %s is a person row, not prose', $okrug ), str_contains( $moscow_rows, '<strong>' . $okrug . '</strong>' ) );
 }
 
+/* -------------------------------------------------- od_pages_sitemap ------ */
+
+/* Production's body, quotes and all: the migrator rewrote `"` as `»`/`″` on the
+   way through, so the stored tag is not the one the plugin's docs show. An
+   unregistered shortcode is printed rather than dropped, which is why the page
+   showed visitors this text and nothing else (reported 2026-08-27). */
+$sitemap_body = '<!-- wp:paragraph --><p class="wp-block-paragraph">[pagelist exclude=»22241,22242″ offset=»5″]</p><!-- /wp:paragraph -->';
+$sitemap_out = od_pages_sitemap( $sitemap_body );
+
+od_test( 'sitemap: the dead `[pagelist]` is gone', ! str_contains( $sitemap_out, '[pagelist' ) );
+od_test( 'sitemap: and the live shortcode is in its place', str_contains( $sitemap_out, '[od_sitemap]' ) );
+od_test( 'sitemap: the paragraph it sat in survives, so an editor can write around it', str_contains( $sitemap_out, '<!-- wp:paragraph -->' ) );
+od_test_idempotent( 'od_pages_sitemap', 'od_pages_sitemap', $sitemap_body );
+
+/* A `/sitemap/` with no listing in it is a body this does not understand, and
+   silently leaving it is how the shortcode survived the first run. */
+$sitemap_threw = false;
+try {
+	od_pages_sitemap( '<!-- wp:paragraph --><p>Ничего тут нет</p><!-- /wp:paragraph -->' );
+} catch ( RuntimeException $e ) {
+	$sitemap_threw = true;
+}
+od_test( 'sitemap: a body with neither tag is refused', $sitemap_threw );
+
 /* ------------------------------------------- od_pages_dead_shortcodes ----- */
 
 $sidebar = '<!-- wp:paragraph --><p>[cmsms_sidebar sidebar="division-list"]</p><!-- /wp:paragraph -->';

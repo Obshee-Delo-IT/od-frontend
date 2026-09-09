@@ -5296,6 +5296,38 @@ function od_pages_dead_shortcodes(string $content, int $_termId = 0): string
 }
 
 /**
+ * `/sitemap/` — the dead `[pagelist]` becomes `[od_sitemap]` (F4b).
+ *
+ * **An unregistered shortcode is printed, not dropped.** The body is one
+ * paragraph holding `[pagelist exclude="22241,22242" offset="5"]`, from the
+ * `page-list` plugin, which the headless install does not have — so the page
+ * rendered that bracketed text at visitors and nothing else (reported on the
+ * demo, 2026-08-27). `wp/mu-plugins/od-sitemap.php` registers the replacement
+ * and lists the tree live; this only swaps the tag, so the page keeps whatever
+ * an editor writes around it.
+ *
+ * The typographic quotes are why the pattern reads `[^\]]*` rather than naming
+ * the attributes: the migrator rewrote `"` as `»`/`″` on the way through, so
+ * the stored tag is `[pagelist exclude=»22241,22242″ offset=»5″]`.
+ *
+ * Refuses a body that holds neither tag, on the house rule: `/sitemap/` with no
+ * listing in it is a page this transform does not understand, and silently
+ * leaving it is how the shortcode survived a run in the first place.
+ */
+function od_pages_sitemap(string $content, int $_termId = 0): string
+{
+    if (strpos($content, '[od_sitemap]') !== false) {
+        return $content;
+    }
+
+    if (!preg_match('~\[pagelist\b[^\]]*\]~', $content)) {
+        throw new RuntimeException('unexpected input: /sitemap/ carries neither `[pagelist]` nor `[od_sitemap]`');
+    }
+
+    return preg_replace('~\[pagelist\b[^\]]*\]~', '[od_sitemap]', $content);
+}
+
+/**
  * Video hosts a film's «Смотреть в …» line points at.
  *
  * `vkvideo.ru` and `vk.com` are the same video under two names — the editors
@@ -5835,6 +5867,12 @@ function od_pages_registry(): array
         'label' => 'D4 · /contacts/ — the index accordion as `[od_regions]`, drawn from the region pages',
         'path' => 'contacts',
         'fix' => 'od_pages_contacts',
+    ];
+
+    $registry[] = [
+        'label' => 'F4b · /sitemap/ — the dead `[pagelist]` becomes `[od_sitemap]`',
+        'path' => 'sitemap',
+        'fix' => 'od_pages_sitemap',
     ];
 
     // After every page-shaped entry above, because those rewrite whole bodies and
