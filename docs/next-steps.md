@@ -678,7 +678,17 @@ default safe — svgr spreads the caller's props after its own.
 
 ## The 25 «Истории активистов» clips are on YouTube, not Kinescope — upload them
 
-**Checked 2026-08-19, twice.** `/about/activist-stories/` (D6r) embeds 25 clips,
+**Checked 2026-08-19, twice — and again 2026-09-09, when the demo asked.**
+Р. Низамов reported the page as «Отзывы и истории активистов. Не прогружается,
+т.к. скорее видео с YouTube», which is exactly right: the re-check listed all
+**266** videos in the Kinescope account and searched it for every surname on the
+page — Свиридов, Моисеев, Гвелесиани, Гурин, Долгова, Новикова, Кузовлёва,
+Медников, Сельдемиров, Пупышев, Нигматянов, Леонтьев, Никонов, Хомич, Мамедов,
+Чернов, Носова, Пастухов, Сагалов, Семенков — with **zero** hits. Site-wide
+there are **41** YouTube embeds across nine pages, 25 of them here; the next
+biggest is `/materials/ppiz-zdorov-molodez/` with six.
+
+`/about/activist-stories/` (D6r) embeds 25 clips,
 all of them YouTube. They were matched the way D6n's film mapping was built —
 each embed resolved through YouTube oEmbed, every resulting title compared
 against all **262** videos in the Kinescope account — and there are **zero**
@@ -1070,3 +1080,253 @@ stop writing cache entries.
 `na9us4ncw8nypov0irwkhozp-*` is «no such directory», so every documented
 `docker exec … curl https://…` in the runbook fails from inside it. Worth fixing
 in the image or rewriting those steps to run from the host.
+
+---
+
+## The August 2026 demo, and where each of its 40-odd findings went
+
+**Five reviewers, 25–28.08.2026**, given `https://new.obshee-delo.ru`:
+Р. Низамов (a document with 14 screenshots), А. Панфёрова (Telegram, 25–27.08),
+Д. Чагаев (Telegram, 25.08), О. Баранова (VK) and Е. Чернов (e-mail to `news@`,
+28.08). De-duplicated, the batch is ~25 distinct items; five of them were
+reported twice by people who had not spoken to each other.
+
+**Fixed the same week** (2026-09-09), each in the script that owns it, so the
+fix survives the cutover clone rather than living in one database:
+
+- the split-bold comma on `/contacts/moscow/` («Руководитель Д, епартамента»,
+  «комплексной б, е, зопасности») and the five «Уполномоченный» people drawn as
+  prose — `od_branch_person_rows()` + `OD_BRANCH_ROLE` in `od-pages.php`, with
+  prod's own body captured as a fixture;
+- the two regions listed twice on `/contacts/` with the coordinator on the copy
+  nothing links — `merge-duplicate-branches` in `od-wp.php`;
+- `/sitemap/` printing `[pagelist …]` at visitors — `[od_sitemap]` in a new
+  mu-plugin;
+- the dead search field — `/search/` (B7), plus `/?s=` finally redirected.
+
+**Suggestions** — the things that were not broken — are in
+[`demo-feedback-suggestions.md`](./demo-feedback-suggestions.md), with a cost
+and a cheapest-version note each. The two that arrived twice are films grouped
+by subject (Панфёрова + Баранова) and the flat illustration set reading as
+unserious (Панфёрова + Чернов, who polled the board). The remaining defects are
+the entries below.
+
+## Uploads made after ~2022 are not on the bucket, and the origin is what serves them
+
+**Measured 2026-09-09 on od-stage.** Of 92 distinct `<img>` sources across `/`,
+`/team/`, `/contacts/moscow/`, the three programme pages, `/about/reviews/`,
+`/about/nashi_partnery/` and `/materials/metodichki/`, **62 come from
+`obshee-delo.website.yandexcloud.net` and 30 from `od.webtm.ru`** — and the 30
+are not a routing choice, they are files the bucket does not have: a HEAD
+against the bucket copy answers **301** for every one of them, so
+`resolveMediaUrl` correctly falls back to the WordPress origin.
+
+The split is by date. Everything up to ~2022 is on the bucket; `2022/02`,
+`2023/*`, `2025/*` and `2026/*` are not — including `2026/08/logo-white.png`
+(the footer logo), the three `film-poster-*` files and every recent news
+thumbnail. So the media offload stopped running years ago and nobody noticed,
+because the origin answers.
+
+**Why it matters, and why it is in this file rather than closed.** The origin is
+the slow, 301-prone host this project routes around on purpose
+([`wp-backend.md` §6.4](./wp-backend.md#64-media)): measured today it is ~0.55 s
+against the bucket's ~0.33 s from here, and it is the single point of failure
+for a third of the site's images. It is also the most likely explanation for the
+demo reports that images «не подгружаются» — five separate pages in Низамов's
+document, and Панфёрова's «картинки не открываются» — none of which reproduces
+from this network today, and **all** of whose named pages are ones whose broken
+images live on `od.webtm.ru`. Низамов is the only reviewer who reported the
+missing footer logo, which is `2026/08/logo-white.png`, origin-only.
+
+**What has to happen:** re-check from a Russian network (the reviewers' own
+networks are the measurement that matters — `od.webtm.ru` is a hoster's
+technical domain and may be slow or filtered there in ways it is not from
+outside), then backfill the bucket for everything under `wp-content/uploads`
+from 2022 on and fix whatever the offload was, before the new install inherits
+the same half-empty bucket. The frontend needs no change either way — the
+probe already prefers the bucket the moment a file appears in it.
+
+## The three `metodichki` covers are still missing on od-stage
+
+`/materials/metodichki/` shows three broken images, and it is not the pipeline:
+`2026/08/metodichka-zdorovaya-{rossiya,molodezh}.jpg` and
+`…-zdorovye-deti.jpg` answer **404 on od.webtm.ru** and 200 on od-dev. The files
+are committed at `wp/assets/metodichki/` and the transfer is already a step in
+[`prod-migration-runbook.md` §2.8](./prod-migration-runbook.md) — it was written
+for the new install and never run against the clone.
+
+**What has to happen:** the two lines the runbook already gives, pointed at
+od-stage (`scp wp/assets/metodichki/*.jpg` into
+`~/od-stage/public_html/wp-content/uploads/2026/08/`), then `od-pages.php apply
+D6` so `od_cover_full_size()` finds them. Reported by both Низамов and
+Панфёрова, whose screenshot shows the alt text where the cover should be.
+
+## od-stage has no per-post migration backup any more — `wp cmsms restore` errors
+
+**Found 2026-09-09, while repairing one page.** `wp cmsms restore --post=21093`
+answers «Нет записей с копией оригинала», and the reason is that
+`SELECT COUNT(*) FROM wp_postmeta WHERE meta_key LIKE 'nvp%'` is **0**: the
+dead-meta sweep of [`wp-backend.md` §4.4](./wp-backend.md) step 8 (215 469 rows)
+took `nvp_content_copy` with it. The migrator's own rollback — the thing
+[`wp-page-passthrough.md` §6](./wp-page-passthrough.md) calls the per-post
+undo — does not exist on that install.
+
+**Consequences, both worth knowing before the cutover:** repairing a page on
+od-stage means re-loading prod's body by hand (`ssh od-root wp post get <id>
+--field=post_content` → `wp post update` on stage → `wp cmsms migrate --post=`
+→ `od-pages.php apply`), and **the sweep must run *after* the migration on the
+new install, not before**, or the new install loses its rollback the same way.
+The sweep's own entry says which keys it targets; `nvp_%` needs adding to its
+keep-list.
+
+## `/contacts/moscow/` on od-stage still reads «Руководитель Д, епартамента»
+
+The transform is fixed and tested, but od-stage's `post_content` was **written**
+by the old one on 2026-08-21 — the split bold runs are gone from the stored body
+and no re-run can re-derive them. Exactly two pages are affected, measured
+across all 148 pages and 300 newest posts on that install: `moscow` (21093) and
+`/contacts/` (529), which embeds its card through `[od_regions]`.
+
+**What has to happen:** the four-step repair in the entry above, for post 21093
+only. Prod needs nothing — it still holds the original body, and the fixed script
+is what will run against the clone. Verified locally against that body: 19
+person rows, every name and role correct, no invented comma
+(`wp/tests/fixtures/contacts-moscow.prod.html`).
+
+## «Короткометражные» in the nav lands on the whole catalogue — decide which way
+
+**Reported by Низамов and Панфёрова both.** The nav's «Фильмы → Короткометражные»
+points at `/video/short/`, `src/proxy.ts` 301s that to `/video/`, and the
+visitor gets all 83 videos. It is not a broken redirect — there is no such WP
+category, so the redirect was the only honest destination.
+
+**What is actually there:** `/video/short/` is a **page**, hand-curated, and
+production still serves it with **12 short films** on it — «Что такое ОБЩЕЕ
+ДЕЛО», «Презентация организации. Короткая версия», «Замечаем ли мы как нами
+манипулируют?», «ПОЧЕМУ же они курят?!», «Трезвый разбор», «Якутия. Трезвые
+сёла», «Межрегиональный слёт волонтёров 2019», «Удивительная история о женской
+красоте», «Генетический код», «Письмо Путину», «Увлекательный ролик», «Секс и
+алкоголь». So the menu item means something; the redirect is what empties it.
+
+**Three ways, and it is an editorial choice.** (a) Drop the redirect and let the
+catch-all serve the page — one line, and the page then needs the catalogue's
+look. (b) Make «Короткометражные» a real fifth category under «Видео» (85),
+tag those 12 posts, add the segment to `FILM_CATEGORIES` — the option that makes
+it behave like every other catalogue page, and the only one that keeps working
+as the collection grows. (c) Delete the nav item, in WordPress, and keep the
+redirect. Note that a film can carry two categories, so (b) does not disturb
+«Ролики» or «Известные люди».
+
+## Two links in the footer that lead nowhere: «Оставить отзыв» and «Предложить идею»
+
+Both in the «Отзывы» column, both reported («Если в подвале выбрать „Оставить
+отзыв“, то ничего не появляется, страница грузится и всё» — Низамов; «Раздел
+Предложить идею не открывается» — Панфёрова).
+
+- **«Предложить идею»** → `http://od1.reformal.ru/`, over plain HTTP, a
+  third-party feedback service that has not existed for years.
+- **«Оставить отзыв»** → `/about/ostavit-otziv/`, which is on the A6 iframe. The
+  page renders (1 409 px of it, measured headless 2026-09-09), so the «страница
+  грузится и всё» report is either the slow legacy origin or a since-fixed
+  state — but the **form on it cannot submit**: Contact Form 7's
+  `/wp-json/contact-form-7/v1/contact-forms/20138/refill` is a cross-origin
+  fetch from `new.obshee-delo.ru` to `obshee-delo.ru` and is blocked, and so is
+  the reCAPTCHA call. The same embed also fails to load the theme's fonts
+  (`MyriadPro-BoldCond.woff`, `fontello.woff` — CORS) and one stylesheet over
+  `http://fonts.googleapis.com` (mixed content). The font relay in `src/proxy.ts`
+  covers `/legacy-font/*` but not the absolute URLs the legacy CSS resolves
+  against its own origin.
+
+**Asked for:** remove both items **in WordPress**, on stage and on prod, rather
+than hiding them on the frontend. As a task in `od-wp.php` beside
+`od_wp_edit_menu()` (which already deletes nav items by the path they point at)
+so the deletion repeats on the clone — the same reason the three 2026-08-15
+deletions are recorded above rather than filtered in code. **Open question
+before touching prod:** «Оставить отзыв» works on the live site today, so
+deleting it there removes a working feedback channel from a site that is still
+the public one; the alternative is to run the task only against the new install,
+where the form is what is broken. Either way the organisation loses its only
+feedback form on the new site unless one is built — the cheapest replacement is
+the newsletter form's own endpoint
+([`newsletter-unisender.md`](./newsletter-unisender.md)) with a message field.
+
+## The donation site: pre-ticked consent boxes, and consent documents that do not open
+
+**Not this repo, and reported through it.** Р. Фамутдинов, 08.08.2026, with
+screenshots, on `https://поддержи.общее-дело.рф/` — the Leyka install the
+«Оказать помощь» button points at:
+
+1. «Соглашаюсь с офертой» and «Соглашаюсь на обработку моих персональных данных»
+   are **checked by default**. His argument is the right one: a pre-ticked box
+   decides for the visitor, and for personal-data consent that is exactly what
+   152-ФЗ asks not to happen.
+2. The words «офертой» and «персональных данных» are links that go to the top of
+   the same page — the documents never open. So even a visitor who wants to read
+   what they are agreeing to cannot.
+
+**What has to happen:** unset both `checked` attributes and point the two links
+at the actual documents. Minutes of work on a site this project does not deploy;
+it needs whoever owns that install. Панфёрова's «нет пути назад» belongs to the
+same site and is in
+[`demo-feedback-suggestions.md`](./demo-feedback-suggestions.md).
+
+## `/materials/metodichka/` and `/materials/metodichki/` — the third duplicate pair
+
+`merge-duplicate-branches` retired the two duplicate **region** pages; this pair
+is the third collision [`test-scenarios.md`](./test-scenarios.md) names (SEO-09)
+and it is deliberately untouched: neither page holds contacts to move, the two
+bodies genuinely differ, and `/materials/metodichki/` is the one the nav and the
+redesign point at. Which of the two is canonical is an editorial call about the
+pages. The mechanism to retire one exists now — add the pair to
+`od_wp_duplicate_branches()` — so this is a decision, not work.
+
+## Content the reviewers asked for, re-checked against production 2026-09-10
+
+**Already right on production, nothing to do** — checked page by page, because
+the requests arrived after somebody had already applied them:
+
+- **Вологодская область** (А. Дегтярёв, 07–09.08: «убрать Ефимова, поставить
+  Константина Заболоцкого»). `/contacts/vologodskaya/` names Заболоцкий
+  Константин Андреевич as coordinator and Ефимов appears nowhere on it.
+- **Чернов Е. П.'s own title and e-mail** (28.08). Prod's `/team/` states
+  «Руководитель департамента информационной политики и комплексной
+  безопасности» and `politbez@obshee-delo.ru`, which is exactly the request —
+  and `OD_TEAM` in `od-pages.php` already carries both. `infobez@` from his
+  parenthetical is on neither page; prod uses `politbez@`.
+- **The order of people on `/contacts/st-petersburg/`** (28.08, «там
+  перепутано», with the four cards in the order he wants them). Prod already
+  reads Чернов → Ковалевский → Тарасов → Копылов, i.e. his order. The second
+  set of four names further down the page is the `pl-categs` coordinator loop,
+  not a duplicate.
+- **The Печоры съезд as a news item** (28.08). Published — «Вдохновение и
+  Сотрудничество: Съезд координаторов Общего Дела в Печорах» is in that page's
+  «События».
+
+**Fixed here** (`od-pages.php`, `OD_TEAM`): Тарасов С. В. carried
+`politbez_od@mail.ru` and no ВК link; prod's `/team/` and Чернов's request both
+say `lenobl@obshee-delo.ru` plus `https://vk.ru/id131271224`. ⚠ **The
+transform only ever adds a contact it cannot find**, so on od-dev and od-stage —
+where an earlier run already wrote the old address into the record — the stale
+`politbez_od@mail.ru` line has to be deleted by hand once. Prod has never been
+run against, so there the new values are simply what lands.
+
+**Still open, and each needs something from outside the repo:**
+
+- **Тарасов's photograph.** Asked to be replaced, «прилагается» — and the
+  attachment did not survive the forward: message 542 in `news@` carries no
+  files. Ask for the image again.
+- **The home banner still says «ДОБРОВОЛЕЦ про»** (Р. Низамов: «Почему на
+  изображении прежнее наименование конкурса?»). It is the wordmark drawn into
+  `public/figma/promo-decoration.svg` and its mobile twin as vector paths, not
+  text — so this is new artwork from the designer, not an edit. The banner's
+  own copy and `OD_TEAM` already use the current name («Общее дело — ПРО»); the
+  picture is the last place the old one survives. Note prod's
+  `/contacts/moscow/` body also still writes «Доброволец-ПРО» in Васильев's
+  role, which the redesign's `OD_TEAM` overrides.
+- **«Заказать методические пособия у Рязанова А. А.»** on
+  `/materials/metodichki/` (Низамов: Рязанов says the information is ten years
+  old and he has not handled this for years). Still live on prod, name, phone,
+  Telegram and ВК. Somebody has to say who takes the orders now — until then
+  the page publishes a wrong contact.
+- **Мультфильмы с титрами** (О. Баранова). Editorial: subtitled versions have
+  to exist before a page can offer them.

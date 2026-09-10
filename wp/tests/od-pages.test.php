@@ -867,6 +867,22 @@ foreach (OD_TEAM as $member) {
     );
 }
 
+/* Е. П. Чернов, 2026-08-28: «исправить должность Тарасова С.В. […] Добавить
+   почту: lenobl@obshee-delo.ru И ссылку на ВК». Production's own `/team/`
+   states both, so the roster has to as well — the old `politbez_od@mail.ru`
+   is on neither. */
+$tarasov = null;
+foreach (OD_TEAM as $member) {
+	if ('Тарасов Сергей Валентинович' === $member['name']) {
+		$tarasov = $member;
+	}
+}
+od_test( 'Тарасов is on the roster', null !== $tarasov );
+$tarasovHrefs = array_column( $tarasov['contacts'], 0 );
+od_test( 'Тарасов: the branch mailbox, as production states it', in_array( 'mailto:lenobl@obshee-delo.ru', $tarasovHrefs, true ) );
+od_test( 'Тарасов: and the ВК page asked for', in_array( 'https://vk.ru/id131271224', $tarasovHrefs, true ) );
+od_test( 'Тарасов: the address neither page carries is gone', ! in_array( 'mailto:politbez_od@mail.ru', $tarasovHrefs, true ) );
+
 /* -------------------------------------------------------- od_profile_slug */
 
 od_test('od_profile_slug takes the last segment', od_profile_slug('/profile/varlamov/') === 'varlamov');
@@ -1721,6 +1737,29 @@ od_test( 'branch card: and the name never opens with punctuation', ! str_contain
 
 od_test( 'branch card: a person line with no contacts in it is unchanged', str_contains( (string) od_branch_person_rows( '<strong>Координатор </strong>Титова Ирина Александровна' ), '<strong>Титова Ирина Александровна</strong><br>Координатор' ) );
 
+/* A Word paste splits a bold run mid-word, and production's `/contacts/moscow/`
+   is a Word paste: «<strong>Руководитель </strong><strong>Д</strong><strong>епартамента
+   …</strong>». Joining the runs with a comma of our own printed «Руководитель Д,
+   епартамента» on ten cards there — reported 2026-08-25. */
+$split = (string) od_branch_person_rows( '<strong>Руководитель </strong><strong>Д</strong><strong>епартамента по связям с госструктурами</strong> Чагаев Дмитрий Владимирович' );
+od_test( 'branch card: a bold run split mid-word is rejoined, not comma-joined', str_contains( $split, '<strong>Чагаев Дмитрий Владимирович</strong><br>Руководитель Департамента по связям с госструктурами' ) );
+od_test( 'branch card: …and no comma is invented anywhere in the role', ! str_contains( $split, 'Д, епартамента' ) );
+
+/* The same paste, split twice inside one word: «комплексной б, е, зопасности». */
+$twice = (string) od_branch_person_rows( '<strong>Руководитель Департамента информационной политики и комплексной б</strong><strong>е</strong><strong>зопасности</strong> Чернов Евгений Павлович' );
+od_test( 'branch card: two splits in one word close up too', str_contains( $twice, '<br>Руководитель Департамента информационной политики и комплексной безопасности' ) );
+
+/* «Уполномоченный по развитию в <округ> федеральном округе» — five of these on
+   `/contacts/moscow/`, and with the word missing from OD_BRANCH_ROLE all five
+   were drawn as prose instead of as person rows. */
+od_test(
+	'branch card: «уполномоченный» is a role',
+	str_contains(
+		(string) od_branch_person_rows( '<strong>Уполномоченный по развитию в Центральном федеральном округе </strong>Касатиков Александр Юрьевич' ),
+		'<strong>Касатиков Александр Юрьевич</strong><br>Уполномоченный по развитию в Центральном федеральном округе'
+	)
+);
+
 od_test( 'branch card: an operator in brackets is not part of the number', str_contains( (string) od_branch_contact_row( 'тел. :+7(910)141-90-28 (МТС)' ), 'tel:+79101419028' ) );
 od_test( 'branch card: brackets with digits in them are', str_contains( (string) od_branch_contact_row( 'тел. +7 (982) 611-97-77' ), 'tel:+79826119777' ) );
 
@@ -1988,6 +2027,66 @@ $samarskaya_prod = file_get_contents( __DIR__ . '/fixtures/contacts-samarskaya.p
 od_test( 'samarskaya (prod): there is no placeholder query to repoint', str_contains( $samarskaya_prod, '"taxQuery":{"post_tag":[-1]}' ) === false );
 od_test( 'samarskaya (prod): but the news loop is there', str_contains( $samarskaya_prod, '<!-- wp:query ' ) );
 od_test( 'samarskaya (prod): so the page is left exactly as it is', od_pages_samarskaya_coordinators( $samarskaya_prod, 532 ) === $samarskaya_prod );
+
+/* ------------------------------- /contacts/moscow/, prod's own body ------- */
+
+/* The one fixture here that is **un-migrated** — `wp post get 21093
+   --field=post_content` on live prod, 2026-09-09, shortcodes and all. It is
+   captured because the «Об отделении» toggle inside it is the corpus's worst
+   Word paste: 19 people, five bold runs split mid-word, non-breaking spaces
+   between the runs, and «Уполномоченный» five times. Migration converts the
+   `[cmsms_*]` wrappers and leaves inline `<strong>` alone, so feeding these
+   lines to the row builder is the same input it sees after `wp cmsms migrate`.
+   od-stage was rewritten from this body on 2026-08-21 with the comma bug in it,
+   which is what Д. В. Чагаев read as «поплыли должности» — the numbers below are
+   the whole of that report. */
+$moscow_prod = file_get_contents( __DIR__ . '/fixtures/contacts-moscow.prod.html' );
+preg_match( '~\[cmsms_toggle title="Об отделении"\](.*?)\[/cmsms_toggle\]~s', $moscow_prod, $moscow_toggle );
+$moscow_rows = '';
+$moscow_count = 0;
+foreach ( preg_split( '~(?:<br\s*/?>|\r?\n)+~', $moscow_toggle[1] ?? '' ) as $moscow_line ) {
+	$built = od_branch_person_rows( trim( $moscow_line ) );
+	if ( is_string( $built ) && '' !== $built ) {
+		$moscow_rows .= $built;
+		$moscow_count++;
+	}
+}
+
+od_test( 'moscow (prod): every one of the 19 people gets a person row', 19 === $moscow_count );
+od_test( 'moscow (prod): no role carries a comma this script invented', ! preg_match( '~(?:^|[\s>(])[А-ЯЁа-яё],\s*[а-яё]{2,}~u', $moscow_rows ) );
+od_test( 'moscow (prod): «Департамента» is one word again', str_contains( $moscow_rows, 'руководитель Департамента по связям с госструктурами' ) );
+od_test( 'moscow (prod): so is «безопасности»', str_contains( $moscow_rows, 'информационной политики и комплексной безопасности' ) );
+/* A non-breaking space between two runs, not a plain one: «…епартамента</strong>\xa0<strong>медиа </strong>Дегтярев…» */
+od_test( 'moscow (prod): a run after an NBSP still belongs to the role', str_contains( $moscow_rows, '<strong>Дегтярев Алексей Анатольевич</strong><br>Руководитель Департамента медиа' ) );
+/* Two roles, a comma and an NBSP between them, then the name. */
+od_test( 'moscow (prod): and the man with two of them keeps both', str_contains( $moscow_rows, '<strong>Моисеев Олег Олегович</strong><br>Руководитель Департамента профилактики, председатель правления Московского городского отделения' ) );
+foreach ( array( 'Касатиков Александр Юрьевич', 'Бальцевич Вячеслав Павлович', 'Маздоров Лев Сергеевич', 'Гатауллин Роберт Кутдусович', 'Круть Владислав Витальевич' ) as $okrug ) {
+	od_test( sprintf( 'moscow (prod): %s is a person row, not prose', $okrug ), str_contains( $moscow_rows, '<strong>' . $okrug . '</strong>' ) );
+}
+
+/* -------------------------------------------------- od_pages_sitemap ------ */
+
+/* Production's body, quotes and all: the migrator rewrote `"` as `»`/`″` on the
+   way through, so the stored tag is not the one the plugin's docs show. An
+   unregistered shortcode is printed rather than dropped, which is why the page
+   showed visitors this text and nothing else (reported 2026-08-27). */
+$sitemap_body = '<!-- wp:paragraph --><p class="wp-block-paragraph">[pagelist exclude=»22241,22242″ offset=»5″]</p><!-- /wp:paragraph -->';
+$sitemap_out = od_pages_sitemap( $sitemap_body );
+
+od_test( 'sitemap: the dead `[pagelist]` is gone', ! str_contains( $sitemap_out, '[pagelist' ) );
+od_test( 'sitemap: and the live shortcode is in its place', str_contains( $sitemap_out, '[od_sitemap]' ) );
+od_test( 'sitemap: the paragraph it sat in survives, so an editor can write around it', str_contains( $sitemap_out, '<!-- wp:paragraph -->' ) );
+od_test_idempotent( 'od_pages_sitemap', 'od_pages_sitemap', $sitemap_body );
+
+/* A `/sitemap/` with no listing in it is a body this does not understand, and
+   silently leaving it is how the shortcode survived the first run. */
+$sitemap_threw = false;
+try {
+	od_pages_sitemap( '<!-- wp:paragraph --><p>Ничего тут нет</p><!-- /wp:paragraph -->' );
+} catch ( RuntimeException $e ) {
+	$sitemap_threw = true;
+}
+od_test( 'sitemap: a body with neither tag is refused', $sitemap_threw );
 
 /* ------------------------------------------- od_pages_dead_shortcodes ----- */
 

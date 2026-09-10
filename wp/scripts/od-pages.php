@@ -3287,9 +3287,16 @@ const OD_TEAM = [
         'supersedes' => [
             'Координатор по Кингисеппскому, Сланцевскому, Волосовскому району',
         ],
+        // `lenobl@obshee-delo.ru` and the ВК link, not `politbez_od@mail.ru`:
+        // asked for by Е. П. Чернов on 2026-08-28 («Добавить почту:
+        // lenobl@obshee-delo.ru И ссылку на ВК») and already what production's
+        // own `/team/` states, which is the tie-breaker. `lenobl@` is the
+        // Ленинградское отделение mailbox the two of them share — Чернов writes
+        // from it — so it is a branch address, not a mistyped personal one.
         'contacts' => [
             ['tel:+79062755758', '+7 906 275-57-58'],
-            ['mailto:politbez_od@mail.ru', 'politbez_od@mail.ru'],
+            ['mailto:lenobl@obshee-delo.ru', 'lenobl@obshee-delo.ru'],
+            ['https://vk.ru/id131271224', 'vk.ru/id131271224'],
         ],
     ],
     [
@@ -4484,9 +4491,17 @@ function od_pages_coordinator_heading_level(string $content, int $_termId = 0): 
 /**
  * The role words these bodies use for the person who runs a regional отделение —
  * «Координатор отделения», «Руководитель», «Председатель правления».
+ *
+ * «Уполномоченный» is here because the word missing cost five people their row:
+ * `/contacts/moscow/` closes with «Уполномоченный по развитию в <округ>
+ * федеральном округе» five times — Касатиков, Бальцевич, Маздоров, Гатауллин,
+ * Круть — and with no role word matched each fell through to prose, which is why
+ * Д. В. Чагаев read the page as «только четверых оставили» (2026-08-25). The
+ * page never lost anyone; it drew them two different ways.
  */
 const OD_BRANCH_ROLE = '(?:координатор|руководител|председател|представител|начальник|директор|помощник'
-    . '|заместител|секретар|куратор|специалист|лектор|соучредител|член\s+правления|ответственн|активист)';
+    . '|заместител|секретар|куратор|специалист|лектор|соучредител|член\s+правления|ответственн|активист'
+    . '|уполномоченн)';
 
 /**
  * The labels an editor typed in front of a contact — and, on their own, the empty
@@ -4802,19 +4817,38 @@ function od_branch_person_rows(string $line): ?string
     // профилактики</strong>, <strong>Руководитель Московского городского
     // отделения</strong> Моисеев Олег Олегович», and reading one of them left the
     // comma and the second title inside the man's name.
-    $roles = [];
+    //
+    // **The runs are joined by whatever stood between them, never by a comma of
+    // this script's own.** Production's bodies are a Word paste, and a paste
+    // splits a bold run mid-word: `/contacts/moscow/` stores «<strong>Руководитель
+    // </strong><strong>Д</strong><strong>епартамента по связям с
+    // госструктурами</strong>» — three runs, no separator. Joining those with
+    // «, » is what printed «Руководитель Д, епартамента» on ten cards there and
+    // «комплексной б, е, зопасности» on two more, which is the whole of what
+    // Д. В. Чагаев reported as «поплыли должности» (2026-08-25). Keeping the
+    // separator gets both readings right: the Моисеев line has its comma in the
+    // source, the split words have nothing, and `od_line_text()` collapses the
+    // rest.
+    $roles = '';
+    $runs  = 0;
     $rest  = $line;
 
-    while (preg_match('~^<(strong|b)>\s*([^<]*?)\s*</\1>\s*[,;:.]?\s*~si', $rest, $bold)) {
-        $roles[] = od_line_text($bold[2]);
+    // `\x{00a0}` in the separator class, and it is not decoration: what stands
+    // between two runs on `/contacts/moscow/` is a **non-breaking space** —
+    // «…епартамента</strong>\xa0<strong>медиа </strong>Дегтярев…» — and PCRE's
+    // `\s` does not match one. Without it the loop stopped at the NBSP and left
+    // «медиа Дегтярев Алексей Анатольевич» as the man's name.
+    while (preg_match('~^<(strong|b)>([^<]*)</\1>([\s\x{00a0},;:.]*)~siu', $rest, $bold)) {
+        $roles .= $bold[2] . $bold[3];
         $rest    = substr($rest, strlen($bold[0]));
+        $runs++;
     }
 
-    if ($roles === []) {
+    if ($runs === 0) {
         return null;
     }
 
-    $found = [1 => implode(', ', array_filter($roles, 'strlen')), 2 => $rest];
+    $found = [1 => $roles, 2 => $rest];
 
     $role = od_line_text($found[1]);
     // The role word need not open the line: `/contacts/samarskaya/` bolds
@@ -5266,6 +5300,38 @@ function od_pages_dead_shortcodes(string $content, int $_termId = 0): string
     $content = preg_replace('~\[cmsms_selected_products\b[^\]]*\]~', '', $content);
 
     return od_drop_empty_layout_groups($content);
+}
+
+/**
+ * `/sitemap/` — the dead `[pagelist]` becomes `[od_sitemap]` (F4b).
+ *
+ * **An unregistered shortcode is printed, not dropped.** The body is one
+ * paragraph holding `[pagelist exclude="22241,22242" offset="5"]`, from the
+ * `page-list` plugin, which the headless install does not have — so the page
+ * rendered that bracketed text at visitors and nothing else (reported on the
+ * demo, 2026-08-27). `wp/mu-plugins/od-sitemap.php` registers the replacement
+ * and lists the tree live; this only swaps the tag, so the page keeps whatever
+ * an editor writes around it.
+ *
+ * The typographic quotes are why the pattern reads `[^\]]*` rather than naming
+ * the attributes: the migrator rewrote `"` as `»`/`″` on the way through, so
+ * the stored tag is `[pagelist exclude=»22241,22242″ offset=»5″]`.
+ *
+ * Refuses a body that holds neither tag, on the house rule: `/sitemap/` with no
+ * listing in it is a page this transform does not understand, and silently
+ * leaving it is how the shortcode survived a run in the first place.
+ */
+function od_pages_sitemap(string $content, int $_termId = 0): string
+{
+    if (strpos($content, '[od_sitemap]') !== false) {
+        return $content;
+    }
+
+    if (!preg_match('~\[pagelist\b[^\]]*\]~', $content)) {
+        throw new RuntimeException('unexpected input: /sitemap/ carries neither `[pagelist]` nor `[od_sitemap]`');
+    }
+
+    return preg_replace('~\[pagelist\b[^\]]*\]~', '[od_sitemap]', $content);
 }
 
 /**
@@ -5808,6 +5874,12 @@ function od_pages_registry(): array
         'label' => 'D4 · /contacts/ — the index accordion as `[od_regions]`, drawn from the region pages',
         'path' => 'contacts',
         'fix' => 'od_pages_contacts',
+    ];
+
+    $registry[] = [
+        'label' => 'F4b · /sitemap/ — the dead `[pagelist]` becomes `[od_sitemap]`',
+        'path' => 'sitemap',
+        'fix' => 'od_pages_sitemap',
     ];
 
     // After every page-shaped entry above, because those rewrite whole bodies and

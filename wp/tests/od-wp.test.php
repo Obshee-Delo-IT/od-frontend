@@ -174,6 +174,27 @@ od_test('both query terms are read off the body', ['pl-categs' => 506, 'category
 // must not count as a reason to keep the page.
 od_test('the «match nothing» placeholder is not a term', [] === od_wp_branch_query_terms('<!-- wp:query {"query":{"taxQuery":{"pl-categs":[-1]}}} -->'));
 
+/* ------------------ the second page two regions have on production --------- */
+
+$withContacts = $empty . '<p>Баранова Ольга Владимировна</p><p>8-960-570-67-07</p><p>OlgaVladimirovnaBaranova@yandex.ru</p>';
+
+od_test('the kept page takes the duplicate\'s body when only the duplicate states a contact', od_wp_branch_takes_over($empty, $withContacts));
+// Idempotency, and the whole reason the check is on the *content* rather than on
+// a flag: run twice, the second run must not overwrite what the first wrote.
+od_test('…and does not once it has one', ! od_wp_branch_takes_over($withContacts, $withContacts));
+// A page an editor has since filled in must not be reverted to the duplicate.
+od_test('a kept page with its own contacts is never overwritten', ! od_wp_branch_takes_over($withContacts, $empty));
+// Two empty pages: the duplicate is redundant, not a source.
+od_test('two contactless pages copy nothing', ! od_wp_branch_takes_over($empty, $empty));
+
+$pairs = od_wp_duplicate_branches();
+od_test('both pairs are addressed by path, never by id', $pairs === array_filter($pairs, static fn($path) => (bool) preg_match('~^contacts/[a-z-]+$~', $path)));
+// The kept path is what the clickable map links; renaming one there 404s a region.
+$map = file_get_contents(__DIR__ . '/../../src/modules/RussiaMap/regions.generated.ts');
+foreach (array_keys($pairs) as $keptPath) {
+    od_test(sprintf('the map links the kept page /%s/', $keptPath), str_contains($map, "'/" . $keptPath . "/'"));
+}
+
 /* -------------------- the film categories taken off news posts ------------- */
 
 $miscategorised = od_wp_miscategorised_videos();

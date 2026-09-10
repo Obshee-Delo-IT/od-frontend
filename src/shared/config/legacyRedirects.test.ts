@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { resolveLegacyUrl } from './legacyRedirects';
+import { resolveLegacySearch, resolveLegacyUrl } from './legacyRedirects';
 
 describe('resolveLegacyUrl', () => {
   it('leaves the catalogue alone — those are served, not redirected', () => {
@@ -133,5 +133,30 @@ describe('resolveLegacyUrl', () => {
       const destination = resolveLegacyUrl(path)!;
       expect(resolveLegacyUrl(destination.split('?')[0])).toBeNull();
     });
+  });
+});
+
+describe('resolveLegacySearch', () => {
+  it("carries WordPress's search term onto the site's own search page", () => {
+    expect(resolveLegacySearch('/', 'алкоголь')).toBe('/search/?q=%D0%B0%D0%BB%D0%BA%D0%BE%D0%B3%D0%BE%D0%BB%D1%8C');
+  });
+
+  it('lands on the empty search page when the term is empty', () => {
+    expect(resolveLegacySearch('/', '')).toBe('/search/');
+    expect(resolveLegacySearch('/', '   ')).toBe('/search/');
+  });
+
+  it('leaves the home page alone when there is no `s` at all', () => {
+    expect(resolveLegacySearch('/', null)).toBeNull();
+  });
+
+  it('is the home page only — `?s=` anywhere else is not a WordPress search URL', () => {
+    expect(resolveLegacySearch('/news/', 'алкоголь')).toBeNull();
+    expect(resolveLegacySearch('/video/filmy/', 'алкоголь')).toBeNull();
+  });
+
+  it('does not send the visitor somewhere that redirects again', () => {
+    const destination = resolveLegacySearch('/', 'табак')!;
+    expect(resolveLegacyUrl(destination.split('?')[0])).toBeNull();
   });
 });

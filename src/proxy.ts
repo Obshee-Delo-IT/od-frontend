@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from 'next/server';
-import { resolveLegacyUrl } from '@/shared/config/legacyRedirects';
+import { resolveLegacySearch, resolveLegacyUrl } from '@/shared/config/legacyRedirects';
 import { legacyFontTarget } from '@/shared/legacy/legacyFonts';
 import { legacyOrigin } from '@/shared/legacy/legacyOrigin';
 
@@ -16,8 +16,10 @@ import { legacyOrigin } from '@/shared/legacy/legacyOrigin';
  * takes exactly one hop. Config redirects also run *before* the proxy, so the
  * two can't coexist — a rule left in the config would shadow this.
  *
- * The `matcher` scopes execution to the four legacy prefixes, so ordinary
- * traffic — the home page, `/<id>` posts, static assets — never enters here.
+ * The `matcher` scopes execution to the legacy prefixes plus `/` itself, so
+ * ordinary traffic — `/<id>` posts, static assets — never enters here. The home
+ * page is listed only because WordPress's `/?s=<term>` search URL lives there;
+ * no fetch happens on that path, just a `searchParams` read.
  */
 export const proxy = (request: NextRequest) => {
   /**
@@ -48,6 +50,13 @@ export const proxy = (request: NextRequest) => {
     return NextResponse.rewrite(new URL(font, legacyOrigin), { request: { headers } });
   }
 
+  // WordPress's `/?s=<term>` — the one legacy shape that is a query string, and
+  // the reason `/` is in the matcher at all.
+  const search = resolveLegacySearch(request.nextUrl.pathname, request.nextUrl.searchParams.get('s'));
+  if (search) {
+    return NextResponse.redirect(new URL(search, request.url), 301);
+  }
+
   const destination = resolveLegacyUrl(request.nextUrl.pathname);
   if (!destination) {
     return NextResponse.next();
@@ -63,5 +72,5 @@ export const proxy = (request: NextRequest) => {
 };
 
 export const config = {
-  matcher: ['/video/:path*', '/news/:path*', '/category/:path*', '/page/:path*', '/legacy-font/:path*'],
+  matcher: ['/', '/video/:path*', '/news/:path*', '/category/:path*', '/page/:path*', '/legacy-font/:path*'],
 };

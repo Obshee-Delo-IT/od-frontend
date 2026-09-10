@@ -27,9 +27,10 @@
  * without WordPress. There are eight today — {@see od_wp_tag_programme_films()},
  * {@see od_wp_rename_pages()}, {@see od_wp_order_pages()},
  * {@see od_wp_draft_empty_branches()}, {@see od_wp_edit_menu()},
- * {@see od_wp_create_profiles()}, {@see od_wp_untag_video_events()} and
- * {@see od_wp_rehost_posters()} — and still no framework between them, because
- * eight calls in a row is not a thing that needs one.
+ * {@see od_wp_create_profiles()}, {@see od_wp_untag_video_events()},
+ * {@see od_wp_rehost_posters()} and {@see od_wp_merge_duplicate_branches()} —
+ * and still no framework between them, because nine calls in a row is not a
+ * thing that needs one.
  *
  * House rules, same as `od-pages.php`: dry run by default, writing takes the
  * positional argument `apply`, everything is idempotent, and **posts are
@@ -976,6 +977,127 @@ function od_wp_rehost_posters(bool $apply): void
     WP_CLI::log(sprintf('%d плакат(ов) %s.', $moved, $apply ? 'rehosted' : 'to rehost'));
 }
 
+/**
+ * Region pages production holds **twice**, as `kept path => retired path`.
+ *
+ * Two regions have a second page each, made by an editor instead of an edit to
+ * the first: `/contacts/rezan-oblast/` beside `/contacts/ryazanskaya/` and
+ * `/contacts/smolenskaya-oblasti/` beside `/contacts/smolenskaya/`. Both live on
+ * production, so both survive a clone — this is not od-dev clutter — and
+ * `[od_regions]` lists one disclosure per published child, so `/contacts/`
+ * draws «Рязанская область» twice: the first empty, the second holding the
+ * coordinator. That is what О. В. Баранова reported («на новом сайте почему-то
+ * две Рязанские области… при нажатии на Рязанскую область на карте не
+ * открывается окошко с координатором») — the map links to the *kept* slug,
+ * which is the empty one.
+ *
+ * **Which one is kept is not a judgement about content.** The kept path is the
+ * one `src/modules/RussiaMap/regions.generated.ts` links and search has
+ * indexed; the newer slug is the one nothing points at. The contacts move to
+ * the kept page, and the duplicate is drafted, which is exactly what
+ * `docs/test-scenarios.md` says this class of collision must end as.
+ *
+ * The third pair it names — `/materials/metodichka/` beside
+ * `/materials/metodichki/` — is deliberately absent: it is not a branch, it has
+ * no contacts to move, and the two bodies differ. It stays a decision, in
+ * `docs/next-steps.md`.
+ *
+ * @return array<string, string>
+ */
+function od_wp_duplicate_branches(): array
+{
+    return [
+        'contacts/ryazanskaya' => 'contacts/rezan-oblast',
+        'contacts/smolenskaya' => 'contacts/smolenskaya-oblasti',
+    ];
+}
+
+/**
+ * Whether the retired page's body is the one worth keeping — the kept page has
+ * no contact in it and the retired page has.
+ *
+ * Both directions of «no» matter and neither is an error: two contactless pages
+ * mean the duplicate is simply redundant, and a kept page that already states
+ * its coordinator means this has run before (or the editor fixed it), so the
+ * body must not be overwritten.
+ */
+function od_wp_branch_takes_over(string $kept, string $retired): bool
+{
+    return od_wp_branch_contactless($kept) && !od_wp_branch_contactless($retired);
+}
+
+/**
+ * Retires the second page of a region: its contacts move onto the page the map
+ * links, and it is drafted.
+ *
+ * Drafting rather than deleting, for the reason {@see od_wp_draft_empty_branches()}
+ * gives: the URL stops being ours and falls through to the A6 iframe, which is
+ * recoverable by re-publishing. Through `$wpdb->update` like everything else
+ * here, so the block parser never runs over a body a script wrote.
+ */
+function od_wp_merge_duplicate_branches(bool $apply): void
+{
+    global $wpdb;
+
+    foreach (od_wp_duplicate_branches() as $keptPath => $retiredPath) {
+        $kept = get_page_by_path($keptPath, OBJECT, 'page');
+        $retired = get_page_by_path($retiredPath, OBJECT, 'page');
+
+        if (!$kept || !$retired) {
+            WP_CLI::log(sprintf('%s / %s: one of the pair is missing — nothing to merge', $keptPath, $retiredPath));
+            continue;
+        }
+
+        if ($retired->post_status !== 'publish') {
+            WP_CLI::log(sprintf('%s (#%d): already retired', $retiredPath, $retired->ID));
+            continue;
+        }
+
+        if (od_wp_branch_takes_over($kept->post_content, $retired->post_content)) {
+            WP_CLI::log(sprintf(
+                '%s (#%d): no contacts here, taking the body of %s (#%d)',
+                $keptPath,
+                $kept->ID,
+                $retiredPath,
+                $retired->ID
+            ));
+
+            if ($apply) {
+                $written = $wpdb->update(
+                    $wpdb->posts,
+                    ['post_content' => $retired->post_content],
+                    ['ID' => $kept->ID],
+                    ['%s'],
+                    ['%d']
+                );
+                if ($written === false) {
+                    WP_CLI::warning(sprintf('%s (#%d): write failed — the duplicate stays published', $keptPath, $kept->ID));
+                    continue;
+                }
+                clean_post_cache($kept->ID);
+                WP_CLI::success(sprintf('%s (#%d): body written', $keptPath, $kept->ID));
+            }
+        } else {
+            WP_CLI::log(sprintf('%s (#%d): keeps its own body', $keptPath, $kept->ID));
+        }
+
+        WP_CLI::log(sprintf('%s (#%d): publish -> draft', $retiredPath, $retired->ID));
+
+        if (!$apply) {
+            continue;
+        }
+
+        $drafted = $wpdb->update($wpdb->posts, ['post_status' => 'draft'], ['ID' => $retired->ID], ['%s'], ['%d']);
+        if ($drafted === false) {
+            WP_CLI::warning(sprintf('%s (#%d): write failed', $retiredPath, $retired->ID));
+            continue;
+        }
+
+        clean_post_cache($retired->ID);
+        WP_CLI::success(sprintf('%s (#%d): drafted', $retiredPath, $retired->ID));
+    }
+}
+
 // ---------------------------------------------------------------------------
 // Runner. Everything above is a function; this is the only thing that runs.
 // ---------------------------------------------------------------------------
@@ -996,6 +1118,7 @@ $tasks = [
     'rename-pages' => 'od_wp_rename_pages',
     'order-pages' => 'od_wp_order_pages',
     'draft-empty-branches' => 'od_wp_draft_empty_branches',
+    'merge-duplicate-branches' => 'od_wp_merge_duplicate_branches',
     'edit-menu' => 'od_wp_edit_menu',
     'create-profiles' => 'od_wp_create_profiles',
     'untag-video-events' => 'od_wp_untag_video_events',
