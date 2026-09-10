@@ -867,6 +867,22 @@ foreach (OD_TEAM as $member) {
     );
 }
 
+/* Е. П. Чернов, 2026-08-28: «исправить должность Тарасова С.В. […] Добавить
+   почту: lenobl@obshee-delo.ru И ссылку на ВК». Production's own `/team/`
+   states both, so the roster has to as well — the old `politbez_od@mail.ru`
+   is on neither. */
+$tarasov = null;
+foreach (OD_TEAM as $member) {
+	if ('Тарасов Сергей Валентинович' === $member['name']) {
+		$tarasov = $member;
+	}
+}
+od_test( 'Тарасов is on the roster', null !== $tarasov );
+$tarasovHrefs = array_column( $tarasov['contacts'], 0 );
+od_test( 'Тарасов: the branch mailbox, as production states it', in_array( 'mailto:lenobl@obshee-delo.ru', $tarasovHrefs, true ) );
+od_test( 'Тарасов: and the ВК page asked for', in_array( 'https://vk.ru/id131271224', $tarasovHrefs, true ) );
+od_test( 'Тарасов: the address neither page carries is gone', ! in_array( 'mailto:politbez_od@mail.ru', $tarasovHrefs, true ) );
+
 /* -------------------------------------------------------- od_profile_slug */
 
 od_test('od_profile_slug takes the last segment', od_profile_slug('/profile/varlamov/') === 'varlamov');

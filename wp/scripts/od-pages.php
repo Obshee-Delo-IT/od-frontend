@@ -3287,9 +3287,16 @@ const OD_TEAM = [
         'supersedes' => [
             'Координатор по Кингисеппскому, Сланцевскому, Волосовскому району',
         ],
+        // `lenobl@obshee-delo.ru` and the ВК link, not `politbez_od@mail.ru`:
+        // asked for by Е. П. Чернов on 2026-08-28 («Добавить почту:
+        // lenobl@obshee-delo.ru И ссылку на ВК») and already what production's
+        // own `/team/` states, which is the tie-breaker. `lenobl@` is the
+        // Ленинградское отделение mailbox the two of them share — Чернов writes
+        // from it — so it is a branch address, not a mistyped personal one.
         'contacts' => [
             ['tel:+79062755758', '+7 906 275-57-58'],
-            ['mailto:politbez_od@mail.ru', 'politbez_od@mail.ru'],
+            ['mailto:lenobl@obshee-delo.ru', 'lenobl@obshee-delo.ru'],
+            ['https://vk.ru/id131271224', 'vk.ru/id131271224'],
         ],
     ],
     [

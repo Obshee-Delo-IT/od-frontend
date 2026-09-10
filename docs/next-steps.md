@@ -1279,3 +1279,54 @@ bodies genuinely differ, and `/materials/metodichki/` is the one the nav and the
 redesign point at. Which of the two is canonical is an editorial call about the
 pages. The mechanism to retire one exists now — add the pair to
 `od_wp_duplicate_branches()` — so this is a decision, not work.
+
+## Content the reviewers asked for, re-checked against production 2026-09-10
+
+**Already right on production, nothing to do** — checked page by page, because
+the requests arrived after somebody had already applied them:
+
+- **Вологодская область** (А. Дегтярёв, 07–09.08: «убрать Ефимова, поставить
+  Константина Заболоцкого»). `/contacts/vologodskaya/` names Заболоцкий
+  Константин Андреевич as coordinator and Ефимов appears nowhere on it.
+- **Чернов Е. П.'s own title and e-mail** (28.08). Prod's `/team/` states
+  «Руководитель департамента информационной политики и комплексной
+  безопасности» and `politbez@obshee-delo.ru`, which is exactly the request —
+  and `OD_TEAM` in `od-pages.php` already carries both. `infobez@` from his
+  parenthetical is on neither page; prod uses `politbez@`.
+- **The order of people on `/contacts/st-petersburg/`** (28.08, «там
+  перепутано», with the four cards in the order he wants them). Prod already
+  reads Чернов → Ковалевский → Тарасов → Копылов, i.e. his order. The second
+  set of four names further down the page is the `pl-categs` coordinator loop,
+  not a duplicate.
+- **The Печоры съезд as a news item** (28.08). Published — «Вдохновение и
+  Сотрудничество: Съезд координаторов Общего Дела в Печорах» is in that page's
+  «События».
+
+**Fixed here** (`od-pages.php`, `OD_TEAM`): Тарасов С. В. carried
+`politbez_od@mail.ru` and no ВК link; prod's `/team/` and Чернов's request both
+say `lenobl@obshee-delo.ru` plus `https://vk.ru/id131271224`. ⚠ **The
+transform only ever adds a contact it cannot find**, so on od-dev and od-stage —
+where an earlier run already wrote the old address into the record — the stale
+`politbez_od@mail.ru` line has to be deleted by hand once. Prod has never been
+run against, so there the new values are simply what lands.
+
+**Still open, and each needs something from outside the repo:**
+
+- **Тарасов's photograph.** Asked to be replaced, «прилагается» — and the
+  attachment did not survive the forward: message 542 in `news@` carries no
+  files. Ask for the image again.
+- **The home banner still says «ДОБРОВОЛЕЦ про»** (Р. Низамов: «Почему на
+  изображении прежнее наименование конкурса?»). It is the wordmark drawn into
+  `public/figma/promo-decoration.svg` and its mobile twin as vector paths, not
+  text — so this is new artwork from the designer, not an edit. The banner's
+  own copy and `OD_TEAM` already use the current name («Общее дело — ПРО»); the
+  picture is the last place the old one survives. Note prod's
+  `/contacts/moscow/` body also still writes «Доброволец-ПРО» in Васильев's
+  role, which the redesign's `OD_TEAM` overrides.
+- **«Заказать методические пособия у Рязанова А. А.»** on
+  `/materials/metodichki/` (Низамов: Рязанов says the information is ten years
+  old and he has not handled this for years). Still live on prod, name, phone,
+  Telegram and ВК. Somebody has to say who takes the orders now — until then
+  the page publishes a wrong contact.
+- **Мультфильмы с титрами** (О. Баранова). Editorial: subtitled versions have
+  to exist before a page can offer them.
