@@ -72,5 +72,16 @@ export const proxy = (request: NextRequest) => {
 };
 
 export const config = {
-  matcher: ['/', '/video/:path*', '/news/:path*', '/category/:path*', '/page/:path*', '/legacy-font/:path*'],
+  // `/contacts/:path*` is here for the two retired duplicate regions only — the
+  // other 73 region pages fall through untouched, as every path the table has no
+  // rule for does.
+  matcher: [
+    '/',
+    '/video/:path*',
+    '/news/:path*',
+    '/category/:path*',
+    '/page/:path*',
+    '/contacts/:path*',
+    '/legacy-font/:path*',
+  ],
 };

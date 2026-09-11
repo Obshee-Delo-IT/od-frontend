@@ -3286,6 +3286,13 @@ const OD_TEAM = [
         'role' => 'Заместитель руководителя департамента информационной политики и комплексной безопасности. Координатор по Кингисеппскому, Сланцевскому, Волосовскому району',
         'supersedes' => [
             'Координатор по Кингисеппскому, Сланцевскому, Волосовскому району',
+            // Not a line the role swallowed but a line an earlier run of *this*
+            // script wrote, when `contacts` still carried the old address. The
+            // lead is only ever added to, never rewritten, so od-dev and
+            // od-stage keep both addresses until something removes one — and
+            // this is the mechanism that removes a line by the text it shows.
+            // Production has never carried it, where it is simply a no-op.
+            'e-mail: politbez_od@mail.ru',
         ],
         // `lenobl@obshee-delo.ru` and the ВК link, not `politbez_od@mail.ru`:
         // asked for by Е. П. Чернов on 2026-08-28 («Добавить почту:

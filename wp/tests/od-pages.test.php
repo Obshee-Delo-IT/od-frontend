@@ -882,6 +882,16 @@ $tarasovHrefs = array_column( $tarasov['contacts'], 0 );
 od_test( 'Тарасов: the branch mailbox, as production states it', in_array( 'mailto:lenobl@obshee-delo.ru', $tarasovHrefs, true ) );
 od_test( 'Тарасов: and the ВК page asked for', in_array( 'https://vk.ru/id131271224', $tarasovHrefs, true ) );
 od_test( 'Тарасов: the address neither page carries is gone', ! in_array( 'mailto:politbez_od@mail.ru', $tarasovHrefs, true ) );
+/* …and an earlier run of this script wrote that address into the record on
+   od-dev and od-stage, where the lead is only ever added to. `supersedes` is
+   what takes a line back out, so the removal travels with the script instead of
+   being a hand edit somebody has to remember twice. */
+od_test( 'Тарасов: the stale line is listed for removal', in_array( 'e-mail: politbez_od@mail.ru', $tarasov['supersedes'], true ) );
+$stale = '<!-- wp:paragraph -->' . "\n" . '<p>тел.: <a href="tel:+79062755758">+7 906 275-57-58</a></p>'
+	. "\n" . '<p>e-mail: <a href="mailto:politbez_od@mail.ru">politbez_od@mail.ru</a></p>' . "\n" . '<!-- /wp:paragraph -->';
+$cleaned = od_drop_superseded_lines( $stale, $tarasov['supersedes'] );
+od_test( 'Тарасов: the stale line goes', ! str_contains( $cleaned, 'politbez_od@mail.ru' ) );
+od_test( 'Тарасов: and the phone beside it stays', str_contains( $cleaned, '+7 906 275-57-58' ) );
 
 /* -------------------------------------------------------- od_profile_slug */
 

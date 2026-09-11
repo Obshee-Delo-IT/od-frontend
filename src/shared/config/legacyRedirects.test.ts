@@ -17,6 +17,15 @@ describe('resolveLegacyUrl', () => {
     expect(resolveLegacyUrl('/video/short/')).toBeNull();
   });
 
+  it('sends a retired duplicate region to the page that kept the coordinator', () => {
+    // The page is a draft in WordPress, which the catch-all answers with the A6
+    // iframe — i.e. the old site's copy, contacts and all — rather than a 404.
+    expect(resolveLegacyUrl('/contacts/rezan-oblast/')).toBe('/contacts/ryazanskaya/');
+    expect(resolveLegacyUrl('/contacts/smolenskaya-oblasti/')).toBe('/contacts/smolenskaya/');
+    expect(resolveLegacyUrl('/contacts/ryazanskaya/')).toBeNull();
+    expect(resolveLegacyUrl('/contacts/smolenskaya/')).toBeNull();
+  });
+
   it('turns WordPress path pagination into the query param we use', () => {
     expect(resolveLegacyUrl('/video/filmy/page/2/')).toBe('/video/filmy/?page=2');
     expect(resolveLegacyUrl('/news/page/2/')).toBe('/news/?page=2');
@@ -116,6 +125,7 @@ describe('resolveLegacyUrl', () => {
 
   it('never lands on a destination that itself redirects', () => {
     const paths = [
+      '/contacts/rezan-oblast/',
       '/video/filmy/page/2/',
       '/news/page/2/',
       '/page/2/',

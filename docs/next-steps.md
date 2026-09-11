@@ -1110,6 +1110,13 @@ fix survives the cutover clone rather than living in one database:
   mu-plugin;
 - the dead search field — `/search/` (B7), plus `/?s=` finally redirected.
 
+**Applied to od-stage on 2026-09-11**, with the two footer links applied to
+production as well: the Moscow repair, the duplicate-region merge (whose two
+retired addresses now 301 onto the page that kept the coordinator, since a
+drafted page falls back to the A6 iframe rather than 404ing), the three
+`metodichki` covers, `[od_sitemap]` as an mu-plugin, «Короткометражные» as a
+real category, and Тарасов's record. Each has its own entry below.
+
 **Suggestions** — the things that were not broken — are in
 [`demo-feedback-suggestions.md`](./demo-feedback-suggestions.md), with a cost
 and a cheapest-version note each. The two that arrived twice are films grouped
@@ -1224,7 +1231,7 @@ is switched off, confirmed again on 2026-09-11 from both networks:
 Russia (1.37 s) and from outside (1.65 s) alike. That is the CF7 entry above, and
 it is the same fix.
 
-## The three `metodichki` covers are still missing on od-stage
+## ~~The three `metodichki` covers are missing on od-stage~~ — done 2026-09-11
 
 `/materials/metodichki/` shows three broken images, and it is not the pipeline:
 `2026/08/metodichka-zdorovaya-{rossiya,molodezh}.jpg` and
@@ -1233,11 +1240,14 @@ are committed at `wp/assets/metodichki/` and the transfer is already a step in
 [`prod-migration-runbook.md` §2.8](./prod-migration-runbook.md) — it was written
 for the new install and never run against the clone.
 
-**What has to happen:** the two lines the runbook already gives, pointed at
+**Done 2026-09-11**: the two lines the runbook already gives, pointed at
 od-stage (`scp wp/assets/metodichki/*.jpg` into
-`~/od-stage/public_html/wp-content/uploads/2026/08/`), then `od-pages.php apply
-D6` so `od_cover_full_size()` finds them. Reported by both Низамов and
-Панфёрова, whose screenshot shows the alt text where the cover should be.
+`~/od-stage/public_html/wp-content/uploads/2026/08/`). All three answer 200 on
+`od.webtm.ru` now and the page draws them; `od-pages.php` needed no re-run, the
+bodies already pointed at these filenames. They serve from the WordPress origin,
+not the bucket — the same backlog as every other upload since 2022, two entries
+up. Reported by both Низамов and Панфёрова, whose screenshot shows the alt text
+where the cover should be.
 
 ## od-stage has no per-post migration backup any more — `wp cmsms restore` errors
 
@@ -1249,27 +1259,45 @@ took `nvp_content_copy` with it. The migrator's own rollback — the thing
 [`wp-page-passthrough.md` §6](./wp-page-passthrough.md) calls the per-post
 undo — does not exist on that install.
 
+**And `wp cmsms backup` cannot put one back for a single page** — it takes no
+`--post`, sweeping every record that has no copy, so on this install it would
+store today's *already migrated* Gutenberg body as each post's «original» and
+make the next `migrate` or `restore` a no-op against the wrong text. Repairing
+post 21093 on 2026-09-11 therefore seeded `nvp_content_copy` for that id alone,
+with production's body, before calling `migrate --post=21093`.
+
 **Consequences, both worth knowing before the cutover:** repairing a page on
 od-stage means re-loading prod's body by hand (`ssh od-root wp post get <id>
---field=post_content` → `wp post update` on stage → `wp cmsms migrate --post=`
-→ `od-pages.php apply`), and **the sweep must run *after* the migration on the
-new install, not before**, or the new install loses its rollback the same way.
+--field=post_content` → `wp post update` on stage → seed `nvp_content_copy` for
+that id → `wp cmsms migrate --post=` → `od-pages.php apply`), and **the sweep
+must run *after* the migration on the new install, not before**, or the new
+install loses its rollback the same way.
 The sweep's own entry says which keys it targets; `nvp_%` needs adding to its
 keep-list.
 
-## `/contacts/moscow/` on od-stage still reads «Руководитель Д, епартамента»
+## ~~`/contacts/moscow/` on od-stage reads «Руководитель Д, епартамента»~~ — repaired 2026-09-11
 
-The transform is fixed and tested, but od-stage's `post_content` was **written**
-by the old one on 2026-08-21 — the split bold runs are gone from the stored body
-and no re-run can re-derive them. Exactly two pages are affected, measured
-across all 148 pages and 300 newest posts on that install: `moscow` (21093) and
-`/contacts/` (529), which embeds its card through `[od_regions]`.
+The transform was fixed and tested, but od-stage's `post_content` had been
+**written** by the old one on 2026-08-21 — the split bold runs were gone from the
+stored body and no re-run could re-derive them.
 
-**What has to happen:** the four-step repair in the entry above, for post 21093
-only. Prod needs nothing — it still holds the original body, and the fixed script
-is what will run against the clone. Verified locally against that body: 19
-person rows, every name and role correct, no invented comma
-(`wp/tests/fixtures/contacts-moscow.prod.html`).
+**One page, not two.** A sweep of all 148 published pages for a comma inside a
+word (a one- or two-letter token, a comma, a lowercase continuation) found
+exactly `moscow` (21093); `/contacts/` renders its cards through `[od_regions]`
+at request time, so it healed with the page. The only other match, `belarus`,
+is an address — «ул. Калинина 30-А, ком. 408».
+
+**Repaired** by loading production's own body back onto od-stage, re-migrating
+it and re-applying the script — `wp post update 21093 moscow.prod.html` →
+`wp cmsms migrate --post=21093` → `wp eval-file od-pages.php apply`. **The
+migrate step needs one thing first**, and it is the entry below:
+`nvp_content_copy` is what the migrator reads, od-stage has none, and
+`wp cmsms backup` takes no `--post` — run bare it would snapshot every *already
+migrated* body as that post's «original». So the meta was seeded for post 21093
+alone, from `wp/tests/fixtures/contacts-moscow.prod.html`, and nothing else on
+that install was touched.
+
+Now live: 19 person rows, every name and role correct, no invented comma.
 
 ## ~~«Короткометражные» in the nav lands on the whole catalogue~~ — done 2026-09-11
 
@@ -1403,11 +1431,15 @@ the requests arrived after somebody had already applied them:
 
 **Fixed here** (`od-pages.php`, `OD_TEAM`): Тарасов С. В. carried
 `politbez_od@mail.ru` and no ВК link; prod's `/team/` and Чернов's request both
-say `lenobl@obshee-delo.ru` plus `https://vk.ru/id131271224`. ⚠ **The
-transform only ever adds a contact it cannot find**, so on od-dev and od-stage —
-where an earlier run already wrote the old address into the record — the stale
-`politbez_od@mail.ru` line has to be deleted by hand once. Prod has never been
-run against, so there the new values are simply what lands.
+say `lenobl@obshee-delo.ru` plus `https://vk.ru/id131271224`. The transform only
+ever *adds* a contact it cannot find, so the earlier run's
+`politbez_od@mail.ru` stayed in the record beside the new address — taken back
+out on 2026-09-11 through `supersedes`, the per-record list of lines the
+transform removes by the text they show, rather than by hand: that way it
+travels with the script instead of being a deletion somebody has to remember on
+each install. Applied to od-stage; prod has never been run against, so there the
+new values are simply what lands, and od-dev is left alone because nothing
+renders it.
 
 **Still open, and each needs something from outside the repo:**
 
