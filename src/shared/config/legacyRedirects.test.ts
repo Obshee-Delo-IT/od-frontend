@@ -13,8 +13,8 @@ describe('resolveLegacyUrl', () => {
     expect(resolveLegacyUrl('/video/famous-people/')).toBeNull();
   });
 
-  it('sends «короткометражки» to the full catalogue — no such WP category', () => {
-    expect(resolveLegacyUrl('/video/short/')).toBe('/video/');
+  it('serves «Короткометражные» rather than redirecting it — the category is real now', () => {
+    expect(resolveLegacyUrl('/video/short/')).toBeNull();
   });
 
   it('turns WordPress path pagination into the query param we use', () => {
@@ -99,7 +99,6 @@ describe('resolveLegacyUrl', () => {
 
   it('always returns a slash-terminated path, so nothing is left to normalise', () => {
     const destinations = [
-      '/video/short/',
       '/video/filmy/page/2/',
       '/news/page/2/',
       '/page/2/',
@@ -117,7 +116,6 @@ describe('resolveLegacyUrl', () => {
 
   it('never lands on a destination that itself redirects', () => {
     const paths = [
-      '/video/short/',
       '/video/filmy/page/2/',
       '/news/page/2/',
       '/page/2/',

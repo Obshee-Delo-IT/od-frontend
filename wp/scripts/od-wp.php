@@ -24,13 +24,14 @@
  * **Adding a task.** One function, called from the runner at the bottom, taking
  * `$apply` and doing nothing but logging when it is false. Whatever it needs to
  * know goes in a registry function above it, so the data can be read and tested
- * without WordPress. There are ten today — {@see od_wp_tag_programme_films()},
+ * without WordPress. There are eleven today — {@see od_wp_tag_programme_films()},
  * {@see od_wp_rename_pages()}, {@see od_wp_order_pages()},
  * {@see od_wp_draft_empty_branches()}, {@see od_wp_edit_menu()},
  * {@see od_wp_create_profiles()}, {@see od_wp_untag_video_events()},
  * {@see od_wp_rehost_posters()}, {@see od_wp_merge_duplicate_branches()} and
- * {@see od_wp_strip_footer_links()} — and still no framework between them,
- * because ten calls in a row is not a thing that needs one.
+ * {@see od_wp_strip_footer_links()} and {@see od_wp_create_short_category()} —
+ * and still no framework between them, because eleven calls in a row is not a
+ * thing that needs one.
  *
  * House rules, same as `od-pages.php`: dry run by default, writing takes the
  * positional argument `apply`, everything is idempotent, and **posts are
@@ -1098,6 +1099,150 @@ function od_wp_merge_duplicate_branches(bool $apply): void
     }
 }
 
+/** The parent every catalogue category hangs off, by slug — «Видео». */
+const OD_WP_VIDEO_PARENT = 'video';
+
+/**
+ * «Короткометражные» — the fifth catalogue category, and the twelve films that
+ * go in it.
+ *
+ * The collection is not new: `/video/short/` is a **page**, curated by hand, and
+ * the nav has always pointed at it. What it never had is a category, so the
+ * catalogue could not draw it and `src/proxy.ts` sent the whole nav item to
+ * `/video/`. These twelve are the page's own list, in its own order, read off
+ * production's body for page 35015.
+ *
+ * Nine of them are already «Ролики» and stay so — a film carries as many
+ * categories as it belongs to, and this one is a second shelf, not a move. The
+ * tenth, «Межрегиональный слёт волонтёров», is a news post with a video format
+ * and no catalogue category at all; tagging it is what puts it on `/video/`.
+ *
+ * The segment this becomes on the frontend is `short`, which is the address the
+ * nav already holds — so `FILM_CATEGORIES` gains `short` and the
+ * `/video/short/` redirect goes.
+ *
+ * @return array{slug: string, name: string, films: array<int, string>}
+ */
+function od_wp_short_films(): array
+{
+    return [
+        'slug' => 'short',
+        'name' => 'Короткометражные',
+        'films' => [
+            'что-такое-общее-дело-презентация-орга',
+            'презентация-организации-общее-дело-к',
+            'замечаем-ли-мы-как-нами-манипулируют-с-2',
+            'почему-же-они-курят',
+            'трезвый-разбор-мифы-об-алкоголе-разоб',
+            'якутия-трезвые-сёла-правда-и-мифы',
+            'межрегиональный-слёт-волонтёров-общ',
+            'удивительная-история-о-женской-красо',
+            'генетический-код-главное-сокровище',
+            'pismo-putinu',
+            'new-rolik',
+            'seks-i-alco',
+        ],
+    ];
+}
+
+/**
+ * Creates «Короткометражные» under «Видео» and tags {@see od_wp_short_films()}.
+ *
+ * Both halves are idempotent the way the rest of this file is: an existing term
+ * is reused rather than duplicated, and `wp_set_post_categories()` is called with
+ * `$append = true`, so a film that already carries the category keeps exactly the
+ * categories it has.
+ *
+ * **The term id it prints is the one the frontend needs.** `FILM_CATEGORIES` in
+ * `src/shared/config/filmCategories.ts` — and its copy in `scripts/lib/wp.mjs` —
+ * maps the URL segment to a WordPress id, and ids differ per install, so this
+ * task's output is the input for that edit on whichever tier it has just run
+ * against.
+ */
+function od_wp_create_short_category(bool $apply): void
+{
+    $short = od_wp_short_films();
+
+    $parent = get_term_by('slug', OD_WP_VIDEO_PARENT, 'category');
+    if (!$parent) {
+        WP_CLI::error(sprintf('no «%s» category — nothing to hang the segment off', OD_WP_VIDEO_PARENT));
+    }
+
+    $term = get_term_by('slug', $short['slug'], 'category');
+
+    if ($term && (int) $term->parent !== (int) $parent->term_id) {
+        // A category with this slug somewhere else in the tree is not ours to
+        // re-parent: the catalogue queries by id, so the wrong one would draw
+        // the wrong films under a name that looks right.
+        WP_CLI::error(sprintf(
+            '«%s» (#%d) exists outside «%s» (parent #%d) — resolve by hand',
+            $short['slug'],
+            $term->term_id,
+            OD_WP_VIDEO_PARENT,
+            $term->parent
+        ));
+    }
+
+    if ($term) {
+        WP_CLI::log(sprintf('«%s» (#%d): already under «%s», skipped', $term->name, $term->term_id, OD_WP_VIDEO_PARENT));
+    } else {
+        WP_CLI::log(sprintf('«%s»: to be created under «%s» (#%d)', $short['name'], OD_WP_VIDEO_PARENT, $parent->term_id));
+
+        if (!$apply) {
+            // Without the term there is no id to tag with, and reporting twelve
+            // films against a term that does not exist would be a lie.
+            return;
+        }
+
+        $created = wp_insert_term($short['name'], 'category', [
+            'slug' => $short['slug'],
+            'parent' => $parent->term_id,
+        ]);
+
+        if (is_wp_error($created)) {
+            WP_CLI::error(sprintf('«%s»: %s', $short['name'], $created->get_error_message()));
+        }
+
+        $term = get_term((int) $created['term_id'], 'category');
+        WP_CLI::success(sprintf('«%s» (#%d): created — this is the id `FILM_CATEGORIES` needs', $term->name, $term->term_id));
+    }
+
+    foreach ($short['films'] as $slug) {
+        $posts = get_posts([
+            'name' => sanitize_title($slug),
+            'post_type' => 'post',
+            'post_status' => 'any',
+            'numberposts' => 1,
+        ]);
+
+        if (!$posts) {
+            WP_CLI::warning(sprintf('%s: no such post', $slug));
+            continue;
+        }
+
+        $post = $posts[0];
+
+        if (has_category((int) $term->term_id, $post)) {
+            WP_CLI::log(sprintf('%s (#%d): already «%s», skipped', $slug, $post->ID, $term->name));
+            continue;
+        }
+
+        WP_CLI::log(sprintf('%s (#%d): to be added to «%s»', $slug, $post->ID, $term->name));
+
+        if (!$apply) {
+            continue;
+        }
+
+        $set = wp_set_post_categories($post->ID, [(int) $term->term_id], true);
+        if (is_wp_error($set)) {
+            WP_CLI::warning(sprintf('%s (#%d): %s', $slug, $post->ID, $set->get_error_message()));
+            continue;
+        }
+
+        WP_CLI::success(sprintf('%s (#%d): tagged', $slug, $post->ID));
+    }
+}
+
 /**
  * The «ОТЗЫВЫ» footer links that go, each as the substring that identifies its
  * `<li>`.
@@ -1237,6 +1382,7 @@ $tasks = [
     'untag-video-events' => 'od_wp_untag_video_events',
     'rehost-posters' => 'od_wp_rehost_posters',
     'strip-footer-links' => 'od_wp_strip_footer_links',
+    'create-short-category' => 'od_wp_create_short_category',
 ];
 
 $positional = $args ?? [];

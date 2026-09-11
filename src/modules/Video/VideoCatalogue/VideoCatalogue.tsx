@@ -68,6 +68,16 @@ const CATALOGUE_COPY: Record<CatalogueKey, CatalogueCopy> = {
     description: 'Видеоролики общероссийской общественной организации «Общее дело»',
     card: '/og-roliki.png',
   },
+  short: {
+    label: 'Короткометражные',
+    heading: 'Короткометражные',
+    title: 'Короткометражные фильмы — ОБЩЕЕ ДЕЛО',
+    description: 'Короткометражные фильмы общероссийской общественной организации «Общее дело»',
+    // No card of its own — the section is new and the artwork is one file the
+    // designer has yet to draw; `/og-video.png` names the catalogue, which is
+    // true of this page too.
+    card: '/og-video.png',
+  },
   'famous-people': {
     label: 'Известные люди',
     heading: 'Известные люди',

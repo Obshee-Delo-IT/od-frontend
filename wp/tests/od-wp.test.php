@@ -293,4 +293,33 @@ od_test(
         === '<ul></ul>'
 );
 
+/* ------------------ «Короткометражные», the fifth catalogue category -------- */
+
+$short = od_wp_short_films();
+
+od_test('the segment is the address the nav already holds', $short['slug'] === 'short');
+od_test('the category has a name', $short['name'] !== '');
+od_test('it is the twelve films the curated page lists', count($short['films']) === 12);
+od_test('no film is listed twice — a duplicate would tag one and hide another', count($short['films']) === count(array_unique($short['films'])));
+
+foreach ($short['films'] as $slug) {
+    od_test($slug . ': a post slug, not a path', $slug !== '' && !str_contains($slug, '/'));
+    // WordPress stores these percent-encoded; the registry writes what a human
+    // can read and `sanitize_title()` encodes it at lookup time.
+    od_test($slug . ': slugs are written decoded', !str_contains($slug, '%'));
+    od_test($slug . ': trimmed', trim($slug) === $slug);
+}
+
+// The frontend maps the segment to a term id, and the file that does it has to
+// gain this segment or the category is created and nothing draws it.
+$categories = file_get_contents(__DIR__ . '/../../src/shared/config/filmCategories.ts');
+od_test('FILM_CATEGORIES carries the segment', str_contains($categories, $short['slug'] . ': '));
+// `scripts/lib/wp.mjs` keeps its own copy — zero-dep Node cannot import TS.
+$mjs = file_get_contents(__DIR__ . '/../../scripts/lib/wp.mjs');
+od_test('and so does the scripts copy', str_contains($mjs, $short['name']));
+// A redirect would beat the route: the proxy runs first, so a leftover
+// `/video/short/` rule 301s the new category page onto the whole catalogue.
+$redirects = file_get_contents(__DIR__ . '/../../src/shared/config/legacyRedirects.ts');
+od_test('and no redirect shadows the segment any more', !str_contains($redirects, "=== '" . $short['slug'] . "'"));
+
 od_test_summary();

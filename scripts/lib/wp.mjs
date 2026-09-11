@@ -6,12 +6,13 @@
  */
 
 /** Children of the «Видео» (85) taxonomy — the film catalogue. */
-export const FILM_CATEGORY_IDS = [581, 580, 86, 559];
+export const FILM_CATEGORY_IDS = [581, 580, 86, 671, 559];
 
 export const FILM_CATEGORY_NAMES = {
   581: 'Фильмы',
   580: 'Мультфильмы',
   86: 'Ролики',
+  671: 'Короткометражные',
   559: 'Известные люди',
   52: 'Видео события',
 };

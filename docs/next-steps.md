@@ -1271,29 +1271,41 @@ is what will run against the clone. Verified locally against that body: 19
 person rows, every name and role correct, no invented comma
 (`wp/tests/fixtures/contacts-moscow.prod.html`).
 
-## «Короткометражные» in the nav lands on the whole catalogue — decide which way
+## ~~«Короткометражные» in the nav lands on the whole catalogue~~ — done 2026-09-11
 
 **Reported by Низамов and Панфёрова both.** The nav's «Фильмы → Короткометражные»
-points at `/video/short/`, `src/proxy.ts` 301s that to `/video/`, and the
-visitor gets all 83 videos. It is not a broken redirect — there is no such WP
+pointed at `/video/short/`, `src/proxy.ts` 301'd that to `/video/`, and the
+visitor got all 83 videos. It was not a broken redirect — there was no such WP
 category, so the redirect was the only honest destination.
 
-**What is actually there:** `/video/short/` is a **page**, hand-curated, and
+**What was actually there:** `/video/short/` is a **page**, hand-curated, and
 production still serves it with **12 short films** on it — «Что такое ОБЩЕЕ
 ДЕЛО», «Презентация организации. Короткая версия», «Замечаем ли мы как нами
 манипулируют?», «ПОЧЕМУ же они курят?!», «Трезвый разбор», «Якутия. Трезвые
 сёла», «Межрегиональный слёт волонтёров 2019», «Удивительная история о женской
 красоте», «Генетический код», «Письмо Путину», «Увлекательный ролик», «Секс и
-алкоголь». So the menu item means something; the redirect is what empties it.
+алкоголь».
 
-**Three ways, and it is an editorial choice.** (a) Drop the redirect and let the
-catch-all serve the page — one line, and the page then needs the catalogue's
-look. (b) Make «Короткометражные» a real fifth category under «Видео» (85),
-tag those 12 posts, add the segment to `FILM_CATEGORIES` — the option that makes
-it behave like every other catalogue page, and the only one that keeps working
-as the collection grows. (c) Delete the nav item, in WordPress, and keep the
-redirect. Note that a film can carry two categories, so (b) does not disturb
-«Ролики» or «Известные люди».
+**Done the way Алексей chose — a real category**, not a dropped redirect and not
+a deleted nav item. `create-short-category` in `od-wp.php` creates
+«Короткометражные» (slug `short`) under «Видео» and tags those twelve by slug,
+reading the list off production's own page body; `FILM_CATEGORIES` gains
+`short: 671` (od-stage's id — **it will differ on production**, which is blocker
+B5 in the runbook, and the task prints the id it created), `scripts/lib/wp.mjs`
+gains the same, `VideoCatalogue` gains the section's copy, and the `/video/short/`
+redirect is gone so the route serves the address the nav already holds.
+
+Eleven of the twelve were «Ролики» and stay so — a film carries as many
+categories as it belongs to, and «Все» de-duplicates. The twelfth,
+«Межрегиональный слёт волонтёров», was a news post with a video format and no
+catalogue category at all, so it reaches `/video/` for the first time.
+
+**Two loose ends, both small.** The section borrows `/og-video.png` as its
+social card — the other five have one each, and a sixth has to be drawn. And the
+curated WP page at `/video/short/` is still published: the route wins over the
+catch-all so nothing serves it, and `sitemap.ts` dedupes the URL, but
+`pages:inventory` will keep counting it as a passed-through page until somebody
+drafts it (**not on production**, where it is still the live list).
 
 ## ~~Two links in the footer that lead nowhere: «Оставить отзыв» and «Предложить идею»~~ — done 2026-09-11
 

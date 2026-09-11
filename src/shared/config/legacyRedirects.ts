@@ -84,10 +84,6 @@ export const resolveLegacyUrl = (pathname: string): string | null => {
   const [first, second, third, fourth, fifth] = pathname.split('/').filter(Boolean);
 
   if (first === 'video') {
-    // «Короткометражки» has no WP category — the live page is a curated list.
-    if (second === 'short') {
-      return '/video/';
-    }
     // WP paginated a category with a path segment; we use a query param.
     const segment = resolveFilmCategory(second);
     if (segment && third === 'page') {
