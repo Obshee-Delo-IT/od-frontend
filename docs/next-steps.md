@@ -1091,6 +1091,12 @@ in the image or rewriting those steps to run from the host.
 28.08). De-duplicated, the batch is ~25 distinct items; five of them were
 reported twice by people who had not spoken to each other.
 
+**Three of them turned out to be one thing: the network.** «Пустой экран» on the
+two iframe pages, «картинки не подгружаются», and the missing footer logo all
+re-checked clean from a Russian exit on 2026-09-11 — every request 200, nothing
+missing — against 3–10× the latency measured from outside, with a 14 s tail on a
+single image. The three entries below carry the numbers.
+
 **Fixed the same week** (2026-09-09), each in the script that owns it, so the
 fix survives the cutover clone rather than living in one database:
 
@@ -1138,13 +1144,85 @@ from this network today, and **all** of whose named pages are ones whose broken
 images live on `od.webtm.ru`. Низамов is the only reviewer who reported the
 missing footer logo, which is `2026/08/logo-white.png`, origin-only.
 
-**What has to happen:** re-check from a Russian network (the reviewers' own
-networks are the measurement that matters — `od.webtm.ru` is a hoster's
-technical domain and may be slow or filtered there in ways it is not from
-outside), then backfill the bucket for everything under `wp-content/uploads`
-from 2022 on and fix whatever the offload was, before the new install inherits
-the same half-empty bucket. The frontend needs no change either way — the
-probe already prefers the bucket the moment a file appears in it.
+**Re-checked from a Russian network 2026-09-11** (VPN exit in Yandex.Cloud
+ru-central, `158.160.144.232`), with the same requests replayed from outside the
+same hour for a baseline — `.scratch/ru-check.sh`. Nothing fails: every image,
+page and font answers **200**, no timeout, no 5xx, no DNS difference. What
+changes is the time, and it changes for **everything**, not for the origin
+alone:
+
+| | from RU | from outside |
+| --- | --- | --- |
+| `od.webtm.ru` `2026/08/logo-white.png` | 11.57 s | 0.61 s |
+| same, 10 consecutive | 1.18–14.35 s | 0.44–1.34 s |
+| five other origin uploads | 1.15–5.98 s | ~0.4–1.2 s |
+| bucket, four uploads | 0.86–7.42 s | ~0.35–0.53 s |
+| `new.obshee-delo.ru/` | 5.44 s | 1.16 s |
+| `/legacy/get-involved/` | 5.87 s | 0.62 s |
+| `obshee-delo.ru/get-involved/` (live prod) | 3.28 s | 0.79 s |
+
+So the origin-vs-bucket gap is real but secondary: the whole path is 3–10× slower
+from there, with a tail past 14 s on a single 30 KB PNG. That is enough to
+explain «не подгружаются» without anything being broken — a browser that has 40
+images in flight on a page whose HTML already took 5 s drops the last of them
+below the fold, and the reporter sees an empty box.
+
+**What has to happen** is unchanged in substance and larger in scope:
+
+1. backfill the bucket for everything under `wp-content/uploads` from 2022 on
+   and fix whatever the offload was, before the new install inherits the same
+   half-empty bucket — this removes the 14 s tail, which is origin-only;
+2. put an actual CDN in front of the bucket (next entry), which is what the
+   remaining 3–10× needs;
+3. no frontend change either way — the probe already prefers the bucket the
+   moment a file appears in it.
+
+## The media bucket is not a CDN, and from Russia it is no faster than the origin
+
+`WP_MEDIA_CDN` is named for what it was meant to be. What it points at —
+`obshee-delo.website.yandexcloud.net` — is an Object Storage **static website
+endpoint**: one bucket, one region, one address (`213.180.193.247`), no edge
+points of presence and no cache anywhere near a visitor. It is a file server on
+a good network, not a delivery network, and the 2026-09-11 numbers above say so
+plainly: from Russia it answered 0.86 s, 1.40 s, 3.18 s and **7.42 s** for four
+small images — the same order as `od.webtm.ru`, whose slowness it is supposed to
+be the remedy for.
+
+**What has to happen:** enable Yandex Cloud CDN (or any CDN) with the bucket as
+the origin and repoint `WP_MEDIA_CDN` at the CDN hostname. It is a one-variable
+change here — `mediaCdn.ts` reads it, `next.config.ts` allowlists it, and
+`resolveMediaUrl`'s HEAD probe works against whatever it is given — plus the
+hostname in `images.remotePatterns` build-args for the Docker image. Do it
+**after** the backfill, so the CDN caches a complete bucket.
+
+## The «empty screen» on the two iframe pages is latency, not a broken embed
+
+Two reviewers reported `/get-involved/` and `/about/ostavit-otziv/` as blank
+(Низамов, with screenshots). Both are on the A6 iframe — they are two of the six
+paths left in [`legacyEmbedPages.ts`](../src/shared/config/legacyEmbedPages.ts) —
+and both render here, headless and by eye: the inner document measures 5305 px
+and 1409 px, and the отзыв form's fields are present.
+
+**Re-checked from a Russian network 2026-09-11, and it renders there too**:
+`/get-involved/` 200 in 1.63 s, its `/legacy/` inner document 200 in 5.87 s,
+`/about/ostavit-otziv/` 200 in 2.14 s — and, by eye under the same VPN, the
+«ПРИМИ УЧАСТИЕ» copy and both form fields are on screen. So there is no blank
+page to fix; there is a page that spends ~6 s fetching an 79 KB inner document
+through a second origin, on top of the outer page's own 1.6 s, before anything
+appears — and a visitor who scrolls past in the meantime sees an iframe-shaped
+hole.
+
+**What has to happen:** nothing iframe-specific, because the iframe is the thing
+being retired. These two paths are the two that most need B6 (`/about/ostavit-otziv/`
+is the отзыв form) and the native `/get-involved/` page; every path taken off
+`LEGACY_EMBED_PAGES` stops paying the second round trip. Until then the entry is
+a known slowness, not a defect, and the reviewers should be told that.
+
+The embedded отзыв form still cannot submit whatever the network — prod's REST
+is switched off, confirmed again on 2026-09-11 from both networks:
+`GET /wp-json/contact-form-7/v1/contact-forms/20138/refill` answers **404** from
+Russia (1.37 s) and from outside (1.65 s) alike. That is the CF7 entry above, and
+it is the same fix.
 
 ## The three `metodichki` covers are still missing on od-stage
 
