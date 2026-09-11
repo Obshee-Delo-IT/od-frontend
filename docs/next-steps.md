@@ -1110,6 +1110,13 @@ fix survives the cutover clone rather than living in one database:
   mu-plugin;
 - the dead search field — `/search/` (B7), plus `/?s=` finally redirected.
 
+**Applied to od-stage on 2026-09-11**, with the two footer links applied to
+production as well: the Moscow repair, the duplicate-region merge (whose two
+retired addresses now 301 onto the page that kept the coordinator, since a
+drafted page falls back to the A6 iframe rather than 404ing), the three
+`metodichki` covers, `[od_sitemap]` as an mu-plugin, «Короткометражные» as a
+real category, and Тарасов's record. Each has its own entry below.
+
 **Suggestions** — the things that were not broken — are in
 [`demo-feedback-suggestions.md`](./demo-feedback-suggestions.md), with a cost
 and a cheapest-version note each. The two that arrived twice are films grouped
@@ -1224,7 +1231,7 @@ is switched off, confirmed again on 2026-09-11 from both networks:
 Russia (1.37 s) and from outside (1.65 s) alike. That is the CF7 entry above, and
 it is the same fix.
 
-## The three `metodichki` covers are still missing on od-stage
+## ~~The three `metodichki` covers are missing on od-stage~~ — done 2026-09-11
 
 `/materials/metodichki/` shows three broken images, and it is not the pipeline:
 `2026/08/metodichka-zdorovaya-{rossiya,molodezh}.jpg` and
@@ -1233,11 +1240,14 @@ are committed at `wp/assets/metodichki/` and the transfer is already a step in
 [`prod-migration-runbook.md` §2.8](./prod-migration-runbook.md) — it was written
 for the new install and never run against the clone.
 
-**What has to happen:** the two lines the runbook already gives, pointed at
+**Done 2026-09-11**: the two lines the runbook already gives, pointed at
 od-stage (`scp wp/assets/metodichki/*.jpg` into
-`~/od-stage/public_html/wp-content/uploads/2026/08/`), then `od-pages.php apply
-D6` so `od_cover_full_size()` finds them. Reported by both Низамов and
-Панфёрова, whose screenshot shows the alt text where the cover should be.
+`~/od-stage/public_html/wp-content/uploads/2026/08/`). All three answer 200 on
+`od.webtm.ru` now and the page draws them; `od-pages.php` needed no re-run, the
+bodies already pointed at these filenames. They serve from the WordPress origin,
+not the bucket — the same backlog as every other upload since 2022, two entries
+up. Reported by both Низамов and Панфёрова, whose screenshot shows the alt text
+where the cover should be.
 
 ## od-stage has no per-post migration backup any more — `wp cmsms restore` errors
 
@@ -1249,53 +1259,83 @@ took `nvp_content_copy` with it. The migrator's own rollback — the thing
 [`wp-page-passthrough.md` §6](./wp-page-passthrough.md) calls the per-post
 undo — does not exist on that install.
 
+**And `wp cmsms backup` cannot put one back for a single page** — it takes no
+`--post`, sweeping every record that has no copy, so on this install it would
+store today's *already migrated* Gutenberg body as each post's «original» and
+make the next `migrate` or `restore` a no-op against the wrong text. Repairing
+post 21093 on 2026-09-11 therefore seeded `nvp_content_copy` for that id alone,
+with production's body, before calling `migrate --post=21093`.
+
 **Consequences, both worth knowing before the cutover:** repairing a page on
 od-stage means re-loading prod's body by hand (`ssh od-root wp post get <id>
---field=post_content` → `wp post update` on stage → `wp cmsms migrate --post=`
-→ `od-pages.php apply`), and **the sweep must run *after* the migration on the
-new install, not before**, or the new install loses its rollback the same way.
+--field=post_content` → `wp post update` on stage → seed `nvp_content_copy` for
+that id → `wp cmsms migrate --post=` → `od-pages.php apply`), and **the sweep
+must run *after* the migration on the new install, not before**, or the new
+install loses its rollback the same way.
 The sweep's own entry says which keys it targets; `nvp_%` needs adding to its
 keep-list.
 
-## `/contacts/moscow/` on od-stage still reads «Руководитель Д, епартамента»
+## ~~`/contacts/moscow/` on od-stage reads «Руководитель Д, епартамента»~~ — repaired 2026-09-11
 
-The transform is fixed and tested, but od-stage's `post_content` was **written**
-by the old one on 2026-08-21 — the split bold runs are gone from the stored body
-and no re-run can re-derive them. Exactly two pages are affected, measured
-across all 148 pages and 300 newest posts on that install: `moscow` (21093) and
-`/contacts/` (529), which embeds its card through `[od_regions]`.
+The transform was fixed and tested, but od-stage's `post_content` had been
+**written** by the old one on 2026-08-21 — the split bold runs were gone from the
+stored body and no re-run could re-derive them.
 
-**What has to happen:** the four-step repair in the entry above, for post 21093
-only. Prod needs nothing — it still holds the original body, and the fixed script
-is what will run against the clone. Verified locally against that body: 19
-person rows, every name and role correct, no invented comma
-(`wp/tests/fixtures/contacts-moscow.prod.html`).
+**One page, not two.** A sweep of all 148 published pages for a comma inside a
+word (a one- or two-letter token, a comma, a lowercase continuation) found
+exactly `moscow` (21093); `/contacts/` renders its cards through `[od_regions]`
+at request time, so it healed with the page. The only other match, `belarus`,
+is an address — «ул. Калинина 30-А, ком. 408».
 
-## «Короткометражные» in the nav lands on the whole catalogue — decide which way
+**Repaired** by loading production's own body back onto od-stage, re-migrating
+it and re-applying the script — `wp post update 21093 moscow.prod.html` →
+`wp cmsms migrate --post=21093` → `wp eval-file od-pages.php apply`. **The
+migrate step needs one thing first**, and it is the entry below:
+`nvp_content_copy` is what the migrator reads, od-stage has none, and
+`wp cmsms backup` takes no `--post` — run bare it would snapshot every *already
+migrated* body as that post's «original». So the meta was seeded for post 21093
+alone, from `wp/tests/fixtures/contacts-moscow.prod.html`, and nothing else on
+that install was touched.
+
+Now live: 19 person rows, every name and role correct, no invented comma.
+
+## ~~«Короткометражные» in the nav lands on the whole catalogue~~ — done 2026-09-11
 
 **Reported by Низамов and Панфёрова both.** The nav's «Фильмы → Короткометражные»
-points at `/video/short/`, `src/proxy.ts` 301s that to `/video/`, and the
-visitor gets all 83 videos. It is not a broken redirect — there is no such WP
+pointed at `/video/short/`, `src/proxy.ts` 301'd that to `/video/`, and the
+visitor got all 83 videos. It was not a broken redirect — there was no such WP
 category, so the redirect was the only honest destination.
 
-**What is actually there:** `/video/short/` is a **page**, hand-curated, and
+**What was actually there:** `/video/short/` is a **page**, hand-curated, and
 production still serves it with **12 short films** on it — «Что такое ОБЩЕЕ
 ДЕЛО», «Презентация организации. Короткая версия», «Замечаем ли мы как нами
 манипулируют?», «ПОЧЕМУ же они курят?!», «Трезвый разбор», «Якутия. Трезвые
 сёла», «Межрегиональный слёт волонтёров 2019», «Удивительная история о женской
 красоте», «Генетический код», «Письмо Путину», «Увлекательный ролик», «Секс и
-алкоголь». So the menu item means something; the redirect is what empties it.
+алкоголь».
 
-**Three ways, and it is an editorial choice.** (a) Drop the redirect and let the
-catch-all serve the page — one line, and the page then needs the catalogue's
-look. (b) Make «Короткометражные» a real fifth category under «Видео» (85),
-tag those 12 posts, add the segment to `FILM_CATEGORIES` — the option that makes
-it behave like every other catalogue page, and the only one that keeps working
-as the collection grows. (c) Delete the nav item, in WordPress, and keep the
-redirect. Note that a film can carry two categories, so (b) does not disturb
-«Ролики» or «Известные люди».
+**Done the way Алексей chose — a real category**, not a dropped redirect and not
+a deleted nav item. `create-short-category` in `od-wp.php` creates
+«Короткометражные» (slug `short`) under «Видео» and tags those twelve by slug,
+reading the list off production's own page body; `FILM_CATEGORIES` gains
+`short: 671` (od-stage's id — **it will differ on production**, which is blocker
+B5 in the runbook, and the task prints the id it created), `scripts/lib/wp.mjs`
+gains the same, `VideoCatalogue` gains the section's copy, and the `/video/short/`
+redirect is gone so the route serves the address the nav already holds.
 
-## Two links in the footer that lead nowhere: «Оставить отзыв» and «Предложить идею»
+Eleven of the twelve were «Ролики» and stay so — a film carries as many
+categories as it belongs to, and «Все» de-duplicates. The twelfth,
+«Межрегиональный слёт волонтёров», was a news post with a video format and no
+catalogue category at all, so it reaches `/video/` for the first time.
+
+**Two loose ends, both small.** The section borrows `/og-video.png` as its
+social card — the other five have one each, and a sixth has to be drawn. And the
+curated WP page at `/video/short/` is still published: the route wins over the
+catch-all so nothing serves it, and `sitemap.ts` dedupes the URL, but
+`pages:inventory` will keep counting it as a passed-through page until somebody
+drafts it (**not on production**, where it is still the live list).
+
+## ~~Two links in the footer that lead nowhere: «Оставить отзыв» and «Предложить идею»~~ — done 2026-09-11
 
 Both in the «Отзывы» column, both reported («Если в подвале выбрать „Оставить
 отзыв“, то ничего не появляется, страница грузится и всё» — Низамов; «Раздел
@@ -1315,17 +1355,26 @@ Both in the «Отзывы» column, both reported («Если в подвале
   covers `/legacy-font/*` but not the absolute URLs the legacy CSS resolves
   against its own origin.
 
-**Asked for:** remove both items **in WordPress**, on stage and on prod, rather
-than hiding them on the frontend. As a task in `od-wp.php` beside
-`od_wp_edit_menu()` (which already deletes nav items by the path they point at)
-so the deletion repeats on the clone — the same reason the three 2026-08-15
-deletions are recorded above rather than filtered in code. **Open question
-before touching prod:** «Оставить отзыв» works on the live site today, so
-deleting it there removes a working feedback channel from a site that is still
-the public one; the alternative is to run the task only against the new install,
-where the form is what is broken. Either way the organisation loses its only
-feedback form on the new site unless one is built — the cheapest replacement is
-the newsletter form's own endpoint
+**Done 2026-09-11, in WordPress on both installs** rather than hidden on the
+frontend: `strip-footer-links` in `od-wp.php`, run against od-stage and — on
+Алексей's explicit instruction, the open question below having been put to him —
+against live production. The task sweeps `widget_text` and `widget_block` alike,
+because the two installs keep the same column in different dialects
+(production's `widget_text[2]`, the clone's `widget_block[4]`, and the clone
+still carries an inactive classic copy too); it removes an `<li>` by the href
+inside it, wrapper comments and all, and a second run is a no-op. Production's
+own page cache does not notice an option written under `--skip-plugins`, so the
+run there ends with `wp --url=https://obshee-delo.ru eval 'rocket_clean_domain();'`
+— **the `--url` is load-bearing**, without it WP Rocket's CLI command dies in a
+redirect handler. `.scratch/prod-widget_text.before.json` holds the option as it
+was.
+
+**What this leaves.** Production's *nav* still carries «Написать отзыв» pointing
+at the same page (`menu-item-27991`, an absolute url against the old `.рф`
+domain) — that one is `edit-menu`'s, which runs in the cutover window with the
+rest of workstream D, and on the live site the page at least renders. And the
+organisation now has no feedback form on the new site until one is built: the
+cheapest replacement is the newsletter form's own endpoint
 ([`newsletter-unisender.md`](./newsletter-unisender.md)) with a message field.
 
 ## The donation site: pre-ticked consent boxes, and consent documents that do not open
@@ -1382,11 +1431,15 @@ the requests arrived after somebody had already applied them:
 
 **Fixed here** (`od-pages.php`, `OD_TEAM`): Тарасов С. В. carried
 `politbez_od@mail.ru` and no ВК link; prod's `/team/` and Чернов's request both
-say `lenobl@obshee-delo.ru` plus `https://vk.ru/id131271224`. ⚠ **The
-transform only ever adds a contact it cannot find**, so on od-dev and od-stage —
-where an earlier run already wrote the old address into the record — the stale
-`politbez_od@mail.ru` line has to be deleted by hand once. Prod has never been
-run against, so there the new values are simply what lands.
+say `lenobl@obshee-delo.ru` plus `https://vk.ru/id131271224`. The transform only
+ever *adds* a contact it cannot find, so the earlier run's
+`politbez_od@mail.ru` stayed in the record beside the new address — taken back
+out on 2026-09-11 through `supersedes`, the per-record list of lines the
+transform removes by the text they show, rather than by hand: that way it
+travels with the script instead of being a deletion somebody has to remember on
+each install. Applied to od-stage; prod has never been run against, so there the
+new values are simply what lands, and od-dev is left alone because nothing
+renders it.
 
 **Still open, and each needs something from outside the repo:**
 

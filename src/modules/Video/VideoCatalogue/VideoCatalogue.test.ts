@@ -26,6 +26,7 @@ describe('catalogueMetadata', () => {
     expect(canonicalOf('filmy')).toBe(`${siteUrl}/video/filmy/`);
     expect(canonicalOf('multy')).toBe(`${siteUrl}/video/multy/`);
     expect(canonicalOf('roliki')).toBe(`${siteUrl}/video/roliki/`);
+    expect(canonicalOf('short')).toBe(`${siteUrl}/video/short/`);
     expect(canonicalOf('famous-people')).toBe(`${siteUrl}/video/famous-people/`);
   });
 
@@ -60,15 +61,21 @@ describe('catalogueMetadata', () => {
   });
 
   it('gives every catalogue page its own social card, image included', () => {
-    // Without an `openGraph` of its own each of these five inherited the root
-    // layout's, so all five unfurled as the same «ОБЩЕЕ ДЕЛО» card.
+    // Without an `openGraph` of its own each of these inherited the root
+    // layout's, so they all unfurled as the same «ОБЩЕЕ ДЕЛО» card.
     const cards = [null, ...SEGMENTS].map((segment) => catalogueMetadata(segment).openGraph);
 
     expect(new Set(cards.map((card) => card?.title)).size).toBe(cards.length);
     expect(new Set(cards.map((card) => card && 'url' in card && card.url)).size).toBe(cards.length);
     // Distinct images too, not just distinct words: the five shared one card
     // until each segment got its own, and a reader cannot tell «Фильмы» from
-    // «Мультфильмы» in a feed by the title alone.
-    expect(new Set(cards.map((card) => JSON.stringify(card?.images))).size).toBe(cards.length);
+    // «Мультфильмы» in a feed by the title alone. «Короткометражные» is the one
+    // exception and a deliberate one — the section is newer than the artwork, so
+    // it borrows the catalogue's card until a sixth is drawn.
+    const drawn = cards.filter((card) => JSON.stringify(card?.images) !== JSON.stringify(cards[0]?.images));
+    expect(new Set(drawn.map((card) => JSON.stringify(card?.images))).size).toBe(drawn.length);
+    expect(JSON.stringify(catalogueMetadata('short').openGraph?.images)).toBe(
+      JSON.stringify(catalogueMetadata(null).openGraph?.images)
+    );
   });
 });

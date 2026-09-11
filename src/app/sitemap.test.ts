@@ -72,15 +72,29 @@ describe('sitemap', () => {
     });
   });
 
-  it('publishes every catalogue segment and never /video/short/', async () => {
+  it('publishes every catalogue segment, each exactly once', async () => {
     paginated(1, 0, () => []);
 
     const urls = (await sitemap()).map((entry) => entry.url);
 
     Object.keys(FILM_CATEGORIES).forEach((segment) => {
-      expect(urls).toContain(`${siteUrl}/video/${segment}/`);
+      expect(urls.filter((url) => url === `${siteUrl}/video/${segment}/`)).toHaveLength(1);
     });
-    expect(urls).not.toContain(`${siteUrl}/video/short/`);
+  });
+
+  it('publishes /video/short/ once, though a WP page still sits at that path', async () => {
+    // The curated page the segment replaced is still published in WordPress, so
+    // the page crawl finds the same URL the static entries already carry.
+    wpFetch.mockImplementation(async (path: string) => {
+      if (isPagesRequest(path)) {
+        return pagesIndex(['https://wp.test/video/short/']);
+      }
+      return postsPage([], { 'x-wp-totalpages': '1', 'x-wp-total': '0' });
+    });
+
+    const urls = (await sitemap()).map((entry) => entry.url);
+
+    expect(urls.filter((url) => url === `${siteUrl}/video/short/`)).toHaveLength(1);
   });
 
   it('addresses posts as /<id>/, never /news/<id> or /video/<id>', async () => {
@@ -161,20 +175,22 @@ describe('sitemap', () => {
 
   /**
    * A sitemap URL that redirects is worse than a missing one: it spends crawl
-   * budget to say «not here». WP page «Короткометражные» lives at
-   * `/video/short/`, which `src/proxy.ts` 301s to `/video/` (SEO-02).
+   * budget to say «not here». The case that taught this was WP page
+   * «Короткометражные» at `/video/short/`, published while the proxy 301'd it
+   * (SEO-02); that path is a real catalogue segment now, so the check rides on
+   * the `/category/*` family, which redirects wholesale.
    */
   it('never publishes a path the proxy redirects', async () => {
     wpFetch.mockImplementation(async (path: string) => {
       if (isPagesRequest(path)) {
-        return pagesIndex(['https://wp.test/video/short/', 'https://wp.test/healthy-russia/']);
+        return pagesIndex(['https://wp.test/category/novosti/', 'https://wp.test/healthy-russia/']);
       }
       return postsPage([], { 'x-wp-totalpages': '1', 'x-wp-total': '0' });
     });
 
     const urls = (await sitemap()).map((entry) => entry.url);
 
-    expect(urls).not.toContain(`${siteUrl}/video/short/`);
+    expect(urls).not.toContain(`${siteUrl}/category/novosti/`);
     expect(urls).toContain(`${siteUrl}/healthy-russia/`);
   });
 

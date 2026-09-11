@@ -26,6 +26,24 @@ const NEWS_CATEGORY_ALIASES: Record<string, string> = {
   articles: ARTICLES_HREF,
 };
 
+/**
+ * The second page a region had, onto the one that is kept.
+ *
+ * Two regions were published twice, and `merge-duplicate-branches` in
+ * `wp/scripts/od-wp.php` drafts the copy after moving its coordinator onto the
+ * page the map links. A drafted page does not 404 here — the catch-all falls
+ * back to the A6 iframe and serves the *old* site's copy of it — so without
+ * these two rules the retired address goes on publishing stale contacts to
+ * anyone holding the link.
+ *
+ * Keyed and valued by full path, since both halves are real URLs rather than a
+ * pattern; the PHP registry is the same pair the other way round.
+ */
+const RETIRED_BRANCHES: Record<string, string> = {
+  '/contacts/rezan-oblast/': '/contacts/ryazanskaya/',
+  '/contacts/smolenskaya-oblasti/': '/contacts/smolenskaya/',
+};
+
 /** A legacy path segment as a page number; junk and «page 1» alike mean 1. */
 const pageNumber = (value: string | undefined): number => {
   const page = Number(value);
@@ -83,11 +101,12 @@ export const resolveLegacySearch = (pathname: string, term: string | null): stri
 export const resolveLegacyUrl = (pathname: string): string | null => {
   const [first, second, third, fourth, fifth] = pathname.split('/').filter(Boolean);
 
+  const retired = RETIRED_BRANCHES[pathname];
+  if (retired) {
+    return retired;
+  }
+
   if (first === 'video') {
-    // «Короткометражки» has no WP category — the live page is a curated list.
-    if (second === 'short') {
-      return '/video/';
-    }
     // WP paginated a category with a path segment; we use a query param.
     const segment = resolveFilmCategory(second);
     if (segment && third === 'page') {

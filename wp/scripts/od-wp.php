@@ -24,12 +24,13 @@
  * **Adding a task.** One function, called from the runner at the bottom, taking
  * `$apply` and doing nothing but logging when it is false. Whatever it needs to
  * know goes in a registry function above it, so the data can be read and tested
- * without WordPress. There are eight today — {@see od_wp_tag_programme_films()},
+ * without WordPress. There are eleven today — {@see od_wp_tag_programme_films()},
  * {@see od_wp_rename_pages()}, {@see od_wp_order_pages()},
  * {@see od_wp_draft_empty_branches()}, {@see od_wp_edit_menu()},
  * {@see od_wp_create_profiles()}, {@see od_wp_untag_video_events()},
- * {@see od_wp_rehost_posters()} and {@see od_wp_merge_duplicate_branches()} —
- * and still no framework between them, because nine calls in a row is not a
+ * {@see od_wp_rehost_posters()}, {@see od_wp_merge_duplicate_branches()} and
+ * {@see od_wp_strip_footer_links()} and {@see od_wp_create_short_category()} —
+ * and still no framework between them, because eleven calls in a row is not a
  * thing that needs one.
  *
  * House rules, same as `od-pages.php`: dry run by default, writing takes the
@@ -1098,6 +1099,263 @@ function od_wp_merge_duplicate_branches(bool $apply): void
     }
 }
 
+/** The parent every catalogue category hangs off, by slug — «Видео». */
+const OD_WP_VIDEO_PARENT = 'video';
+
+/**
+ * «Короткометражные» — the fifth catalogue category, and the twelve films that
+ * go in it.
+ *
+ * The collection is not new: `/video/short/` is a **page**, curated by hand, and
+ * the nav has always pointed at it. What it never had is a category, so the
+ * catalogue could not draw it and `src/proxy.ts` sent the whole nav item to
+ * `/video/`. These twelve are the page's own list, in its own order, read off
+ * production's body for page 35015.
+ *
+ * Nine of them are already «Ролики» and stay so — a film carries as many
+ * categories as it belongs to, and this one is a second shelf, not a move. The
+ * tenth, «Межрегиональный слёт волонтёров», is a news post with a video format
+ * and no catalogue category at all; tagging it is what puts it on `/video/`.
+ *
+ * The segment this becomes on the frontend is `short`, which is the address the
+ * nav already holds — so `FILM_CATEGORIES` gains `short` and the
+ * `/video/short/` redirect goes.
+ *
+ * @return array{slug: string, name: string, films: array<int, string>}
+ */
+function od_wp_short_films(): array
+{
+    return [
+        'slug' => 'short',
+        'name' => 'Короткометражные',
+        'films' => [
+            'что-такое-общее-дело-презентация-орга',
+            'презентация-организации-общее-дело-к',
+            'замечаем-ли-мы-как-нами-манипулируют-с-2',
+            'почему-же-они-курят',
+            'трезвый-разбор-мифы-об-алкоголе-разоб',
+            'якутия-трезвые-сёла-правда-и-мифы',
+            'межрегиональный-слёт-волонтёров-общ',
+            'удивительная-история-о-женской-красо',
+            'генетический-код-главное-сокровище',
+            'pismo-putinu',
+            'new-rolik',
+            'seks-i-alco',
+        ],
+    ];
+}
+
+/**
+ * Creates «Короткометражные» under «Видео» and tags {@see od_wp_short_films()}.
+ *
+ * Both halves are idempotent the way the rest of this file is: an existing term
+ * is reused rather than duplicated, and `wp_set_post_categories()` is called with
+ * `$append = true`, so a film that already carries the category keeps exactly the
+ * categories it has.
+ *
+ * **The term id it prints is the one the frontend needs.** `FILM_CATEGORIES` in
+ * `src/shared/config/filmCategories.ts` — and its copy in `scripts/lib/wp.mjs` —
+ * maps the URL segment to a WordPress id, and ids differ per install, so this
+ * task's output is the input for that edit on whichever tier it has just run
+ * against.
+ */
+function od_wp_create_short_category(bool $apply): void
+{
+    $short = od_wp_short_films();
+
+    $parent = get_term_by('slug', OD_WP_VIDEO_PARENT, 'category');
+    if (!$parent) {
+        WP_CLI::error(sprintf('no «%s» category — nothing to hang the segment off', OD_WP_VIDEO_PARENT));
+    }
+
+    $term = get_term_by('slug', $short['slug'], 'category');
+
+    if ($term && (int) $term->parent !== (int) $parent->term_id) {
+        // A category with this slug somewhere else in the tree is not ours to
+        // re-parent: the catalogue queries by id, so the wrong one would draw
+        // the wrong films under a name that looks right.
+        WP_CLI::error(sprintf(
+            '«%s» (#%d) exists outside «%s» (parent #%d) — resolve by hand',
+            $short['slug'],
+            $term->term_id,
+            OD_WP_VIDEO_PARENT,
+            $term->parent
+        ));
+    }
+
+    if ($term) {
+        WP_CLI::log(sprintf('«%s» (#%d): already under «%s», skipped', $term->name, $term->term_id, OD_WP_VIDEO_PARENT));
+    } else {
+        WP_CLI::log(sprintf('«%s»: to be created under «%s» (#%d)', $short['name'], OD_WP_VIDEO_PARENT, $parent->term_id));
+
+        if (!$apply) {
+            // Without the term there is no id to tag with, and reporting twelve
+            // films against a term that does not exist would be a lie.
+            return;
+        }
+
+        $created = wp_insert_term($short['name'], 'category', [
+            'slug' => $short['slug'],
+            'parent' => $parent->term_id,
+        ]);
+
+        if (is_wp_error($created)) {
+            WP_CLI::error(sprintf('«%s»: %s', $short['name'], $created->get_error_message()));
+        }
+
+        $term = get_term((int) $created['term_id'], 'category');
+        WP_CLI::success(sprintf('«%s» (#%d): created — this is the id `FILM_CATEGORIES` needs', $term->name, $term->term_id));
+    }
+
+    foreach ($short['films'] as $slug) {
+        $posts = get_posts([
+            'name' => sanitize_title($slug),
+            'post_type' => 'post',
+            'post_status' => 'any',
+            'numberposts' => 1,
+        ]);
+
+        if (!$posts) {
+            WP_CLI::warning(sprintf('%s: no such post', $slug));
+            continue;
+        }
+
+        $post = $posts[0];
+
+        if (has_category((int) $term->term_id, $post)) {
+            WP_CLI::log(sprintf('%s (#%d): already «%s», skipped', $slug, $post->ID, $term->name));
+            continue;
+        }
+
+        WP_CLI::log(sprintf('%s (#%d): to be added to «%s»', $slug, $post->ID, $term->name));
+
+        if (!$apply) {
+            continue;
+        }
+
+        $set = wp_set_post_categories($post->ID, [(int) $term->term_id], true);
+        if (is_wp_error($set)) {
+            WP_CLI::warning(sprintf('%s (#%d): %s', $slug, $post->ID, $set->get_error_message()));
+            continue;
+        }
+
+        WP_CLI::success(sprintf('%s (#%d): tagged', $slug, $post->ID));
+    }
+}
+
+/**
+ * The «ОТЗЫВЫ» footer links that go, each as the substring that identifies its
+ * `<li>`.
+ *
+ *  - **«Предложить идею»** points at `http://od1.reformal.ru/`, over plain HTTP,
+ *    a third-party suggestion box that has not existed for years.
+ *  - **«Оставить отзыв»** points at `/about/ostavit-otziv/`, whose Contact Form
+ *    7 form cannot submit from the new site — and on production cannot submit at
+ *    all, since REST is switched off there ({@see `next-steps.md`}).
+ *
+ * Matched by a substring of the item's own markup rather than by its label: the
+ * two installs spell the surrounding markup differently (production's widget is
+ * a classic `text` widget, the clone's is a block one), but the href inside is
+ * the same string on both. The path is written without `href="` so an absolute
+ * url against any of this site's three historical origins matches too.
+ *
+ * @return array<int, string>
+ */
+function od_wp_footer_links(): array
+{
+    return [
+        '/about/ostavit-otziv/',
+        'od1.reformal.ru',
+    ];
+}
+
+/**
+ * Every `<li>` whose markup contains one of `$needles`, removed from `$html`.
+ *
+ * Handles both widget dialects in one pass, because the block editor's list item
+ * *is* an `<li>` with a pair of HTML comments around it — so the comments are
+ * matched optionally and a classic widget simply has none. Anything else in the
+ * document is returned byte for byte: this runs against a live footer, and the
+ * two installs' markup is not ours to reformat.
+ *
+ * Pure, and tested without WordPress.
+ */
+function od_wp_strip_list_items(string $html, array $needles): string
+{
+    $pattern = '~(?:<!--\s*wp:list-item\s*-->\s*)?<li\b[^>]*>.*?</li>(?:\s*<!--\s*/wp:list-item\s*-->)?\s*~su';
+
+    return (string) preg_replace_callback($pattern, static function (array $m) use ($needles): string {
+        foreach ($needles as $needle) {
+            if (strpos($m[0], $needle) !== false) {
+                return '';
+            }
+        }
+
+        return $m[0];
+    }, $html);
+}
+
+/**
+ * Applies {@see od_wp_footer_links()} to the footer widgets.
+ *
+ * Both widget options are swept rather than one named widget id, since the ids
+ * differ per install (production keeps the column in `widget_text[2]`, the clone
+ * in `widget_block[4]`) and the needles are specific enough that a widget which
+ * does not carry the link is left untouched — which is also what makes a second
+ * run a no-op.
+ *
+ * The write is `update_option()`, not `$wpdb->update`: widgets are one
+ * serialized option and WordPress caches it.
+ */
+function od_wp_strip_footer_links(bool $apply): void
+{
+    $needles = od_wp_footer_links();
+
+    foreach (['widget_text' => 'text', 'widget_block' => 'content'] as $option => $field) {
+        $widgets = get_option($option);
+        if (!is_array($widgets)) {
+            WP_CLI::log(sprintf('%s: no such option, skipped', $option));
+            continue;
+        }
+
+        $changed = false;
+
+        foreach ($widgets as $id => $widget) {
+            if (!is_array($widget) || !isset($widget[$field]) || !is_string($widget[$field])) {
+                continue;
+            }
+
+            $stripped = od_wp_strip_list_items($widget[$field], $needles);
+            if ($stripped === $widget[$field]) {
+                continue;
+            }
+
+            $removed = substr_count($widget[$field], '<li') - substr_count($stripped, '<li');
+            WP_CLI::log(sprintf('%s[%s] «%s»: %d item(s) to be removed', $option, $id, $widget['title'] ?? '', $removed));
+
+            $widgets[$id][$field] = $stripped;
+            $changed = true;
+        }
+
+        if (!$changed) {
+            // The state this leaves behind, so a second run reports it this way.
+            WP_CLI::log(sprintf('%s: no item carries either link, skipped', $option));
+            continue;
+        }
+
+        if (!$apply) {
+            continue;
+        }
+
+        if (!update_option($option, $widgets)) {
+            WP_CLI::warning(sprintf('%s: write failed', $option));
+            continue;
+        }
+
+        WP_CLI::success(sprintf('%s: written', $option));
+    }
+}
+
 // ---------------------------------------------------------------------------
 // Runner. Everything above is a function; this is the only thing that runs.
 // ---------------------------------------------------------------------------
@@ -1123,6 +1381,8 @@ $tasks = [
     'create-profiles' => 'od_wp_create_profiles',
     'untag-video-events' => 'od_wp_untag_video_events',
     'rehost-posters' => 'od_wp_rehost_posters',
+    'strip-footer-links' => 'od_wp_strip_footer_links',
+    'create-short-category' => 'od_wp_create_short_category',
 ];
 
 $positional = $args ?? [];

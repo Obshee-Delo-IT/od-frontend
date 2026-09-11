@@ -218,10 +218,11 @@ const collectLinks = async (
         continue;
       }
       const decoded = decodeURIComponent(pathname);
-      // Never advertise a URL that redirects: WP page «Короткометражные» sits
-      // at `/video/short/`, which the proxy 301s to `/video/` — the sitemap
-      // published the 301 for months while the comment below claimed it was
-      // «absent by construction» (SEO-02).
+      // Never advertise a URL that redirects — the sitemap published a 301 for
+      // months while the comment below claimed it was «absent by construction»
+      // (SEO-02). The case that taught it was the WP page at `/video/short/`;
+      // that one is a real catalogue segment now, published by the static
+      // entries below and dropped here by the `staticUrls` filter instead.
       if (!isLegacyEmbedPage(decoded) && !resolveLegacyUrl(decoded)) {
         collected.push({ path: pathname, lastModified: toLastModified(raw.modified_gmt) });
       }
@@ -250,9 +251,9 @@ const sitemap = async (): Promise<MetadataRoute.Sitemap> => {
     { url: canonicalUrl(catalogueHref({ segment: null })), changeFrequency: 'weekly', priority: 0.8 },
     // Enumerated from the shared map, and addressed through the same helper the
     // catalogue links with, so a new segment can't be forgotten here or drift
-    // into a URL that redirects. `/video/short/` names no category and 301s to
-    // «Все», so it is absent from here — and `collectLinks` drops it from the
-    // WP page crawl, which is where it used to slip back in.
+    // into a URL that redirects. `/video/short/` is one of the five since the
+    // category exists; the WP page still sitting at that path is deduped out
+    // below rather than published twice.
     ...Object.keys(FILM_CATEGORIES).map((segment) => ({
       url: canonicalUrl(catalogueHref({ segment: segment as FilmCategorySegment })),
       changeFrequency: 'weekly' as const,

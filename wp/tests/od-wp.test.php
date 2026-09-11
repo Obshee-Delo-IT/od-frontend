@@ -233,4 +233,93 @@ od_test('an external image is not this install\'s business', od_wp_rehost_url('h
 od_test('a root-relative path is not absolute', od_wp_rehost_url('/wp-content/uploads/a.jpg', $home) === null);
 od_test('and neither is an empty field', od_wp_rehost_url('', $home) === null);
 
+/* ------------------ the two footer links that lead nowhere ----------------- */
+
+// Both bodies are the live «ОТЗЫВЫ» column, byte for byte: production's classic
+// `widget_text[2]` and the clone's block `widget_block[4]`. They are the two
+// dialects one function has to handle.
+$classic = <<<'HTML'
+<ul>
+<li><a href="/about/reviews/">Письма и отзывы</a></li>
+<li><a href="/about/smi/">СМИ о нас</a></li>
+<li><a href="/about/experts-review/">Экспертные заключения</a></li>
+<li><a href="/about/nashi_partnery/">Наши партнеры</a></li>
+<li><a href="/about/ostavit-otziv/">Оставить отзыв</a></li>
+<li><a href="http://od1.reformal.ru/" target="_blank">Предложить идею</a></li>
+
+
+</ul>
+HTML;
+
+$block = <<<'HTML'
+<!-- wp:list -->
+<ul class="wp-block-list"><!-- wp:list-item -->
+<li><a href="/about/reviews/">Письма и отзывы</a></li>
+<!-- /wp:list-item -->
+
+<!-- wp:list-item -->
+<li><a href="/about/ostavit-otziv/">Оставить отзыв</a></li>
+<!-- /wp:list-item -->
+
+<!-- wp:list-item -->
+<li><a href="http://od1.reformal.ru/" target="_blank">Предложить идею</a></li>
+<!-- /wp:list-item --></ul>
+<!-- /wp:list -->
+HTML;
+
+$needles = od_wp_footer_links();
+$strippedClassic = od_wp_strip_list_items($classic, $needles);
+$strippedBlock = od_wp_strip_list_items($block, $needles);
+
+od_test('the classic widget loses «Оставить отзыв»', !str_contains($strippedClassic, 'ostavit-otziv'));
+od_test('…and «Предложить идею»', !str_contains($strippedClassic, 'reformal'));
+od_test('…and keeps the other four', substr_count($strippedClassic, '<li>') === 4);
+od_test('the block widget loses both too', !str_contains($strippedBlock, 'ostavit-otziv') && !str_contains($strippedBlock, 'reformal'));
+// A stray `<!-- wp:list-item -->` with no `<li>` under it is markup the editor
+// renders as an empty bullet, which is worse than the link it replaced.
+od_test('…taking its comment wrappers with it', substr_count($strippedBlock, 'wp:list-item') === 2);
+od_test('…and keeps the list itself', str_contains($strippedBlock, '<!-- wp:list -->') && str_contains($strippedBlock, '</ul>'));
+od_test('the item that stays is untouched', str_contains($strippedBlock, '<li><a href="/about/reviews/">Письма и отзывы</a></li>'));
+// The task writes only when the body changed, so a second pass has to be a no-op
+// — and a footer column that carries neither link must come back byte for byte.
+od_test('a second pass changes nothing', od_wp_strip_list_items($strippedBlock, $needles) === $strippedBlock);
+$other = "<ul>\n<li><b>Телефон:</b><br>\n+7 (962) 950-75-61</li>\n</ul>";
+od_test('a column with neither link is returned byte for byte', od_wp_strip_list_items($other, $needles) === $other);
+// An absolute url against any of the site's three historical origins is the same
+// link, and the needle is written without `href="` so that it matches.
+od_test(
+    'an absolute url to the same page matches',
+    od_wp_strip_list_items('<ul><li><a href="https://obshee-delo.ru/about/ostavit-otziv/">x</a></li></ul>', $needles)
+        === '<ul></ul>'
+);
+
+/* ------------------ «Короткометражные», the fifth catalogue category -------- */
+
+$short = od_wp_short_films();
+
+od_test('the segment is the address the nav already holds', $short['slug'] === 'short');
+od_test('the category has a name', $short['name'] !== '');
+od_test('it is the twelve films the curated page lists', count($short['films']) === 12);
+od_test('no film is listed twice — a duplicate would tag one and hide another', count($short['films']) === count(array_unique($short['films'])));
+
+foreach ($short['films'] as $slug) {
+    od_test($slug . ': a post slug, not a path', $slug !== '' && !str_contains($slug, '/'));
+    // WordPress stores these percent-encoded; the registry writes what a human
+    // can read and `sanitize_title()` encodes it at lookup time.
+    od_test($slug . ': slugs are written decoded', !str_contains($slug, '%'));
+    od_test($slug . ': trimmed', trim($slug) === $slug);
+}
+
+// The frontend maps the segment to a term id, and the file that does it has to
+// gain this segment or the category is created and nothing draws it.
+$categories = file_get_contents(__DIR__ . '/../../src/shared/config/filmCategories.ts');
+od_test('FILM_CATEGORIES carries the segment', str_contains($categories, $short['slug'] . ': '));
+// `scripts/lib/wp.mjs` keeps its own copy — zero-dep Node cannot import TS.
+$mjs = file_get_contents(__DIR__ . '/../../scripts/lib/wp.mjs');
+od_test('and so does the scripts copy', str_contains($mjs, $short['name']));
+// A redirect would beat the route: the proxy runs first, so a leftover
+// `/video/short/` rule 301s the new category page onto the whole catalogue.
+$redirects = file_get_contents(__DIR__ . '/../../src/shared/config/legacyRedirects.ts');
+od_test('and no redirect shadows the segment any more', !str_contains($redirects, "=== '" . $short['slug'] . "'"));
+
 od_test_summary();

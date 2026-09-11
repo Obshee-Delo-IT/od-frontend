@@ -11,15 +11,19 @@
  * differ per WordPress environment (blocker B5 in the prod-migration runbook),
  * so this is the one place to change when promoting to stage or prod.
  *
- * «Короткометражки» is deliberately absent — no such category exists in WP, the
- * live page is a hand-curated list, so `/video/short/` redirects to the full
- * catalogue. Adding it here would turn that redirect into a 200 showing the
- * wrong films, since `/video/[segment]` serves exactly these keys.
+ * `short` («Короткометражные») is the newest of the five and was for a long time
+ * the odd one out: the nav pointed at `/video/short/`, no such WP category
+ * existed, and the proxy 301'd the whole item to `/video/`. The category is
+ * real now — `create-short-category` in `wp/scripts/od-wp.php` creates it and
+ * tags the twelve films the old curated page listed — so the segment is served
+ * here and the redirect is gone. The films are mostly «Ролики» as well; a film
+ * carries as many categories as it belongs to, and «Все» de-duplicates.
  */
 export const FILM_CATEGORIES = {
   filmy: 581,
   multy: 580,
   roliki: 86,
+  short: 671,
   'famous-people': 559,
 } as const;
 

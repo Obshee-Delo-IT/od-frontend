@@ -6,15 +6,15 @@ describe('FILM_CATEGORIES', () => {
     // These segments are the live URLs — /video/multy/ and /video/filmy/ are
     // the #2 and #3 entry pages on the site — so a rename here silently drops
     // that traffic into a 404.
-    expect(Object.keys(FILM_CATEGORIES)).toEqual(['filmy', 'multy', 'roliki', 'famous-people']);
+    expect(Object.keys(FILM_CATEGORIES)).toEqual(['filmy', 'multy', 'roliki', 'short', 'famous-people']);
   });
 
-  it('has no «короткометражки» category, so /video/short/ can keep redirecting', () => {
-    expect(resolveFilmCategory('short')).toBeNull();
+  it('serves «Короткометражные» — the category the nav always pointed at exists now', () => {
+    expect(resolveFilmCategory('short')).toBe('short');
   });
 
   it('exposes every id for the «Все» union', () => {
-    expect(ALL_FILM_CATEGORY_IDS).toEqual([581, 580, 86, 559]);
+    expect(ALL_FILM_CATEGORY_IDS).toEqual([581, 580, 86, 671, 559]);
   });
 });
 

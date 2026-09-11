@@ -13,8 +13,17 @@ describe('resolveLegacyUrl', () => {
     expect(resolveLegacyUrl('/video/famous-people/')).toBeNull();
   });
 
-  it('sends «короткометражки» to the full catalogue — no such WP category', () => {
-    expect(resolveLegacyUrl('/video/short/')).toBe('/video/');
+  it('serves «Короткометражные» rather than redirecting it — the category is real now', () => {
+    expect(resolveLegacyUrl('/video/short/')).toBeNull();
+  });
+
+  it('sends a retired duplicate region to the page that kept the coordinator', () => {
+    // The page is a draft in WordPress, which the catch-all answers with the A6
+    // iframe — i.e. the old site's copy, contacts and all — rather than a 404.
+    expect(resolveLegacyUrl('/contacts/rezan-oblast/')).toBe('/contacts/ryazanskaya/');
+    expect(resolveLegacyUrl('/contacts/smolenskaya-oblasti/')).toBe('/contacts/smolenskaya/');
+    expect(resolveLegacyUrl('/contacts/ryazanskaya/')).toBeNull();
+    expect(resolveLegacyUrl('/contacts/smolenskaya/')).toBeNull();
   });
 
   it('turns WordPress path pagination into the query param we use', () => {
@@ -99,7 +108,6 @@ describe('resolveLegacyUrl', () => {
 
   it('always returns a slash-terminated path, so nothing is left to normalise', () => {
     const destinations = [
-      '/video/short/',
       '/video/filmy/page/2/',
       '/news/page/2/',
       '/page/2/',
@@ -117,7 +125,7 @@ describe('resolveLegacyUrl', () => {
 
   it('never lands on a destination that itself redirects', () => {
     const paths = [
-      '/video/short/',
+      '/contacts/rezan-oblast/',
       '/video/filmy/page/2/',
       '/news/page/2/',
       '/page/2/',
