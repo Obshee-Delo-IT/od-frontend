@@ -1446,12 +1446,20 @@ renders it.
 - **Тарасов's photograph.** Asked to be replaced, «прилагается» — and the
   attachment did not survive the forward: message 542 in `news@` carries no
   files. Ask for the image again.
-- **The home banner still says «ДОБРОВОЛЕЦ про»** (Р. Низамов: «Почему на
-  изображении прежнее наименование конкурса?»). It is the wordmark drawn into
-  `public/figma/promo-decoration.svg` and its mobile twin as vector paths, not
-  text — so this is new artwork from the designer, not an edit. The banner's
-  own copy and `OD_TEAM` already use the current name («Общее дело — ПРО»); the
-  picture is the last place the old one survives. Note prod's
+- **The home banner said «ДОБРОВОЛЕЦ про»** (Р. Низамов: «Почему на изображении
+  прежнее наименование конкурса?») — **redrawn 2026-09-11**, so this needs a
+  designer's *opinion* now rather than a designer's *time*. The wordmark is
+  vector paths in `public/figma/promo-decoration.svg` and its mobile twin, not
+  text, so it was rebuilt from the file's own glyphs: «ОБЩЕЕ ДЕЛО» needs
+  О Б Щ Е Д Л and «ДОБРОВОЛЕЦ» already carried every one of them but Щ, which
+  was assembled from Ц — the same stems, bar and descender tail with a third
+  stem cloned from its own outline. Nothing else in either file changed.
+  Three judgement calls are worth a designer's eye before this is considered
+  final: Щ's counters are narrower than Ц's single one (correct for three stems,
+  but it is a choice), the second line sits +33 units right of the first where
+  the original used +39.5 with a longer word, and «ОБЩЕЕ»'s two Е's are the same
+  drawing 2° apart where the original's repeated О's were separately drawn.
+  The banner's own copy and `OD_TEAM` already used the current name. Note prod's
   `/contacts/moscow/` body also still writes «Доброволец-ПРО» in Васильев's
   role, which the redesign's `OD_TEAM` overrides.
 - **«Заказать методические пособия у Рязанова А. А.»** on
