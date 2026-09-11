@@ -233,4 +233,64 @@ od_test('an external image is not this install\'s business', od_wp_rehost_url('h
 od_test('a root-relative path is not absolute', od_wp_rehost_url('/wp-content/uploads/a.jpg', $home) === null);
 od_test('and neither is an empty field', od_wp_rehost_url('', $home) === null);
 
+/* ------------------ the two footer links that lead nowhere ----------------- */
+
+// Both bodies are the live «ОТЗЫВЫ» column, byte for byte: production's classic
+// `widget_text[2]` and the clone's block `widget_block[4]`. They are the two
+// dialects one function has to handle.
+$classic = <<<'HTML'
+<ul>
+<li><a href="/about/reviews/">Письма и отзывы</a></li>
+<li><a href="/about/smi/">СМИ о нас</a></li>
+<li><a href="/about/experts-review/">Экспертные заключения</a></li>
+<li><a href="/about/nashi_partnery/">Наши партнеры</a></li>
+<li><a href="/about/ostavit-otziv/">Оставить отзыв</a></li>
+<li><a href="http://od1.reformal.ru/" target="_blank">Предложить идею</a></li>
+
+
+</ul>
+HTML;
+
+$block = <<<'HTML'
+<!-- wp:list -->
+<ul class="wp-block-list"><!-- wp:list-item -->
+<li><a href="/about/reviews/">Письма и отзывы</a></li>
+<!-- /wp:list-item -->
+
+<!-- wp:list-item -->
+<li><a href="/about/ostavit-otziv/">Оставить отзыв</a></li>
+<!-- /wp:list-item -->
+
+<!-- wp:list-item -->
+<li><a href="http://od1.reformal.ru/" target="_blank">Предложить идею</a></li>
+<!-- /wp:list-item --></ul>
+<!-- /wp:list -->
+HTML;
+
+$needles = od_wp_footer_links();
+$strippedClassic = od_wp_strip_list_items($classic, $needles);
+$strippedBlock = od_wp_strip_list_items($block, $needles);
+
+od_test('the classic widget loses «Оставить отзыв»', !str_contains($strippedClassic, 'ostavit-otziv'));
+od_test('…and «Предложить идею»', !str_contains($strippedClassic, 'reformal'));
+od_test('…and keeps the other four', substr_count($strippedClassic, '<li>') === 4);
+od_test('the block widget loses both too', !str_contains($strippedBlock, 'ostavit-otziv') && !str_contains($strippedBlock, 'reformal'));
+// A stray `<!-- wp:list-item -->` with no `<li>` under it is markup the editor
+// renders as an empty bullet, which is worse than the link it replaced.
+od_test('…taking its comment wrappers with it', substr_count($strippedBlock, 'wp:list-item') === 2);
+od_test('…and keeps the list itself', str_contains($strippedBlock, '<!-- wp:list -->') && str_contains($strippedBlock, '</ul>'));
+od_test('the item that stays is untouched', str_contains($strippedBlock, '<li><a href="/about/reviews/">Письма и отзывы</a></li>'));
+// The task writes only when the body changed, so a second pass has to be a no-op
+// — and a footer column that carries neither link must come back byte for byte.
+od_test('a second pass changes nothing', od_wp_strip_list_items($strippedBlock, $needles) === $strippedBlock);
+$other = "<ul>\n<li><b>Телефон:</b><br>\n+7 (962) 950-75-61</li>\n</ul>";
+od_test('a column with neither link is returned byte for byte', od_wp_strip_list_items($other, $needles) === $other);
+// An absolute url against any of the site's three historical origins is the same
+// link, and the needle is written without `href="` so that it matches.
+od_test(
+    'an absolute url to the same page matches',
+    od_wp_strip_list_items('<ul><li><a href="https://obshee-delo.ru/about/ostavit-otziv/">x</a></li></ul>', $needles)
+        === '<ul></ul>'
+);
+
 od_test_summary();

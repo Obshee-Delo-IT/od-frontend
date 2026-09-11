@@ -1295,7 +1295,7 @@ as the collection grows. (c) Delete the nav item, in WordPress, and keep the
 redirect. Note that a film can carry two categories, so (b) does not disturb
 «Ролики» or «Известные люди».
 
-## Two links in the footer that lead nowhere: «Оставить отзыв» and «Предложить идею»
+## ~~Two links in the footer that lead nowhere: «Оставить отзыв» and «Предложить идею»~~ — done 2026-09-11
 
 Both in the «Отзывы» column, both reported («Если в подвале выбрать „Оставить
 отзыв“, то ничего не появляется, страница грузится и всё» — Низамов; «Раздел
@@ -1315,17 +1315,26 @@ Both in the «Отзывы» column, both reported («Если в подвале
   covers `/legacy-font/*` but not the absolute URLs the legacy CSS resolves
   against its own origin.
 
-**Asked for:** remove both items **in WordPress**, on stage and on prod, rather
-than hiding them on the frontend. As a task in `od-wp.php` beside
-`od_wp_edit_menu()` (which already deletes nav items by the path they point at)
-so the deletion repeats on the clone — the same reason the three 2026-08-15
-deletions are recorded above rather than filtered in code. **Open question
-before touching prod:** «Оставить отзыв» works on the live site today, so
-deleting it there removes a working feedback channel from a site that is still
-the public one; the alternative is to run the task only against the new install,
-where the form is what is broken. Either way the organisation loses its only
-feedback form on the new site unless one is built — the cheapest replacement is
-the newsletter form's own endpoint
+**Done 2026-09-11, in WordPress on both installs** rather than hidden on the
+frontend: `strip-footer-links` in `od-wp.php`, run against od-stage and — on
+Алексей's explicit instruction, the open question below having been put to him —
+against live production. The task sweeps `widget_text` and `widget_block` alike,
+because the two installs keep the same column in different dialects
+(production's `widget_text[2]`, the clone's `widget_block[4]`, and the clone
+still carries an inactive classic copy too); it removes an `<li>` by the href
+inside it, wrapper comments and all, and a second run is a no-op. Production's
+own page cache does not notice an option written under `--skip-plugins`, so the
+run there ends with `wp --url=https://obshee-delo.ru eval 'rocket_clean_domain();'`
+— **the `--url` is load-bearing**, without it WP Rocket's CLI command dies in a
+redirect handler. `.scratch/prod-widget_text.before.json` holds the option as it
+was.
+
+**What this leaves.** Production's *nav* still carries «Написать отзыв» pointing
+at the same page (`menu-item-27991`, an absolute url against the old `.рф`
+domain) — that one is `edit-menu`'s, which runs in the cutover window with the
+rest of workstream D, and on the live site the page at least renders. And the
+organisation now has no feedback form on the new site until one is built: the
+cheapest replacement is the newsletter form's own endpoint
 ([`newsletter-unisender.md`](./newsletter-unisender.md)) with a message field.
 
 ## The donation site: pre-ticked consent boxes, and consent documents that do not open
