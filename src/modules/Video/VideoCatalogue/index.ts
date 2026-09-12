@@ -1,1 +1,1 @@
-export { catalogueMetadata, cataloguePage, VideoCatalogue } from './VideoCatalogue';
+export { catalogueMetadata, cataloguePage, catalogueTopics, VideoCatalogue } from './VideoCatalogue';

@@ -54,6 +54,14 @@ interface FetchVideoListParams {
    * the «Видео события» event reports.
    */
   category?: number | number[];
+  /**
+   * WP `post_tag` ids — the subject topics (`shared/config/filmTopics.ts`).
+   *
+   * OR-matched within the taxonomy, like categories, and AND-ed against them
+   * across taxonomies: `category: 580, tags: [213, 216]` is «мультфильмы про
+   * алкоголь или табак». Empty or omitted filters nothing.
+   */
+  tags?: number[];
 }
 
 /** How many generic `download_N_*` slots the ACF group defines. */
@@ -162,6 +170,7 @@ export const fetchVideoList = async ({
   page = 1,
   perPage = 10,
   category,
+  tags,
 }: FetchVideoListParams = {}): Promise<VideoListResult> => {
   const query = new URLSearchParams({
     format: 'video',
@@ -172,6 +181,9 @@ export const fetchVideoList = async ({
   const categories = (Array.isArray(category) ? category : [category]).filter(Boolean);
   if (categories.length > 0) {
     query.set('categories', categories.join(','));
+  }
+  if (tags && tags.length > 0) {
+    query.set('tags', tags.join(','));
   }
 
   const res = await wpFetch(`/wp/v2/posts?${query.toString()}`, wpCache([WP_TAGS.posts, WP_TAGS.films]));

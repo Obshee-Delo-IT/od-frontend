@@ -1,6 +1,4 @@
-import clsx from 'clsx';
-import NextLink from 'next/link';
-import css from './NewsFilter.module.css';
+import { FilterChips } from '@/shared/ui/components/FilterChips';
 
 export interface NewsFilterOption {
   label: string;
@@ -15,21 +13,20 @@ interface NewsFilterProps {
   className?: string;
 }
 
+/**
+ * The `/news/` category chips — single-select, so exactly one arrives active.
+ *
+ * A thin adapter over {@link FilterChips}, which is the same strip `/video/`
+ * filters topics with; the two differ only in how many chips can be on at once.
+ */
 export const NewsFilter: React.FC<NewsFilterProps> = ({ options, active, buildHref, className }) => (
-  <nav className={clsx(css.root, className)} aria-label="Фильтр новостей">
-    {options.map((option) => {
-      const isActive = option.value === active;
-
-      return (
-        <NextLink
-          key={option.value ?? 'all'}
-          href={buildHref(option.value)}
-          className={clsx(css.chip, isActive && css.active)}
-          aria-current={isActive ? 'true' : undefined}
-        >
-          {option.label}
-        </NextLink>
-      );
-    })}
-  </nav>
+  <FilterChips
+    label="Фильтр новостей"
+    className={className}
+    chips={options.map((option) => ({
+      label: option.label,
+      href: buildHref(option.value),
+      active: option.value === active,
+    }))}
+  />
 );

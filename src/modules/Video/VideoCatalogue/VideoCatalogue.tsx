@@ -7,10 +7,12 @@ import {
   FILM_CATEGORIES,
   type FilmCategorySegment,
 } from '@/shared/config/filmCategories';
+import { filmTopicIds, filmTopicLabels, type FilmTopicKey, resolveFilmTopics } from '@/shared/config/filmTopics';
 import { canonicalUrl } from '@/shared/config/site';
 import { Box } from '@/shared/ui/components/Box';
 import { PageHeader } from '@/shared/ui/components/PageHeader';
 import { Pagination } from '@/shared/ui/components/Pagination';
+import { TopicFilter } from '../TopicFilter';
 import { VideoCard } from '../VideoCard';
 import { VideoFilter, type VideoFilterOption } from '../VideoFilter';
 import css from './VideoCatalogue.module.css';
@@ -98,23 +100,40 @@ export const cataloguePage = (value: string | string[] | undefined): number => {
   return Number.isFinite(raw) && raw > 1 ? Math.floor(raw) : 1;
 };
 
+/** `?topic=` as a normalised topic list — see {@link resolveFilmTopics}. */
+export const catalogueTopics = (value: string | string[] | undefined): FilmTopicKey[] => resolveFilmTopics(value);
+
 /** Every catalogue title ends with it, and a page number goes *before* it. */
 const TITLE_SUFFIX = ' — ОБЩЕЕ ДЕЛО';
 
-export const catalogueMetadata = (segment: FilmCategorySegment | null, page = 1): Metadata => {
+export const catalogueMetadata = (
+  segment: FilmCategorySegment | null,
+  page = 1,
+  topics: FilmTopicKey[] = []
+): Metadata => {
   const copy = copyFor(segment);
   // Numbered the way `/news/` numbers its own: all four `/video/filmy/?page=N`
   // URLs shared one `<title>`, which is the collision search engines dedupe by
   // dropping pages (SEO-10).
-  const title = page > 1 ? `${copy.title.replace(TITLE_SUFFIX, '')}, страница ${page}${TITLE_SUFFIX}` : copy.title;
+  const base = topics.length > 0 ? `${copy.title.replace(TITLE_SUFFIX, '')}: ${filmTopicLabels(topics)}` : copy.title;
+  const stem = base.replace(TITLE_SUFFIX, '');
+  const title = page > 1 ? `${stem}, страница ${page}${TITLE_SUFFIX}` : `${stem}${TITLE_SUFFIX}`;
   // Paginated views self-canonicalise: page 2 holds different films, and
   // pointing it at page 1 would leave everything past the tenth film with no
-  // indexable address at all.
-  const url = canonicalUrl(catalogueHref({ segment, page }));
+  // indexable address at all. A topic selection self-canonicalises for the same
+  // reason and is kept out of the index instead — see below.
+  const url = canonicalUrl(catalogueHref({ segment, page, topics }));
   return {
     title,
     description: copy.description,
     alternates: { canonical: url },
+    /* Ten topics are 1 023 selections, each of them a real page over a real
+       subset of films — so pointing them at the unfiltered catalogue would be a
+       lie, and leaving them indexable would hand a crawler a thousand
+       near-duplicates of a 84-film catalogue. `noindex, follow`: the films
+       themselves are reached and indexed through the five category pages, which
+       stay indexable. The five unfiltered pages are unaffected. */
+    ...(topics.length > 0 ? { robots: { index: false, follow: true } } : {}),
     /* Five URLs come through here, and none of them declared `openGraph` — so
        all five inherited the root layout's, and a `/video/filmy/` link shared
        into Telegram unfurled as «ОБЩЕЕ ДЕЛО» with the home page's description,
@@ -130,6 +149,8 @@ interface VideoCatalogueProps {
   /** `null` renders «Все» — the union of the four sub-categories. */
   segment: FilmCategorySegment | null;
   page: number;
+  /** Subject filter; empty is «Все темы». */
+  topics?: FilmTopicKey[];
 }
 
 /**
@@ -138,11 +159,12 @@ interface VideoCatalogueProps {
  * rather than in `app/` because two routes share it — the same split as
  * {@link FilmPage}, which `/[...slug]` dispatches to.
  */
-export const VideoCatalogue = async ({ segment, page }: VideoCatalogueProps) => {
+export const VideoCatalogue = async ({ segment, page, topics = [] }: VideoCatalogueProps) => {
   const { items, totalPages } = await fetchVideoList({
     page,
     perPage: PER_PAGE,
     category: segment ? FILM_CATEGORIES[segment] : ALL_FILM_CATEGORY_IDS,
+    tags: filmTopicIds(topics),
   });
 
   // A page past the end is not a page: `?page=999` answered 200 with zero
@@ -159,10 +181,13 @@ export const VideoCatalogue = async ({ segment, page }: VideoCatalogueProps) => 
     ? [{ label: 'Главная', href: '/' }, { label: 'Видео', href: catalogueRoot }, { label: copy.label }]
     : [{ label: 'Главная', href: '/' }, { label: 'Видео' }];
 
+  // Switching category keeps the topics: the two filters are different
+  // questions about the same shelf, and dropping one because the other moved is
+  // the behaviour that makes a filter pair annoying to use.
   const filterOptions: VideoFilterOption[] = CATALOGUE_KEYS.map((key) => ({
     label: CATALOGUE_COPY[key].label,
     value: key,
-    href: catalogueHref({ segment: key === ALL ? null : key }),
+    href: catalogueHref({ segment: key === ALL ? null : key, topics }),
   }));
 
   return (
@@ -170,6 +195,8 @@ export const VideoCatalogue = async ({ segment, page }: VideoCatalogueProps) => 
       <PageHeader title={copy.heading} breadcrumbs={breadcrumbItems} />
 
       <VideoFilter options={filterOptions} active={segment ?? ALL} />
+
+      <TopicFilter selected={topics} buildHref={(next) => catalogueHref({ segment, topics: next })} />
 
       {items.length > 0 ? (
         <div className={css.list}>
@@ -191,13 +218,15 @@ export const VideoCatalogue = async ({ segment, page }: VideoCatalogueProps) => 
           ))}
         </div>
       ) : (
-        <p className={css.empty}>Фильмов не найдено.</p>
+        <p className={css.empty}>
+          {topics.length > 0 ? 'Фильмов по выбранным темам не найдено.' : 'Фильмов не найдено.'}
+        </p>
       )}
 
       <Pagination
         currentPage={page}
         totalPages={totalPages}
-        buildHref={(target) => catalogueHref({ segment, page: target })}
+        buildHref={(target) => catalogueHref({ segment, page: target, topics })}
       />
 
       <NewsletterSignup />

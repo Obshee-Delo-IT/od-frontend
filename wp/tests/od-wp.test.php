@@ -366,4 +366,47 @@ od_test('«Конвейер смерти» is alcohol and tobacco', in_array('ko
 
 od_test('the task is in the registry', str_contains(file_get_contents(__DIR__ . '/../scripts/od-wp.php'), "'tag-film-topics' => 'od_wp_tag_film_topics'"));
 
+// -- the six footer widgets -------------------------------------------------
+
+$widgets = od_wp_footer_widgets();
+od_test('the footer is six widgets — Footer.module.css lays it out by aside:nth-child(N)', count($widgets) === 6);
+od_test('slot 1 is the logo and the three socials', str_contains($widgets[0], '/wp-content/uploads/2026/08/logo-white.png') && str_contains($widgets[0], 'cmsms-icon-vkontakte'));
+od_test('slot 2 is КОНТАКТЫ РЕДАКЦИИ', str_contains($widgets[1], 'КОНТАКТЫ РЕДАКЦИИ'));
+od_test('slot 3 is ОТЗЫВЫ', str_contains($widgets[2], 'ОТЗЫВЫ'));
+od_test('slot 4 is ССЫЛКИ', str_contains($widgets[3], 'ССЫЛКИ'));
+od_test('slot 5 is the separator', str_contains($widgets[4], 'wp:separator'));
+od_test('slot 6 carries the НКО number production has and the design instance never did', str_contains($widgets[5], '0012011716'));
+od_test('and the СМИ registration, the ОГРН and 12+', str_contains($widgets[5], 'ФC77-72346') && str_contains($widgets[5], '1127799010624') && str_contains($widgets[5], '12+'));
+od_test('the two dead links strip-footer-links removed are not authored back in', !str_contains(implode('', $widgets), 'ostavit-otziv') && !str_contains(implode('', $widgets), 'predlozhit-ideyu'));
+
+/* An install-specific value in a body is the bug this whole file exists to
+   prevent: it was authored on od-stage, and od-stage's host and attachment id
+   are meaningless anywhere else. */
+$bodies = implode('', $widgets);
+od_test('no origin is stored — %HOME% is filled at write time', !str_contains($bodies, 'od.webtm.ru') && !str_contains($bodies, '//obshee-delo.ru'));
+od_test('no attachment id travels with the logo', !str_contains($bodies, '80413'));
+od_test('%HOME% appears only where an upload is addressed', substr_count($bodies, '%HOME%') === substr_count($bodies, '%HOME%/wp-content/'));
+
+/* Allocation: an area that already holds widgets keeps their ids, or the option
+   grows by six on every run and the footer collects orphans. */
+$stored = ['2' => ['content' => $widgets[0]], '3' => ['content' => 'stale'], '_multiwidget' => 1];
+$plan = od_wp_footer_plan($stored, ['block-2', 'block-3'], $widgets);
+od_test('the first two slots keep the ids they have', $plan['ids'][0] === 2 && $plan['ids'][1] === 3);
+od_test('the four with no widget yet take the next free keys', array_slice($plan['ids'], 2) === [4, 5, 6, 7]);
+od_test('an identical body is not a write', !in_array(0, $plan['changed'], true));
+od_test('a stale one is', in_array(1, $plan['changed'], true));
+
+$fresh = od_wp_footer_plan([], [], $widgets);
+od_test('an empty install allocates block-2..block-7', $fresh['ids'] === [2, 3, 4, 5, 6, 7]);
+od_test('and every slot is a write', count($fresh['changed']) === 6);
+
+$full = [];
+foreach ($fresh['ids'] as $slot => $id) {
+    $full[$id] = ['content' => $widgets[$slot]];
+}
+$again = od_wp_footer_plan($full, ['block-2', 'block-3', 'block-4', 'block-5', 'block-6', 'block-7'], $widgets);
+od_test('a second run writes nothing', $again['changed'] === [] && $again['ids'] === $fresh['ids']);
+
+od_test('the footer task is in the registry', str_contains(file_get_contents(__DIR__ . '/../scripts/od-wp.php'), "'author-footer' => 'od_wp_author_footer'"));
+
 od_test_summary();
