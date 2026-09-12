@@ -32,6 +32,23 @@ describe('FILM_TOPICS', () => {
     });
   });
 
+  it('keeps every label short enough for a phone-width chip', () => {
+    // Ten chips wrap; the WordPress term names («Манипуляция и реклама»,
+    // «История и патриотизм») cost two extra rows of wrapping at 390px, which
+    // is the filter burying the films it exists to find. Twelve characters fits
+    // three chips to a row.
+    FILM_TOPIC_KEYS.forEach((key) => {
+      expect(FILM_TOPIC_LABELS[key].length).toBeLessThanOrEqual(12);
+    });
+    expect(FILM_TOPIC_LABELS.manipulation).toBe('Манипуляция');
+    expect(FILM_TOPIC_LABELS.family).toBe('Семья');
+  });
+
+  it('keeps them distinct — a chip has to say which topic it is', () => {
+    const labels = FILM_TOPIC_KEYS.map((key) => FILM_TOPIC_LABELS[key]);
+    expect(new Set(labels).size).toBe(labels.length);
+  });
+
   it('gives each topic its own WordPress term id', () => {
     const ids = Object.values(FILM_TOPICS);
     expect(new Set(ids).size).toBe(ids.length);

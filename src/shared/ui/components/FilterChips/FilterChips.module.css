@@ -1,4 +1,19 @@
-.root {
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* Matches the Dropdown's own field label (Figma 1324:4251), because the two sit
+   one above the other on the catalogue and a filter's label should not change
+   shape depending on which control it introduces. */
+.caption {
+  color: var(--gray-8);
+  font-size: 14px;
+  line-height: 140%;
+}
+
+.row {
   display: flex;
   flex-wrap: wrap;
   gap: 12px;
@@ -32,4 +47,17 @@
   border-color: var(--red-8);
   background: var(--red-8);
   color: var(--white);
+}
+
+/* The dense variant: eleven topics wrap to six rows on a 390px screen at the
+   default size, which buries the films under their own filter. */
+.small {
+  gap: 8px;
+}
+
+.small .chip {
+  height: 32px;
+  padding: 0 12px;
+  border-radius: 6px;
+  font-size: 14px;
 }

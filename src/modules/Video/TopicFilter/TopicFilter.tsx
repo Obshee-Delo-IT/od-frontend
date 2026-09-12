@@ -24,10 +24,17 @@ interface TopicFilterProps {
  *
  * «Все темы» is the reset, and it is the active chip when nothing is selected —
  * the same shape as the «Все» chip on `/news/`.
+ *
+ * The caption is visible rather than only an `aria-label`, and it says «можно
+ * выбрать несколько» in so many words: on a phone this row sits directly under
+ * the category row, and two unlabelled strips of chips read as one wall of
+ * buttons with no way to tell which question either of them answers.
  */
 export const TopicFilter: React.FC<TopicFilterProps> = ({ selected, buildHref, className }) => (
   <FilterChips
-    label="Темы фильмов, можно выбрать несколько"
+    label="Тема — можно выбрать несколько"
+    caption="Тема — можно выбрать несколько"
+    size="small"
     className={className}
     chips={[
       { label: 'Все темы', href: buildHref([]), active: selected.length === 0 },
