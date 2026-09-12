@@ -2127,6 +2127,55 @@ try {
 }
 od_test( 'dead shortcodes: a form tag with no CF7 id is refused', $threw );
 
+/* ------------------------------------------ od_drop_orphan_shortcodes ----- */
+
+/* The real MailPoet row, copied out of od-stage page 20293 (`/materials/metodichka/`)
+   on 2026-09-12 — a 50 % heading beside a 50 % form, which is the shape it has on
+   all fourteen pages that still carry it. */
+$mailpoet = <<<'HTML'
+<!-- wp:group {"layout":{"type":"constrained"}} --><div class="wp-block-group"><!-- wp:columns --><div class="wp-block-columns"><!-- wp:column {"width":"50%"} --><div class="wp-block-column" style="flex-basis:50%"><!-- wp:heading {"level":3,"textAlign":"right"} --><h3 class="wp-block-heading has-text-align-right">Хотите быть в курсе новых видеоматериалов?</h3><!-- /wp:heading --></div><!-- /wp:column --><!-- wp:column {"width":"50%"} --><div class="wp-block-column" style="flex-basis:50%"><!-- wp:paragraph --><p>[wysija_form id="2"]</p>
+<!-- /wp:paragraph --></div><!-- /wp:column --></div><!-- /wp:columns --></div><!-- /wp:group -->
+HTML;
+
+$mailpoet_out = od_pages_dead_shortcodes( $mailpoet );
+od_test( 'orphan shortcodes: the MailPoet tag goes', ! str_contains( $mailpoet_out, 'wysija_form' ) );
+od_test( 'orphan shortcodes: and so does the heading that introduced it', ! str_contains( $mailpoet_out, 'Хотите быть в курсе' ) );
+od_test( 'orphan shortcodes: the emptied row goes with them', '' === trim( $mailpoet_out ) );
+od_test_idempotent( 'od_drop_orphan_shortcodes (MailPoet row)', 'od_pages_dead_shortcodes', $mailpoet );
+
+/* A heading with that wording but no form under it is somebody's copy, not the
+   MailPoet row — «Хотите быть в курсе» is only a marker when the tag is there. */
+$heading_only = '<!-- wp:heading --><h3>Хотите быть в курсе новых видеоматериалов?</h3><!-- /wp:heading -->';
+od_test( 'orphan shortcodes: the heading alone is left alone', od_pages_dead_shortcodes( $heading_only ) === $heading_only );
+
+/* The counter on `/get-involved/join/`: the tag is inside a heading's own text, so
+   only the tag can go — the sentence around it is the page's. */
+$counter = '<!-- wp:paragraph --><h2>Нас уже <span id="counter">[sbs_users]</span> человек</h2><!-- /wp:paragraph -->';
+$counter_out = od_pages_dead_shortcodes( $counter );
+od_test( 'orphan shortcodes: the counter tag goes', ! str_contains( $counter_out, 'sbs_users' ) );
+od_test( 'orphan shortcodes: and the words around it stay', str_contains( $counter_out, 'Нас уже' ) && str_contains( $counter_out, 'человек' ) );
+
+/* `[insert_php]` wraps PHP, which a plugin-less renderer prints line by line. */
+$php = "<!-- wp:paragraph --><p>[insert_php]<br />\nif ( is_user_logged_in() )<br />\n{ echo 'да'; }<br />\n[/insert_php]<br />\nРазместите ссылку</p><!-- /wp:paragraph -->";
+$php_out = od_pages_dead_shortcodes( $php );
+od_test( 'orphan shortcodes: the PHP block goes whole', ! str_contains( $php_out, 'insert_php' ) && ! str_contains( $php_out, 'is_user_logged_in' ) );
+od_test( 'orphan shortcodes: the copy after it stays', str_contains( $php_out, 'Разместите ссылку' ) );
+
+/* The avatar grid and the old home page's slider, the other two. */
+od_test(
+	'orphan shortcodes: the avatar grid goes',
+	! str_contains( od_pages_dead_shortcodes( '<!-- wp:paragraph --><p>[authoravatars  avatar_size=100 limit=200]</p><!-- /wp:paragraph -->' ), 'authoravatars' )
+);
+od_test(
+	'orphan shortcodes: so does the slider',
+	! str_contains( od_pages_dead_shortcodes( "<!-- wp:paragraph --><p>[all_in_one_bannerWithPlaylist settings_id='1']</p><!-- /wp:paragraph -->" ), 'bannerWithPlaylist' )
+);
+
+/* The four tags that are live on the headless install, and must survive a sweep
+   that runs over every published page. */
+$live = '<!-- wp:shortcode -->[contact-form-7 id="20138"][leyka_campaign_form id="54235"][od_sitemap][od_regions]<!-- /wp:shortcode -->';
+od_test( 'orphan shortcodes: the live forms and our own tags are untouched', od_pages_dead_shortcodes( $live ) === $live );
+
 /* ---------------------------------------- od_pages_film_watch_links ------- */
 
 /* The two fixtures are films from od-stage 2026-08-23, and between them they hold

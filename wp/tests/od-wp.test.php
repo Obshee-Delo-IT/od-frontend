@@ -322,4 +322,43 @@ od_test('and so does the scripts copy', str_contains($mjs, $short['name']));
 $redirects = file_get_contents(__DIR__ . '/../../src/shared/config/legacyRedirects.ts');
 od_test('and no redirect shadows the segment any more', !str_contains($redirects, "=== '" . $short['slug'] . "'"));
 
+/* --------------------------- The eleven film topics ------------------------ */
+
+$topics = od_wp_film_topics();
+
+od_test('there are eleven topics', count($topics) === 11);
+od_test('«Алкоголь» and «Табак» are among them, by the names the empty tags already carry', 'Алкоголь' === $topics['alcohol']['name'] && 'Табак' === $topics['tobacco']['name']);
+od_test('every topic key is a latin URL segment', [] === array_filter(array_keys($topics), static fn(string $k): bool => (bool) preg_match('~[^a-z-]~', $k)));
+od_test('no two topics share a name — the lookup falls back to the name', count($topics) === count(array_unique(array_column($topics, 'name'))));
+
+$seen = [];
+foreach ($topics as $key => $topic) {
+    od_test($key . ': has a name', '' !== $topic['name']);
+    od_test($key . ': holds at least two films', count($topic['films']) >= 2);
+    od_test($key . ': no film listed twice', count($topic['films']) === count(array_unique($topic['films'])));
+
+    foreach ($topic['films'] as $slug) {
+        od_test($key . '/' . $slug . ': a post slug, not a path', '' !== $slug && !str_contains($slug, '/'));
+        od_test($key . '/' . $slug . ': written decoded', !str_contains($slug, '%'));
+        $seen[$slug] = true;
+    }
+}
+
+/* The catalogue is 84 films on od-stage (2026-09-12) and two of them carry no
+   text at all, so 82 is the whole of what can be read off the content. */
+od_test('82 of the 84 catalogue films are placed', count($seen) === 82);
+od_test('«Письмо Путину» is left for an editor', !isset($seen['pismo-putinu']));
+od_test('and so is «Ребенок и Ангел»', !isset($seen['ребенок-и-ангел-трогательная-истори']));
+
+/* A film belongs to as many subjects as it is about — that is the difference from
+   the five catalogue shelves, and the reason this is worth having. */
+$multi = array_filter(
+    array_count_values(array_merge(...array_column($topics, 'films'))),
+    static fn(int $n): bool => $n > 1
+);
+od_test('films carry more than one topic where they are about more than one', count($multi) >= 10);
+od_test('«Конвейер смерти» is alcohol and tobacco', in_array('konvejer-smerti', $topics['alcohol']['films'], true) && in_array('konvejer-smerti', $topics['tobacco']['films'], true));
+
+od_test('the task is in the registry', str_contains(file_get_contents(__DIR__ . '/../scripts/od-wp.php'), "'tag-film-topics' => 'od_wp_tag_film_topics'"));
+
 od_test_summary();

@@ -5260,6 +5260,69 @@ function od_pages_contacts(string $content, int $_termId = 0): string
 }
 
 /**
+ * Tags left behind by plugins that do not travel to the headless install.
+ *
+ * **An unregistered shortcode is printed, not dropped** — the same rule that made
+ * `/sitemap/` publish `[pagelist …]` at visitors ({@see od_pages_sitemap()}).
+ * These four are still registered on production, so nobody there has ever seen
+ * them; on the prod clone they are literal text on fourteen published pages, and
+ * `/materials/metodichka/`, `/get-involved/dozor/` and `/get-involved/baner/` were
+ * each serving `[wysija_form id="2"]` as a line of copy (measured 2026-09-12).
+ *
+ * - `wysija_form` — the MailPoet signup. The site has its own
+ *   (`src/modules/NewsletterSignup`), so nothing replaces it here.
+ * - `sbs_users` — `simple-blog-stats`, a registered-user counter.
+ * - `authoravatars` — `author-avatars`, an avatar grid.
+ * - `all_in_one_bannerWithPlaylist` — the old home page's slider.
+ *
+ * Nine other tags on those pages are deliberately **not** here: `[contact-form-7]`
+ * and `[leyka_campaign_form]` are live forms, `[od_sitemap]` and `[od_regions]`
+ * are ours, and core's own `[caption]`/`[gallery]`/`[embed]` are core's.
+ */
+const OD_ORPHAN_SHORTCODES = ['wysija_form', 'sbs_users', 'authoravatars', 'all_in_one_bannerWithPlaylist'];
+
+/**
+ * Remove every {@see OD_ORPHAN_SHORTCODES} tag, and the block that held nothing else.
+ *
+ * A paragraph whose whole text was the tag goes with it, so the empty-column sweep
+ * can take the row: that is how the MailPoet row — a 50 % heading beside a 50 %
+ * form — leaves as one unit rather than as a stray «Хотите быть в курсе новых
+ * видеоматериалов?» over nothing. The heading is only touched when the form it
+ * introduces was actually on the page.
+ *
+ * `[insert_php] … [/insert_php]` is the one that wraps something: its body is PHP,
+ * which every renderer without that plugin prints line by line.
+ *
+ * Idempotent: after one pass there is no tag left to match.
+ */
+function od_drop_orphan_shortcodes(string $content): string
+{
+    $hadNewsletter = strpos($content, '[wysija_form') !== false;
+
+    $content = preg_replace('~\[insert_php\][\s\S]*?\[/insert_php\]~', '', $content);
+
+    foreach (OD_ORPHAN_SHORTCODES as $tag) {
+        $quoted  = preg_quote($tag, '~');
+        $content = preg_replace(
+            '~<!--\s*wp:paragraph\b[^>]*-->\s*<p[^>]*>\s*\[' . $quoted . '\b[^\]]*\]\s*</p>\s*<!--\s*/wp:paragraph\s*-->~',
+            '',
+            $content
+        );
+        $content = preg_replace('~\[' . $quoted . '\b[^\]]*\]~', '', $content);
+    }
+
+    if ($hadNewsletter) {
+        $content = preg_replace(
+            '~<!--\s*wp:heading\b[^>]*-->\s*<h3[^>]*>Хотите быть в курсе[^<]*</h3>\s*<!--\s*/wp:heading\s*-->~u',
+            '',
+            $content
+        );
+    }
+
+    return $content;
+}
+
+/**
  * Whatever `cmsms-gutenberg-upgrade` could not convert, wherever it is left.
  *
  * The migrator covers 26 tags; four survive it on the prod clone, and this is
@@ -5277,7 +5340,9 @@ function od_pages_contacts(string $content, int $_termId = 0): string
  *   it becomes CF7's own shortcode, with the id the old wrapper carried.
  *
  * A sweep rather than four registry entries: the tags are what is addressed, not
- * the pages, and prod may hold one somewhere this list has not seen.
+ * the pages, and prod may hold one somewhere this list has not seen. The same
+ * sweep carries {@see od_drop_orphan_shortcodes()}, for the tags that are not the
+ * migrator's but whose plugin is equally gone.
  *
  * @param string $content Stored `post_content`.
  * @param int    $_termId Unused — the runner passes the term id to every transform.
@@ -5285,28 +5350,33 @@ function od_pages_contacts(string $content, int $_termId = 0): string
  */
 function od_pages_dead_shortcodes(string $content, int $_termId = 0): string
 {
-    if (strpos($content, '[cmsms_') === false) {
-        return $content; // Nothing of the old builder here.
+    $before = $content;
+
+    if (strpos($content, '[cmsms_') !== false) {
+        // The form first: it is the one tag that becomes something rather than
+        // nothing, and the id is read out of the page for the usual reason.
+        $content = preg_replace_callback(
+            '~\[cmsms_contact_form\b[^\]]*\]~',
+            static function (array $found): string {
+                if (!preg_match('~form_cf7="(\d+)~', $found[0], $form)) {
+                    throw new RuntimeException('unexpected input: a cmsms contact form with no CF7 id');
+                }
+
+                return sprintf('[contact-form-7 id="%s"]', $form[1]);
+            },
+            $content
+        );
+
+        $content = preg_replace('~\[cmsms_sidebar\b[^\]]*\]~', '', $content);
+        $content = preg_replace('~\[cmsms_selected_products\b[^\]]*\]~', '', $content);
     }
 
-    // The form first: it is the one tag that becomes something rather than
-    // nothing, and the id is read out of the page for the usual reason.
-    $content = preg_replace_callback(
-        '~\[cmsms_contact_form\b[^\]]*\]~',
-        static function (array $found): string {
-            if (!preg_match('~form_cf7="(\d+)~', $found[0], $form)) {
-                throw new RuntimeException('unexpected input: a cmsms contact form with no CF7 id');
-            }
+    $content = od_drop_orphan_shortcodes($content);
 
-            return sprintf('[contact-form-7 id="%s"]', $form[1]);
-        },
-        $content
-    );
-
-    $content = preg_replace('~\[cmsms_sidebar\b[^\]]*\]~', '', $content);
-    $content = preg_replace('~\[cmsms_selected_products\b[^\]]*\]~', '', $content);
-
-    return od_drop_empty_layout_groups($content);
+    // Only a page this touched pays for the empty-row sweep: over every published
+    // page, an untouched body has to come back byte-identical or the runner writes
+    // 168 revisions to change nothing.
+    return $content === $before ? $content : od_drop_empty_layout_groups($content);
 }
 
 /**
@@ -5894,7 +5964,7 @@ function od_pages_registry(): array
     // that still held a `[cmsms_*]` tag were rewritten by an entry above and lost
     // it on the way.
     $registry[] = [
-        'label' => 'A7 · every page — the four `[cmsms_*]` tags the migrator does not convert',
+        'label' => 'A7 · every page — the tags no plugin here registers, `[cmsms_*]` and the four orphans',
         'post_type' => 'page',
         'sweep' => true,
         'fix' => 'od_pages_dead_shortcodes',

@@ -1174,11 +1174,42 @@ explain «не подгружаются» without anything being broken — a br
 images in flight on a page whose HTML already took 5 s drops the last of them
 below the fold, and the reporter sees an empty box.
 
+**There is no offload, and there never was** (checked 2026-09-12). Neither
+production nor the clone has a plugin that writes to Object Storage —
+production's 28 plugins and the clone's 7 hold none, there is no mu-plugin doing
+it, and no option, theme or plugin file on production so much as names
+`yandexcloud`. WordPress does not know the bucket exists: every `<img>` it writes
+points at its own `wp-content/uploads`, and the only thing that ever prefers the
+bucket is `resolveMediaUrl`'s HEAD probe in this repo. So the bucket is a
+**one-off manual mirror**, taken around 2022 and never repeated — not an
+integration that broke.
+
+That makes the backfill a copy rather than a repair, and sizes it exactly.
+Production's `wp-content/uploads` is **1.3 GB in 18 918 files**; everything from
+`2022/` on — the part the bucket does not have — is **18 103 files and 1.22 GB**,
+and it is nearly all of it:
+
+| | files | size |
+| --- | --- | --- |
+| 2015–2021 (on the bucket) | 815 | 49 MB |
+| 2022–2023 | 539 | 45 MB |
+| 2024 | 4 482 | 323 MB |
+| 2025 | 7 435 | 374 MB |
+| 2026 (to 12.09) | 5 647 | 477 MB |
+
+A one-way `aws s3 sync wp-content/uploads s3://<bucket>/wp-content/uploads` from
+production covers it; the copy has to be repeated at cutover for whatever lands
+in between, and after cutover something has to keep doing it — a real offload
+plugin, or a cron'd sync, or the decision that new uploads simply serve from the
+origin. Whoever owns the Yandex Cloud account has to run it: this repo has no
+credentials for that bucket and only ever reads it over HTTP.
+
 **What has to happen** is unchanged in substance and larger in scope:
 
-1. backfill the bucket for everything under `wp-content/uploads` from 2022 on
-   and fix whatever the offload was, before the new install inherits the same
-   half-empty bucket — this removes the 14 s tail, which is origin-only;
+1. backfill the bucket with `wp-content/uploads` from 2022 on — 18 103 files,
+   1.22 GB — and decide what keeps it in sync afterwards, before the new install
+   inherits the same half-empty bucket; this removes the 14 s tail, which is
+   origin-only;
 2. put an actual CDN in front of the bucket (next entry), which is what the
    remaining 3–10× needs;
 3. no frontend change either way — the probe already prefers the bucket the
@@ -1397,15 +1428,58 @@ it needs whoever owns that install. Панфёрова's «нет пути на�
 same site and is in
 [`demo-feedback-suggestions.md`](./demo-feedback-suggestions.md).
 
-## `/materials/metodichka/` and `/materials/metodichki/` — the third duplicate pair
+## ~~`/materials/metodichka/` and `/materials/metodichki/` — the third duplicate pair~~ — decided 2026-09-12
 
 `merge-duplicate-branches` retired the two duplicate **region** pages; this pair
-is the third collision [`test-scenarios.md`](./test-scenarios.md) names (SEO-09)
-and it is deliberately untouched: neither page holds contacts to move, the two
-bodies genuinely differ, and `/materials/metodichki/` is the one the nav and the
-redesign point at. Which of the two is canonical is an editorial call about the
-pages. The mechanism to retire one exists now — add the pair to
-`od_wp_duplicate_branches()` — so this is a decision, not work.
+is the third collision [`test-scenarios.md`](./test-scenarios.md) names (SEO-09).
+**Decided: keep both, as production has them** — and read against production the
+two are not a duplicate pair at all:
+
+- `/materials/metodichki/` is the **index**: three covers, three «Подробнее»
+  buttons pointing at `metodic.obshee-delo.ru`, `/materials/pppuiv-ted-6/` and
+  `/materials/ppiz-zdorov-molodez/`, then the order-a-copy card. It is what the
+  nav, the redesign and this site all point at.
+- `/materials/metodichka/` is an **orphan detail page** for «Здоровая Россия»,
+  superseded by the external `metodic.obshee-delo.ru` the first card now links
+  to. Nothing on production links to it either — its own index does not.
+
+So there is no canonical to pick and nothing to retire; the pair is two different
+pages that happen to be a letter apart. Diffed prod against the clone on
+2026-09-12, and the two real differences were:
+
+1. `/materials/metodichka/` published `[wysija_form id="2"]` as a line of copy.
+   That is the next entry, and it is fixed.
+2. `/materials/metodichki/`'s three covers carry no visible caption here, where
+   production prints «Здоровая Россия — ОБЩЕЕ ДЕЛО» above each. **Deliberate**:
+   the `handbooks` mock draws the covers with no captions because each poster
+   prints its own title, and `od_headings_into_image_alt()` moves the words into
+   the image's `alt` and the button's `aria-label` rather than deleting them.
+   Say so if the captions should come back — it is one transform out of
+   `od_pages_metodichki()`.
+
+Still open on that page and unrelated to either: who takes methodical-material
+orders now that Рязанов does not (below).
+
+## ~~Fourteen pages published a shortcode as their own text~~ — done 2026-09-12
+
+Found while diffing the two `metodich*` pages against production. **An
+unregistered shortcode is printed, not dropped** — the rule that made `/sitemap/`
+publish `[pagelist …]` at visitors, one of the demo's own findings. Four plugins
+that production still runs are not part of the headless install, and their tags
+were literal text on every un-redesigned page that carried one:
+`[wysija_form id="2"]` (MailPoet, on 25 pages — `/materials/metodichka/`,
+`/get-involved/dozor/` and `/get-involved/baner/` among the live ones),
+`[sbs_users]`, `[authoravatars …]`, `[all_in_one_bannerWithPlaylist …]` and the
+`[insert_php] … [/insert_php]` block, whose body is PHP.
+
+Each redesigned page already dropped the MailPoet form in its own transform —
+eight of them do it by hand — which is why nobody saw it: the pages that show it
+are the ones no transform touches. Fixed once, in the sweep that already exists
+for the migrator's leftovers: `od_pages_dead_shortcodes()` now also runs
+`od_drop_orphan_shortcodes()`, and the emptied row goes with the tag, so the
+«Хотите быть в курсе новых видеоматериалов?» heading does not survive its form.
+`[contact-form-7]`, `[leyka_campaign_form]`, `[od_sitemap]` and `[od_regions]`
+are live here and are left alone. Applied to od-stage — 26 page records.
 
 ## Content the reviewers asked for, re-checked against production 2026-09-10
 
