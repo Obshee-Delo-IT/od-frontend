@@ -1359,7 +1359,7 @@ function od_wp_strip_footer_links(bool $apply): void
 
 // ---------------------------------------------------------------------------
 /**
- * The ten subjects the 84 catalogue films divide into, and which films each holds.
+ * The nine subjects the 84 catalogue films divide into, and which films each holds.
  *
  * Asked for on 2026-09-12 («группировку фильмов по тегам … алкоголь, курение и
  * предложить другие»), and a reviewer's suggestion before that: the catalogue's
@@ -1379,7 +1379,14 @@ function od_wp_strip_footer_links(bool $apply): void
  * the categories — «Конвейер смерти» is alcohol *and* tobacco, «Секреты
  * манипуляции. Алкоголь» is alcohol *and* the manipulation it documents.
  *
- * **Five films are deliberately absent.** `pismo-putinu` («Письмо Путину») and
+ * **«История и патриотизм» was the tenth and is gone** (2026-09-12): the five
+ * films under it are old clips — an Afghanistan veteran, a spetsnaz officer,
+ * Емельяненко on Victory Day — and two of them, «Почему князь Владимир выбрал
+ * Христианство?» and «История трезвеннических движений», are carried by «Вера и
+ * традиция» and «Алкоголь» anyway. A chip is a promise that there is something
+ * behind it worth a click.
+ *
+ * **Eight films are deliberately absent.** `pismo-putinu` («Письмо Путину») and
  * `ребенок-и-ангел-трогательная-истори` have empty bodies and empty excerpts on
  * both installs, so there is nothing to read them off — an editor assigns those
  * two. The other three are the presentations and the слёт: «Об организации» is
@@ -1523,16 +1530,6 @@ function od_wp_film_topics(): array
                 'вопрос-алкоголя-в-исламе-ислам-зарипо', // Вопрос алкоголя в Исламе! Ислам Зарипов
                 'lovchev', // Почему князь Владимир выбрал Христианство?
                 'tolstoy', // Лев Николаевич Толстой – Путь Жизни
-            ],
-        ],
-        'history' => [
-            'name' => 'История и патриотизм',
-            'films' => [
-                'обращение-офицера-вдв-ко-дню-победы', // Обращение офицера ВДВ ко Дню Победы!!!
-                'rolik-oficer-specnaza', // Офицер спецназа. Что я могу сделать для России?
-                'emelyanenko', // 70 лет Великой Победы. Федор Емельяненко
-                'lovchev', // Почему князь Владимир выбрал Христианство?
-                'история-трезвеннических-движений-в-р', // История трезвеннических движений в России!
             ],
         ],
         'gadgets' => [

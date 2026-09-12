@@ -2,6 +2,13 @@
  * What a film is *about* — the subject axis, orthogonal to the catalogue's five
  * categories.
  *
+ * Nine of them. «История и патриотизм» was a tenth and was dropped on
+ * 2026-09-12: the five films under it were old clips, and the two worth keeping
+ * («Почему князь Владимир выбрал Христианство?», «История трезвеннических
+ * движений») are carried by «Вера» and «Алкоголь» anyway. Term 678 stays
+ * unused in WordPress rather than being re-used for something else; a gap in
+ * the ids is cheaper than a tag whose name no longer matches its films.
+ *
  * The categories say what a film *is* (фильм, мультфильм, ролик,
  * короткометражный, известные люди) and never what it is about, which is the
  * gap two reviewers reported independently in August 2026: a teacher wants *the
@@ -34,7 +41,6 @@ export const FILM_TOPICS = {
   meaning: 675,
   health: 676,
   faith: 677,
-  history: 678,
   gadgets: 679,
 } as const;
 
@@ -60,7 +66,6 @@ export const FILM_TOPIC_LABELS: Record<FilmTopicKey, string> = {
   meaning: 'Смысл жизни',
   health: 'Здоровье',
   faith: 'Вера',
-  history: 'История',
   gadgets: 'Гаджеты',
 };
 
