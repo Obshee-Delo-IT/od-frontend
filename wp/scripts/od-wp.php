@@ -1358,7 +1358,7 @@ function od_wp_strip_footer_links(bool $apply): void
 
 // ---------------------------------------------------------------------------
 /**
- * The eleven subjects the 84 catalogue films divide into, and which films each holds.
+ * The ten subjects the 84 catalogue films divide into, and which films each holds.
  *
  * Asked for on 2026-09-12 («группировку фильмов по тегам … алкоголь, курение и
  * предложить другие»), and a reviewer's suggestion before that: the catalogue's
@@ -1378,9 +1378,12 @@ function od_wp_strip_footer_links(bool $apply): void
  * the categories — «Конвейер смерти» is alcohol *and* tobacco, «Секреты
  * манипуляции. Алкоголь» is alcohol *and* the manipulation it documents.
  *
- * **Two films are deliberately absent:** `pismo-putinu` («Письмо Путину») and
+ * **Five films are deliberately absent.** `pismo-putinu` («Письмо Путину») and
  * `ребенок-и-ангел-трогательная-истори` have empty bodies and empty excerpts on
- * both installs, so there is nothing to read them off. An editor assigns those two.
+ * both installs, so there is nothing to read them off — an editor assigns those
+ * two. The other three are the presentations and the слёт: «Об организации» is
+ * not a subject somebody browses the catalogue for, it is what `/about/` is, so
+ * those films get no topic here (2026-09-12).
  *
  * Assigned from each film's own title and excerpt, not from the existing tags.
  *
@@ -1536,14 +1539,6 @@ function od_wp_film_topics(): array
             'films' => [
                 'пожиратели-мозга', // Пожиратели мозга
                 'путь-героя-фильм-о-игровой-зависимост', // Путь героя. Фильм об игровой зависимости
-            ],
-        ],
-        'about-us' => [
-            'name' => 'Об организации',
-            'films' => [
-                'межрегиональный-слёт-волонтёров-общ', // Межрегиональный слёт волонтёров Общее дело 2019
-                'презентация-организации-общее-дело-к', // Презентация организации Общее дело. Короткая версия
-                'что-такое-общее-дело-презентация-орга', // Что такое ОБЩЕЕ ДЕЛО. Презентация организации
             ],
         ],
     ];

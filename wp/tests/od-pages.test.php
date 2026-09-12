@@ -277,17 +277,42 @@ od_test_idempotent(
 	$swapped
 );
 
+/* -------------------------------------------- od_drop_order_contact */
+
+/* Both shapes: the accordion production still stores, and the heading-plus-link
+   this repo has already made of it on the clone. */
+$dropped = od_drop_order_contact( $swapped, OD_METODICHKI_COORDINATOR_HREF );
+od_test( 'order contact: the accordion is gone', ! str_contains( $dropped, 'wp:details' ) );
+od_test( 'order contact: and its heading with it', ! str_contains( $dropped, 'Заказать' ) );
+od_test( 'order contact: the coordinator is not named', ! str_contains( $dropped, OD_METODICHKI_COORDINATOR_HREF ) && ! str_contains( $dropped, 'paramon1302' ) );
+od_test( 'order contact: the covers above it are untouched', 3 === substr_count( $dropped, '<img' ) );
+
+$converted = od_details_to_profile_link( $swapped, OD_METODICHKI_COORDINATOR_HREF, OD_METODICHKI_COORDINATOR_NAME );
+od_test( 'order contact: the already-converted shape is reached too', ! str_contains( od_drop_order_contact( $converted, OD_METODICHKI_COORDINATOR_HREF ), 'Заказать' ) );
+
+/* A heading that is not an order block, and a profile link that is somebody
+   else's, both survive — this is not «delete every h2 and every /profile/». */
+$other = '<!-- wp:heading {"level":2} --><h2 class="wp-block-heading">Наши партнеры</h2><!-- /wp:heading -->'
+	. '<!-- wp:paragraph --><p><a href="/profile/someone-else/">Кто-то другой</a></p><!-- /wp:paragraph -->';
+od_test( 'order contact: another heading and another profile link are left alone', od_drop_order_contact( $other, OD_METODICHKI_COORDINATOR_HREF ) === $other );
+
+od_test_idempotent(
+	'od_drop_order_contact',
+	static fn( string $c ): string => od_drop_order_contact( $c, OD_METODICHKI_COORDINATOR_HREF ),
+	$swapped
+);
+
 /* ------------------------------------------- the whole page fix, in order */
 
 $whole = od_pages_metodichki( $page );
-od_test( 'the page fix composes to the same result', $whole === $linked );
+od_test( 'the page fix composes to the same result', $whole === $dropped );
 od_test( 'the page fix is idempotent end to end', od_pages_metodichki( $whole ) === $whole );
-// What the page should end up as: two groups, one three-up cover row carrying the
-// class, one heading (the order section's), three posters each still linked and
-// still buttoned, and one profile link.
-od_test( 'exactly one heading survives — the order section\'s', 1 === substr_count( $whole, '<!-- wp:heading' ) );
+// What the page should end up as: one group, one three-up cover row carrying the
+// class, three posters each still linked and still buttoned — and, since
+// 2026-09-12, no order section and nobody named as the way to order.
+od_test( 'no heading survives — the order section\'s was the only one', 0 === substr_count( $whole, '<!-- wp:heading' ) );
 od_test( 'the cover row is the only classed columns block', 2 === substr_count( $whole, 'od-covers' ) );
-od_test( 'three posters, three buttons, one profile link', 3 === substr_count( $whole, '<img' ) && 3 === substr_count( $whole, 'wp:button' ) * 1 / 2 && 1 === substr_count( $whole, '/profile/' ) );
+od_test( 'three posters, three buttons, no profile link', 3 === substr_count( $whole, '<img' ) && 3 === substr_count( $whole, 'wp:button' ) * 1 / 2 && 0 === substr_count( $whole, '/profile/' ) );
 
 /* ---------------------------------------- od_append_contact_links */
 
@@ -793,7 +818,10 @@ od_test('and not the mock\'s tab strip', !str_contains($booklet, 'wp-block-butto
 od_test('the two faces are captions now', substr_count($booklet, '>Сторона А</figcaption>') === 2 && substr_count($booklet, '>Сторона Б</figcaption>') === 2);
 od_test('not paragraphs above the picture', !str_contains($booklet, '<p>Сторона'));
 od_test('one download per card', substr_count($booklet, 'wp-block-button__link') === 3);
-od_test('the coordinator becomes the profile card', str_contains($booklet, OD_METODICHKI_COORDINATOR_HREF));
+// Hidden on request 2026-09-12: the order contact is ten years stale and nobody
+// has said who replaces him, so the block goes rather than publishing a name the
+// reader cannot use. {@see od_drop_order_contact()}.
+od_test('no order block, and nobody named as the way to order', !str_contains($booklet, OD_METODICHKI_COORDINATOR_HREF) && !str_contains($booklet, 'Заказать'));
 od_test('and stops being an accordion', !str_contains($booklet, 'wp:details'));
 od_test('the MailPoet form is gone', !str_contains($booklet, 'wysija_form'));
 od_test('so is the old theme\'s stylesheet', !str_contains($booklet, '<style'));

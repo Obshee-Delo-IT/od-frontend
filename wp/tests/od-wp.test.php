@@ -326,7 +326,7 @@ od_test('and no redirect shadows the segment any more', !str_contains($redirects
 
 $topics = od_wp_film_topics();
 
-od_test('there are eleven topics', count($topics) === 11);
+od_test('there are ten topics', count($topics) === 10);
 od_test('«Алкоголь» and «Табак» are among them, by the names the empty tags already carry', 'Алкоголь' === $topics['alcohol']['name'] && 'Табак' === $topics['tobacco']['name']);
 od_test('every topic key is a latin URL segment', [] === array_filter(array_keys($topics), static fn(string $k): bool => (bool) preg_match('~[^a-z-]~', $k)));
 od_test('no two topics share a name — the lookup falls back to the name', count($topics) === count(array_unique(array_column($topics, 'name'))));
@@ -344,11 +344,16 @@ foreach ($topics as $key => $topic) {
     }
 }
 
-/* The catalogue is 84 films on od-stage (2026-09-12) and two of them carry no
-   text at all, so 82 is the whole of what can be read off the content. */
-od_test('82 of the 84 catalogue films are placed', count($seen) === 82);
+/* The catalogue is 84 films on od-stage (2026-09-12); two carry no text at all
+   and three are about the organisation rather than a subject. */
+od_test('79 of the 84 catalogue films are placed', count($seen) === 79);
 od_test('«Письмо Путину» is left for an editor', !isset($seen['pismo-putinu']));
 od_test('and so is «Ребенок и Ангел»', !isset($seen['ребенок-и-ангел-трогательная-истори']));
+
+/* «Об организации» is what `/about/` is, not a subject anyone browses the
+   catalogue for, so the three presentations carry no topic (2026-09-12). */
+od_test('there is no «Об организации» shelf', !isset($topics['about-us']));
+od_test('and the presentations carry no topic', !isset($seen['что-такое-общее-дело-презентация-орга']) && !isset($seen['презентация-организации-общее-дело-к']) && !isset($seen['межрегиональный-слёт-волонтёров-общ']));
 
 /* A film belongs to as many subjects as it is about — that is the difference from
    the five catalogue shelves, and the reason this is worth having. */
