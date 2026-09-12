@@ -1174,11 +1174,42 @@ explain «не подгружаются» without anything being broken — a br
 images in flight on a page whose HTML already took 5 s drops the last of them
 below the fold, and the reporter sees an empty box.
 
+**There is no offload, and there never was** (checked 2026-09-12). Neither
+production nor the clone has a plugin that writes to Object Storage —
+production's 28 plugins and the clone's 7 hold none, there is no mu-plugin doing
+it, and no option, theme or plugin file on production so much as names
+`yandexcloud`. WordPress does not know the bucket exists: every `<img>` it writes
+points at its own `wp-content/uploads`, and the only thing that ever prefers the
+bucket is `resolveMediaUrl`'s HEAD probe in this repo. So the bucket is a
+**one-off manual mirror**, taken around 2022 and never repeated — not an
+integration that broke.
+
+That makes the backfill a copy rather than a repair, and sizes it exactly.
+Production's `wp-content/uploads` is **1.3 GB in 18 918 files**; everything from
+`2022/` on — the part the bucket does not have — is **18 103 files and 1.22 GB**,
+and it is nearly all of it:
+
+| | files | size |
+| --- | --- | --- |
+| 2015–2021 (on the bucket) | 815 | 49 MB |
+| 2022–2023 | 539 | 45 MB |
+| 2024 | 4 482 | 323 MB |
+| 2025 | 7 435 | 374 MB |
+| 2026 (to 12.09) | 5 647 | 477 MB |
+
+A one-way `aws s3 sync wp-content/uploads s3://<bucket>/wp-content/uploads` from
+production covers it; the copy has to be repeated at cutover for whatever lands
+in between, and after cutover something has to keep doing it — a real offload
+plugin, or a cron'd sync, or the decision that new uploads simply serve from the
+origin. Whoever owns the Yandex Cloud account has to run it: this repo has no
+credentials for that bucket and only ever reads it over HTTP.
+
 **What has to happen** is unchanged in substance and larger in scope:
 
-1. backfill the bucket for everything under `wp-content/uploads` from 2022 on
-   and fix whatever the offload was, before the new install inherits the same
-   half-empty bucket — this removes the 14 s tail, which is origin-only;
+1. backfill the bucket with `wp-content/uploads` from 2022 on — 18 103 files,
+   1.22 GB — and decide what keeps it in sync afterwards, before the new install
+   inherits the same half-empty bucket; this removes the 14 s tail, which is
+   origin-only;
 2. put an actual CDN in front of the bucket (next entry), which is what the
    remaining 3–10× needs;
 3. no frontend change either way — the probe already prefers the bucket the
