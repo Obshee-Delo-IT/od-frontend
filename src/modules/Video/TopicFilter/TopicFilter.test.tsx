@@ -70,9 +70,12 @@ describe('<TopicFilter />', () => {
     });
   });
 
-  it('names the strip as a multi-select, since nothing else says so', () => {
+  it('says in visible words that it is a multi-select, and which question it answers', () => {
+    // On a phone this row sits straight under the category row; without a
+    // caption the two are one undifferentiated wall of buttons.
     renderWith([]);
 
+    expect(screen.getByText('Тема — можно выбрать несколько')).toBeInTheDocument();
     expect(screen.getByRole('navigation', { name: /выбрать несколько/i })).toBeInTheDocument();
   });
 });

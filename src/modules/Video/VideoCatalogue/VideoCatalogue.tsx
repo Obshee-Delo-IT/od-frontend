@@ -194,9 +194,14 @@ export const VideoCatalogue = async ({ segment, page, topics = [] }: VideoCatalo
     <Box display="flex" flexDirection="column" gap={40} pt={20} pb={48}>
       <PageHeader title={copy.heading} breadcrumbs={breadcrumbItems} />
 
-      <VideoFilter options={filterOptions} active={segment ?? ALL} />
+      {/* One block, not two sections: the page's 40px rhythm between them read
+          as «unrelated», which on a phone is two stacks of chips with nothing
+          saying which question either answers. */}
+      <div className={css.filters}>
+        <VideoFilter options={filterOptions} active={segment ?? ALL} />
 
-      <TopicFilter selected={topics} buildHref={(next) => catalogueHref({ segment, topics: next })} />
+        <TopicFilter selected={topics} buildHref={(next) => catalogueHref({ segment, topics: next })} />
+      </div>
 
       {items.length > 0 ? (
         <div className={css.list}>

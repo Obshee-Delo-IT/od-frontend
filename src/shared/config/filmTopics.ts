@@ -40,18 +40,28 @@ export const FILM_TOPICS = {
 
 export type FilmTopicKey = keyof typeof FILM_TOPICS;
 
-/** Chip wording. The WordPress term names, which are what an editor sees. */
+/**
+ * Chip wording — one word wherever one word will do.
+ *
+ * **Deliberately shorter than the WordPress term names** («Манипуляция и
+ * реклама», «Семья и отношения», «История и патриотизм», «Вера и традиция»,
+ * «Гаджеты и игры»), which stay as they are: those name the tag for an editor
+ * looking at a list of 384 of them, where the qualifier earns its place. Here
+ * ten of them stand side by side under the heading «Тема», the context does the
+ * qualifying, and the long forms cost two extra rows of wrapping on a phone —
+ * the filter burying the films it is supposed to find.
+ */
 export const FILM_TOPIC_LABELS: Record<FilmTopicKey, string> = {
   alcohol: 'Алкоголь',
   tobacco: 'Табак',
   drugs: 'Наркотики',
-  manipulation: 'Манипуляция и реклама',
-  family: 'Семья и отношения',
+  manipulation: 'Манипуляция',
+  family: 'Семья',
   meaning: 'Смысл жизни',
   health: 'Здоровье',
-  faith: 'Вера и традиция',
-  history: 'История и патриотизм',
-  gadgets: 'Гаджеты и игры',
+  faith: 'Вера',
+  history: 'История',
+  gadgets: 'Гаджеты',
 };
 
 /** Declaration order — the chip order, and the order a URL lists topics in. */

@@ -11,6 +11,16 @@
   display: none;
 }
 
+/* Same field label as the Dropdown's own (Figma 1324:4251) — the mobile half
+   has no label slot of its own, and it needs one as much as the desktop half. */
+.caption {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--gray-8);
+  font-size: 14px;
+  line-height: 140%;
+}
+
 @media (--mobile) {
   .desktop {
     display: none;

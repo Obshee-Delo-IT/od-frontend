@@ -40,4 +40,15 @@ describe('<FilterChips />', () => {
 
     expect(screen.getByRole('navigation', { name: 'Темы фильмов' })).toBeInTheDocument();
   });
+
+  it('shows the caption when it is given one, and nothing when it is not', () => {
+    // Two unlabelled strips stacked on a phone read as one wall of buttons —
+    // the caption is what says which question each of them answers.
+    const { unmount } = render(<FilterChips label="Тема" caption="Тема" chips={[{ label: 'Один', href: '/a' }]} />);
+    expect(screen.getByText('Тема')).toBeInTheDocument();
+    unmount();
+
+    render(<FilterChips label="Тема" chips={[{ label: 'Один', href: '/a' }]} />);
+    expect(screen.queryByText('Тема')).not.toBeInTheDocument();
+  });
 });
