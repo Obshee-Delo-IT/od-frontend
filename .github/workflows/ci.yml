@@ -63,6 +63,15 @@ jobs:
     # by hand — see `deploy.yml`.
     needs: ci
     if: github.ref == 'refs/heads/main'
+    # A called workflow cannot elevate its own token: `deploy.yml` asks for
+    # `packages: write` to push to GHCR, and a reusable workflow only ever gets
+    # what the calling job already holds. Without this block the caller falls
+    # back to the repository's default permissions, the request exceeds them,
+    # and the whole run is rejected before a single job starts — `startup_failure`
+    # with zero jobs and no log to read. Keep this in step with `deploy.yml`.
+    permissions:
+      contents: read
+      packages: write
     uses: ./.github/workflows/deploy.yml
     with:
       tier: stage
