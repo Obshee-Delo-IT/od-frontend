@@ -11,7 +11,7 @@ import {
 } from './filmTopics';
 
 describe('FILM_TOPICS', () => {
-  it('is the ten subjects `tag-film-topics` creates', () => {
+  it('is the nine subjects `tag-film-topics` creates', () => {
     expect(FILM_TOPIC_KEYS).toEqual([
       'alcohol',
       'tobacco',
@@ -21,9 +21,14 @@ describe('FILM_TOPICS', () => {
       'meaning',
       'health',
       'faith',
-      'history',
       'gadgets',
     ]);
+  });
+
+  it('does not carry «История и патриотизм», which was five old clips', () => {
+    // Dropped 2026-09-12. Two of its films are on «Вера» and «Алкоголь» anyway,
+    // and a chip is a promise that there is something behind it worth a click.
+    expect(FILM_TOPIC_KEYS).not.toContain('history');
   });
 
   it('labels every one of them', () => {
