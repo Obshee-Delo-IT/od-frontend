@@ -62,3 +62,8 @@ next-env.d.ts
 /*.png
 /*.jpeg
 /*.jpg
+
+# project docs — local only. Public repo; these hold tier configuration,
+# credentials' whereabouts and the list of holes still open, so they are kept
+# out of the published tree. Do not re-add them.
+/docs/
