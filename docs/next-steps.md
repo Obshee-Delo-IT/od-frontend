@@ -1545,10 +1545,9 @@ renders it.
   profile 46651 is his own record and he is still the Челябинская coordinator,
   so the contact stays published where it belongs —
   `/profile/гордикова-екатерина/` (the slug is somebody else's, see
-  `OD_METODICHKI_COORDINATOR_HREF`) and `/contacts/chelyabinskaya/`; on
-  production the un-hidden order blocks are still live on both materials pages,
-  and one news post (#69732, «Семинар-практикум для педагогов») repeats the
-  phone. Somebody still has to say who takes the orders — the block comes back
+  `OD_METODICHKI_COORDINATOR_HREF`) and `/contacts/chelyabinskaya/`, which names
+  him as the Магнитогорск coordinator. On production the order blocks are still
+  live on both materials pages. Somebody still has to say who takes the orders — the block comes back
   the moment there is a name, which is why `od_details_to_profile_link()` is
   kept.
 - **Мультфильмы с титрами** (О. Баранова). Editorial: subtitled versions have
