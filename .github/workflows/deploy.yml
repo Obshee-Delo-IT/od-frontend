@@ -1,0 +1,151 @@
+name: deploy
+
+# One image build and one Coolify deploy, for whichever tier is named.
+#
+# Two tiers exist and they cannot share an image: `SITE_URL` and `WP_BASE` are
+# baked in at build time — the first into every canonical, the sitemap and
+# `robots.txt`, the second into `images.remotePatterns`. So a tier is a set of
+# repository variables, a Coolify application, and a build of its own.
+#
+# `stage` runs from `ci.yml` on every push to `main`. `prod` is dispatched by
+# hand: before cutover it serves https://prod.obshee-delo.ru for verification,
+# after cutover it is the apex, and neither is a thing to redeploy by accident.
+# A dispatch skips the `ci` gate — it builds the commit at the tip of the branch
+# it is dispatched on, which on `main` has already been through it.
+
+on:
+  workflow_call:
+    inputs:
+      tier:
+        required: true
+        type: string
+  workflow_dispatch:
+    inputs:
+      tier:
+        description: Tier to build and deploy
+        type: choice
+        options: [stage, prod]
+        default: prod
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  image:
+    name: image → GHCR → Coolify (${{ inputs.tier }})
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    env:
+      IMAGE: ghcr.io/obshee-delo-it/od-frontend
+      COOLIFY: https://coolify.obshee-delo.ru/api/v1
+      # A tier's three build-time values and its application. Empty is fatal —
+      # see the guard below, which exists because GitHub's `&&/||` returns the
+      # right-hand side for an *empty* variable just as it does for a missing
+      # one: without it, a prod build with `WP_BASE_PROD` unset would silently
+      # bake the stage WordPress into the image that serves the apex.
+      WP_BASE: ${{ inputs.tier == 'prod' && vars.WP_BASE_PROD || vars.WP_BASE }}
+      SITE_URL: ${{ inputs.tier == 'prod' && vars.SITE_URL_PROD || vars.SITE_URL }}
+      WP_MEDIA_CDN: ${{ vars.WP_MEDIA_CDN }}
+      APP: ${{ inputs.tier == 'prod' && vars.COOLIFY_APP_UUID_PROD || vars.COOLIFY_APP_UUID }}
+
+    steps:
+      - name: Check the tier is configured
+        run: |
+          set -euo pipefail
+          for v in WP_BASE SITE_URL WP_MEDIA_CDN APP; do
+            if [ -z "${!v}" ]; then
+              echo "::error::${{ inputs.tier }}: $v resolves to nothing — add the tier's repository variable"
+              exit 1
+            fi
+          done
+          # The prod tier must never be built against the stage backend: both
+          # values are public, so naming them here is free and catches a
+          # mis-set variable before 8 000 canonical URLs are baked.
+          if [ "${{ inputs.tier }}" = prod ] && [ "$SITE_URL" != https://obshee-delo.ru ]; then
+            echo "::error::prod: SITE_URL is $SITE_URL, not the apex"
+            exit 1
+          fi
+          echo "$WP_BASE → $SITE_URL, application $APP"
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: |
+            ${{ env.IMAGE }}:${{ inputs.tier }}
+            ${{ env.IMAGE }}:${{ github.sha }}
+          # Build-time, not runtime: `images.remotePatterns` and every
+          # canonical/sitemap URL are baked into the bundle. None of the three is
+          # a secret — they are `vars`, and they are readable in the build record.
+          build-args: |
+            WP_BASE=${{ env.WP_BASE }}
+            WP_MEDIA_CDN=${{ env.WP_MEDIA_CDN }}
+            SITE_URL=${{ env.SITE_URL }}
+          # The credentials are needed at build time too — without them
+          # `httpClient` stubs and every prerendered page ships an empty header
+          # and footer for the hour of `revalidate = 3600`. They must never be
+          # build-args: buildx records those in `frontendAttrs`, which is
+          # uploaded as a `.dockerbuild` workflow artifact, and this repo is
+          # public. That published the od-stage application password on every
+          # push to `main` until 2026-08-23. A secret mount is recorded nowhere.
+          secrets: |
+            wp_user=${{ inputs.tier == 'prod' && secrets.WP_USER_PROD || secrets.WP_USER }}
+            wp_password=${{ inputs.tier == 'prod' && secrets.WP_PASSWORD_PROD || secrets.WP_PASSWORD }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          # Provenance attestations record build args. Nothing secret is passed
+          # that way any more, but an attestation on a public package still buys
+          # nothing here.
+          provenance: false
+        env:
+          # Defence in depth, not the fix: the fix is that no credential is a
+          # build arg. This stops the build record being published at all, so a
+          # future `build-args:` line cannot quietly leak the way the last one
+          # did. It costs the job-summary build graph.
+          DOCKER_BUILD_RECORD_UPLOAD: false
+          DOCKER_BUILD_SUMMARY: false
+
+      - name: Deploy on Coolify
+        env:
+          TOKEN: ${{ secrets.COOLIFY_TOKEN }}
+        run: |
+          set -euo pipefail
+          api() { curl -fsS -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' "$@"; }
+          # Pin the app to this commit's immutable tag rather than trusting a
+          # re-pull of the tier tag: a deploy that silently serves the previous
+          # image is indistinguishable from a successful one. It also makes
+          # rollback "set the tag back".
+          api -X PATCH "$COOLIFY/applications/$APP" \
+            -d '{"docker_registry_image_tag":"${{ github.sha }}"}' > /dev/null
+          deployment=$(api -X POST "$COOLIFY/deploy?uuid=$APP" | jq -r '.deployments[0].deployment_uuid')
+          echo "deployment $deployment"
+          # Poll to completion — the API answers as soon as the job is queued, so
+          # without this the workflow goes green on a deploy that failed.
+          for _ in $(seq 60); do
+            status=$(api "$COOLIFY/deployments/$deployment" | jq -r '.status')
+            echo "  $status"
+            case $status in
+              finished) exit 0 ;;
+              failed|cancelled-by-user) exit 1 ;;
+            esac
+            sleep 10
+          done
+          echo "still $status after 10 min — check https://coolify.obshee-delo.ru"
+          exit 1

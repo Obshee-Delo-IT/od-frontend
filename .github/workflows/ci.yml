@@ -59,96 +59,11 @@ jobs:
   image:
     name: image → GHCR → Coolify (stage)
     # Only after the gate above is green, and only for main: a red commit must
-    # never reach a deployed tier.
+    # never reach a deployed tier. The prod tier is the same workflow, dispatched
+    # by hand — see `deploy.yml`.
     needs: ci
     if: github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
-
-    env:
-      IMAGE: ghcr.io/obshee-delo-it/od-frontend
-      COOLIFY: https://coolify.obshee-delo.ru/api/v1
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Set up Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Log in to GHCR
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Build and push
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          push: true
-          tags: |
-            ${{ env.IMAGE }}:stage
-            ${{ env.IMAGE }}:${{ github.sha }}
-          # Build-time, not runtime: `images.remotePatterns` and every
-          # canonical/sitemap URL are baked into the bundle. None of the three is
-          # a secret — they are `vars`, and they are readable in the build record.
-          build-args: |
-            WP_BASE=${{ vars.WP_BASE }}
-            WP_MEDIA_CDN=${{ vars.WP_MEDIA_CDN }}
-            SITE_URL=${{ vars.SITE_URL }}
-          # The credentials are needed at build time too — without them
-          # `httpClient` stubs and every prerendered page ships an empty header
-          # and footer for the hour of `revalidate = 3600`. They must never be
-          # build-args: buildx records those in `frontendAttrs`, which is
-          # uploaded as a `.dockerbuild` workflow artifact, and this repo is
-          # public. That published the od-stage application password on every
-          # push to `main` until 2026-08-23. A secret mount is recorded nowhere.
-          secrets: |
-            wp_user=${{ secrets.WP_USER }}
-            wp_password=${{ secrets.WP_PASSWORD }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-          # Provenance attestations record build args. Nothing secret is passed
-          # that way any more, but an attestation on a public package still buys
-          # nothing here.
-          provenance: false
-        env:
-          # Defence in depth, not the fix: the fix is that no credential is a
-          # build arg. This stops the build record being published at all, so a
-          # future `build-args:` line cannot quietly leak the way the last one
-          # did. It costs the job-summary build graph.
-          DOCKER_BUILD_RECORD_UPLOAD: false
-          DOCKER_BUILD_SUMMARY: false
-
-      - name: Deploy on Coolify
-        env:
-          TOKEN: ${{ secrets.COOLIFY_TOKEN }}
-          APP: ${{ vars.COOLIFY_APP_UUID }}
-        run: |
-          set -euo pipefail
-          api() { curl -fsS -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' "$@"; }
-          # Pin the app to this commit's immutable tag rather than trusting a
-          # re-pull of `stage`: a deploy that silently serves the previous image
-          # is indistinguishable from a successful one. It also makes rollback
-          # "set the tag back".
-          api -X PATCH "$COOLIFY/applications/$APP" \
-            -d '{"docker_registry_image_tag":"${{ github.sha }}"}' > /dev/null
-          deployment=$(api -X POST "$COOLIFY/deploy?uuid=$APP" | jq -r '.deployments[0].deployment_uuid')
-          echo "deployment $deployment"
-          # Poll to completion — the API answers as soon as the job is queued, so
-          # without this the workflow goes green on a deploy that failed.
-          for _ in $(seq 60); do
-            status=$(api "$COOLIFY/deployments/$deployment" | jq -r '.status')
-            echo "  $status"
-            case $status in
-              finished) exit 0 ;;
-              failed|cancelled-by-user) exit 1 ;;
-            esac
-            sleep 10
-          done
-          echo "still $status after 10 min — check https://coolify.obshee-delo.ru"
-          exit 1
+    uses: ./.github/workflows/deploy.yml
+    with:
+      tier: stage
+    secrets: inherit
