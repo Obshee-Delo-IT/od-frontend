@@ -48,10 +48,54 @@ query parameter, no new page) or the rails — one horizontal strip per subject 
 is impossible; tags without a strip already let a teacher find every film about
 smoking in one click.
 
-**Cost:** editorial tagging of 85 films (hours, not minutes, and it is not
-ours) + a day for the filter, or several for the rails. Nothing in the data
+**Cost:** a day for the filter, or several for the rails. Nothing in the data
 layer blocks either — `fetchFilms` already takes category ids and would take
 tag ids the same way.
+
+**The taxonomy exists now (2026-09-12), which was the half that was «not ours».**
+Asked for directly, and done by reading each film's own title and excerpt rather
+than the existing tags: `od_wp_film_topics()` in `wp/scripts/od-wp.php` places
+**82 of the catalogue's 84 films** into **eleven subjects**, and the
+`tag-film-topics` task creates the tags and applies them. Run it dry to read the
+whole assignment.
+
+| topic | tag | films |
+| --- | --- | --- |
+| `alcohol` | Алкоголь | 23 |
+| `tobacco` | Табак | 16 |
+| `family` | Семья и отношения | 15 |
+| `manipulation` | Манипуляция и реклама | 12 |
+| `meaning` | Смысл жизни | 9 |
+| `health` | Здоровье | 7 |
+| `drugs` | Наркотики | 6 |
+| `faith` | Вера и традиция | 4 |
+| `history` | История и патриотизм | 5 |
+| `about-us` | Об организации | 3 |
+| `gadgets` | Гаджеты и игры | 2 |
+
+Three things about it worth a decision before it is applied:
+
+- **A film carries as many subjects as it is about**, which is what the five
+  catalogue shelves cannot express: «Конвейер смерти» is alcohol *and* tobacco,
+  «Секреты манипуляции. Алкоголь» is alcohol *and* the manipulation it
+  documents. Twelve films carry two.
+- **They are ordinary `post_tag`s**, not a new taxonomy. The install already has
+  384 tags — ten years of one-off keywords, useless as a filter — but two of them
+  are «Алкоголь» (#213) and «Табак» (#216) with no posts on them, so the task
+  reuses those and the frontend reads eleven ids, exactly as `FILM_CATEGORIES`
+  reads five category ids. No mu-plugin, no registration.
+- **`gadgets` holds two films** («Пожиратели мозга», «Путь героя») and
+  `about-us` three. Fold them in or leave them thin — a chip with two films is
+  still the fastest way to those two.
+
+Two films are left for an editor: `pismo-putinu` and «Ребенок и Ангел» have
+empty bodies and empty excerpts on both installs, so there is nothing to read
+them off.
+
+**Not applied.** The tags would be invisible until the chips or the rails exist,
+and the eleven names are a judgement call that belongs to whoever runs the
+catalogue. `wp eval-file od-wp.php tag-film-topics apply` is the whole of it
+once that is settled.
 
 ## 2. The illustrations look unserious for the organisation
 

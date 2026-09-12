@@ -1357,6 +1357,269 @@ function od_wp_strip_footer_links(bool $apply): void
 }
 
 // ---------------------------------------------------------------------------
+/**
+ * The eleven subjects the 84 catalogue films divide into, and which films each holds.
+ *
+ * Asked for on 2026-09-12 («группировку фильмов по тегам … алкоголь, курение и
+ * предложить другие»), and a reviewer's suggestion before that: the catalogue's
+ * five shelves are *forms* — фильм, мультфильм, ролик, короткометражный,
+ * известные люди — so somebody looking for what to show at a lesson about smoking
+ * has to read 84 titles. The subject is the axis nobody can filter on.
+ *
+ * **`post_tag`, not a new taxonomy.** The install already has 384 tags; they are
+ * ten years of one-off keywords («Агидель», «Баннер», 45 of them on one post) and
+ * useless as a filter, but two of them — «Алкоголь» (#213) and «Табак» (#216) —
+ * are the right names with no posts on them, left by somebody who started this and
+ * stopped. So the topics are ordinary tags and the frontend reads the eleven ids,
+ * exactly as `FILM_CATEGORIES` reads five category ids: no taxonomy to register,
+ * no mu-plugin, and an editor sees a familiar box.
+ *
+ * A film carries as many topics as it is about, which is the whole difference from
+ * the categories — «Конвейер смерти» is alcohol *and* tobacco, «Секреты
+ * манипуляции. Алкоголь» is alcohol *and* the manipulation it documents.
+ *
+ * **Two films are deliberately absent:** `pismo-putinu` («Письмо Путину») and
+ * `ребенок-и-ангел-трогательная-истори` have empty bodies and empty excerpts on
+ * both installs, so there is nothing to read them off. An editor assigns those two.
+ *
+ * Assigned from each film's own title and excerpt, not from the existing tags.
+ *
+ * @return array<string, array{name: string, films: array<int, string>}>
+ */
+function od_wp_film_topics(): array
+{
+    return [
+        'alcohol' => [
+            'name' => 'Алкоголь',
+            'films' => [
+                'алкоголь-взгляд-изнутри', // Алкоголь. Взгляд изнутри
+                'документальный-фильм-алкоголь-секр', // Алкоголь. Секреты манипуляции
+                'алкоголь-незримый-враг', // Алкоголь. НЕЗРИМЫЙ ВРАГ
+                'скрытые-вопросы-опасное-погружение', // Скрытые вопросы. Опасное погружение
+                'мультфильм-опасное-погружение-сер', // Мультфильм «Опасное погружение» сериала «Команда Познавалова».
+                'трезвый-разбор-мифы-об-алкоголе-разоб', // Трезвый разбор Мифы об алкоголе. Разоблачение TrashSmash Валентина Конона
+                'якутия-трезвые-сёла-правда-и-мифы', // Якутия. Трезвые сёла правда и мифы
+                'история-трезвеннических-движений-в-р', // История трезвеннических движений в России!
+                'конвейер-смерти-в-современной-россии', // Конвейер смерти в современной России. Владимир Жданов
+                'konvejer-smerti', // Конвейер смерти в современной России Жданов Владимир Георгиевич
+                'профессор-ефимов-в-а-прибыль-от-алкого', // Профессор Ефимов В.А. Прибыль от алкоголя и табака
+                'professor-efimov', // Профессор Ефимов. Прибыль от алкоголя и табака
+                'в-г-жданов-о-пиве-и-пивной-рекламе', // В.Г. Жданов. О пиве и пивной рекламе
+                'zdanov-video', // Что скрывают от народа? Владимир Жданов
+                'why-no-need-alcohol', // Почему России алкоголь больше не нужен!?
+                'вопрос-алкоголя-в-исламе-ислам-зарипо', // Вопрос алкоголя в Исламе! Ислам Зарипов
+                'belov', // Как алкоголь влияет на способность писать музыку?
+                'butusov', // Вячеслав Бутусов – Откровенный разговор
+                'manipulacia-alcogol', // Секреты манипуляции Алкоголь
+                'one-deception-story', // История одного обмана
+                'seks-i-alco', // Секс и алкоголь
+                'new-rolik', // Увлекательный ролик
+                '04-09-14-война-в-россии-уже-сейчас-сотни-поги', // Война в России УЖЕ СЕЙЧАС!!! Сотни погибших ежедневно!
+            ],
+        ],
+        'tobacco' => [
+            'name' => 'Табак',
+            'films' => [
+                'курение-взгляд-изнутри', // Курение. Взгляд изнутри
+                'никотин-секреты-манипуляции', // Никотин. Секреты манипуляции
+                'деньги-с-дымком', // Деньги с дымком
+                'скрытые-вопросы-тайна-едкого-дыма', // Скрытые вопросы. Тайна едкого дыма
+                'multfilm-tayna-edkogo-dyma', // Команда Познавалова Тайна едкого дыма
+                '28749', // The Mystery of the Deadly Smoke
+                'почему-же-они-курят', // Почему же они курят?
+                'что-скрыто-от-курильщика-ведущий-врач-2', // Что скрыто от курильщика? Ведущий врач онколог
+                'onkolog', // Непридуманная история от ведущего врача онколога
+                'gandapas', // Легкий способ бросить курить. Радислав Гандапас
+                'secrets-tabac', // Секреты манипуляции Табак
+                'конвейер-смерти-в-современной-россии', // Конвейер смерти в современной России. Владимир Жданов
+                'konvejer-smerti', // Конвейер смерти в современной России Жданов Владимир Георгиевич
+                'профессор-ефимов-в-а-прибыль-от-алкого', // Профессор Ефимов В.А. Прибыль от алкоголя и табака
+                'professor-efimov', // Профессор Ефимов. Прибыль от алкоголя и табака
+                'butusov', // Вячеслав Бутусов – Откровенный разговор
+            ],
+        ],
+        'drugs' => [
+            'name' => 'Наркотики',
+            'films' => [
+                'наркотики-лучшее-что-придумал-дьявол', // Наркотики. Лучшее, что придумал дьявол
+                'narkotiki-sekrety-manipuljacii', // Наркотики. СЕКРЕТЫ МАНИПУЛЯЦИИ!
+                'в-г-жданов-о-наркотиках', // В.Г. Жданов. О наркотиках
+                'gazmanov', // Олег Газманов о наркотиках
+                'samoylov', // Творчество вместо наркотиков. Вадим Самойлов
+                'drugs-legalize', // Как легализуют наркотики в России
+            ],
+        ],
+        'manipulation' => [
+            'name' => 'Манипуляция и реклама',
+            'films' => [
+                'ловцы-душ-секреты-манипуляции-фильмы', // Ловцы душ. Секреты манипуляции: Фильмы, Кино, Сериалы
+                'документальный-фильм-алкоголь-секр', // Алкоголь. Секреты манипуляции
+                'никотин-секреты-манипуляции', // Никотин. Секреты манипуляции
+                'narkotiki-sekrety-manipuljacii', // Наркотики. СЕКРЕТЫ МАНИПУЛЯЦИИ!
+                'secrets-tabac', // Секреты манипуляции Табак
+                'manipulacia-alcogol', // Секреты манипуляции Алкоголь
+                'one-deception-story', // История одного обмана
+                'деньги-с-дымком', // Деньги с дымком
+                'влияние-кино-на-общество-николай-бурл', // Влияние кино на общество Николай Бурляев
+                'влияние-кино-на-общество-николай-бурл-2', // Влияние кино на общество. Николай Бурляев
+                'замечаем-ли-мы-как-нами-манипулируют-с-2', // Замечаем ли мы как нами манипулируют? Социологическое исследование!
+                'в-г-жданов-о-пиве-и-пивной-рекламе', // В.Г. Жданов. О пиве и пивной рекламе
+            ],
+        ],
+        'family' => [
+            'name' => 'Семья и отношения',
+            'films' => [
+                'спасибо-за-жизнь', // Спасибо за жизнь
+                'мама-я-вырасту', // Мама, я вырасту!
+                'докажи-что-любишь', // Докажи, что любишь
+                'фильм-как-научиться-любить-пошагова', // Фильм Как научиться любить? . Пошаговая инструкция
+                'генетический-код-главное-сокровище', // Генетический код – главное сокровище нации
+                'удивительная-история-о-женской-красо', // Удивительная история о женской красоте
+                'woman-nature-secret', // Тайна природы женщины
+                'man-five-secrets', // Пять секретов настоящего мужчины
+                '5-secrets-of-a-real-man', // 5 secrets of a real man!
+                'real-man', // Кто такой настоящий мужчина? Александр Муромский
+                'inna-gomes', // Актриса Инна Гомес о семейных ценностях
+                'condoms', // Миф о защитных свойствах презерватива. Академик РАМН
+                'juvenalnaja-justicija', // Ювенальная юстиция в России. Депутат Евгений Федоров
+                'уникальный-православный-фильм-утеря', // Уникальный православный фильм Утерянная добродетель
+                'seks-i-alco', // Секс и алкоголь
+            ],
+        ],
+        'meaning' => [
+            'name' => 'Смысл жизни',
+            'films' => [
+                'как-найти-призвание', // Как найти призвание
+                'камертон-счастья-2', // Камертон счастья
+                'фильм-четыре-ключа-к-твоим-победам', // Фильм «Четыре ключа к твоим победам»
+                'грязные-слова', // Грязные слова
+                'torsunov', // Поступая так, ты похож на животное О.Г. Торсунов
+                'tolstoy', // Лев Николаевич Толстой – Путь Жизни
+                'dorokhova', // Одежда это система знаков. Катерина Дорохова
+                'kuklachev', // Удивительная история! Юрий Куклачев
+                'пьер-эдель-обращение-музыканта-к-моло', // Пьер Эдель Обращение музыканта к молодёжи!
+            ],
+        ],
+        'health' => [
+            'name' => 'Здоровье',
+            'films' => [
+                'сахар-атакует', // САХАР АТАКУЕТ
+                'большая-опасность-маленьких-размеро', // БОЛЬШАЯ ОПАСНОСТЬ МАЛЕНЬКИХ РАЗМЕРОВ
+                'история-с-ушами', // История с ушами
+                'команда-познавалова-задача-по-зубам', // Команда Познавалова – Задача по зубам
+                'как-не-стать-импотентом-доктор-медици', // Как не стать импотентом? Доктор медицинских наук О.И. Аполихин
+                'yugay', // Здоровье мужчины. Сергей Югай
+                'condoms', // Миф о защитных свойствах презерватива. Академик РАМН
+            ],
+        ],
+        'faith' => [
+            'name' => 'Вера и традиция',
+            'films' => [
+                'уникальный-православный-фильм-утеря', // Уникальный православный фильм Утерянная добродетель
+                'вопрос-алкоголя-в-исламе-ислам-зарипо', // Вопрос алкоголя в Исламе! Ислам Зарипов
+                'lovchev', // Почему князь Владимир выбрал Христианство?
+                'tolstoy', // Лев Николаевич Толстой – Путь Жизни
+            ],
+        ],
+        'history' => [
+            'name' => 'История и патриотизм',
+            'films' => [
+                'обращение-офицера-вдв-ко-дню-победы', // Обращение офицера ВДВ ко Дню Победы!!!
+                'rolik-oficer-specnaza', // Офицер спецназа. Что я могу сделать для России?
+                'emelyanenko', // 70 лет Великой Победы. Федор Емельяненко
+                'lovchev', // Почему князь Владимир выбрал Христианство?
+                'история-трезвеннических-движений-в-р', // История трезвеннических движений в России!
+            ],
+        ],
+        'gadgets' => [
+            'name' => 'Гаджеты и игры',
+            'films' => [
+                'пожиратели-мозга', // Пожиратели мозга
+                'путь-героя-фильм-о-игровой-зависимост', // Путь героя. Фильм об игровой зависимости
+            ],
+        ],
+        'about-us' => [
+            'name' => 'Об организации',
+            'films' => [
+                'межрегиональный-слёт-волонтёров-общ', // Межрегиональный слёт волонтёров Общее дело 2019
+                'презентация-организации-общее-дело-к', // Презентация организации Общее дело. Короткая версия
+                'что-такое-общее-дело-презентация-орга', // Что такое ОБЩЕЕ ДЕЛО. Презентация организации
+            ],
+        ],
+    ];
+}
+
+/**
+ * Task: create the eleven topic tags and put each film on the ones it belongs to.
+ *
+ * Additive and idempotent, like every other task here: an existing term is reused
+ * rather than duplicated, and `wp_set_post_terms()` is called with `$append = true`
+ * so the ten years of keywords a film already carries survive.
+ *
+ * A term is looked up by **slug and then by name**, because the two that already
+ * exist were created through the editor and carry percent-encoded Cyrillic slugs —
+ * `wp_insert_term()` would refuse the name as a duplicate and leave the topic with
+ * no term at all.
+ *
+ * **The ids it prints are what the frontend needs**, the same way
+ * `create-short-category` prints one: term ids are per-install.
+ */
+function od_wp_tag_film_topics(bool $apply): void
+{
+    foreach (od_wp_film_topics() as $slug => $topic) {
+        $term = get_term_by('slug', $slug, 'post_tag') ?: get_term_by('name', $topic['name'], 'post_tag');
+
+        if ($term) {
+            WP_CLI::log(sprintf('%s: «%s» (#%d) exists, reused', $slug, $term->name, $term->term_id));
+        } else {
+            WP_CLI::log(sprintf('%s: tag missing, to be created as «%s»', $slug, $topic['name']));
+
+            if ($apply) {
+                $created = wp_insert_term($topic['name'], 'post_tag', ['slug' => $slug]);
+                if (is_wp_error($created)) {
+                    WP_CLI::warning(sprintf('%s: %s', $slug, $created->get_error_message()));
+                    continue;
+                }
+
+                $term = get_term($created['term_id'], 'post_tag');
+                WP_CLI::success(sprintf('%s: tag created (#%d)', $slug, $term->term_id));
+            }
+            // A dry run carries on without a term, so the film list below is still
+            // the point of the run.
+        }
+
+        foreach ($topic['films'] as $path) {
+            $post = get_page_by_path($path, OBJECT, 'post')
+                ?: get_page_by_path(sanitize_title($path), OBJECT, 'post');
+
+            if (!$post) {
+                WP_CLI::warning(sprintf('%s: no post with slug %s', $slug, $path));
+                continue;
+            }
+
+            if ($term && has_term($term->term_id, 'post_tag', $post->ID)) {
+                WP_CLI::log(sprintf('%s: %s (#%d) already tagged, skipped', $slug, $path, $post->ID));
+                continue;
+            }
+
+            WP_CLI::log(sprintf('%s: %s (#%d) «%s»', $slug, $path, $post->ID, get_the_title($post)));
+
+            if (!$apply || !$term) {
+                continue;
+            }
+
+            $set = wp_set_post_terms($post->ID, [$term->term_id], 'post_tag', true);
+            if (is_wp_error($set)) {
+                WP_CLI::warning(sprintf('%s: %s', $path, $set->get_error_message()));
+                continue;
+            }
+
+            WP_CLI::success(sprintf('%s: %s (#%d) tagged', $slug, $path, $post->ID));
+        }
+    }
+}
+
+
 // Runner. Everything above is a function; this is the only thing that runs.
 // ---------------------------------------------------------------------------
 
@@ -1383,6 +1646,7 @@ $tasks = [
     'rehost-posters' => 'od_wp_rehost_posters',
     'strip-footer-links' => 'od_wp_strip_footer_links',
     'create-short-category' => 'od_wp_create_short_category',
+    'tag-film-topics' => 'od_wp_tag_film_topics',
 ];
 
 $positional = $args ?? [];
