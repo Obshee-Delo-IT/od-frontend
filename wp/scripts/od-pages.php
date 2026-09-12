@@ -1634,6 +1634,11 @@ function od_https_own_links(string $content): string
  *
  * The heading text is the summary's, verbatim.
  *
+ * **Both call sites drop the block instead as of 2026-09-12** — see
+ * {@see od_drop_order_contact()}. This stays because it is what gets re-wired the
+ * day somebody says who takes the orders: a name and a `profile` path, and the
+ * card is back.
+ *
  * Idempotent: there is no `wp:details` left to match.
  */
 function od_details_to_profile_link(string $content, string $href, string $label): string
@@ -1651,6 +1656,52 @@ function od_details_to_profile_link(string $content, string $href, string $label
         $content,
         1
     );
+}
+
+/**
+ * Remove the «Заказать …» block from the two pages that publish one.
+ *
+ * `/materials/metodichki/` and `/materials/booklet/` each end in an order-a-copy
+ * block naming {@see OD_METODICHKI_COORDINATOR_NAME}. Рязанов told the demo's
+ * reviewer that the information is ten years old and he has not handled orders
+ * for years, and nobody has said who does — so the page was publishing a wrong
+ * contact and a promise it cannot keep. Hidden on request, 2026-09-12.
+
+ * **The heading goes with the contact.** «Заказать методические пособия» over
+ * nothing is a worse page than no heading: it still promises a way to order and
+ * now does not even say who to ask.
+ *
+ * Two shapes, because the two installs are at different stages: the `wp:details`
+ * accordion production still stores, and the `h2` + profile link
+ * {@see od_details_to_profile_link()} has already made of it on the clone. Only a
+ * summary or heading that opens with «Заказать» matches, and only a paragraph
+ * holding that one profile link and nothing else.
+ *
+ * The person is **not** deleted anywhere — profile 46651 is his own record and he
+ * is still the Челябинская coordinator. This only stops the two materials pages
+ * naming him as the way to order.
+ *
+ * Idempotent: after one pass there is no block left to match.
+ */
+function od_drop_order_contact(string $content, string $href): string
+{
+    $before = $content;
+
+    $content = preg_replace(
+        '~<!--\s*wp:heading\b[^>]*-->\s*<h2\b[^>]*>\s*Заказать[^<]*</h2>\s*<!--\s*/wp:heading\s*-->'
+        . '\s*<!--\s*wp:paragraph\b[^>]*-->\s*<p[^>]*>\s*<a\s+href="' . preg_quote($href, '~') . '">[^<]*</a>\s*</p>'
+        . '\s*<!--\s*/wp:paragraph\s*-->~su',
+        '',
+        $content
+    );
+
+    $content = preg_replace_callback(
+        '~<!--\s*wp:details\b.*?<summary>(.*?)</summary>.*?<!--\s*/wp:details\s*-->~s',
+        static fn(array $m): string => preg_match('~^\s*Заказать~u', strip_tags($m[1])) ? '' : $m[0],
+        $content
+    );
+
+    return $content === $before ? $content : od_drop_empty_layout_groups($content);
 }
 
 /**
@@ -1831,7 +1882,7 @@ function od_pages_metodichki(string $content, int $_filmTagId = 0): string
     $content = od_strip_paragraph_spacing($content);
     $content = od_cover_full_size($content, OD_METODICHKI_COVERS);
 
-    return od_details_to_profile_link($content, OD_METODICHKI_COORDINATOR_HREF, OD_METODICHKI_COORDINATOR_NAME);
+    return od_drop_order_contact($content, OD_METODICHKI_COORDINATOR_HREF);
 }
 
 /**
@@ -2293,6 +2344,10 @@ function od_pages_zakladki(string $content, int $filmTagId): string
  */
 function od_pages_booklet(string $content, int $filmTagId): string
 {
+    // Before the guard: on an install this has already run against, the order
+    // block is what it left behind, and an early return would never reach it.
+    $content = od_drop_order_contact($content, OD_METODICHKI_COORDINATOR_HREF);
+
     if (od_has_block_class($content, 'od-asset')) {
         return $content; // Already converted — leave the editor's copy alone.
     }
@@ -2350,6 +2405,10 @@ function od_pages_booklet(string $content, int $filmTagId): string
  * The «Заказать листовки и буклеты» accordion, as the heading and profile link
  * {@see od_details_to_profile_link()} makes of it — read off the original body,
  * because everything else on this page is rebuilt from scratch.
+ *
+ * Returns nothing since 2026-09-12: `od_pages_booklet()` runs
+ * {@see od_drop_order_contact()} first, so there is no accordion left to find.
+ * Kept for the day the order contact is named again.
  */
 function od_pages_contact_block(string $content): string
 {

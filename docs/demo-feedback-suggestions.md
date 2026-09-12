@@ -55,7 +55,7 @@ tag ids the same way.
 **The taxonomy exists now (2026-09-12), which was the half that was «not ours».**
 Asked for directly, and done by reading each film's own title and excerpt rather
 than the existing tags: `od_wp_film_topics()` in `wp/scripts/od-wp.php` places
-**82 of the catalogue's 84 films** into **eleven subjects**, and the
+**79 of the catalogue's 84 films** into **ten subjects**, and the
 `tag-film-topics` task creates the tags and applies them. Run it dry to read the
 whole assignment.
 
@@ -70,7 +70,6 @@ whole assignment.
 | `drugs` | Наркотики | 6 |
 | `faith` | Вера и традиция | 4 |
 | `history` | История и патриотизм | 5 |
-| `about-us` | Об организации | 3 |
 | `gadgets` | Гаджеты и игры | 2 |
 
 Three things about it worth a decision before it is applied:
@@ -82,18 +81,19 @@ Three things about it worth a decision before it is applied:
 - **They are ordinary `post_tag`s**, not a new taxonomy. The install already has
   384 tags — ten years of one-off keywords, useless as a filter — but two of them
   are «Алкоголь» (#213) and «Табак» (#216) with no posts on them, so the task
-  reuses those and the frontend reads eleven ids, exactly as `FILM_CATEGORIES`
+  reuses those and the frontend reads ten ids, exactly as `FILM_CATEGORIES`
   reads five category ids. No mu-plugin, no registration.
-- **`gadgets` holds two films** («Пожиратели мозга», «Путь героя») and
-  `about-us` three. Fold them in or leave them thin — a chip with two films is
-  still the fastest way to those two.
+- **`gadgets` holds two films** («Пожиратели мозга», «Путь героя»). Fold it in
+  or leave it thin — a chip with two films is still the fastest way to those two.
 
-Two films are left for an editor: `pismo-putinu` and «Ребенок и Ангел» have
-empty bodies and empty excerpts on both installs, so there is nothing to read
-them off.
+Five films carry no topic. `pismo-putinu` and «Ребенок и Ангел» have empty
+bodies and empty excerpts on both installs, so there is nothing to read them off
+— an editor assigns those two. The other three are the two presentations and the
+слёт: «Об организации» is what `/about/` is, not a subject anyone browses the
+catalogue for, so there is no such shelf (dropped 2026-09-12).
 
 **Not applied.** The tags would be invisible until the chips or the rails exist,
-and the eleven names are a judgement call that belongs to whoever runs the
+and the ten names are a judgement call that belongs to whoever runs the
 catalogue. `wp eval-file od-wp.php tag-film-topics apply` is the whole of it
 once that is settled.
 

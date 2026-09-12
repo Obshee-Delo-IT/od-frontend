@@ -1536,10 +1536,20 @@ renders it.
   The banner's own copy and `OD_TEAM` already used the current name. Note prod's
   `/contacts/moscow/` body also still writes «Доброволец-ПРО» in Васильев's
   role, which the redesign's `OD_TEAM` overrides.
-- **«Заказать методические пособия у Рязанова А. А.»** on
-  `/materials/metodichki/` (Низамов: Рязанов says the information is ten years
-  old and he has not handled this for years). Still live on prod, name, phone,
-  Telegram and ВК. Somebody has to say who takes the orders now — until then
-  the page publishes a wrong contact.
+- **«Заказать методические пособия у Рязанова А. А.»** (Низамов: Рязанов says
+  the information is ten years old and he has not handled this for years).
+  **Hidden here on 2026-09-12** — `od_drop_order_contact()` removes the block,
+  heading and all, from both pages that carry one: `/materials/metodichki/` and
+  `/materials/booklet/` («Заказать листовки и буклеты»). A heading promising a
+  way to order over nothing is a worse page than no heading. Nobody is deleted:
+  profile 46651 is his own record and he is still the Челябинская coordinator,
+  so the contact stays published where it belongs —
+  `/profile/гордикова-екатерина/` (the slug is somebody else's, see
+  `OD_METODICHKI_COORDINATOR_HREF`) and `/contacts/chelyabinskaya/`; on
+  production the un-hidden order blocks are still live on both materials pages,
+  and one news post (#69732, «Семинар-практикум для педагогов») repeats the
+  phone. Somebody still has to say who takes the orders — the block comes back
+  the moment there is a name, which is why `od_details_to_profile_link()` is
+  kept.
 - **Мультфильмы с титрами** (О. Баранова). Editorial: subtitled versions have
   to exist before a page can offer them.
