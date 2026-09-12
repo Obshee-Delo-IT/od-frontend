@@ -460,6 +460,86 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/llar/v1': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: {
+      parameters: {
+        query?: {
+          namespace?: unknown;
+          context?: unknown;
+        };
+        header?: never;
+        path?: never;
+        cookie?: never;
+      };
+      requestBody?: never;
+      responses: {
+        /** @description OK */
+        200: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content?: never;
+        };
+      };
+    };
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/llar/v1/mfa/send-code': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post: {
+      parameters: {
+        query?: never;
+        header?: never;
+        path?: never;
+        cookie?: never;
+      };
+      requestBody?: {
+        content: {
+          'application/x-www-form-urlencoded': {
+            token: string;
+            secret: string;
+            code?: string;
+            ip?: string;
+            browser?: string;
+            location?: string;
+          };
+        };
+      };
+      responses: {
+        /** @description OK */
+        200: {
+          headers: {
+            [name: string]: unknown;
+          };
+          content?: never;
+        };
+      };
+    };
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/wp/v2': {
     parameters: {
       query?: never;
@@ -669,17 +749,7 @@ export interface paths {
              * @description Именованный статус записи.
              * @enum {string}
              */
-            status?:
-              | 'publish'
-              | 'future'
-              | 'draft'
-              | 'pending'
-              | 'private'
-              | 'submitted'
-              | 'funded'
-              | 'refunded'
-              | 'failed'
-              | 'acf-disabled';
+            status?: 'publish' | 'future' | 'draft' | 'pending' | 'private' | 'acf-disabled';
             /** @description Пароль для защиты содержания и отрывка. */
             password?: string;
             /** @description Название записи. */
@@ -845,17 +915,7 @@ export interface paths {
              * @description Именованный статус записи.
              * @enum {string}
              */
-            status?:
-              | 'publish'
-              | 'future'
-              | 'draft'
-              | 'pending'
-              | 'private'
-              | 'submitted'
-              | 'funded'
-              | 'refunded'
-              | 'failed'
-              | 'acf-disabled';
+            status?: 'publish' | 'future' | 'draft' | 'pending' | 'private' | 'acf-disabled';
             /** @description Пароль для защиты содержания и отрывка. */
             password?: string;
             /** @description Название записи. */
@@ -978,17 +1038,7 @@ export interface paths {
              * @description Именованный статус записи.
              * @enum {string}
              */
-            status?:
-              | 'publish'
-              | 'future'
-              | 'draft'
-              | 'pending'
-              | 'private'
-              | 'submitted'
-              | 'funded'
-              | 'refunded'
-              | 'failed'
-              | 'acf-disabled';
+            status?: 'publish' | 'future' | 'draft' | 'pending' | 'private' | 'acf-disabled';
             /** @description Пароль для защиты содержания и отрывка. */
             password?: string;
             /** @description Название записи. */
@@ -1146,17 +1196,7 @@ export interface paths {
              * @description Именованный статус записи.
              * @enum {string}
              */
-            status?:
-              | 'publish'
-              | 'future'
-              | 'draft'
-              | 'pending'
-              | 'private'
-              | 'submitted'
-              | 'funded'
-              | 'refunded'
-              | 'failed'
-              | 'acf-disabled';
+            status?: 'publish' | 'future' | 'draft' | 'pending' | 'private' | 'acf-disabled';
             /** @description Пароль для защиты содержания и отрывка. */
             password?: string;
             /** @description Название записи. */
@@ -1451,17 +1491,7 @@ export interface paths {
              * @description Именованный статус записи.
              * @enum {string}
              */
-            status?:
-              | 'publish'
-              | 'future'
-              | 'draft'
-              | 'pending'
-              | 'private'
-              | 'submitted'
-              | 'funded'
-              | 'refunded'
-              | 'failed'
-              | 'acf-disabled';
+            status?: 'publish' | 'future' | 'draft' | 'pending' | 'private' | 'acf-disabled';
             /** @description Пароль для защиты содержания и отрывка. */
             password?: string;
             /** @description Название записи. */
@@ -1714,17 +1744,7 @@ export interface paths {
              * @description Именованный статус записи.
              * @enum {string}
              */
-            status?:
-              | 'publish'
-              | 'future'
-              | 'draft'
-              | 'pending'
-              | 'private'
-              | 'submitted'
-              | 'funded'
-              | 'refunded'
-              | 'failed'
-              | 'acf-disabled';
+            status?: 'publish' | 'future' | 'draft' | 'pending' | 'private' | 'acf-disabled';
             /** @description Пароль для защиты содержания и отрывка. */
             password?: string;
             /** @description ID родителя записи. */
@@ -1868,17 +1888,7 @@ export interface paths {
              * @description Именованный статус записи.
              * @enum {string}
              */
-            status?:
-              | 'publish'
-              | 'future'
-              | 'draft'
-              | 'pending'
-              | 'private'
-              | 'submitted'
-              | 'funded'
-              | 'refunded'
-              | 'failed'
-              | 'acf-disabled';
+            status?: 'publish' | 'future' | 'draft' | 'pending' | 'private' | 'acf-disabled';
             /** @description Пароль для защиты содержания и отрывка. */
             password?: string;
             /** @description ID родителя записи. */
@@ -1979,17 +1989,7 @@ export interface paths {
              * @description Именованный статус записи.
              * @enum {string}
              */
-            status?:
-              | 'publish'
-              | 'future'
-              | 'draft'
-              | 'pending'
-              | 'private'
-              | 'submitted'
-              | 'funded'
-              | 'refunded'
-              | 'failed'
-              | 'acf-disabled';
+            status?: 'publish' | 'future' | 'draft' | 'pending' | 'private' | 'acf-disabled';
             /** @description Пароль для защиты содержания и отрывка. */
             password?: string;
             /** @description ID родителя записи. */
@@ -2125,17 +2125,7 @@ export interface paths {
              * @description Именованный статус записи.
              * @enum {string}
              */
-            status?:
-              | 'publish'
-              | 'future'
-              | 'draft'
-              | 'pending'
-              | 'private'
-              | 'submitted'
-              | 'funded'
-              | 'refunded'
-              | 'failed'
-              | 'acf-disabled';
+            status?: 'publish' | 'future' | 'draft' | 'pending' | 'private' | 'acf-disabled';
             /** @description Пароль для защиты содержания и отрывка. */
             password?: string;
             /** @description ID родителя записи. */
@@ -2408,17 +2398,7 @@ export interface paths {
              * @description Именованный статус записи.
              * @enum {string}
              */
-            status?:
-              | 'publish'
-              | 'future'
-              | 'draft'
-              | 'pending'
-              | 'private'
-              | 'submitted'
-              | 'funded'
-              | 'refunded'
-              | 'failed'
-              | 'acf-disabled';
+            status?: 'publish' | 'future' | 'draft' | 'pending' | 'private' | 'acf-disabled';
             /** @description Пароль для защиты содержания и отрывка. */
             password?: string;
             /** @description Название записи. */
@@ -2648,17 +2628,7 @@ export interface paths {
              * @description Именованный статус записи.
              * @enum {string}
              */
-            status?:
-              | 'publish'
-              | 'future'
-              | 'draft'
-              | 'pending'
-              | 'private'
-              | 'submitted'
-              | 'funded'
-              | 'refunded'
-              | 'failed'
-              | 'acf-disabled';
+            status?: 'publish' | 'future' | 'draft' | 'pending' | 'private' | 'acf-disabled';
             /** @description Название записи. */
             title?: {
               /** @description Название записи как оно существует в базе данных. */
@@ -2803,17 +2773,7 @@ export interface paths {
              * @description Именованный статус записи.
              * @enum {string}
              */
-            status?:
-              | 'publish'
-              | 'future'
-              | 'draft'
-              | 'pending'
-              | 'private'
-              | 'submitted'
-              | 'funded'
-              | 'refunded'
-              | 'failed'
-              | 'acf-disabled';
+            status?: 'publish' | 'future' | 'draft' | 'pending' | 'private' | 'acf-disabled';
             /** @description Название записи. */
             title?: {
               /** @description Название записи как оно существует в базе данных. */
@@ -2904,17 +2864,7 @@ export interface paths {
              * @description Именованный статус записи.
              * @enum {string}
              */
-            status?:
-              | 'publish'
-              | 'future'
-              | 'draft'
-              | 'pending'
-              | 'private'
-              | 'submitted'
-              | 'funded'
-              | 'refunded'
-              | 'failed'
-              | 'acf-disabled';
+            status?: 'publish' | 'future' | 'draft' | 'pending' | 'private' | 'acf-disabled';
             /** @description Название записи. */
             title?: {
               /** @description Название записи как оно существует в базе данных. */
@@ -3040,17 +2990,7 @@ export interface paths {
              * @description Именованный статус записи.
              * @enum {string}
              */
-            status?:
-              | 'publish'
-              | 'future'
-              | 'draft'
-              | 'pending'
-              | 'private'
-              | 'submitted'
-              | 'funded'
-              | 'refunded'
-              | 'failed'
-              | 'acf-disabled';
+            status?: 'publish' | 'future' | 'draft' | 'pending' | 'private' | 'acf-disabled';
             /** @description Название записи. */
             title?: {
               /** @description Название записи как оно существует в базе данных. */
@@ -3528,17 +3468,7 @@ export interface paths {
              * @default publish
              * @enum {string}
              */
-            status?:
-              | 'publish'
-              | 'future'
-              | 'draft'
-              | 'pending'
-              | 'private'
-              | 'submitted'
-              | 'funded'
-              | 'refunded'
-              | 'failed'
-              | 'acf-disabled';
+            status?: 'publish' | 'future' | 'draft' | 'pending' | 'private' | 'acf-disabled';
             /**
              * @description ID родителя объекта.
              * @default 0
@@ -3666,17 +3596,7 @@ export interface paths {
              * @description Именованный статус для объекта.
              * @enum {string}
              */
-            status?:
-              | 'publish'
-              | 'future'
-              | 'draft'
-              | 'pending'
-              | 'private'
-              | 'submitted'
-              | 'funded'
-              | 'refunded'
-              | 'failed'
-              | 'acf-disabled';
+            status?: 'publish' | 'future' | 'draft' | 'pending' | 'private' | 'acf-disabled';
             /** @description ID родителя объекта. */
             parent?: number;
             /** @description Текст для атрибута title элемента link для данного пункта меню. */
@@ -3756,17 +3676,7 @@ export interface paths {
              * @description Именованный статус для объекта.
              * @enum {string}
              */
-            status?:
-              | 'publish'
-              | 'future'
-              | 'draft'
-              | 'pending'
-              | 'private'
-              | 'submitted'
-              | 'funded'
-              | 'refunded'
-              | 'failed'
-              | 'acf-disabled';
+            status?: 'publish' | 'future' | 'draft' | 'pending' | 'private' | 'acf-disabled';
             /** @description ID родителя объекта. */
             parent?: number;
             /** @description Текст для атрибута title элемента link для данного пункта меню. */
@@ -3881,17 +3791,7 @@ export interface paths {
              * @description Именованный статус для объекта.
              * @enum {string}
              */
-            status?:
-              | 'publish'
-              | 'future'
-              | 'draft'
-              | 'pending'
-              | 'private'
-              | 'submitted'
-              | 'funded'
-              | 'refunded'
-              | 'failed'
-              | 'acf-disabled';
+            status?: 'publish' | 'future' | 'draft' | 'pending' | 'private' | 'acf-disabled';
             /** @description ID родителя объекта. */
             parent?: number;
             /** @description Текст для атрибута title элемента link для данного пункта меню. */
@@ -4009,17 +3909,7 @@ export interface paths {
              * @description Именованный статус для объекта.
              * @enum {string}
              */
-            status?:
-              | 'publish'
-              | 'future'
-              | 'draft'
-              | 'pending'
-              | 'private'
-              | 'submitted'
-              | 'funded'
-              | 'refunded'
-              | 'failed'
-              | 'acf-disabled';
+            status?: 'publish' | 'future' | 'draft' | 'pending' | 'private' | 'acf-disabled';
             /** @description Текст для атрибута title элемента link для данного пункта меню. */
             attr_title?: string;
             /** @description Имена классов для элемента ссылки этого пункта меню. */
@@ -4242,17 +4132,7 @@ export interface paths {
              * @description Именованный статус записи.
              * @enum {string}
              */
-            status?:
-              | 'publish'
-              | 'future'
-              | 'draft'
-              | 'pending'
-              | 'private'
-              | 'submitted'
-              | 'funded'
-              | 'refunded'
-              | 'failed'
-              | 'acf-disabled';
+            status?: 'publish' | 'future' | 'draft' | 'pending' | 'private' | 'acf-disabled';
             /** @description Пароль для защиты содержания и отрывка. */
             password?: string;
             /** @description Название записи. */
@@ -4381,17 +4261,7 @@ export interface paths {
              * @description Именованный статус записи.
              * @enum {string}
              */
-            status?:
-              | 'publish'
-              | 'future'
-              | 'draft'
-              | 'pending'
-              | 'private'
-              | 'submitted'
-              | 'funded'
-              | 'refunded'
-              | 'failed'
-              | 'acf-disabled';
+            status?: 'publish' | 'future' | 'draft' | 'pending' | 'private' | 'acf-disabled';
             /** @description Пароль для защиты содержания и отрывка. */
             password?: string;
             /** @description Название записи. */
@@ -4477,17 +4347,7 @@ export interface paths {
              * @description Именованный статус записи.
              * @enum {string}
              */
-            status?:
-              | 'publish'
-              | 'future'
-              | 'draft'
-              | 'pending'
-              | 'private'
-              | 'submitted'
-              | 'funded'
-              | 'refunded'
-              | 'failed'
-              | 'acf-disabled';
+            status?: 'publish' | 'future' | 'draft' | 'pending' | 'private' | 'acf-disabled';
             /** @description Пароль для защиты содержания и отрывка. */
             password?: string;
             /** @description Название записи. */
@@ -4608,17 +4468,7 @@ export interface paths {
              * @description Именованный статус записи.
              * @enum {string}
              */
-            status?:
-              | 'publish'
-              | 'future'
-              | 'draft'
-              | 'pending'
-              | 'private'
-              | 'submitted'
-              | 'funded'
-              | 'refunded'
-              | 'failed'
-              | 'acf-disabled';
+            status?: 'publish' | 'future' | 'draft' | 'pending' | 'private' | 'acf-disabled';
             /** @description Пароль для защиты содержания и отрывка. */
             password?: string;
             /** @description Название записи. */
@@ -4876,17 +4726,7 @@ export interface paths {
              * @description Именованный статус записи.
              * @enum {string}
              */
-            status?:
-              | 'publish'
-              | 'future'
-              | 'draft'
-              | 'pending'
-              | 'private'
-              | 'submitted'
-              | 'funded'
-              | 'refunded'
-              | 'failed'
-              | 'acf-disabled';
+            status?: 'publish' | 'future' | 'draft' | 'pending' | 'private' | 'acf-disabled';
             /** @description Пароль для защиты содержания и отрывка. */
             password?: string;
             /** @description Название записи. */
@@ -5203,17 +5043,7 @@ export interface paths {
              * @description Статус шаблона.
              * @enum {string}
              */
-            status?:
-              | 'publish'
-              | 'future'
-              | 'draft'
-              | 'pending'
-              | 'private'
-              | 'submitted'
-              | 'funded'
-              | 'refunded'
-              | 'failed'
-              | 'acf-disabled';
+            status?: 'publish' | 'future' | 'draft' | 'pending' | 'private' | 'acf-disabled';
             /** @description ID автора шаблона. */
             author?: number;
           };
@@ -5367,17 +5197,7 @@ export interface paths {
              * @default publish
              * @enum {string}
              */
-            status?:
-              | 'publish'
-              | 'future'
-              | 'draft'
-              | 'pending'
-              | 'private'
-              | 'submitted'
-              | 'funded'
-              | 'refunded'
-              | 'failed'
-              | 'acf-disabled';
+            status?: 'publish' | 'future' | 'draft' | 'pending' | 'private' | 'acf-disabled';
             /** @description ID автора шаблона. */
             author?: number;
           };
@@ -5517,17 +5337,7 @@ export interface paths {
              * @description Статус шаблона.
              * @enum {string}
              */
-            status?:
-              | 'publish'
-              | 'future'
-              | 'draft'
-              | 'pending'
-              | 'private'
-              | 'submitted'
-              | 'funded'
-              | 'refunded'
-              | 'failed'
-              | 'acf-disabled';
+            status?: 'publish' | 'future' | 'draft' | 'pending' | 'private' | 'acf-disabled';
             /** @description ID автора шаблона. */
             author?: number;
           };
@@ -5588,17 +5398,7 @@ export interface paths {
              * @description Статус шаблона.
              * @enum {string}
              */
-            status?:
-              | 'publish'
-              | 'future'
-              | 'draft'
-              | 'pending'
-              | 'private'
-              | 'submitted'
-              | 'funded'
-              | 'refunded'
-              | 'failed'
-              | 'acf-disabled';
+            status?: 'publish' | 'future' | 'draft' | 'pending' | 'private' | 'acf-disabled';
             /** @description ID автора шаблона. */
             author?: number;
           };
@@ -5694,17 +5494,7 @@ export interface paths {
              * @description Статус шаблона.
              * @enum {string}
              */
-            status?:
-              | 'publish'
-              | 'future'
-              | 'draft'
-              | 'pending'
-              | 'private'
-              | 'submitted'
-              | 'funded'
-              | 'refunded'
-              | 'failed'
-              | 'acf-disabled';
+            status?: 'publish' | 'future' | 'draft' | 'pending' | 'private' | 'acf-disabled';
             /** @description ID автора шаблона. */
             author?: number;
           };
@@ -5935,17 +5725,7 @@ export interface paths {
              * @description Статус шаблона.
              * @enum {string}
              */
-            status?:
-              | 'publish'
-              | 'future'
-              | 'draft'
-              | 'pending'
-              | 'private'
-              | 'submitted'
-              | 'funded'
-              | 'refunded'
-              | 'failed'
-              | 'acf-disabled';
+            status?: 'publish' | 'future' | 'draft' | 'pending' | 'private' | 'acf-disabled';
             /** @description ID автора шаблона. */
             author?: number;
             /** @description Где предполагается использовать часть шаблона ( шапка, подвал и т.д.) */
@@ -6101,17 +5881,7 @@ export interface paths {
              * @default publish
              * @enum {string}
              */
-            status?:
-              | 'publish'
-              | 'future'
-              | 'draft'
-              | 'pending'
-              | 'private'
-              | 'submitted'
-              | 'funded'
-              | 'refunded'
-              | 'failed'
-              | 'acf-disabled';
+            status?: 'publish' | 'future' | 'draft' | 'pending' | 'private' | 'acf-disabled';
             /** @description ID автора шаблона. */
             author?: number;
             /** @description Где предполагается использовать часть шаблона ( шапка, подвал и т.д.) */
@@ -6253,17 +6023,7 @@ export interface paths {
              * @description Статус шаблона.
              * @enum {string}
              */
-            status?:
-              | 'publish'
-              | 'future'
-              | 'draft'
-              | 'pending'
-              | 'private'
-              | 'submitted'
-              | 'funded'
-              | 'refunded'
-              | 'failed'
-              | 'acf-disabled';
+            status?: 'publish' | 'future' | 'draft' | 'pending' | 'private' | 'acf-disabled';
             /** @description ID автора шаблона. */
             author?: number;
             /** @description Где предполагается использовать часть шаблона ( шапка, подвал и т.д.) */
@@ -6326,17 +6086,7 @@ export interface paths {
              * @description Статус шаблона.
              * @enum {string}
              */
-            status?:
-              | 'publish'
-              | 'future'
-              | 'draft'
-              | 'pending'
-              | 'private'
-              | 'submitted'
-              | 'funded'
-              | 'refunded'
-              | 'failed'
-              | 'acf-disabled';
+            status?: 'publish' | 'future' | 'draft' | 'pending' | 'private' | 'acf-disabled';
             /** @description ID автора шаблона. */
             author?: number;
             /** @description Где предполагается использовать часть шаблона ( шапка, подвал и т.д.) */
@@ -6434,17 +6184,7 @@ export interface paths {
              * @description Статус шаблона.
              * @enum {string}
              */
-            status?:
-              | 'publish'
-              | 'future'
-              | 'draft'
-              | 'pending'
-              | 'private'
-              | 'submitted'
-              | 'funded'
-              | 'refunded'
-              | 'failed'
-              | 'acf-disabled';
+            status?: 'publish' | 'future' | 'draft' | 'pending' | 'private' | 'acf-disabled';
             /** @description ID автора шаблона. */
             author?: number;
             /** @description Где предполагается использовать часть шаблона ( шапка, подвал и т.д.) */
@@ -6882,17 +6622,7 @@ export interface paths {
              * @description Именованный статус записи.
              * @enum {string}
              */
-            status?:
-              | 'publish'
-              | 'future'
-              | 'draft'
-              | 'pending'
-              | 'private'
-              | 'submitted'
-              | 'funded'
-              | 'refunded'
-              | 'failed'
-              | 'acf-disabled';
+            status?: 'publish' | 'future' | 'draft' | 'pending' | 'private' | 'acf-disabled';
             /** @description Пароль для защиты содержания и отрывка. */
             password?: string;
             /** @description Название записи. */
@@ -7000,17 +6730,7 @@ export interface paths {
              * @description Именованный статус записи.
              * @enum {string}
              */
-            status?:
-              | 'publish'
-              | 'future'
-              | 'draft'
-              | 'pending'
-              | 'private'
-              | 'submitted'
-              | 'funded'
-              | 'refunded'
-              | 'failed'
-              | 'acf-disabled';
+            status?: 'publish' | 'future' | 'draft' | 'pending' | 'private' | 'acf-disabled';
             /** @description Пароль для защиты содержания и отрывка. */
             password?: string;
             /** @description Название записи. */
@@ -7077,17 +6797,7 @@ export interface paths {
              * @description Именованный статус записи.
              * @enum {string}
              */
-            status?:
-              | 'publish'
-              | 'future'
-              | 'draft'
-              | 'pending'
-              | 'private'
-              | 'submitted'
-              | 'funded'
-              | 'refunded'
-              | 'failed'
-              | 'acf-disabled';
+            status?: 'publish' | 'future' | 'draft' | 'pending' | 'private' | 'acf-disabled';
             /** @description Пароль для защиты содержания и отрывка. */
             password?: string;
             /** @description Название записи. */
@@ -7189,17 +6899,7 @@ export interface paths {
              * @description Именованный статус записи.
              * @enum {string}
              */
-            status?:
-              | 'publish'
-              | 'future'
-              | 'draft'
-              | 'pending'
-              | 'private'
-              | 'submitted'
-              | 'funded'
-              | 'refunded'
-              | 'failed'
-              | 'acf-disabled';
+            status?: 'publish' | 'future' | 'draft' | 'pending' | 'private' | 'acf-disabled';
             /** @description Пароль для защиты содержания и отрывка. */
             password?: string;
             /** @description Название записи. */
@@ -7438,17 +7138,7 @@ export interface paths {
              * @description Именованный статус записи.
              * @enum {string}
              */
-            status?:
-              | 'publish'
-              | 'future'
-              | 'draft'
-              | 'pending'
-              | 'private'
-              | 'submitted'
-              | 'funded'
-              | 'refunded'
-              | 'failed'
-              | 'acf-disabled';
+            status?: 'publish' | 'future' | 'draft' | 'pending' | 'private' | 'acf-disabled';
             /** @description Пароль для защиты содержания и отрывка. */
             password?: string;
             /** @description Название записи. */
@@ -7965,768 +7655,6 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  '/wp/v2/leyka_campaign': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get: {
-      parameters: {
-        query?: {
-          /** @description Рамки в которых сделан запрос, определяют поля в ответе. */
-          context?: 'view' | 'embed' | 'edit';
-          /** @description Текущая страница коллекции. */
-          page?: unknown;
-          /** @description Максимальное число объектов возвращаемое в выборке. */
-          per_page?: unknown;
-          /** @description Ограничить результаты до совпадающих со строкой. */
-          search?: unknown;
-          /** @description Ограничить ответ записями опубликованными после заданной ISO8601 совместимой даты. */
-          after?: unknown;
-          /** @description Ограничить ответ записями изменёнными после заданной ISO8601 совместимой даты. */
-          modified_after?: unknown;
-          /** @description Ограничить ответ записями опубликованными до заданной ISO8601 совместимой даты. */
-          before?: unknown;
-          /** @description Ограничить ответ записями изменёнными до заданной ISO8601 совместимой даты. */
-          modified_before?: unknown;
-          /** @description Убедиться что выборка исключает определенные ID. */
-          exclude?: unknown;
-          /** @description Ограничить выборку до определенных ID. */
-          include?: unknown;
-          /** @description Как интерпретировать вводимые данные поиска. */
-          search_semantics?: 'exact';
-          /** @description Сдвиг выборки на определенное число объектов. */
-          offset?: unknown;
-          /** @description Упорядочить сортировку атрибута по возрастанию или убыванию. */
-          order?: 'asc' | 'desc';
-          /** @description Сортировать коллекцию по атрибуту записи. */
-          orderby?:
-            | 'author'
-            | 'date'
-            | 'id'
-            | 'include'
-            | 'modified'
-            | 'parent'
-            | 'relevance'
-            | 'slug'
-            | 'include_slugs'
-            | 'title';
-          /** @description Массив имен столбцов для поиска. */
-          search_columns?: unknown;
-          /** @description Ограничить выборку до записей с одним или несколькими установленными конкретными ярлыками. */
-          slug?: unknown;
-          /** @description Ограничить выборку до записей с одним или несколькими установленными статусами. */
-          status?: unknown;
-        };
-        header?: never;
-        path?: never;
-        cookie?: never;
-      };
-      requestBody?: never;
-      responses: {
-        /** @description OK */
-        200: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['leyka_campaign'][];
-          };
-        };
-      };
-    };
-    put?: never;
-    post: {
-      parameters: {
-        query?: never;
-        header?: never;
-        path?: never;
-        cookie?: never;
-      };
-      requestBody?: {
-        content: {
-          'application/x-www-form-urlencoded': {
-            /**
-             * Format: date-time
-             * @description Дата публикации записи (по часовому поясу сайта).
-             */
-            date?: string | null;
-            /**
-             * Format: date-time
-             * @description Дата публикации записи, по GMT.
-             */
-            date_gmt?: string | null;
-            /** @description Буквенно-цифровой идентификатор для записи, уникальный для ее типа. */
-            slug?: string;
-            /**
-             * @description Именованный статус записи.
-             * @enum {string}
-             */
-            status?:
-              | 'publish'
-              | 'future'
-              | 'draft'
-              | 'pending'
-              | 'private'
-              | 'submitted'
-              | 'funded'
-              | 'refunded'
-              | 'failed'
-              | 'acf-disabled';
-            /** @description Пароль для защиты содержания и отрывка. */
-            password?: string;
-            /** @description Название записи. */
-            title?: {
-              /** @description Название записи как оно существует в базе данных. */
-              raw?: string;
-              /** @description HTML название записи, преобразованное для показа. */
-              rendered?: string;
-            };
-            /** @description Содержимое записи. */
-            content?: {
-              /** @description Содержимое записи как оно существует в базе данных. */
-              raw?: string;
-              /** @description HTML содержимое записи преобразованное для показа. */
-              rendered?: string;
-              /** @description Версия формата блоков содержимого используемая записью. */
-              block_version?: number;
-              /** @description Защищено ли содержимое паролем. */
-              protected?: boolean;
-            };
-            /** @description ID избранного изображения записи. */
-            featured_media?: number;
-            /** @description Файл темы используемый для показа записи. */
-            template?: string;
-          };
-        };
-      };
-      responses: {
-        /** @description OK */
-        200: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['leyka_campaign'];
-          };
-        };
-      };
-    };
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/wp/v2/leyka_campaign/{id}': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get: {
-      parameters: {
-        query?: {
-          /** @description Рамки в которых сделан запрос, определяют поля в ответе. */
-          context?: 'view' | 'embed' | 'edit';
-          /** @description Пароль для записи, если она защищена паролем. */
-          password?: unknown;
-        };
-        header?: never;
-        path: {
-          /** @description Уникальный идентификатор записи. */
-          id: unknown;
-        };
-        cookie?: never;
-      };
-      requestBody?: never;
-      responses: {
-        /** @description OK */
-        200: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['leyka_campaign'];
-          };
-        };
-      };
-    };
-    put: {
-      parameters: {
-        query?: never;
-        header?: never;
-        path: {
-          /** @description Уникальный идентификатор записи. */
-          id: unknown;
-        };
-        cookie?: never;
-      };
-      requestBody?: {
-        content: {
-          'application/x-www-form-urlencoded': {
-            /**
-             * Format: date-time
-             * @description Дата публикации записи (по часовому поясу сайта).
-             */
-            date?: string | null;
-            /**
-             * Format: date-time
-             * @description Дата публикации записи, по GMT.
-             */
-            date_gmt?: string | null;
-            /** @description Буквенно-цифровой идентификатор для записи, уникальный для ее типа. */
-            slug?: string;
-            /**
-             * @description Именованный статус записи.
-             * @enum {string}
-             */
-            status?:
-              | 'publish'
-              | 'future'
-              | 'draft'
-              | 'pending'
-              | 'private'
-              | 'submitted'
-              | 'funded'
-              | 'refunded'
-              | 'failed'
-              | 'acf-disabled';
-            /** @description Пароль для защиты содержания и отрывка. */
-            password?: string;
-            /** @description Название записи. */
-            title?: {
-              /** @description Название записи как оно существует в базе данных. */
-              raw?: string;
-              /** @description HTML название записи, преобразованное для показа. */
-              rendered?: string;
-            };
-            /** @description Содержимое записи. */
-            content?: {
-              /** @description Содержимое записи как оно существует в базе данных. */
-              raw?: string;
-              /** @description HTML содержимое записи преобразованное для показа. */
-              rendered?: string;
-              /** @description Версия формата блоков содержимого используемая записью. */
-              block_version?: number;
-              /** @description Защищено ли содержимое паролем. */
-              protected?: boolean;
-            };
-            /** @description ID избранного изображения записи. */
-            featured_media?: number;
-            /** @description Файл темы используемый для показа записи. */
-            template?: string;
-          };
-        };
-      };
-      responses: {
-        /** @description OK */
-        200: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['leyka_campaign'];
-          };
-        };
-      };
-    };
-    post: {
-      parameters: {
-        query?: never;
-        header?: never;
-        path: {
-          /** @description Уникальный идентификатор записи. */
-          id: unknown;
-        };
-        cookie?: never;
-      };
-      requestBody?: {
-        content: {
-          'application/x-www-form-urlencoded': {
-            /**
-             * Format: date-time
-             * @description Дата публикации записи (по часовому поясу сайта).
-             */
-            date?: string | null;
-            /**
-             * Format: date-time
-             * @description Дата публикации записи, по GMT.
-             */
-            date_gmt?: string | null;
-            /** @description Буквенно-цифровой идентификатор для записи, уникальный для ее типа. */
-            slug?: string;
-            /**
-             * @description Именованный статус записи.
-             * @enum {string}
-             */
-            status?:
-              | 'publish'
-              | 'future'
-              | 'draft'
-              | 'pending'
-              | 'private'
-              | 'submitted'
-              | 'funded'
-              | 'refunded'
-              | 'failed'
-              | 'acf-disabled';
-            /** @description Пароль для защиты содержания и отрывка. */
-            password?: string;
-            /** @description Название записи. */
-            title?: {
-              /** @description Название записи как оно существует в базе данных. */
-              raw?: string;
-              /** @description HTML название записи, преобразованное для показа. */
-              rendered?: string;
-            };
-            /** @description Содержимое записи. */
-            content?: {
-              /** @description Содержимое записи как оно существует в базе данных. */
-              raw?: string;
-              /** @description HTML содержимое записи преобразованное для показа. */
-              rendered?: string;
-              /** @description Версия формата блоков содержимого используемая записью. */
-              block_version?: number;
-              /** @description Защищено ли содержимое паролем. */
-              protected?: boolean;
-            };
-            /** @description ID избранного изображения записи. */
-            featured_media?: number;
-            /** @description Файл темы используемый для показа записи. */
-            template?: string;
-          };
-        };
-      };
-      responses: {
-        /** @description OK */
-        200: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['leyka_campaign'];
-          };
-        };
-      };
-    };
-    delete: {
-      parameters: {
-        query?: never;
-        header?: never;
-        path: {
-          /** @description Уникальный идентификатор записи. */
-          id: unknown;
-        };
-        cookie?: never;
-      };
-      requestBody?: {
-        content: {
-          'application/x-www-form-urlencoded': {
-            /**
-             * @description Игнорировать ли перемещение в корзину и принудительно удалять.
-             * @default false
-             */
-            force?: boolean;
-          };
-        };
-      };
-      responses: {
-        /** @description OK */
-        200: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['leyka_campaign'];
-          };
-        };
-      };
-    };
-    options?: never;
-    head?: never;
-    patch: {
-      parameters: {
-        query?: never;
-        header?: never;
-        path: {
-          /** @description Уникальный идентификатор записи. */
-          id: unknown;
-        };
-        cookie?: never;
-      };
-      requestBody?: {
-        content: {
-          'application/x-www-form-urlencoded': {
-            /**
-             * Format: date-time
-             * @description Дата публикации записи (по часовому поясу сайта).
-             */
-            date?: string | null;
-            /**
-             * Format: date-time
-             * @description Дата публикации записи, по GMT.
-             */
-            date_gmt?: string | null;
-            /** @description Буквенно-цифровой идентификатор для записи, уникальный для ее типа. */
-            slug?: string;
-            /**
-             * @description Именованный статус записи.
-             * @enum {string}
-             */
-            status?:
-              | 'publish'
-              | 'future'
-              | 'draft'
-              | 'pending'
-              | 'private'
-              | 'submitted'
-              | 'funded'
-              | 'refunded'
-              | 'failed'
-              | 'acf-disabled';
-            /** @description Пароль для защиты содержания и отрывка. */
-            password?: string;
-            /** @description Название записи. */
-            title?: {
-              /** @description Название записи как оно существует в базе данных. */
-              raw?: string;
-              /** @description HTML название записи, преобразованное для показа. */
-              rendered?: string;
-            };
-            /** @description Содержимое записи. */
-            content?: {
-              /** @description Содержимое записи как оно существует в базе данных. */
-              raw?: string;
-              /** @description HTML содержимое записи преобразованное для показа. */
-              rendered?: string;
-              /** @description Версия формата блоков содержимого используемая записью. */
-              block_version?: number;
-              /** @description Защищено ли содержимое паролем. */
-              protected?: boolean;
-            };
-            /** @description ID избранного изображения записи. */
-            featured_media?: number;
-            /** @description Файл темы используемый для показа записи. */
-            template?: string;
-          };
-        };
-      };
-      responses: {
-        /** @description OK */
-        200: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['leyka_campaign'];
-          };
-        };
-      };
-    };
-    trace?: never;
-  };
-  '/wp/v2/leyka_campaign/{parent}/revisions': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get: {
-      parameters: {
-        query?: {
-          /** @description Рамки в которых сделан запрос, определяют поля в ответе. */
-          context?: 'view' | 'embed' | 'edit';
-          /** @description Текущая страница коллекции. */
-          page?: unknown;
-          /** @description Максимальное число объектов возвращаемое в выборке. */
-          per_page?: unknown;
-          /** @description Ограничить результаты до совпадающих со строкой. */
-          search?: unknown;
-          /** @description Убедиться что выборка исключает определенные ID. */
-          exclude?: unknown;
-          /** @description Ограничить выборку до определенных ID. */
-          include?: unknown;
-          /** @description Сдвиг выборки на определенное число объектов. */
-          offset?: unknown;
-          /** @description Упорядочить сортировку атрибута по возрастанию или убыванию. */
-          order?: 'asc' | 'desc';
-          /** @description Сортировать коллекцию по атрибуту объекта. */
-          orderby?: 'date' | 'id' | 'include' | 'relevance' | 'slug' | 'include_slugs' | 'title';
-        };
-        header?: never;
-        path: {
-          /** @description ID родителя редакции. */
-          parent: unknown;
-        };
-        cookie?: never;
-      };
-      requestBody?: never;
-      responses: {
-        /** @description OK */
-        200: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['leyka_campaign-revision'][];
-          };
-        };
-      };
-    };
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/wp/v2/leyka_campaign/{parent}/revisions/{id}': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get: {
-      parameters: {
-        query?: {
-          /** @description Рамки в которых сделан запрос, определяют поля в ответе. */
-          context?: 'view' | 'embed' | 'edit';
-        };
-        header?: never;
-        path: {
-          /** @description ID родителя редакции. */
-          parent: unknown;
-          /** @description Уникальный идентификатор редакции. */
-          id: unknown;
-        };
-        cookie?: never;
-      };
-      requestBody?: never;
-      responses: {
-        /** @description OK */
-        200: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['leyka_campaign-revision'];
-          };
-        };
-      };
-    };
-    put?: never;
-    post?: never;
-    delete: {
-      parameters: {
-        query?: never;
-        header?: never;
-        path: {
-          /** @description ID родителя редакции. */
-          parent: unknown;
-          /** @description Уникальный идентификатор редакции. */
-          id: unknown;
-        };
-        cookie?: never;
-      };
-      requestBody?: {
-        content: {
-          'application/x-www-form-urlencoded': {
-            /**
-             * @description Должно быть истинно, так как редакции не поддерживают перемещение в корзину.
-             * @default false
-             */
-            force?: boolean;
-          };
-        };
-      };
-      responses: {
-        /** @description OK */
-        200: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['leyka_campaign-revision'];
-          };
-        };
-      };
-    };
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/wp/v2/leyka_campaign/{id}/autosaves': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get: {
-      parameters: {
-        query?: {
-          /** @description ID родителя редакции автосохранения. */
-          parent?: unknown;
-          /** @description Рамки в которых сделан запрос, определяют поля в ответе. */
-          context?: 'view' | 'embed' | 'edit';
-        };
-        header?: never;
-        path: {
-          id: unknown;
-        };
-        cookie?: never;
-      };
-      requestBody?: never;
-      responses: {
-        /** @description OK */
-        200: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['leyka_campaign-revision'];
-          };
-        };
-      };
-    };
-    put?: never;
-    post: {
-      parameters: {
-        query?: never;
-        header?: never;
-        path: {
-          id: unknown;
-        };
-        cookie?: never;
-      };
-      requestBody?: {
-        content: {
-          'application/x-www-form-urlencoded': {
-            /** @description ID родителя редакции автосохранения. */
-            parent?: number;
-            /**
-             * Format: date-time
-             * @description Дата публикации записи (по часовому поясу сайта).
-             */
-            date?: string | null;
-            /**
-             * Format: date-time
-             * @description Дата публикации записи, по GMT.
-             */
-            date_gmt?: string | null;
-            /** @description Буквенно-цифровой идентификатор для записи, уникальный для ее типа. */
-            slug?: string;
-            /**
-             * @description Именованный статус записи.
-             * @enum {string}
-             */
-            status?:
-              | 'publish'
-              | 'future'
-              | 'draft'
-              | 'pending'
-              | 'private'
-              | 'submitted'
-              | 'funded'
-              | 'refunded'
-              | 'failed'
-              | 'acf-disabled';
-            /** @description Пароль для защиты содержания и отрывка. */
-            password?: string;
-            /** @description Название записи. */
-            title?: {
-              /** @description Название записи как оно существует в базе данных. */
-              raw?: string;
-              /** @description HTML название записи, преобразованное для показа. */
-              rendered?: string;
-            };
-            /** @description Содержимое записи. */
-            content?: {
-              /** @description Содержимое записи как оно существует в базе данных. */
-              raw?: string;
-              /** @description HTML содержимое записи преобразованное для показа. */
-              rendered?: string;
-              /** @description Версия формата блоков содержимого используемая записью. */
-              block_version?: number;
-              /** @description Защищено ли содержимое паролем. */
-              protected?: boolean;
-            };
-            /** @description ID избранного изображения записи. */
-            featured_media?: number;
-            /** @description Файл темы используемый для показа записи. */
-            template?: string;
-          };
-        };
-      };
-      responses: {
-        /** @description OK */
-        200: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['leyka_campaign-revision'];
-          };
-        };
-      };
-    };
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/wp/v2/leyka_campaign/{parent}/autosaves/{id}': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get: {
-      parameters: {
-        query?: {
-          /** @description Рамки в которых сделан запрос, определяют поля в ответе. */
-          context?: 'view' | 'embed' | 'edit';
-        };
-        header?: never;
-        path: {
-          /** @description ID родителя редакции автосохранения. */
-          parent: unknown;
-          /** @description ID редакции автосохранения. */
-          id: unknown;
-        };
-        cookie?: never;
-      };
-      requestBody?: never;
-      responses: {
-        /** @description OK */
-        200: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['leyka_campaign-revision'];
-          };
-        };
-      };
-    };
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
   '/wp/v2/profile': {
     parameters: {
       query?: never;
@@ -8893,17 +7821,7 @@ export interface paths {
              * @description Именованный статус записи.
              * @enum {string}
              */
-            status?:
-              | 'publish'
-              | 'future'
-              | 'draft'
-              | 'pending'
-              | 'private'
-              | 'submitted'
-              | 'funded'
-              | 'refunded'
-              | 'failed'
-              | 'acf-disabled';
+            status?: 'publish' | 'future' | 'draft' | 'pending' | 'private' | 'acf-disabled';
             /** @description Пароль для защиты содержания и отрывка. */
             password?: string;
             /** @description Название записи. */
@@ -9047,17 +7965,7 @@ export interface paths {
              * @description Именованный статус записи.
              * @enum {string}
              */
-            status?:
-              | 'publish'
-              | 'future'
-              | 'draft'
-              | 'pending'
-              | 'private'
-              | 'submitted'
-              | 'funded'
-              | 'refunded'
-              | 'failed'
-              | 'acf-disabled';
+            status?: 'publish' | 'future' | 'draft' | 'pending' | 'private' | 'acf-disabled';
             /** @description Пароль для защиты содержания и отрывка. */
             password?: string;
             /** @description Название записи. */
@@ -9158,17 +8066,7 @@ export interface paths {
              * @description Именованный статус записи.
              * @enum {string}
              */
-            status?:
-              | 'publish'
-              | 'future'
-              | 'draft'
-              | 'pending'
-              | 'private'
-              | 'submitted'
-              | 'funded'
-              | 'refunded'
-              | 'failed'
-              | 'acf-disabled';
+            status?: 'publish' | 'future' | 'draft' | 'pending' | 'private' | 'acf-disabled';
             /** @description Пароль для защиты содержания и отрывка. */
             password?: string;
             /** @description Название записи. */
@@ -9304,17 +8202,7 @@ export interface paths {
              * @description Именованный статус записи.
              * @enum {string}
              */
-            status?:
-              | 'publish'
-              | 'future'
-              | 'draft'
-              | 'pending'
-              | 'private'
-              | 'submitted'
-              | 'funded'
-              | 'refunded'
-              | 'failed'
-              | 'acf-disabled';
+            status?: 'publish' | 'future' | 'draft' | 'pending' | 'private' | 'acf-disabled';
             /** @description Пароль для защиты содержания и отрывка. */
             password?: string;
             /** @description Название записи. */
@@ -9587,17 +8475,7 @@ export interface paths {
              * @description Именованный статус записи.
              * @enum {string}
              */
-            status?:
-              | 'publish'
-              | 'future'
-              | 'draft'
-              | 'pending'
-              | 'private'
-              | 'submitted'
-              | 'funded'
-              | 'refunded'
-              | 'failed'
-              | 'acf-disabled';
+            status?: 'publish' | 'future' | 'draft' | 'pending' | 'private' | 'acf-disabled';
             /** @description Пароль для защиты содержания и отрывка. */
             password?: string;
             /** @description Название записи. */
@@ -11333,436 +10211,6 @@ export interface paths {
           };
           content: {
             'application/json': components['schemas']['pl-categs'];
-          };
-        };
-      };
-    };
-    trace?: never;
-  };
-  '/wp/v2/users': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get: {
-      parameters: {
-        query?: {
-          /** @description Рамки в которых сделан запрос, определяют поля в ответе. */
-          context?: 'view' | 'embed' | 'edit';
-          /** @description Текущая страница коллекции. */
-          page?: unknown;
-          /** @description Максимальное число объектов возвращаемое в выборке. */
-          per_page?: unknown;
-          /** @description Ограничить результаты до совпадающих со строкой. */
-          search?: unknown;
-          /** @description Убедиться что выборка исключает определенные ID. */
-          exclude?: unknown;
-          /** @description Ограничить выборку до определенных ID. */
-          include?: unknown;
-          /** @description Сдвиг выборки на определенное число объектов. */
-          offset?: unknown;
-          /** @description Упорядочить сортировку атрибута по возрастанию или убыванию. */
-          order?: 'asc' | 'desc';
-          /** @description Сортировать коллекцию по пользовательскому атрибуту. */
-          orderby?: 'id' | 'include' | 'name' | 'registered_date' | 'slug' | 'include_slugs' | 'email' | 'url';
-          /** @description Ограничить выборку пользователями с одним или более специальными ярлыками. */
-          slug?: unknown;
-          /** @description Ограничить выборку до пользователей удовлетворяющих как минимум одной указанной роли. Можно указать CSV список или одну роль. */
-          roles?: unknown;
-          /** @description Ограничить выборку до пользователей удовлетворяющих как минимум одной указанной роли. Можно указать CSV список или одну роль. */
-          capabilities?: unknown;
-          /** @description Ограничить выборку пользователями-авторами. */
-          who?: 'authors';
-          /** @description Ограничьте результаты пользователями, которые имеют опубликованные записи. */
-          has_published_posts?: unknown;
-          /** @description Массив имен столбцов для поиска. */
-          search_columns?: unknown;
-        };
-        header?: never;
-        path?: never;
-        cookie?: never;
-      };
-      requestBody?: never;
-      responses: {
-        /** @description OK */
-        200: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['user'][];
-          };
-        };
-      };
-    };
-    put?: never;
-    post: {
-      parameters: {
-        query?: never;
-        header?: never;
-        path?: never;
-        cookie?: never;
-      };
-      requestBody?: {
-        content: {
-          'application/x-www-form-urlencoded': {
-            /** @description Имя входа для пользователя. */
-            username: string;
-            /** @description Отображаемое имя пользователя. */
-            name?: string;
-            /** @description Имя пользователя. */
-            first_name?: string;
-            /** @description Фамилия пользователя. */
-            last_name?: string;
-            /**
-             * Format: email
-             * @description Адрес email пользователя.
-             */
-            email: string;
-            /**
-             * Format: uri
-             * @description URL пользователя.
-             */
-            url?: string;
-            /** @description Описание пользователя. */
-            description?: string;
-            /**
-             * @description Локаль для пользователя.
-             * @enum {string}
-             */
-            locale?: '' | 'en_US' | 'ru_RU';
-            /** @description Ник пользователя. */
-            nickname?: string;
-            /** @description Буквенно-цифровой идентификатор пользователя. */
-            slug?: string;
-            /** @description Роли назначенные пользователю. */
-            roles?: string[];
-            /** @description Пароль пользователя (никогда не показывается). */
-            password: string;
-            /** @description Мета поля. */
-            meta?: {
-              /** @default [] */
-              persisted_preferences?: {
-                /**
-                 * Format: date-time
-                 * @description Дата и время обновления настроек.
-                 */
-                _modified?: string;
-              } & {
-                [key: string]: unknown;
-              };
-            };
-          };
-        };
-      };
-      responses: {
-        /** @description OK */
-        200: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['user'];
-          };
-        };
-      };
-    };
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/wp/v2/users/{id}': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get: {
-      parameters: {
-        query?: {
-          /** @description Рамки в которых сделан запрос, определяют поля в ответе. */
-          context?: 'view' | 'embed' | 'edit';
-        };
-        header?: never;
-        path: {
-          /** @description Уникальный идентификатор пользователя. */
-          id: unknown;
-        };
-        cookie?: never;
-      };
-      requestBody?: never;
-      responses: {
-        /** @description OK */
-        200: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['user'];
-          };
-        };
-      };
-    };
-    put: {
-      parameters: {
-        query?: never;
-        header?: never;
-        path: {
-          /** @description Уникальный идентификатор пользователя. */
-          id: unknown;
-        };
-        cookie?: never;
-      };
-      requestBody?: {
-        content: {
-          'application/x-www-form-urlencoded': {
-            /** @description Имя входа для пользователя. */
-            username?: string;
-            /** @description Отображаемое имя пользователя. */
-            name?: string;
-            /** @description Имя пользователя. */
-            first_name?: string;
-            /** @description Фамилия пользователя. */
-            last_name?: string;
-            /**
-             * Format: email
-             * @description Адрес email пользователя.
-             */
-            email?: string;
-            /**
-             * Format: uri
-             * @description URL пользователя.
-             */
-            url?: string;
-            /** @description Описание пользователя. */
-            description?: string;
-            /**
-             * @description Локаль для пользователя.
-             * @enum {string}
-             */
-            locale?: '' | 'en_US' | 'ru_RU';
-            /** @description Ник пользователя. */
-            nickname?: string;
-            /** @description Буквенно-цифровой идентификатор пользователя. */
-            slug?: string;
-            /** @description Роли назначенные пользователю. */
-            roles?: string[];
-            /** @description Пароль пользователя (никогда не показывается). */
-            password?: string;
-            /** @description Мета поля. */
-            meta?: {
-              /** @default [] */
-              persisted_preferences?: {
-                /**
-                 * Format: date-time
-                 * @description Дата и время обновления настроек.
-                 */
-                _modified?: string;
-              } & {
-                [key: string]: unknown;
-              };
-            };
-          };
-        };
-      };
-      responses: {
-        /** @description OK */
-        200: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['user'];
-          };
-        };
-      };
-    };
-    post: {
-      parameters: {
-        query?: never;
-        header?: never;
-        path: {
-          /** @description Уникальный идентификатор пользователя. */
-          id: unknown;
-        };
-        cookie?: never;
-      };
-      requestBody?: {
-        content: {
-          'application/x-www-form-urlencoded': {
-            /** @description Имя входа для пользователя. */
-            username?: string;
-            /** @description Отображаемое имя пользователя. */
-            name?: string;
-            /** @description Имя пользователя. */
-            first_name?: string;
-            /** @description Фамилия пользователя. */
-            last_name?: string;
-            /**
-             * Format: email
-             * @description Адрес email пользователя.
-             */
-            email?: string;
-            /**
-             * Format: uri
-             * @description URL пользователя.
-             */
-            url?: string;
-            /** @description Описание пользователя. */
-            description?: string;
-            /**
-             * @description Локаль для пользователя.
-             * @enum {string}
-             */
-            locale?: '' | 'en_US' | 'ru_RU';
-            /** @description Ник пользователя. */
-            nickname?: string;
-            /** @description Буквенно-цифровой идентификатор пользователя. */
-            slug?: string;
-            /** @description Роли назначенные пользователю. */
-            roles?: string[];
-            /** @description Пароль пользователя (никогда не показывается). */
-            password?: string;
-            /** @description Мета поля. */
-            meta?: {
-              /** @default [] */
-              persisted_preferences?: {
-                /**
-                 * Format: date-time
-                 * @description Дата и время обновления настроек.
-                 */
-                _modified?: string;
-              } & {
-                [key: string]: unknown;
-              };
-            };
-          };
-        };
-      };
-      responses: {
-        /** @description OK */
-        200: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['user'];
-          };
-        };
-      };
-    };
-    delete: {
-      parameters: {
-        query?: never;
-        header?: never;
-        path: {
-          /** @description Уникальный идентификатор пользователя. */
-          id: unknown;
-        };
-        cookie?: never;
-      };
-      requestBody?: {
-        content: {
-          'application/x-www-form-urlencoded': {
-            /**
-             * @description Должно быть истинным, так как пользователей нельзя переместить в корзину.
-             * @default false
-             */
-            force?: boolean;
-            /** @description Переназначить удаленные записи пользователя и ссылки на этот ID пользователя. */
-            reassign: number;
-          };
-        };
-      };
-      responses: {
-        /** @description OK */
-        200: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['user'];
-          };
-        };
-      };
-    };
-    options?: never;
-    head?: never;
-    patch: {
-      parameters: {
-        query?: never;
-        header?: never;
-        path: {
-          /** @description Уникальный идентификатор пользователя. */
-          id: unknown;
-        };
-        cookie?: never;
-      };
-      requestBody?: {
-        content: {
-          'application/x-www-form-urlencoded': {
-            /** @description Имя входа для пользователя. */
-            username?: string;
-            /** @description Отображаемое имя пользователя. */
-            name?: string;
-            /** @description Имя пользователя. */
-            first_name?: string;
-            /** @description Фамилия пользователя. */
-            last_name?: string;
-            /**
-             * Format: email
-             * @description Адрес email пользователя.
-             */
-            email?: string;
-            /**
-             * Format: uri
-             * @description URL пользователя.
-             */
-            url?: string;
-            /** @description Описание пользователя. */
-            description?: string;
-            /**
-             * @description Локаль для пользователя.
-             * @enum {string}
-             */
-            locale?: '' | 'en_US' | 'ru_RU';
-            /** @description Ник пользователя. */
-            nickname?: string;
-            /** @description Буквенно-цифровой идентификатор пользователя. */
-            slug?: string;
-            /** @description Роли назначенные пользователю. */
-            roles?: string[];
-            /** @description Пароль пользователя (никогда не показывается). */
-            password?: string;
-            /** @description Мета поля. */
-            meta?: {
-              /** @default [] */
-              persisted_preferences?: {
-                /**
-                 * Format: date-time
-                 * @description Дата и время обновления настроек.
-                 */
-                _modified?: string;
-              } & {
-                [key: string]: unknown;
-              };
-            };
-          };
-        };
-      };
-      responses: {
-        /** @description OK */
-        200: {
-          headers: {
-            [name: string]: unknown;
-          };
-          content: {
-            'application/json': components['schemas']['user'];
           };
         };
       };
@@ -15748,17 +14196,7 @@ export interface components {
        * @description Именованный статус записи.
        * @enum {string}
        */
-      status?:
-        | 'publish'
-        | 'future'
-        | 'draft'
-        | 'pending'
-        | 'private'
-        | 'submitted'
-        | 'funded'
-        | 'refunded'
-        | 'failed'
-        | 'acf-disabled';
+      status?: 'publish' | 'future' | 'draft' | 'pending' | 'private' | 'acf-disabled';
       /** @description Тип записи. */
       type?: string;
       /** @description Пароль для защиты содержания и отрывка. */
@@ -15960,17 +14398,7 @@ export interface components {
        * @description Именованный статус записи.
        * @enum {string}
        */
-      status?:
-        | 'publish'
-        | 'future'
-        | 'draft'
-        | 'pending'
-        | 'private'
-        | 'submitted'
-        | 'funded'
-        | 'refunded'
-        | 'failed'
-        | 'acf-disabled';
+      status?: 'publish' | 'future' | 'draft' | 'pending' | 'private' | 'acf-disabled';
       /** @description Тип записи. */
       type?: string;
       /** @description Пароль для защиты содержания и отрывка. */
@@ -16155,17 +14583,7 @@ export interface components {
        * @description Именованный статус записи.
        * @enum {string}
        */
-      status?:
-        | 'publish'
-        | 'future'
-        | 'draft'
-        | 'pending'
-        | 'private'
-        | 'submitted'
-        | 'funded'
-        | 'refunded'
-        | 'failed'
-        | 'acf-disabled';
+      status?: 'publish' | 'future' | 'draft' | 'pending' | 'private' | 'acf-disabled';
       /** @description Тип записи. */
       type?: string;
       /** @description Шаблон постоянных ссылок для записи. */
@@ -16289,17 +14707,7 @@ export interface components {
        * @default publish
        * @enum {string}
        */
-      status:
-        | 'publish'
-        | 'future'
-        | 'draft'
-        | 'pending'
-        | 'private'
-        | 'submitted'
-        | 'funded'
-        | 'refunded'
-        | 'failed'
-        | 'acf-disabled';
+      status: 'publish' | 'future' | 'draft' | 'pending' | 'private' | 'acf-disabled';
       /**
        * @description ID родителя объекта.
        * @default 0
@@ -16439,17 +14847,7 @@ export interface components {
        * @description Именованный статус записи.
        * @enum {string}
        */
-      status?:
-        | 'publish'
-        | 'future'
-        | 'draft'
-        | 'pending'
-        | 'private'
-        | 'submitted'
-        | 'funded'
-        | 'refunded'
-        | 'failed'
-        | 'acf-disabled';
+      status?: 'publish' | 'future' | 'draft' | 'pending' | 'private' | 'acf-disabled';
       /** @description Тип записи. */
       type?: string;
       /** @description Пароль для защиты содержания и отрывка. */
@@ -16620,17 +15018,7 @@ export interface components {
        * @default publish
        * @enum {string}
        */
-      status:
-        | 'publish'
-        | 'future'
-        | 'draft'
-        | 'pending'
-        | 'private'
-        | 'submitted'
-        | 'funded'
-        | 'refunded'
-        | 'failed'
-        | 'acf-disabled';
+      status: 'publish' | 'future' | 'draft' | 'pending' | 'private' | 'acf-disabled';
       /** @description ID записи. */
       wp_id?: number;
       /** @description Файл темы существует */
@@ -16707,17 +15095,7 @@ export interface components {
        * @default publish
        * @enum {string}
        */
-      status:
-        | 'publish'
-        | 'future'
-        | 'draft'
-        | 'pending'
-        | 'private'
-        | 'submitted'
-        | 'funded'
-        | 'refunded'
-        | 'failed'
-        | 'acf-disabled';
+      status: 'publish' | 'future' | 'draft' | 'pending' | 'private' | 'acf-disabled';
       /** @description ID записи. */
       wp_id?: number;
       /** @description Файл темы существует */
@@ -16840,17 +15218,7 @@ export interface components {
        * @description Именованный статус записи.
        * @enum {string}
        */
-      status?:
-        | 'publish'
-        | 'future'
-        | 'draft'
-        | 'pending'
-        | 'private'
-        | 'submitted'
-        | 'funded'
-        | 'refunded'
-        | 'failed'
-        | 'acf-disabled';
+      status?: 'publish' | 'future' | 'draft' | 'pending' | 'private' | 'acf-disabled';
       /** @description Тип записи. */
       type?: string;
       /** @description Пароль для защиты содержания и отрывка. */
@@ -17034,158 +15402,6 @@ export interface components {
         preview: string;
       };
     };
-    /** leyka_campaign */
-    leyka_campaign: {
-      /**
-       * Format: date-time
-       * @description Дата публикации записи (по часовому поясу сайта).
-       */
-      date?: string | null;
-      /**
-       * Format: date-time
-       * @description Дата публикации записи, по GMT.
-       */
-      date_gmt?: string | null;
-      /** @description Глобальный уникальный идентификатор записи. */
-      guid?: {
-        /** @description GUID для записи в том виде, в котором он существует в базе данных. */
-        raw?: string;
-        /** @description GUID для записи, преобразованный для показа. */
-        rendered?: string;
-      };
-      /** @description Уникальный идентификатор записи. */
-      id?: number;
-      /**
-       * Format: uri
-       * @description URL записи.
-       */
-      link?: string;
-      /**
-       * Format: date-time
-       * @description Дата последнего изменения записи (по часовому поясу сайта).
-       */
-      modified?: string;
-      /**
-       * Format: date-time
-       * @description Дата последнего изменения записи (в формате GMT).
-       */
-      modified_gmt?: string;
-      /** @description Буквенно-цифровой идентификатор для записи, уникальный для ее типа. */
-      slug?: string;
-      /**
-       * @description Именованный статус записи.
-       * @enum {string}
-       */
-      status?:
-        | 'publish'
-        | 'future'
-        | 'draft'
-        | 'pending'
-        | 'private'
-        | 'submitted'
-        | 'funded'
-        | 'refunded'
-        | 'failed'
-        | 'acf-disabled';
-      /** @description Тип записи. */
-      type?: string;
-      /** @description Пароль для защиты содержания и отрывка. */
-      password?: string;
-      /** @description Шаблон постоянных ссылок для записи. */
-      permalink_template?: string;
-      /** @description Ярлык автоматически создан из заголовка записи. */
-      generated_slug?: string;
-      /** @description Массив имён классов для элемента контейнера записи. */
-      class_list?: string[];
-      /** @description Название записи. */
-      title?: {
-        /** @description Название записи как оно существует в базе данных. */
-        raw?: string;
-        /** @description HTML название записи, преобразованное для показа. */
-        rendered?: string;
-      };
-      /** @description Содержимое записи. */
-      content?: {
-        /** @description Содержимое записи как оно существует в базе данных. */
-        raw?: string;
-        /** @description HTML содержимое записи преобразованное для показа. */
-        rendered?: string;
-        /** @description Версия формата блоков содержимого используемая записью. */
-        block_version?: number;
-        /** @description Защищено ли содержимое паролем. */
-        protected?: boolean;
-      };
-      /** @description ID избранного изображения записи. */
-      featured_media?: number;
-      /** @description Файл темы используемый для показа записи. */
-      template?: string;
-    };
-    /** leyka_campaign-revision */
-    'leyka_campaign-revision': {
-      /** @description ID автора редакции. */
-      author?: number;
-      /**
-       * Format: date-time
-       * @description Дата публикации записи, по времени часового пояса сайта.
-       */
-      date?: string;
-      /**
-       * Format: date-time
-       * @description Время публикации редакции, по GMT.
-       */
-      date_gmt?: string;
-      /** @description Глобальный уникальный идентификатор записи. */
-      guid?: {
-        /** @description GUID для записи в том виде, в котором он существует в базе данных. */
-        raw?: string;
-        /** @description GUID для записи, преобразованный для показа. */
-        rendered?: string;
-      };
-      /** @description Уникальный идентификатор редакции. */
-      id?: number;
-      /**
-       * Format: date-time
-       * @description Дата последнего изменения редакции, по времени часового пояса сайта.
-       */
-      modified?: string;
-      /**
-       * Format: date-time
-       * @description Дата последнего изменения редакции, по GMT.
-       */
-      modified_gmt?: string;
-      /** @description ID родителя редакции. */
-      parent?: number;
-      /** @description Буквенно-цифровой идентификатор редакции, уникальный для её типа. */
-      slug?: string;
-      /** @description Название записи. */
-      title?: {
-        /** @description Название записи как оно существует в базе данных. */
-        raw?: string;
-        /** @description HTML название записи, преобразованное для показа. */
-        rendered?: string;
-      };
-      /** @description Содержимое записи. */
-      content?: {
-        /** @description Содержимое записи как оно существует в базе данных. */
-        raw?: string;
-        /** @description HTML содержимое записи преобразованное для показа. */
-        rendered?: string;
-        /** @description Версия формата блоков содержимого используемая записью. */
-        block_version?: number;
-        /** @description Защищено ли содержимое паролем. */
-        protected?: boolean;
-      };
-      /** @description Мета поля. */
-      meta?: {
-        /** @default false */
-        _acf_changed: boolean;
-      };
-      /**
-       * Format: uri
-       * @description Ссылка для предварительного просмотра записи.
-       */
-      preview_link?: string;
-    };
     /** profile */
     profile: {
       /**
@@ -17228,17 +15444,7 @@ export interface components {
        * @description Именованный статус записи.
        * @enum {string}
        */
-      status?:
-        | 'publish'
-        | 'future'
-        | 'draft'
-        | 'pending'
-        | 'private'
-        | 'submitted'
-        | 'funded'
-        | 'refunded'
-        | 'failed'
-        | 'acf-disabled';
+      status?: 'publish' | 'future' | 'draft' | 'pending' | 'private' | 'acf-disabled';
       /** @description Тип записи. */
       type?: string;
       /** @description Пароль для защиты содержания и отрывка. */
@@ -17790,7 +15996,7 @@ export interface components {
        * @description Подтип объекта.
        * @enum {string}
        */
-      subtype?: 'post' | 'page' | 'leyka_campaign' | 'profile' | 'category' | 'post_tag' | 'pl-categs';
+      subtype?: 'post' | 'page' | 'profile' | 'category' | 'post_tag' | 'pl-categs';
     };
     /** rendered-block */
     'rendered-block': {
