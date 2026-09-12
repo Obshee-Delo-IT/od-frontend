@@ -92,10 +92,16 @@ bodies and empty excerpts on both installs, so there is nothing to read them off
 слёт: «Об организации» is what `/about/` is, not a subject anyone browses the
 catalogue for, so there is no such shelf (dropped 2026-09-12).
 
-**Not applied.** The tags would be invisible until the chips or the rails exist,
+**Applied to od-stage 2026-09-12** — 99 tag applications across 79 films. The
+term ids the frontend needs are per-install; on od-stage they are «Алкоголь» 213,
+«Табак» 216, «Наркотики» 672, «Манипуляция и реклама» 673, «Семья и отношения»
+674, «Смысл жизни» 675, «Здоровье» 676, «Вера и традиция» 677, «История и
+патриотизм» 678, «Гаджеты и игры» 679. Re-run the task on any other tier and read
+its own ids off the output, the way `create-short-category` is used.
+
+**Nothing renders them yet.** The tags would be invisible until the chips or the rails exist,
 and the ten names are a judgement call that belongs to whoever runs the
-catalogue. `wp eval-file od-wp.php tag-film-topics apply` is the whole of it
-once that is settled.
+catalogue.
 
 ## 2. The illustrations look unserious for the organisation
 
