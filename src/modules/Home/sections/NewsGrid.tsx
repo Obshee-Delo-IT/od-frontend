@@ -12,6 +12,7 @@ interface NewsItem {
   href: string;
   imageSrc?: string | null;
   imageAlt?: string;
+  imageRatio?: number | null;
   excerpt?: string;
 }
 
@@ -63,6 +64,7 @@ export const NewsGrid: React.FC<NewsGridProps> = ({ items }) => {
               date={item.date}
               imageSrc={item.imageSrc}
               imageAlt={item.imageAlt}
+              imageRatio={item.imageRatio}
             />
           ))}
         </div>

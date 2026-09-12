@@ -77,6 +77,7 @@ const HomePage = async () => {
           href: `/${post.id}`,
           date: formatDate(post.date) || undefined,
           imageSrc: post.thumbnailUrl,
+          imageRatio: post.thumbnailRatio,
           imageAlt: post.title,
           excerpt: post.excerpt ?? undefined,
         }))}
