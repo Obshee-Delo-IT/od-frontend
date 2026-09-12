@@ -1397,15 +1397,58 @@ it needs whoever owns that install. Панфёрова's «нет пути на�
 same site and is in
 [`demo-feedback-suggestions.md`](./demo-feedback-suggestions.md).
 
-## `/materials/metodichka/` and `/materials/metodichki/` — the third duplicate pair
+## ~~`/materials/metodichka/` and `/materials/metodichki/` — the third duplicate pair~~ — decided 2026-09-12
 
 `merge-duplicate-branches` retired the two duplicate **region** pages; this pair
-is the third collision [`test-scenarios.md`](./test-scenarios.md) names (SEO-09)
-and it is deliberately untouched: neither page holds contacts to move, the two
-bodies genuinely differ, and `/materials/metodichki/` is the one the nav and the
-redesign point at. Which of the two is canonical is an editorial call about the
-pages. The mechanism to retire one exists now — add the pair to
-`od_wp_duplicate_branches()` — so this is a decision, not work.
+is the third collision [`test-scenarios.md`](./test-scenarios.md) names (SEO-09).
+**Decided: keep both, as production has them** — and read against production the
+two are not a duplicate pair at all:
+
+- `/materials/metodichki/` is the **index**: three covers, three «Подробнее»
+  buttons pointing at `metodic.obshee-delo.ru`, `/materials/pppuiv-ted-6/` and
+  `/materials/ppiz-zdorov-molodez/`, then the order-a-copy card. It is what the
+  nav, the redesign and this site all point at.
+- `/materials/metodichka/` is an **orphan detail page** for «Здоровая Россия»,
+  superseded by the external `metodic.obshee-delo.ru` the first card now links
+  to. Nothing on production links to it either — its own index does not.
+
+So there is no canonical to pick and nothing to retire; the pair is two different
+pages that happen to be a letter apart. Diffed prod against the clone on
+2026-09-12, and the two real differences were:
+
+1. `/materials/metodichka/` published `[wysija_form id="2"]` as a line of copy.
+   That is the next entry, and it is fixed.
+2. `/materials/metodichki/`'s three covers carry no visible caption here, where
+   production prints «Здоровая Россия — ОБЩЕЕ ДЕЛО» above each. **Deliberate**:
+   the `handbooks` mock draws the covers with no captions because each poster
+   prints its own title, and `od_headings_into_image_alt()` moves the words into
+   the image's `alt` and the button's `aria-label` rather than deleting them.
+   Say so if the captions should come back — it is one transform out of
+   `od_pages_metodichki()`.
+
+Still open on that page and unrelated to either: who takes methodical-material
+orders now that Рязанов does not (below).
+
+## ~~Fourteen pages published a shortcode as their own text~~ — done 2026-09-12
+
+Found while diffing the two `metodich*` pages against production. **An
+unregistered shortcode is printed, not dropped** — the rule that made `/sitemap/`
+publish `[pagelist …]` at visitors, one of the demo's own findings. Four plugins
+that production still runs are not part of the headless install, and their tags
+were literal text on every un-redesigned page that carried one:
+`[wysija_form id="2"]` (MailPoet, on 25 pages — `/materials/metodichka/`,
+`/get-involved/dozor/` and `/get-involved/baner/` among the live ones),
+`[sbs_users]`, `[authoravatars …]`, `[all_in_one_bannerWithPlaylist …]` and the
+`[insert_php] … [/insert_php]` block, whose body is PHP.
+
+Each redesigned page already dropped the MailPoet form in its own transform —
+eight of them do it by hand — which is why nobody saw it: the pages that show it
+are the ones no transform touches. Fixed once, in the sweep that already exists
+for the migrator's leftovers: `od_pages_dead_shortcodes()` now also runs
+`od_drop_orphan_shortcodes()`, and the emptied row goes with the tag, so the
+«Хотите быть в курсе новых видеоматериалов?» heading does not survive its form.
+`[contact-form-7]`, `[leyka_campaign_form]`, `[od_sitemap]` and `[od_regions]`
+are live here and are left alone. Applied to od-stage — 26 page records.
 
 ## Content the reviewers asked for, re-checked against production 2026-09-10
 
