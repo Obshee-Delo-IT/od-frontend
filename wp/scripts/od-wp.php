@@ -24,14 +24,15 @@
  * **Adding a task.** One function, called from the runner at the bottom, taking
  * `$apply` and doing nothing but logging when it is false. Whatever it needs to
  * know goes in a registry function above it, so the data can be read and tested
- * without WordPress. There are eleven today — {@see od_wp_tag_programme_films()},
+ * without WordPress. There are thirteen today — {@see od_wp_tag_programme_films()},
  * {@see od_wp_rename_pages()}, {@see od_wp_order_pages()},
  * {@see od_wp_draft_empty_branches()}, {@see od_wp_edit_menu()},
  * {@see od_wp_create_profiles()}, {@see od_wp_untag_video_events()},
- * {@see od_wp_rehost_posters()}, {@see od_wp_merge_duplicate_branches()} and
- * {@see od_wp_strip_footer_links()} and {@see od_wp_create_short_category()} —
- * and still no framework between them, because eleven calls in a row is not a
- * thing that needs one.
+ * {@see od_wp_rehost_posters()}, {@see od_wp_merge_duplicate_branches()},
+ * {@see od_wp_strip_footer_links()}, {@see od_wp_create_short_category()},
+ * {@see od_wp_tag_film_topics()} and {@see od_wp_author_footer()} — and still no
+ * framework between them, because thirteen calls in a row is not a thing that
+ * needs one.
  *
  * House rules, same as `od-pages.php`: dry run by default, writing takes the
  * positional argument `apply`, everything is idempotent, and **posts are
@@ -1615,6 +1616,296 @@ function od_wp_tag_film_topics(bool $apply): void
 }
 
 
+/**
+ * The six `sidebar_bottom` widgets, in slot order, as block HTML.
+ *
+ * The footer is laid out by `Footer.module.css` with `.footer aside:nth-child(N)`,
+ * so the order here *is* the design: logo + socials, КОНТАКТЫ РЕДАКЦИИ, ОТЗЫВЫ,
+ * ССЫЛКИ, a separator, and the legal row. Six is not decoration — five widgets
+ * shift every column one slot left.
+ *
+ * **Why this is in a script at all.** Production's own footer is four legacy
+ * `widget_text` instances, and `welfare` registered the area they live in; the
+ * area comes back with {@see od-sidebars.php}, but its content has to be
+ * authored. It was authored once by hand on the prod clone — the design's
+ * structure with production's own words, which is the rule od-dev content never
+ * satisfies — and that authoring existed nowhere but that install's database
+ * until this task. A second clone would have come up with an empty footer at
+ * status 200.
+ *
+ * `%HOME%` is the only per-environment value: the logo is a file under
+ * `wp-content/uploads/`, not an attachment, so nothing here carries an id.
+ * Production's four `widget_text` instances stay in `wp_inactive_widgets` as the
+ * record of what the live site said.
+ *
+ * @return array<int, string>
+ */
+function od_wp_footer_widgets(): array
+{
+    return [
+        // логотип, название организации и три соцсети
+        <<<'HTML'
+<!-- wp:columns -->
+<div class="wp-block-columns"><!-- wp:column {"width":"100%"} -->
+<div class="wp-block-column" style="flex-basis:100%"><!-- wp:group {"layout":{"type":"constrained"}} -->
+<div class="wp-block-group"><!-- wp:columns {"verticalAlignment":"center","isStackedOnMobile":false} -->
+<div class="wp-block-columns are-vertically-aligned-center is-not-stacked-on-mobile"><!-- wp:column {"verticalAlignment":"center","width":"30%","layout":{"type":"default"}} -->
+<div class="wp-block-column is-vertically-aligned-center" style="flex-basis:30%"><!-- wp:image {"width":"60px","height":"auto","sizeSlug":"full","linkDestination":"none","align":"center"} -->
+<figure class="wp-block-image aligncenter size-full is-resized"><img src="%HOME%/wp-content/uploads/2026/08/logo-white.png" alt="" style="width:60px;height:auto"/></figure>
+<!-- /wp:image --></div>
+<!-- /wp:column -->
+
+<!-- wp:column {"verticalAlignment":"center","width":"85%","layout":{"type":"default"}} -->
+<div class="wp-block-column is-vertically-aligned-center" style="flex-basis:85%"><!-- wp:paragraph {"fontSize":"small"} -->
+<p class="has-small-font-size">ОБЩЕРОССИЙСКАЯ<br>ОБЩЕСТВЕННАЯ<br>ОРГАНИЗАЦИЯ</p>
+<!-- /wp:paragraph --></div>
+<!-- /wp:column --></div>
+<!-- /wp:columns --></div>
+<!-- /wp:group -->
+
+<!-- wp:heading -->
+<h2 class="wp-block-heading"><a class="cmsms-icon-vkontakte" title="VK" href="http://vk.com/obsheedelorf" target="_blank"> </a><a class="cmsms-icon-odnoklassniki" title="Одноклассники" href="http://ok.ru/obsheedelo" target="_blank"> </a><a class="cmsms-icon-youtube-2" title="YouTube" href="https://www.youtube.com/user/proektobsheedelo?sub_confirmation=1" target="_blank"> </a></h2>
+<!-- /wp:heading --></div>
+<!-- /wp:column --></div>
+<!-- /wp:columns -->
+HTML,
+
+        // КОНТАКТЫ РЕДАКЦИИ
+        <<<'HTML'
+<!-- wp:group {"layout":{"type":"flex","orientation":"vertical"}} -->
+<div class="wp-block-group"><!-- wp:heading -->
+<h2 class="wp-block-heading">КОНТАКТЫ РЕДАКЦИИ</h2>
+<!-- /wp:heading -->
+
+<!-- wp:paragraph -->
+<p><b>Главный редактор:</b><br>Дегтярев А.А.</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:paragraph -->
+<p><b>Электронная почта:</b><br>web@obshee-delo.ru</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:paragraph -->
+<p><b>Телефон:</b><br>+7 (962) 950-75-61</p>
+<!-- /wp:paragraph --></div>
+<!-- /wp:group -->
+HTML,
+
+        // ОТЗЫВЫ
+        <<<'HTML'
+<!-- wp:group {"layout":{"type":"constrained"}} -->
+<div class="wp-block-group"><!-- wp:heading -->
+<h2 class="wp-block-heading">ОТЗЫВЫ</h2>
+<!-- /wp:heading -->
+
+<!-- wp:list -->
+<ul class="wp-block-list"><!-- wp:list-item -->
+<li><a href="/about/reviews/">Письма и отзывы</a></li>
+<!-- /wp:list-item -->
+
+<!-- wp:list-item -->
+<li><a href="/about/smi/">СМИ о нас</a></li>
+<!-- /wp:list-item -->
+
+<!-- wp:list-item -->
+<li><a href="/about/experts-review/">Экспертные заключения</a></li>
+<!-- /wp:list-item -->
+
+<!-- wp:list-item -->
+<li><a href="/about/nashi_partnery/">Наши партнеры</a></li>
+<!-- /wp:list-item -->
+
+</ul>
+<!-- /wp:list --></div>
+<!-- /wp:group -->
+HTML,
+
+        // ССЫЛКИ
+        <<<'HTML'
+<!-- wp:group {"layout":{"type":"flex","orientation":"vertical"}} -->
+<div class="wp-block-group"><!-- wp:heading -->
+<h2 class="wp-block-heading">ССЫЛКИ</h2>
+<!-- /wp:heading -->
+
+<!-- wp:list -->
+<ul class="wp-block-list"><!-- wp:list-item -->
+<li><a href="/about/">О нас</a></li>
+<!-- /wp:list-item -->
+
+<!-- wp:list-item -->
+<li><a href="/news/">Наши дела</a></li>
+<!-- /wp:list-item -->
+
+<!-- wp:list-item -->
+<li><a href="/video/">Наши фильмы</a></li>
+<!-- /wp:list-item -->
+
+<!-- wp:list-item -->
+<li><a href="/get-involved/">Прими участие</a></li>
+<!-- /wp:list-item -->
+
+<!-- wp:list-item -->
+<li><a href="/materials/">Наши материалы</a></li>
+<!-- /wp:list-item -->
+
+<!-- wp:list-item -->
+<li><a href="/sitemap/">Карта сайта</a></li>
+<!-- /wp:list-item -->
+
+<!-- wp:list-item -->
+<li><a href="/faq/">Частые вопросы</a></li>
+<!-- /wp:list-item --></ul>
+<!-- /wp:list --></div>
+<!-- /wp:group -->
+HTML,
+
+        // разделитель
+        <<<'HTML'
+<!-- wp:separator {"className":"is-style-wide"} -->
+<hr class="wp-block-separator has-alpha-channel-opacity is-style-wide"/>
+<!-- /wp:separator -->
+HTML,
+
+        // юридическая строка: СМИ, учредитель, 12+, политика конфиденциальности
+        <<<'HTML'
+<!-- wp:group {"layout":{"type":"flex","flexWrap":"nowrap","justifyContent":"space-between"}} -->
+<div class="wp-block-group"><!-- wp:paragraph -->
+<p><b>Средство массовой информации:</b><br>Сетевое издание "ОБЩЕЕ ДЕЛО"<br><a href="/wp-content/uploads/2019/04/2018-02-16-Выписка-из-реестра-СМИ-сайт-ОД.pdf" target="_blank">Зарегистрировано Роскомнадзором, свидетельство Эл № ФC77-72346 от 14 февраля 2018</a></p>
+<!-- /wp:paragraph -->
+
+<!-- wp:paragraph -->
+<p><b>Учредитель:</b><br>Общероссийская общественная организация "Общее дело" ОГРН: 1127799010624<br>Учётный номер в реестре НКО №0012011716</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:group {"layout":{"type":"flex","orientation":"vertical"}} -->
+<div class="wp-block-group"><!-- wp:paragraph -->
+<p>При перепечатывании материалов ссылка на издание обязательна. 12+</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:paragraph -->
+<p><a href="/conf_politics/">Политика конфиденциальности</a></p>
+<!-- /wp:paragraph --></div>
+<!-- /wp:group --></div>
+<!-- /wp:group -->
+HTML,
+    ];
+}
+
+/** The widget area `fetchFooter` reads — {@see od-sidebars.php} re-registers it. */
+const OD_WP_FOOTER_SIDEBAR = 'sidebar_bottom';
+
+/**
+ * Which `widget_block` id each slot lands on, and which slots differ from what
+ * is stored.
+ *
+ * Pure, so the allocation is testable without WordPress. A slot that already has
+ * a widget keeps its id, so a re-run rewrites in place instead of growing the
+ * option by six every time; a slot with none takes the next free integer key.
+ *
+ * @param array<int|string, mixed> $blocks  The `widget_block` option.
+ * @param array<int, string>       $sidebar The ids currently in the area, in order.
+ * @param array<int, string>       $wanted  Slot bodies, in order.
+ * @return array{ids: array<int, int>, changed: array<int, int>}
+ */
+function od_wp_footer_plan(array $blocks, array $sidebar, array $wanted): array
+{
+    $next = 2;
+    foreach (array_keys($blocks) as $key) {
+        if (is_numeric($key)) {
+            $next = max($next, (int) $key + 1);
+        }
+    }
+
+    $ids = [];
+    $changed = [];
+    foreach ($wanted as $slot => $html) {
+        $existing = isset($sidebar[$slot]) && preg_match('/^block-(\d+)$/', (string) $sidebar[$slot], $m)
+            ? (int) $m[1]
+            : null;
+        $id = $existing ?? $next++;
+        $ids[$slot] = $id;
+
+        $stored = $blocks[$id]['content'] ?? null;
+        if (!is_string($stored) || $stored !== $html) {
+            $changed[] = $slot;
+        }
+    }
+
+    return ['ids' => $ids, 'changed' => $changed];
+}
+
+/**
+ * Writes {@see od_wp_footer_widgets()} into the footer area.
+ *
+ * Both halves are one `update_option()` each, because that is what a widget is —
+ * `widget_block` holds the bodies, `sidebars_widgets` holds the assignment. Do
+ * **not** reach for `wp widget move`: WP-CLI does not understand block widgets,
+ * `wp widget list` shows an area holding them as empty, and moving one silently
+ * drops it into `wp_inactive_widgets` (runbook §0.6 item 6).
+ */
+function od_wp_author_footer(bool $apply): void
+{
+    $home = untrailingslashit(home_url());
+    $wanted = array_map(
+        static fn (string $html): string => str_replace('%HOME%', $home, $html),
+        od_wp_footer_widgets()
+    );
+
+    $blocks = get_option('widget_block');
+    $blocks = is_array($blocks) ? $blocks : [];
+    $areas = get_option('sidebars_widgets');
+    $areas = is_array($areas) ? $areas : [];
+    $sidebar = isset($areas[OD_WP_FOOTER_SIDEBAR]) && is_array($areas[OD_WP_FOOTER_SIDEBAR])
+        ? array_values($areas[OD_WP_FOOTER_SIDEBAR])
+        : [];
+
+    $plan = od_wp_footer_plan($blocks, $sidebar, $wanted);
+    $target = array_map(static fn (int $id): string => 'block-' . $id, $plan['ids']);
+
+    if ($plan['changed'] === [] && $sidebar === $target) {
+        WP_CLI::log(sprintf('%s: six widgets already in shape, skipped', OD_WP_FOOTER_SIDEBAR));
+
+        return;
+    }
+
+    foreach ($plan['changed'] as $slot) {
+        WP_CLI::log(sprintf(
+            'block-%d (slot %d): %s',
+            $plan['ids'][$slot],
+            $slot + 1,
+            isset($blocks[$plan['ids'][$slot]]) ? 'to be rewritten' : 'to be created'
+        ));
+    }
+    if ($sidebar !== $target) {
+        WP_CLI::log(sprintf('%s: [%s] → [%s]', OD_WP_FOOTER_SIDEBAR, implode(', ', $sidebar), implode(', ', $target)));
+    }
+
+    if (!$apply) {
+        return;
+    }
+
+    foreach ($plan['ids'] as $slot => $id) {
+        $blocks[$id] = ['content' => $wanted[$slot]];
+    }
+    $blocks['_multiwidget'] = 1;
+    update_option('widget_block', $blocks);
+
+    // A widget id in two areas renders twice. Ours belong to the footer, so they
+    // come out of everywhere else — `wp_inactive_widgets` above all, which is
+    // where a theme swap parks everything.
+    foreach ($areas as $area => $ids) {
+        if ($area === OD_WP_FOOTER_SIDEBAR || !is_array($ids)) {
+            continue;
+        }
+        $areas[$area] = array_values(array_diff($ids, $target));
+    }
+    $areas[OD_WP_FOOTER_SIDEBAR] = $target;
+    update_option('sidebars_widgets', $areas);
+
+    WP_CLI::success(sprintf('%s: %d widget(s) written, area assigned', OD_WP_FOOTER_SIDEBAR, count($target)));
+}
+
+
 // Runner. Everything above is a function; this is the only thing that runs.
 // ---------------------------------------------------------------------------
 
@@ -1642,6 +1933,7 @@ $tasks = [
     'strip-footer-links' => 'od_wp_strip_footer_links',
     'create-short-category' => 'od_wp_create_short_category',
     'tag-film-topics' => 'od_wp_tag_film_topics',
+    'author-footer' => 'od_wp_author_footer',
 ];
 
 $positional = $args ?? [];
