@@ -30,6 +30,12 @@
   object-fit: cover;
 }
 
+/* A cover too far from the box's own shape to crop — see `cardImageFits`. The
+   media box's background is what shows beside it. */
+.whole {
+  object-fit: contain;
+}
+
 .body {
   display: flex;
   flex-direction: column;

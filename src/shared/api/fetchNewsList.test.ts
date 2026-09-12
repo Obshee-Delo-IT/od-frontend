@@ -30,7 +30,11 @@ describe('fetchNewsList', () => {
             title: { rendered: 'Заголовок' },
             link: 'https://wp.test/?p=7',
             date: '2025-01-02T10:00:00',
-            _embedded: { 'wp:featuredmedia': [{ source_url: 'https://wp.test/a.jpg' }] },
+            _embedded: {
+              'wp:featuredmedia': [
+                { source_url: 'https://wp.test/a.jpg', media_details: { width: 1568, height: 682 } },
+              ],
+            },
           },
         ],
         { 'x-wp-total': '42', 'x-wp-totalpages': '3' }
@@ -48,6 +52,9 @@ describe('fetchNewsList', () => {
         link: 'https://wp.test/?p=7',
         date: '2025-01-02T10:00:00',
         thumbnailUrl: 'https://wp.test/a.jpg',
+        // Carried through so the card can decide whether cropping this cover
+        // would cut the title printed inside it — see `cardImageFits`.
+        thumbnailRatio: 1568 / 682,
         excerpt: null,
       },
     ]);

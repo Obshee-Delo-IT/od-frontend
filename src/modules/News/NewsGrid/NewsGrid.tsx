@@ -29,6 +29,7 @@ export const NewsGrid: React.FC<NewsGridProps> = ({ items, emptyMessage = 'Но�
           title={post.title}
           date={formatDate(post.date) || undefined}
           imageSrc={post.thumbnailUrl}
+          imageRatio={post.thumbnailRatio}
           imageAlt={post.title}
         />
       ))}

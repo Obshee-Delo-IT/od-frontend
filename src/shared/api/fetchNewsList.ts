@@ -1,9 +1,10 @@
 import { WP_TAGS, wpCache } from './cacheTags';
 import { extractFirstImage } from './extractFirstImage';
+import { mediaRatio } from './fetchLatestNews';
 import { wpBaseUrl, wpFetch } from './httpClient';
 import { resolveMediaUrl } from './mediaUrl';
 import { stripHtml } from './newsPreview';
-import type { NewsSummary } from './fetchLatestNews';
+import type { Media, NewsSummary } from './fetchLatestNews';
 
 interface NewsListResult {
   items: NewsSummary[];
@@ -24,7 +25,7 @@ interface RawPost {
   date?: string;
   title?: { rendered?: string };
   content?: { rendered?: string };
-  _embedded?: { 'wp:featuredmedia'?: Array<{ source_url?: string }> };
+  _embedded?: { 'wp:featuredmedia'?: Array<Media> };
 }
 
 /**
@@ -62,6 +63,7 @@ export const fetchNewsList = async ({
       thumbnailUrl: await resolveMediaUrl(
         post._embedded?.['wp:featuredmedia']?.[0]?.source_url ?? extractFirstImage(post.content?.rendered, wpBaseUrl)
       ),
+      thumbnailRatio: mediaRatio(post._embedded?.['wp:featuredmedia']?.[0]),
       excerpt: null,
     }))
   );
