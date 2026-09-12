@@ -1,5 +1,5 @@
 import { notFound } from 'next/navigation';
-import { catalogueMetadata, cataloguePage, VideoCatalogue } from '@/modules/Video/VideoCatalogue';
+import { catalogueMetadata, cataloguePage, catalogueTopics, VideoCatalogue } from '@/modules/Video/VideoCatalogue';
 import { FILM_CATEGORIES, resolveFilmCategory } from '@/shared/config/filmCategories';
 import type { Metadata } from 'next';
 
@@ -7,7 +7,7 @@ export const revalidate = 3600;
 
 interface CategoryPageProps {
   params: Promise<{ segment: string }>;
-  searchParams: Promise<{ page?: string | string[] }>;
+  searchParams: Promise<{ page?: string | string[]; topic?: string | string[] }>;
 }
 
 /** Only the four real categories exist, so prerender all of them. */
@@ -18,7 +18,8 @@ export const generateMetadata = async ({ params, searchParams }: CategoryPagePro
   if (!segment) {
     return {};
   }
-  return catalogueMetadata(segment, cataloguePage((await searchParams).page));
+  const query = await searchParams;
+  return catalogueMetadata(segment, cataloguePage(query.page), catalogueTopics(query.topic));
 };
 
 /**
@@ -39,7 +40,8 @@ const Page = async ({ params, searchParams }: CategoryPageProps) => {
     notFound();
   }
 
-  return <VideoCatalogue segment={segment} page={cataloguePage((await searchParams).page)} />;
+  const query = await searchParams;
+  return <VideoCatalogue segment={segment} page={cataloguePage(query.page)} topics={catalogueTopics(query.topic)} />;
 };
 
 export default Page;

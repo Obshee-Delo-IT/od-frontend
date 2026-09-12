@@ -1,3 +1,5 @@
+import { TOPIC_PARAM, type FilmTopicKey } from './filmTopics';
+
 /**
  * The film catalogue — children of the «Видео» (85) taxonomy.
  *
@@ -55,16 +57,33 @@ export const resolveFilmCategory = (segment: string | undefined | null): FilmCat
  * and the redirect table all build links here, so links and redirects can't
  * drift into pointing at each other. Always slash-terminated before the query,
  * since `trailingSlash: true` makes the slashless twin a 301.
+ *
+ * `topics` is the subject filter ({@link FILM_TOPICS}), and it comes **before**
+ * `page` in the query so one selection has one address whichever order the
+ * caller passes things in. The parts are joined by hand rather than through
+ * `URLSearchParams`, which would percent-encode the separating comma and turn a
+ * readable `?topic=alcohol,tobacco` into `?topic=alcohol%2Ctobacco`; topic keys
+ * are `[a-z-]+` and need no encoding.
  */
 export const catalogueHref = ({
   segment,
   page = 1,
+  topics = [],
 }: {
   segment: FilmCategorySegment | null;
   page?: number;
+  topics?: FilmTopicKey[];
 }): string => {
   const path = segment ? `/video/${segment}/` : '/video/';
-  return page > 1 ? `${path}?page=${page}` : path;
+  const query: string[] = [];
+  if (topics.length > 0) {
+    query.push(`${TOPIC_PARAM}=${topics.join(',')}`);
+  }
+  if (page > 1) {
+    query.push(`page=${page}`);
+  }
+
+  return query.length > 0 ? `${path}?${query.join('&')}` : path;
 };
 
 /**

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { FILM_CATEGORIES, type FilmCategorySegment } from '@/shared/config/filmCategories';
 import { siteUrl } from '@/shared/config/site';
-import { catalogueMetadata, cataloguePage } from './VideoCatalogue';
+import { catalogueMetadata, cataloguePage, catalogueTopics } from './VideoCatalogue';
 
 const SEGMENTS = Object.keys(FILM_CATEGORIES) as FilmCategorySegment[];
 const canonicalOf = (segment: FilmCategorySegment | null, page?: number) =>
@@ -77,5 +77,49 @@ describe('catalogueMetadata', () => {
     expect(JSON.stringify(catalogueMetadata('short').openGraph?.images)).toBe(
       JSON.stringify(catalogueMetadata(null).openGraph?.images)
     );
+  });
+});
+
+describe('catalogueTopics', () => {
+  it('reads `?topic=` the way the config normalises it', () => {
+    expect(catalogueTopics('tobacco,alcohol')).toEqual(['alcohol', 'tobacco']);
+    expect(catalogueTopics(undefined)).toEqual([]);
+    expect(catalogueTopics('nonsense')).toEqual([]);
+  });
+});
+
+describe('catalogueMetadata with topics', () => {
+  it('keeps a filtered view out of the index, and lets the crawler follow out of it', () => {
+    // Ten topics are 1 023 selections over an 84-film catalogue. The films are
+    // reached and indexed through the five category pages, which stay indexable.
+    expect(catalogueMetadata(null, 1, ['alcohol']).robots).toEqual({ index: false, follow: true });
+    expect(catalogueMetadata('multy', 2, ['alcohol', 'tobacco']).robots).toEqual({ index: false, follow: true });
+  });
+
+  it('leaves the five unfiltered pages indexable', () => {
+    expect(catalogueMetadata(null).robots).toBeUndefined();
+    expect(catalogueMetadata('filmy', 3).robots).toBeUndefined();
+  });
+
+  it('self-canonicalises rather than pointing at the unfiltered page', () => {
+    // Pointing a topic view at `/video/` would claim it holds the same films,
+    // which is the thing that is not true about a filter.
+    expect(catalogueMetadata(null, 1, ['alcohol']).alternates?.canonical).toBe(`${siteUrl}/video/?topic=alcohol`);
+    expect(catalogueMetadata('multy', 2, ['alcohol', 'tobacco']).alternates?.canonical).toBe(
+      `${siteUrl}/video/multy/?topic=alcohol,tobacco&page=2`
+    );
+  });
+
+  it('names the topics in the title, and still ends on the site name', () => {
+    const title = catalogueMetadata('multy', 1, ['alcohol', 'tobacco']).title;
+    expect(title).toBe('Мультфильмы: Алкоголь, Табак — ОБЩЕЕ ДЕЛО');
+    expect(catalogueMetadata(null, 2, ['alcohol']).title).toBe('Видеоматериалы: Алкоголь, страница 2 — ОБЩЕЕ ДЕЛО');
+  });
+
+  it('leaves an unfiltered title exactly as it was', () => {
+    // The five unfiltered titles are the indexable ones; this path must not
+    // start rewriting them on the way through the topic branch.
+    expect(catalogueMetadata('multy').title).toBe('Мультфильмы — ОБЩЕЕ ДЕЛО');
+    expect(catalogueMetadata('multy', 2).title).toBe('Мультфильмы, страница 2 — ОБЩЕЕ ДЕЛО');
   });
 });

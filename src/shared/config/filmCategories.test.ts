@@ -54,6 +54,26 @@ describe('catalogueHref', () => {
     expect(catalogueHref({ segment: null, page: 3 })).toBe('/video/?page=3');
   });
 
+  it('carries a topic selection, comma-separated and unencoded', () => {
+    expect(catalogueHref({ segment: null, topics: ['alcohol'] })).toBe('/video/?topic=alcohol');
+    expect(catalogueHref({ segment: 'multy', topics: ['alcohol', 'tobacco'] })).toBe(
+      '/video/multy/?topic=alcohol,tobacco'
+    );
+    // `URLSearchParams` would write `%2C` here, which is the same URL and a
+    // worse one to read or paste.
+    expect(catalogueHref({ segment: null, topics: ['alcohol', 'tobacco'] })).not.toContain('%2C');
+  });
+
+  it('puts the topics before the page, so one view has one address', () => {
+    expect(catalogueHref({ segment: 'filmy', topics: ['alcohol'], page: 2 })).toBe(
+      '/video/filmy/?topic=alcohol&page=2'
+    );
+  });
+
+  it('writes no query at all for the unfiltered first page', () => {
+    expect(catalogueHref({ segment: 'filmy', topics: [], page: 1 })).toBe('/video/filmy/');
+  });
+
   it('always terminates the path with a slash', () => {
     // `trailingSlash: true` makes the slashless twin a 301, so linking or
     // canonicalising to one would point at a redirect.
