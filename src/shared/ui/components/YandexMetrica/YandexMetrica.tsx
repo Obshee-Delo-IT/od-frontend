@@ -1,30 +1,28 @@
 import Script from 'next/script';
-import { Suspense } from 'react';
 import { METRICA_COUNTER_ID, METRICA_ENABLED } from '@/shared/config/metrica';
-import { MetricaRouteHits } from './MetricaRouteHits';
 
 /**
- * Production's snippet, with production's four options and one addition — the tag
- * moves with the domain rather than being rewritten
- * (`docs/prod-migration-runbook.md` §4.9). Kept as the official loader instead of
- * a bare `<Script src>`: `tag.js` ends with `if (window.ym) { …flush the queue… }`
- * and does nothing at all when the stub is missing, with no error.
+ * Yandex's own snippet, verbatim — the same text production's
+ * `welfare/header.php` carried, with production's four options
+ * (`docs/prod-migration-runbook.md` §4.9). The counter id is the only
+ * substitution.
  *
- * **`defer:true` and an explicit landing `hit` are the addition, and they are what
- * Yandex documents for an SPA** (yandex.ru/support/metrica/code/counter-spa-setup).
- * Left on the default, `init` resolves the landing view's URL when `tag.js`
- * *finishes loading*, not when this ran — so a visitor who clicks through during
- * that window has the landing view recorded against the page they moved to, which
- * `MetricaRouteHits` then counts a second time. Queued with the URL read here, the
- * view is pinned to the page that was actually open. It also gives the tag a
- * first artificial hit to chain the next one's referrer from; without it the
- * second page reports the external referrer instead of this one.
+ * Kept as the official loader rather than a bare `<Script src>` because `tag.js`
+ * ends with `if (window.ym) { …flush the queue… }` and does nothing at all when
+ * the stub is missing, with no error.
  */
 const LOADER_SNIPPET = `(function(m,e,t,r,i,k,a){m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};
-m[i].l=1*new Date();k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a)})
-(window,document,"script","https://mc.yandex.ru/metrika/tag.js","ym");
-ym(${METRICA_COUNTER_ID},"init",{defer:true,clickmap:true,trackLinks:true,accurateTrackBounce:true,webvisor:true});
-ym(${METRICA_COUNTER_ID},"hit",location.pathname+location.search);`;
+   m[i].l=1*new Date();
+   for (var j = 0; j < document.scripts.length; j++) {if (document.scripts[j].src === r) { return; }}
+   k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a)})
+   (window, document, "script", "https://mc.yandex.ru/metrika/tag.js", "ym");
+
+   ym(${METRICA_COUNTER_ID}, "init", {
+        clickmap:true,
+        trackLinks:true,
+        accurateTrackBounce:true,
+        webvisor:true
+   });`;
 
 /**
  * The Yandex Metrica tag (A4).
@@ -39,31 +37,25 @@ ym(${METRICA_COUNTER_ID},"hit",location.pathname+location.search);`;
  * after the visitor's first interaction and a visit without one sends nothing at
  * all. `next/script` has no such delay, so every traffic figure in `docs/` comes
  * from a counter that saw less than this one will.
+ *
+ * ⚠ And `tag.js` counts one view per *document*, not per client-side navigation:
+ * it patches `pushState`/`replaceState` only to feed Yandex Tag Manager triggers,
+ * and `trackHash` listens to `hashchange` alone. Yandex's SPA guide covers that
+ * case with `defer:true` plus a manual `hit` per route change; this deployment
+ * deliberately runs the plain snippet instead, so «Просмотры» counts entries and
+ * the bounce rate is not comparable with the WordPress-era figures.
  */
-export const YandexMetrica: React.FC = () => {
+export const YandexMetrica: React.FC = () =>
   /* Only the tier that owns the counter renders it — see `METRICA_ENABLED`. */
-  if (!METRICA_ENABLED) {
-    return null;
-  }
-
-  return (
+  METRICA_ENABLED ? (
     <>
-      {/* `beforeInteractive`, and the rule that objects is a Pages Router rule —
-          its message names `pages/_document.js`, which this project does not
-          have; the App Router's documented home for the strategy is the root
-          layout, which is where this renders. Measured on a production build:
-          with `afterInteractive` the snippet is not in the served HTML at all
-          (next/script appends it from an effect, so nothing is counted until
-          hydration finishes), with `beforeInteractive` it ships in the document
-          and runs before it — which is also what §4.9's gate greps for. */}
-      {/* eslint-disable-next-line @next/next/no-before-interactive-script-outside-document */}
-      <Script id="yandex-metrica" strategy="beforeInteractive" dangerouslySetInnerHTML={{ __html: LOADER_SNIPPET }} />
+      <Script id="yandex-metrica" strategy="afterInteractive" dangerouslySetInnerHTML={{ __html: LOADER_SNIPPET }} />
       {/* Production's pixel, kept. It is the one part that must be in the served
-        HTML, since it is what a visitor without JavaScript sends. */}
+          HTML, since it is what a visitor without JavaScript sends. */}
       <noscript>
         <div>
           {/* eslint-disable-next-line @next/next/no-img-element -- a tracking pixel,
-            not an image: `next/image` would proxy it through the optimizer. */}
+              not an image: `next/image` would proxy it through the optimizer. */}
           <img
             src={`https://mc.yandex.ru/watch/${METRICA_COUNTER_ID}`}
             style={{ position: 'absolute', left: '-9999px' }}
@@ -71,13 +63,5 @@ export const YandexMetrica: React.FC = () => {
           />
         </div>
       </noscript>
-      {/* `useSearchParams` in the root layout without a boundary would client-render
-        every route above it — all 49 prerendered pages, the 42 post pages that are
-        this site's SEO surface included. The boundary keeps them static; its
-        fallback is nothing, because the tag renders nothing. */}
-      <Suspense fallback={null}>
-        <MetricaRouteHits />
-      </Suspense>
     </>
-  );
-};
+  ) : null;
