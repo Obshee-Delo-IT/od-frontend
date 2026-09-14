@@ -90,7 +90,7 @@ jobs:
           push: true
           tags: |
             ${{ env.IMAGE }}:${{ inputs.tier }}
-            ${{ env.IMAGE }}:${{ github.sha }}
+            ${{ env.IMAGE }}:${{ inputs.tier }}-${{ github.sha }}
           # Build-time, not runtime: `images.remotePatterns` and every
           # canonical/sitemap URL are baked into the bundle. None of the three is
           # a secret — they are `vars`, and they are readable in the build record.
@@ -132,8 +132,16 @@ jobs:
           # re-pull of the tier tag: a deploy that silently serves the previous
           # image is indistinguishable from a successful one. It also makes
           # rollback "set the tag back".
+          #
+          # The tag carries the tier because the two tiers cannot share an image
+          # and this workflow builds both: `WP_BASE` and `SITE_URL` are baked in
+          # (`images.remotePatterns`, canonicals), so a bare `<sha>` let the
+          # stage build of a commit overwrite its prod build. That happened on
+          # 2026-09-14 — prod ran a stage image whose `remotePatterns` named
+          # `od.webtm.ru`, and every `/_next/image` of a `wp.obshee-delo.ru`
+          # upload answered 400.
           api -X PATCH "$COOLIFY/applications/$APP" \
-            -d '{"docker_registry_image_tag":"${{ github.sha }}"}' > /dev/null
+            -d '{"docker_registry_image_tag":"${{ inputs.tier }}-${{ github.sha }}"}' > /dev/null
           deployment=$(api -X POST "$COOLIFY/deploy?uuid=$APP" | jq -r '.deployments[0].deployment_uuid')
           echo "deployment $deployment"
           # Poll to completion — the API answers as soon as the job is queued, so
