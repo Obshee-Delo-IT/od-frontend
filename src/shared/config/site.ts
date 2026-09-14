@@ -50,8 +50,8 @@ export const OG_NEWS_IMAGE = '/og-news.png';
 export const OG_ARTICLES_IMAGE = '/og-articles.png';
 
 /**
- * The organisation's *other* domain for the same site — `общее-дело.рф`, stored
- * everywhere in Punycode.
+ * The organisation's *other* domains for the same site — the two `.рф`
+ * spellings, stored everywhere in Punycode.
  *
  * It is not a redirect and not a second site: the live site's own navigation
  * mixes both hosts freely (see `src/shared/legacy/__fixtures__/team.html`), and
@@ -66,7 +66,16 @@ export const OG_ARTICLES_IMAGE = '/og-articles.png';
  * (`xn--d1aadek5agm.…`) is the donation host the header CTA points at, and
  * `xn--80a7adb.…` is the statistics site.
  */
-const SITE_ALIAS_ORIGINS = ['https://xn----9sbkcac6brh7h.xn--p1ai'];
+const SITE_ALIAS_ORIGINS = [
+  // общее-дело.рф
+  'https://xn----9sbkcac6brh7h.xn--p1ai',
+  // общеедело.рф — the same organisation's second .рф spelling, without the
+  // hyphen. It has always 301'd to the apex from the old install's `.htaccess`,
+  // so nothing was ever served there; it is listed for the same two reasons as
+  // its sibling — a body link to it is a path on this site, and `proxy.ts`
+  // redirects it.
+  'https://xn--90agcab0bpg7g.xn--p1ai',
+];
 
 /**
  * Every origin whose absolute URLs are really paths on this site — the
@@ -100,3 +109,40 @@ export const canonicalUrl = (path = '/'): string => {
  * exactly the hop this work exists to remove.
  */
 export const fileUrl = (path: string): string => `${siteUrl}/${path.replace(/^\/+/, '')}`;
+
+/**
+ * Every hostname this deployment answers on that is **not** its canonical one:
+ * each alias origin above, `www.` in front of each, and `www.` in front of the
+ * canonical host itself.
+ *
+ * Derived rather than written out, so adding a domain to
+ * `SITE_ALIAS_ORIGINS` is the only edit a new alias needs.
+ */
+const ALIAS_HOSTS: Set<string> = (() => {
+  const canonical = new URL(siteUrl).host;
+  const roots = [...SITE_ALIAS_ORIGINS.map((origin) => new URL(origin).host), canonical];
+  return new Set(roots.flatMap((host) => [host, `www.${host}`]).filter((host) => host !== canonical));
+})();
+
+/**
+ * The canonical address for a request that arrived on an alias host, or `null`
+ * when the host is already canonical — or is none of our business.
+ *
+ * **An allowlist, deliberately, rather than «anything that is not `siteUrl`».**
+ * The container answers its own health check on `http://localhost:3000/health/`
+ * and Coolify treats anything but a 200 as a failure, so a blanket rule would
+ * 301 the probe and drive the application into a restart loop. `prod.…`, which
+ * stays live as the fallback entrance after cutover, and any preview hostname
+ * are protected by the same choice rather than by a list of exceptions.
+ *
+ * The port is dropped before comparing (a `Host` header carries one whenever
+ * the site is not on 443) and the host is lower-cased, since neither changes
+ * which site was asked for.
+ */
+export const resolveCanonicalRedirect = (host: string | null | undefined, path: string): string | null => {
+  if (!host) {
+    return null;
+  }
+  const bare = host.toLowerCase().split(':')[0];
+  return ALIAS_HOSTS.has(bare) ? `${siteUrl}${path}` : null;
+};
