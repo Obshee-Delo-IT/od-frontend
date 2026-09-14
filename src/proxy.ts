@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { resolveLegacySearch, resolveLegacyUrl } from '@/shared/config/legacyRedirects';
+import { resolveCanonicalRedirect } from '@/shared/config/site';
 import { legacyFontTarget } from '@/shared/legacy/legacyFonts';
 import { legacyOrigin } from '@/shared/legacy/legacyOrigin';
 
@@ -16,12 +17,32 @@ import { legacyOrigin } from '@/shared/legacy/legacyOrigin';
  * takes exactly one hop. Config redirects also run *before* the proxy, so the
  * two can't coexist — a rule left in the config would shadow this.
  *
- * The `matcher` scopes execution to the legacy prefixes plus `/` itself, so
- * ordinary traffic — `/<id>` posts, static assets — never enters here. The home
- * page is listed only because WordPress's `/?s=<term>` search URL lives there;
- * no fetch happens on that path, just a `searchParams` read.
+ * The `matcher` used to scope execution to the legacy prefixes plus `/` itself.
+ * Host canonicalisation ended that: `общеедело.рф/about/` has to redirect as
+ * surely as `общеедело.рф/`, so every path a visitor can ask for now enters
+ * here. Nothing else changed with it — `resolveLegacyUrl` answers only under
+ * `/video`, `/news`, `/page` and `/category` plus an exact-path table, so the
+ * paths that newly arrive fall straight through.
  */
 export const proxy = (request: NextRequest) => {
+  /**
+   * Alias domains first, before anything else can answer on one of them. The
+   * organisation owns two `.рф` spellings and the `www.` form of all three
+   * names, and until cutover the old install's `.htaccess` was what folded them
+   * onto the apex — so this is that rule moving hosts, not a new policy.
+   *
+   * `x-forwarded-host` before `host`: behind the reverse proxy the latter is the
+   * container's own name on some paths, and a redirect built from it would send
+   * a visitor somewhere unreachable.
+   */
+  const canonical = resolveCanonicalRedirect(
+    request.headers.get('x-forwarded-host') ?? request.headers.get('host'),
+    `${request.nextUrl.pathname}${request.nextUrl.search}`
+  );
+  if (canonical) {
+    return NextResponse.redirect(canonical, 301);
+  }
+
   /**
    * The A6 fallback's font relay (see `shared/legacy/legacyFonts.ts`). A rewrite
    * rather than a redirect on purpose: a redirect would send the browser back to
@@ -72,16 +93,11 @@ export const proxy = (request: NextRequest) => {
 };
 
 export const config = {
-  // `/contacts/:path*` is here for the two retired duplicate regions only — the
-  // other 73 region pages fall through untouched, as every path the table has no
-  // rule for does.
-  matcher: [
-    '/',
-    '/video/:path*',
-    '/news/:path*',
-    '/category/:path*',
-    '/page/:path*',
-    '/contacts/:path*',
-    '/legacy-font/:path*',
-  ],
+  // Every path except Next's own build output. An alias host has to be folded
+  // onto the apex whatever was asked for, and a matcher is the only gate on
+  // whether this file runs at all — so the list of legacy prefixes it used to
+  // carry could not stay. `_next/static` and `_next/image` are excluded because
+  // nothing there is ever requested on an alias host: the redirect happens on
+  // the document, and the markup that asks for those assets is already canonical.
+  matcher: ['/((?!_next/static|_next/image).*)'],
 };
