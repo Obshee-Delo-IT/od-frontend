@@ -16,6 +16,7 @@ import { Footer } from '@/modules/Footer';
 import { HeaderServer } from '@/modules/Header';
 import { OG_DEFAULT_IMAGE, SITE_NAME, siteUrl } from '@/shared/config/site';
 import { CookieNotice } from '@/shared/ui/components/CookieNotice';
+import { YandexMetrica } from '@/shared/ui/components/YandexMetrica';
 /* From its own module, not the `theme` barrel: the barrel also exports
    `GutenbergProvider`, whose module imports `gutenberg.css` — 167 KB / 21.9 KB
    gzip that was render-blocking on every route, including the four that render
@@ -98,6 +99,7 @@ const RootLayout = ({
         </main>
         <Footer />
         <CookieNotice />
+        <YandexMetrica />
       </RadixProvider>
     </body>
   </html>
