@@ -67,6 +67,13 @@ const nextConfig: NextConfig = {
     // Keep optimized images cached for a day. Re-uploads get a new filename
     // (new URL → new cache key) so this doesn't stale edits; on expiry Next
     // serves the cached image and revalidates in the background.
+    //
+    // That only holds for URLs that change with their content. A file under
+    // `public/` keeps its path across builds, so the cache — an on-disk store
+    // on a persistent volume, which a redeploy therefore does not flush —
+    // answers with the old bytes for a day after the file is replaced. Import
+    // a local image instead of pointing at its `public/` path: the URL is
+    // content-hashed, so a new export is a new key (`Home/sections/Hero.tsx`).
     minimumCacheTTL: 86400,
   },
   reactCompiler: true,

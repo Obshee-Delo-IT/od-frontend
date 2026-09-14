@@ -1,18 +1,33 @@
 import { Heading } from '@radix-ui/themes';
-import Image from 'next/image';
+import Image, { type StaticImageData } from 'next/image';
 import NextLink from 'next/link';
 import { Button } from '@/shared/ui/components/Button';
 import { AddOutlinedIcon } from '@/shared/ui/components/Icons';
+import photo1 from './hero-photos/1.png';
+import photo10 from './hero-photos/10.png';
+import photo2 from './hero-photos/2.png';
+import photo3 from './hero-photos/3.png';
+import photo4 from './hero-photos/4.png';
+import photo5 from './hero-photos/5.png';
+import photo6 from './hero-photos/6.png';
+import photo7 from './hero-photos/7.png';
+import photo8 from './hero-photos/8.png';
+import photo9 from './hero-photos/9.png';
 import css from './Hero.module.css';
 
 // Three marquee rows, each with its own distinct set of photos (matching the
 // Figma layout: 3 / 4 / 3 tiles across the top / middle / bottom rows). Each
 // row's set is repeated across the track so the right-to-left scroll loops
 // seamlessly — see TRACK_COPIES and the `-50%` translate in the CSS.
+// Imported rather than referenced at `/figma/hero-photos/N.png`: a `public/`
+// path is stable across builds, so the image optimizer's on-disk cache — a
+// persistent volume, keyed on the URL and held for `minimumCacheTTL` — kept
+// serving the previous export of tile 7 for a day after it was replaced. A
+// static import is content-hashed, so a re-export is a new URL and a new key.
 const ROWS = [
-  [1, 2, 3],
-  [4, 5, 6, 7],
-  [8, 9, 10],
+  [photo1, photo2, photo3],
+  [photo4, photo5, photo6, photo7],
+  [photo8, photo9, photo10],
 ];
 
 // The track holds 4 copies of the row's set; the animation translates by 50%
@@ -23,10 +38,10 @@ const ROWS = [
 // is sized differently by Firefox, see `Hero.module.css`.
 const TRACK_COPIES = 4;
 
-const PhotoTile: React.FC<{ photo: number }> = ({ photo }) => (
+const PhotoTile: React.FC<{ photo: StaticImageData }> = ({ photo }) => (
   <div className={css.tile}>
     <Image
-      src={`/figma/hero-photos/${photo}.png`}
+      src={photo}
       alt=""
       fill
       sizes="(max-width: 900px) 180px, (max-width: 1440px) 200px, 222px"
