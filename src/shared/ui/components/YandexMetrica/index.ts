@@ -1,0 +1,1 @@
+export { YandexMetrica } from './YandexMetrica';
