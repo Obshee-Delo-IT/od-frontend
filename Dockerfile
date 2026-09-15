@@ -39,9 +39,12 @@ ARG WP_MEDIA_CDN
 ARG SITE_URL
 # Not a secret — it ships in the HTML of every page — but a per-tier value, and
 # one the public repository does not carry. Empty is the off switch, and the
-# wanted state on every tier but production. Build-time because the root layout
-# renders into prerendered HTML: setting it on a running container changes
-# nothing.
+# wanted state on every tier but production. **It is needed in both stages**: the
+# root layout renders into prerendered HTML here, and again on every ISR
+# regeneration and dynamic route in `runner`, where the other three come from
+# Coolify's own environment and this one does not exist. Set it only here and the
+# tag ships in the build's HTML and then disappears the first time a page is
+# rebuilt — measured on prod 2026-09-15.
 ARG METRICA_COUNTER_ID
 ENV WP_BASE=$WP_BASE
 ENV WP_MEDIA_CDN=$WP_MEDIA_CDN
@@ -92,6 +95,10 @@ COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 # has to exist here and belong to `nextjs`, or the mount lands root-owned and
 # every ISR write fails at runtime.
 RUN mkdir -p .next/cache && chown nextjs:nodejs .next/cache
+# The same value again, for the renders that happen here rather than at build
+# time — see the ARG in `builder`. `ARG` does not cross stages.
+ARG METRICA_COUNTER_ID
+ENV METRICA_COUNTER_ID=$METRICA_COUNTER_ID
 USER nextjs
 ENV HOSTNAME="0.0.0.0"
 CMD ["node", "server.js"]
