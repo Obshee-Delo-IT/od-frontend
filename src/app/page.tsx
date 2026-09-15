@@ -9,7 +9,7 @@ import {
   PROGRAMS_TITLE,
   SPLIT_HOME_SECTIONS,
 } from '@/shared/config/programSections';
-import { canonicalUrl, OG_DEFAULT_IMAGE } from '@/shared/config/site';
+import { canonicalUrl, ogCard } from '@/shared/config/site';
 import { formatDate } from '@/shared/lib/formatDate';
 import { Box } from '@/shared/ui/components/Box';
 import type { Metadata } from 'next';
@@ -31,12 +31,8 @@ export const metadata: Metadata = {
   title: TITLE,
   description: DESCRIPTION,
   alternates: { canonical: canonicalUrl('/') },
-  openGraph: {
-    url: canonicalUrl('/'),
-    title: TITLE,
-    description: DESCRIPTION,
-    images: [OG_DEFAULT_IMAGE],
-  },
+  // No `images`: the default card is this page's card, and `ogCard` names it.
+  openGraph: ogCard({ type: 'website', url: canonicalUrl('/'), title: TITLE, description: DESCRIPTION }),
 };
 
 /* Twice the six the row shipped with: at three cards per view the carousel was

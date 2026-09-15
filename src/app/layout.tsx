@@ -14,7 +14,7 @@ import '@/shared/ui/theme/radix/theme-override.css';
 import { PT_Sans as PTSans, PT_Sans_Narrow as PtSansNarrow } from 'next/font/google';
 import { Footer } from '@/modules/Footer';
 import { HeaderServer } from '@/modules/Header';
-import { OG_DEFAULT_IMAGE, SITE_NAME, siteUrl } from '@/shared/config/site';
+import { ogCard, SITE_NAME, siteUrl } from '@/shared/config/site';
 import { CookieNotice } from '@/shared/ui/components/CookieNotice';
 import { YandexMetrica } from '@/shared/ui/components/YandexMetrica';
 /* From its own module, not the `theme` barrel: the barrel also exports
@@ -54,16 +54,10 @@ export const metadata: Metadata = {
   // suffix, and a template would double it.
   title: SITE_NAME,
   description: SITE_DESCRIPTION,
-  openGraph: {
-    type: 'website',
-    siteName: SITE_NAME,
-    title: SITE_NAME,
-    description: SITE_DESCRIPTION,
-    // Open Graph wants the underscore form; `ru-RU` is silently ignored.
-    locale: 'ru_RU',
-    countryName: 'Russia',
-    images: [OG_DEFAULT_IMAGE],
-  },
+  // The root's card is the defaults and nothing else — which is why they live
+  // in `ogCard` now, where the routes that replace this object wholesale can
+  // restate them without copying them.
+  openGraph: ogCard({ type: 'website', title: SITE_NAME, description: SITE_DESCRIPTION }),
   /**
    * VK, Telegram and Odnoklassniki — where this site's sharing happens — read
    * Open Graph, so these three lines only serve Twitter/X. They cost nothing

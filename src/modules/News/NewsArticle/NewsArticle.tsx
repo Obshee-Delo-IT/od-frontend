@@ -6,7 +6,7 @@ import { cachedFetchNews } from '@/shared/api/fetchNews';
 import { wpBaseUrl } from '@/shared/api/httpClient';
 import { resolveMediaUrl } from '@/shared/api/mediaUrl';
 import { buildNewsPreview, stripHtml } from '@/shared/api/newsPreview';
-import { canonicalUrl, OG_DEFAULT_IMAGE } from '@/shared/config/site';
+import { canonicalUrl, ogCard, ogCardImage } from '@/shared/config/site';
 import { formatDate } from '@/shared/lib/formatDate';
 import { parsePost, resolveContentHtml } from '@/shared/lib/wpContent';
 import { Box } from '@/shared/ui/components/Box';
@@ -33,42 +33,42 @@ export const newsMetadata = async (
 ): Promise<Metadata> => {
   const title = stripHtml(post?.title?.rendered) || undefined;
   // Same source as the film page: WP's excerpt, stripped of markup, falling
-  // back to the body for the many posts that have no manual excerpt.
-  const description = buildNewsPreview(post?.excerpt?.rendered, post?.content?.rendered) ?? undefined;
+  // back to the body for the many posts that have no manual excerpt — and with
+  // the headline dropped when the body opens by repeating it.
+  const description = buildNewsPreview(post?.excerpt?.rendered, post?.content?.rendered, title) ?? undefined;
   const url = canonicalUrl(`/${id}/`);
   /* The editor's own lead image, with the body's first image only as a fallback.
-     Measured on od-stage: **100 of 100 posts carry `featured_media`** (against 1
-     of 100 pages), so this is a picture someone chose for the post, where the
-     body's first image is whatever the layout happens to open with.
+     The newest 100 posts all carry `featured_media` (against 1 of 100 pages);
+     uniformly over all 8 286, 49 of 76 do — the 2013-2016 archive is what the
+     rest is. So this is a picture someone chose for the post, where the body's
+     first image is whatever the layout happens to open with.
 
      Both go through the resolution pipeline rather than the raw URL: the
      WordPress origin **301s** an offloaded upload to the Yandex bucket, and a
      social crawler that doesn't follow the hop shows no image at all. */
-  const image =
-    (await cachedFetchFeaturedImage(post?.featured_media, id)) ??
-    (await resolveMediaUrl(extractFirstImage(post?.content?.rendered, wpBaseUrl)));
+  const featured = await cachedFetchFeaturedImage(post?.featured_media, id);
+  const image = featured?.url ?? (await resolveMediaUrl(extractFirstImage(post?.content?.rendered, wpBaseUrl)));
 
   return {
     title,
     description,
     alternates: { canonical: url },
-    openGraph: {
+    openGraph: ogCard({
       type: 'article',
       url,
-      countryName: 'Russia',
-      // Open Graph wants the underscore form; `ru-RU` is silently ignored.
-      locale: 'ru_RU',
       title,
       description,
       // WP omits the zone designator on its GMT timestamps.
       publishedTime: post?.date_gmt ? `${post.date_gmt}Z` : undefined,
       modifiedTime: post?.modified_gmt ? `${post.modified_gmt}Z` : undefined,
-      /* The body's first image rather than `featured_media`: that is an id, and
-         resolving it costs a second request on a route that has to stay
-         statically generatable — while `content.rendered` is already here, and
-         on this site's posts the lead photo is the first thing in it. */
-      images: [image ?? OG_DEFAULT_IMAGE],
-    },
+      /* The attachment's own `media_details` carries the pixels, so the card
+         can state them — and 14 % of posts turn out to have a 160×120 or
+         150×200 thumbnail as their lead image, which renders as *no* card in
+         Facebook and WhatsApp. `ogCardImage` sends those to the branded card
+         instead. The body-image fallback has no cheap size source, so it ships
+         without the two tags, exactly as everything did before. */
+      images: [ogCardImage(image, featured)],
+    }),
   };
 };
 

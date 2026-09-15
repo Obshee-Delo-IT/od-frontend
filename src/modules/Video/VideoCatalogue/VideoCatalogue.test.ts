@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { FILM_CATEGORIES, type FilmCategorySegment } from '@/shared/config/filmCategories';
-import { siteUrl } from '@/shared/config/site';
+import { SITE_NAME, siteUrl } from '@/shared/config/site';
 import { catalogueMetadata, cataloguePage, catalogueTopics } from './VideoCatalogue';
 
 const SEGMENTS = Object.keys(FILM_CATEGORIES) as FilmCategorySegment[];
@@ -57,6 +57,19 @@ describe('catalogueMetadata', () => {
     expect(new Set(descriptions).size).toBe(pages.length);
     titles.forEach((title) => {
       expect(title).toMatch(/ОБЩЕЕ ДЕЛО$/);
+    });
+  });
+
+  it('names the site and the type on every card', () => {
+    // A segment's `openGraph` replaces the root layout's whole, so these are
+    // emitted only where they are restated — `ogCard` is what restates them,
+    // and without it the #2 and #3 entry pages carried no `og:site_name`.
+    [null, ...SEGMENTS].forEach((segment) => {
+      const card = catalogueMetadata(segment).openGraph;
+
+      expect(card?.siteName).toBe(SITE_NAME);
+      expect(card?.locale).toBe('ru_RU');
+      expect(card && 'type' in card && card.type).toBe('website');
     });
   });
 

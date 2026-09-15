@@ -8,7 +8,7 @@ import {
   type FilmCategorySegment,
 } from '@/shared/config/filmCategories';
 import { filmTopicIds, filmTopicLabels, type FilmTopicKey, resolveFilmTopics } from '@/shared/config/filmTopics';
-import { canonicalUrl } from '@/shared/config/site';
+import { canonicalUrl, ogCard, ogSectionImage } from '@/shared/config/site';
 import { Box } from '@/shared/ui/components/Box';
 import { PageHeader } from '@/shared/ui/components/PageHeader';
 import { Pagination } from '@/shared/ui/components/Pagination';
@@ -140,8 +140,15 @@ export const catalogueMetadata = (
        indistinguishable from `/video/multy/` and from the home page itself.
        Next merges metadata *shallowly*: a segment that declares `openGraph`
        replaces the parent's object whole, so it inherits no image either and
-       the fallback card has to be named here. */
-    openGraph: { url, title, description: copy.description, images: [copy.card] },
+       the fallback card has to be named here — and `siteName`/`locale` with it,
+       which is what `ogCard` restates. */
+    openGraph: ogCard({
+      type: 'website',
+      url,
+      title,
+      description: copy.description,
+      images: [ogSectionImage(copy.card)],
+    }),
   };
 };
 

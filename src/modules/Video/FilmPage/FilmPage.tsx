@@ -2,7 +2,7 @@ import { notFound } from 'next/navigation';
 import { cachedFetchVideo, fetchVideoList, resolveMediaUrl } from '@/shared/api';
 import { wpBaseUrl } from '@/shared/api/httpClient';
 import { ALL_FILM_CATEGORY_IDS, catalogueHref } from '@/shared/config/filmCategories';
-import { canonicalUrl, OG_DEFAULT_IMAGE } from '@/shared/config/site';
+import { canonicalUrl, ogCard, ogCardImage } from '@/shared/config/site';
 import { parsePost, resolveContentHtml } from '@/shared/lib/wpContent';
 import { Box } from '@/shared/ui/components/Box';
 import { Breadcrumbs } from '@/shared/ui/components/Breadcrumbs';
@@ -31,16 +31,17 @@ export const filmMetadata = (film: NonNullable<Awaited<ReturnType<typeof cachedF
     title: `${film.title} — ОБЩЕЕ ДЕЛО`,
     description: film.excerpt ?? undefined,
     alternates: { canonical: url },
-    openGraph: {
+    openGraph: ogCard({
       type: 'video.movie',
       url,
-      countryName: 'Russia',
-      // Open Graph wants the underscore form; `ru-RU` is silently ignored.
-      locale: 'ru_RU',
       title: film.title,
       description: film.excerpt ?? undefined,
-      images: [film.thumbnailUrl ?? OG_DEFAULT_IMAGE],
-    },
+      // `cardImageUrl`, not the visible thumbnail: the body-image fallback is
+      // whatever the post opens with, and on a film that is often a download
+      // button. The featured image's pixels come free with the `_embed`, so the
+      // card states them when it is the one that won.
+      images: [ogCardImage(film.cardImageUrl, film.thumbnailSize)],
+    }),
   };
 };
 

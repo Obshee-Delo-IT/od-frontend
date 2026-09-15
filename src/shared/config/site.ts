@@ -1,3 +1,5 @@
+import type { Metadata } from 'next';
+
 /**
  * The site's public origin — what canonical tags, OG URLs and the sitemap must
  * advertise (A8 / F4).
@@ -37,7 +39,7 @@ export const SITE_NAME = 'ОБЩЕЕ ДЕЛО';
  * outranks config metadata, so the file form would stamp this logo over a film's
  * own poster and a news post's own photo — the two cards that matter most.
  */
-export const OG_DEFAULT_IMAGE = '/og-default.png';
+const OG_DEFAULT_IMAGE = '/og-default.png';
 
 /**
  * The same card with the section named under the wordmark, for the indexes that
@@ -48,6 +50,88 @@ export const OG_DEFAULT_IMAGE = '/og-default.png';
  */
 export const OG_NEWS_IMAGE = '/og-news.png';
 export const OG_ARTICLES_IMAGE = '/og-articles.png';
+
+/** What a card image looks like once its pixels are known. */
+interface OgCardImage {
+  url: string;
+  width?: number;
+  height?: number;
+}
+
+/** {@link OG_DEFAULT_IMAGE}, measured — the file in `public/` is 1200×630. */
+const OG_DEFAULT_CARD: OgCardImage = { url: OG_DEFAULT_IMAGE, width: 1200, height: 630 };
+
+/** The section cards are the same 1200×630 export with a word under the wordmark. */
+export const ogSectionImage = (url: string): OgCardImage => ({ url, width: 1200, height: 630 });
+
+/**
+ * The defaults every route's `openGraph` object has to restate, wrapped around
+ * whatever that route owns.
+ *
+ * The shallow-merge rule above has a second half nobody drew: a segment loses
+ * `siteName` and `locale` exactly as it loses `images`. Nine hand-written call
+ * sites all remembered the image — the one the comment named — and all nine
+ * forgot the rest, so no card on the site carried the organisation's name and
+ * the home page's own card advertised no `og:type`.
+ *
+ * `type` stays the caller's business: it is the union's discriminant, and the
+ * wrong type is worse than no type. Hence the generic rather than a plain
+ * `Metadata['openGraph']` parameter, which would widen every call site's literal
+ * to the union and lose the discriminant — and hence the cast, which is what
+ * that costs: TypeScript cannot prove a spread of defaults into a generic is
+ * still exactly `T`. Excess-property checking survives it, because the literal is
+ * still checked against `T`'s constraint at the call site.
+ *
+ * `countryName` is deliberately **not** here. Three of the eleven cards carried
+ * it and `og:country_name` belongs to `og:business`/`og:place`, not to
+ * `website`, `article` or `profile` — restating it everywhere would have spread
+ * a tag that means nothing on these types.
+ */
+export const ogCard = <T extends NonNullable<Metadata['openGraph']>>(own: T): T =>
+  ({
+    siteName: SITE_NAME,
+    // Open Graph wants the underscore form; `ru-RU` is silently ignored.
+    locale: 'ru_RU',
+    // Sized, like every other card this file hands out: a crawler that knows the
+    // pixels lays the card out on the first share, before it has fetched the file.
+    images: [OG_DEFAULT_CARD],
+    ...own,
+  }) as T;
+
+/**
+ * **200 px, not 600.** Facebook, Telegram and VK all *scale* an image between
+ * 200 and 600 px into the small card — they still show the photograph. Only
+ * below 200 px is there no image at all, and only that case is worth losing the
+ * post's own picture over: gating at 600 sent the branded wordmark out in place
+ * of a real 452×300 photo, which is a worse card than the small one it avoided.
+ */
+const OG_MIN_SIDE = 200;
+
+/**
+ * The image a card advertises, with `og:image:width`/`height` whenever the
+ * fetcher already knew them (`media_details` rides along in the post's `_embed`
+ * and costs one extra field on the attachment request).
+ *
+ * Two jobs, both measured on production. The numbers let a crawler lay the card
+ * out on the **first** share, before it has fetched the file — which for a news
+ * post is the only share that matters. And they are the detector for the posts
+ * whose featured image is a 160×120 or 150×200 thumbnail: those get the branded
+ * card instead of a card that is blank in Facebook and WhatsApp. An image of
+ * unknown size passes through as it always did — omitting the two tags is legal,
+ * guessing them is not.
+ */
+export const ogCardImage = (
+  url: string | null | undefined,
+  size?: { width?: number | null; height?: number | null } | null
+): OgCardImage => {
+  const width = size?.width ?? 0;
+  const height = size?.height ?? 0;
+  if (!url || (width && height && (width < OG_MIN_SIDE || height < OG_MIN_SIDE))) {
+    return OG_DEFAULT_CARD;
+  }
+
+  return width && height ? { url, width, height } : { url };
+};
 
 /**
  * The organisation's *other* domains for the same site — the two `.рф`
