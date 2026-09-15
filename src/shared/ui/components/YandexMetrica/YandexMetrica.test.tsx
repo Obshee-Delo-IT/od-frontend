@@ -1,8 +1,16 @@
 import { render } from '@testing-library/react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { METRICA_COUNTER_ID } from '@/shared/config/metrica';
 import { YandexMetrica } from './YandexMetrica';
+
+/* The id is read at module load, and the modules under test are imported
+   statically — so it has to be in the environment before those imports run,
+   which is what `vi.hoisted` buys. A stand-in, not the real counter: this file
+   is in a public repository for the same reason the id is not. */
+const COUNTER_ID = vi.hoisted(() => {
+  process.env.METRICA_COUNTER_ID = '12345678';
+  return '12345678';
+});
 
 const mocks = vi.hoisted(() => ({ scripts: [] as Record<string, unknown>[] }));
 
@@ -25,7 +33,7 @@ describe('YandexMetrica', () => {
     mocks.scripts.length = 0;
   });
 
-  it("loads production's counter with production's four options", () => {
+  it('loads the counter with the options its own settings page generates', () => {
     render(<YandexMetrica />);
 
     expect(mocks.scripts).toHaveLength(1);
@@ -33,11 +41,15 @@ describe('YandexMetrica', () => {
     expect(mocks.scripts[0].id).toBe('yandex-metrica');
     expect(mocks.scripts[0].strategy).toBe('afterInteractive');
     expect(snippet()).toContain('https://mc.yandex.ru/metrika/tag.js');
-    expect(snippet()).toContain(`ym(${METRICA_COUNTER_ID}, "init", {`);
+    expect(snippet()).toContain(`ym(${COUNTER_ID}, 'init', {`);
     expect(snippet()).toContain('clickmap:true');
     expect(snippet()).toContain('trackLinks:true');
     expect(snippet()).toContain('accurateTrackBounce:true');
     expect(snippet()).toContain('webvisor:true');
+    // Generated alongside the four, and the reason the landing view is not left
+    // to whatever `tag.js` resolves when it finishes loading.
+    expect(snippet()).toContain('referrer: document.referrer');
+    expect(snippet()).toContain('url: location.href');
   });
 
   /* Yandex's snippet, unmodified: no `defer`, and no `hit` of our own. The SPA
@@ -46,15 +58,25 @@ describe('YandexMetrica', () => {
     render(<YandexMetrica />);
 
     expect(snippet()).not.toContain('defer');
-    expect(snippet()).not.toContain('"hit"');
+    expect(snippet()).not.toContain("'hit'");
   });
 
   /* The server render, not `render()`: React drops `<noscript>` children on the
      client, so the pixel only ever exists in the served HTML — which is the only
      place it can matter, since it is what a visitor without JavaScript sends. */
+  it('renders nothing at all when no counter is configured', async () => {
+    vi.stubEnv('METRICA_COUNTER_ID', '');
+    vi.resetModules();
+    const { YandexMetrica: Unconfigured } = await import('./YandexMetrica');
+
+    expect(renderToStaticMarkup(<Unconfigured />)).toBe('');
+    expect(mocks.scripts).toHaveLength(0);
+    vi.unstubAllEnvs();
+  });
+
   it('keeps the noscript pixel in the server HTML', () => {
     expect(renderToStaticMarkup(<YandexMetrica />)).toContain(
-      `<noscript><div><img src="https://mc.yandex.ru/watch/${METRICA_COUNTER_ID}"`
+      `<noscript><div><img src="https://mc.yandex.ru/watch/${COUNTER_ID}"`
     );
   });
 });
