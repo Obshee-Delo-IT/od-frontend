@@ -1,5 +1,7 @@
 import Script from 'next/script';
+import { Suspense } from 'react';
 import { METRICA_COUNTER_ID, METRICA_ENABLED } from '@/shared/config/metrica';
+import { MetricaRouteHits } from './MetricaRouteHits';
 
 /**
  * Yandex's own snippet, verbatim — copied out of this counter's own **Настройка
@@ -18,6 +20,14 @@ import { METRICA_COUNTER_ID, METRICA_ENABLED } from '@/shared/config/metrica';
  * Kept as the official loader rather than a bare `<Script src>` because `tag.js`
  * ends with `if (window.ym) { …flush the queue… }` and does nothing at all when
  * the stub is missing, with no error.
+ *
+ * **Two lines are Yandex's SPA setup and not ours to tidy either**
+ * (yandex.ru/support/metrica/code/counter-spa-setup): `defer: true`, which turns
+ * off the automatic view — «Это нужно, чтобы отключить автоматическую отправку
+ * данных о просмотрах» — and the `hit` that then sends the landing view. It is
+ * sent here rather than from `MetricaRouteHits` so that it cannot depend on which
+ * effect React runs first, and so that its URL is the one that was open rather
+ * than whichever is current when `tag.js` finishes loading.
  */
 const LOADER_SNIPPET = `(function(m,e,t,r,i,k,a){
         m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};
@@ -26,7 +36,8 @@ const LOADER_SNIPPET = `(function(m,e,t,r,i,k,a){
         k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a)
     })(window, document,'script','https://mc.yandex.ru/metrika/tag.js', 'ym');
 
-    ym(${METRICA_COUNTER_ID}, 'init', {webvisor:true, clickmap:true, referrer: document.referrer, url: location.href, accurateTrackBounce:true, trackLinks:true});`;
+    ym(${METRICA_COUNTER_ID}, 'init', {defer: true, webvisor:true, clickmap:true, referrer: document.referrer, url: location.href, accurateTrackBounce:true, trackLinks:true});
+    ym(${METRICA_COUNTER_ID}, 'hit', location.pathname + location.search);`;
 
 /**
  * The Yandex Metrica tag (A4).
@@ -42,12 +53,8 @@ const LOADER_SNIPPET = `(function(m,e,t,r,i,k,a){
  * all. `next/script` has no such delay, so every traffic figure in `docs/` comes
  * from a counter that saw less than this one will.
  *
- * ⚠ And `tag.js` counts one view per *document*, not per client-side navigation:
- * it patches `pushState`/`replaceState` only to feed Yandex Tag Manager triggers,
- * and `trackHash` listens to `hashchange` alone. Yandex's SPA guide covers that
- * case with `defer:true` plus a manual `hit` per route change; this deployment
- * deliberately runs the plain snippet instead, so «Просмотры» counts entries and
- * the bounce rate is not comparable with the WordPress-era figures.
+ * ⚠ Scroll maps, form analytics and Webvisor 1.0 do not work on an SPA — the
+ * same guide says so. Webvisor 2.0, the clickmap and the link map do.
  */
 export const YandexMetrica: React.FC = () =>
   /* Only the tier that owns the counter renders it — see `METRICA_ENABLED`. */
@@ -67,5 +74,12 @@ export const YandexMetrica: React.FC = () =>
           />
         </div>
       </noscript>
+      {/* `useSearchParams` in the root layout without a boundary would
+          client-render every route above it — all 49 prerendered pages, the 42
+          post pages that are this site's SEO surface included. The boundary keeps
+          them static; its fallback is nothing, because the tag renders nothing. */}
+      <Suspense fallback={null}>
+        <MetricaRouteHits />
+      </Suspense>
     </>
   ) : null;

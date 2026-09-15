@@ -1,4 +1,5 @@
 import { render } from '@testing-library/react';
+import { StrictMode } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { YandexMetrica } from './YandexMetrica';
@@ -12,10 +13,15 @@ const COUNTER_ID = vi.hoisted(() => {
   return '12345678';
 });
 
-const mocks = vi.hoisted(() => ({ scripts: [] as Record<string, unknown>[] }));
+const mocks = vi.hoisted(() => ({ scripts: [] as Record<string, unknown>[], pathname: '/', search: '' }));
 
 /* Captured rather than rendered: React sets a `<script>`'s content before it is
    appended, so a real one would run the loader against mc.yandex.ru in jsdom. */
+vi.mock('next/navigation', () => ({
+  usePathname: () => mocks.pathname,
+  useSearchParams: () => new URLSearchParams(mocks.search),
+}));
+
 vi.mock('next/script', () => ({
   default: (props: Record<string, unknown>) => {
     mocks.scripts.push(props);
@@ -52,13 +58,59 @@ describe('YandexMetrica', () => {
     expect(snippet()).toContain('url: location.href');
   });
 
-  /* Yandex's snippet, unmodified: no `defer`, and no `hit` of our own. The SPA
-     wiring is a deliberate non-goal here — see the component's second warning. */
-  it("keeps Yandex's snippet unmodified", () => {
+  /* Yandex's SPA setup, and the two halves only work together: `defer` turns off
+     the automatic view, the `hit` on the next line sends it with the URL read
+     there. Drop either and the landing view is lost or lands on the wrong page. */
+  it('follows the SPA setup: defer, then the landing hit from the snippet', () => {
     render(<YandexMetrica />);
 
-    expect(snippet()).not.toContain('defer');
-    expect(snippet()).not.toContain("'hit'");
+    expect(snippet()).toContain('defer: true');
+    expect(snippet()).toContain(`ym(${COUNTER_ID}, 'hit', location.pathname + location.search)`);
+  });
+
+  it('sends one hit per navigation and none for the landing view', async () => {
+    const ym = vi.fn();
+    window.ym = ym;
+    mocks.pathname = '/';
+    mocks.search = '';
+    /* A fresh module: the guard this asserts is module state by design, so a copy
+       already mounted by the tests above would make the landing case vacuous. */
+    vi.resetModules();
+    const { MetricaRouteHits } = await import('./MetricaRouteHits');
+
+    /* Strict Mode on purpose: it is what the module-level URL guard exists for,
+       and a `useRef` guard would send the landing view here. */
+    const { rerender } = render(
+      <StrictMode>
+        <MetricaRouteHits />
+      </StrictMode>
+    );
+    expect(ym).not.toHaveBeenCalled();
+
+    mocks.pathname = '/news/';
+    rerender(
+      <StrictMode>
+        <MetricaRouteHits />
+      </StrictMode>
+    );
+    expect(ym.mock.calls).toEqual([[COUNTER_ID, 'hit', '/news/']]);
+
+    // A re-render that changes no URL is not a view.
+    rerender(
+      <StrictMode>
+        <MetricaRouteHits />
+      </StrictMode>
+    );
+    expect(ym).toHaveBeenCalledTimes(1);
+
+    // The site paginates and filters by query alone, so the pathname cannot be the key.
+    mocks.search = 'category=articles';
+    rerender(
+      <StrictMode>
+        <MetricaRouteHits />
+      </StrictMode>
+    );
+    expect(ym.mock.calls[1]).toEqual([COUNTER_ID, 'hit', '/news/?category=articles']);
   });
 
   /* The server render, not `render()`: React drops `<noscript>` children on the
