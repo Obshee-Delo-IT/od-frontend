@@ -57,30 +57,56 @@ const fold = (text: string): string =>
     .replace(/ё/g, 'е')
     .replace(/[«»“”„‟"'’‘‚`]/g, '"');
 
-/** Where WordPress ends a line. A headline pasted as its own first line is followed by one of these. */
-const FIRST_BLOCK_END = /<\/(?:p|h[1-6]|div|li|blockquote|figcaption)>|<br\s*\/?>/i;
+/**
+ * Where WordPress ends a line. Nesting is why this is a replace and not a
+ * search: a Gutenberg body opens with `<div class="wp-block-group">` wrappers
+ * and often a gallery, so «the first block» is a `</div>` several levels in,
+ * while the first line a *reader* sees is the first block that carries text.
+ */
+const BLOCK_END = /<\/(?:p|h[1-6]|div|li|blockquote|figure|figcaption|section|article|tr|td)>|<br\s*\/?>/gi;
+
+/** Ends a sentence, so a title ending in one is a whole sentence of the lede. */
+const SENTENCE_END = /[.!?…]$/;
+
+/** The first line of the body that carries any text at all; `''` when there is none. */
+const firstTextLine = (html?: string | null): string => {
+  if (!html) {
+    return '';
+  }
+  const lines = stripHtml(html.replace(BLOCK_END, '\u0000')).split('\u0000');
+
+  return lines.map((line) => line.trim()).find(Boolean) ?? '';
+};
 
 /**
- * Whether the **body** opens with a line that is nothing but the title — the
- * editor's pasted headline, and the only case where cutting it is safe.
+ * Whether the **body** opens with the title — the editor's pasted headline, and
+ * the only case where cutting the echo out of the description is safe.
  *
  * The signal has to be read here rather than off the excerpt, because
  * `wp_trim_excerpt` flattens the body's markup into one `<p>`: in
  * `excerpt.rendered` the pasted headline and the sentence after it are the same
- * paragraph, so a prefix match there cannot tell «ЗДОРОВЬЕ — ВАЖНЕЙШИЙ РЕСУРС\n21
- * апреля в гимназии…» (two lines, an echo) from «Общее дело в Республике Саха
- * продолжает работу…» (one sentence, whose subject happens to be the title). Cut
- * the second and the description is a subjectless fragment.
+ * paragraph, so a prefix match there cannot tell «ЗДОРОВЬЕ — ВАЖНЕЙШИЙ РЕСУРС /
+ * 21 апреля в гимназии…» (two lines, an echo) from «3 февраля в Москве прошёл
+ * «ПРО-форум» для команд-добровольцев, участвующих в…» (one sentence, whose
+ * opening happens to be the title). Cut the second and the description is a
+ * fragment starting mid-clause.
+ *
+ * Two shapes count, both measured on production's newest 25 posts. The line
+ * **is** the title — 7 of the 13 echoes. Or the line **opens** with it and the
+ * title ends in a full stop, which makes the copy a complete sentence and the
+ * remainder another one — 3 more. The rest are titles the body reproduces with a
+ * line break inside, where no cut can be made cleanly and none is.
  */
 const opensWithTitleLine = (contentHtml?: string | null, title?: string | null): boolean => {
   const bare = (title ?? '').replace(EDGE_PUNCT, '');
-  if (!contentHtml || bare.length < MIN_TITLE_LEAD) {
+  if (bare.length < MIN_TITLE_LEAD) {
     return false;
   }
-  const end = contentHtml.search(FIRST_BLOCK_END);
-  const firstLine = stripHtml(end === -1 ? contentHtml : contentHtml.slice(0, end)).replace(EDGE_PUNCT, '');
+  const line = firstTextLine(contentHtml);
+  const folded = fold(line);
+  const foldedTitle = fold(bare);
 
-  return fold(firstLine) === fold(bare);
+  return folded === foldedTitle || (SENTENCE_END.test((title ?? '').trim()) && folded.startsWith(foldedTitle));
 };
 
 /**

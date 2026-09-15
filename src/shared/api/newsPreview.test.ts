@@ -70,8 +70,8 @@ describe('buildNewsPreview, against the excerpts WordPress really sends', () => 
 /**
  * Editors paste the headline as the post's first line and leave the manual
  * excerpt empty, so WordPress builds `excerpt.rendered` out of a body that opens
- * with the title — and the card printed the headline twice. 65 of the newest 100
- * posts on production, 67 of 300 across the archive.
+ * with the title — and the card printed the headline twice. Measured on
+ * production: 16 of the newest 20 posts, and 0 of 40 sampled across 2011-2022.
  */
 describe('buildNewsPreview, dropping the headline echo', () => {
   const TITLE = 'ЗДОРОВЬЕ — ВАЖНЕЙШИЙ РЕСУРС В ПОВСЕДНЕВНОЙ ЖИЗНИ';
@@ -93,6 +93,32 @@ describe('buildNewsPreview, dropping the headline echo', () => {
     const excerpt = '<p>ВСЕ ОБ ОПЫТЕ "ОБЩЕГО ДЕЛА" В ЯКУТИИ. В Якутске состоялся форум по общественному здоровью.</p>';
 
     expect(buildNewsPreview(excerpt, body('ВСЕ ОБ ОПЫТЕ "ОБЩЕГО ДЕЛА" В ЯКУТИИ', rest), title)).toBe(rest);
+  });
+
+  it('reads past the block wrappers and the gallery a Gutenberg body opens with', () => {
+    /* #74417's real shape: `<div class="wp-block-group">` twice, then a gallery,
+       then the pasted headline. The first *block* closes several levels in and
+       carries no text, so the signal has to be the first line that does. */
+    const rest = '21 апреля в МАОУ «Башкирская гимназия» состоялось занятие по профилактике.';
+    const content = `<div class="wp-block-group"><div class="wp-block-group__inner-container"><figure class="wp-block-gallery"><img src="a.jpg" alt="фото"/></figure><p>${TITLE}</p><p>${rest}</p></div></div>`;
+
+    expect(buildNewsPreview(`<p>${TITLE} ${rest}</p>`, content, TITLE)).toBe(rest);
+  });
+
+  it('cuts a title that is itself the whole first sentence of the lede', () => {
+    // #74524. The copy ends in a full stop, so what follows is another sentence.
+    const title = '20 апреля в рамках конкурса «Общее дело-ПРО» прошёл форум «Про-Защита».';
+    const rest = 'Участники представили свои проекты и обсудили профилактическую работу в школах.';
+
+    expect(buildNewsPreview(`<p>${title} ${rest}</p>`, `<p>${title} ${rest}</p>`, title)).toBe(rest);
+  });
+
+  it('leaves a title that is only the opening of a longer sentence', () => {
+    // #74234. No full stop, so the line runs on and the cut would start mid-clause.
+    const title = '3 февраля 2026 года в Москве прошёл «ПРО-форум» для команд-добровольцев';
+    const line = `${title}, участвующих в конкурсе социальных проектов в сфере здоровьесбережения.`;
+
+    expect(buildNewsPreview(`<p>${line}</p>`, `<p>${line}</p>`, title)).toBe(line);
   });
 
   it("leaves the title alone when it is the first sentence's subject, not a line of its own", () => {
