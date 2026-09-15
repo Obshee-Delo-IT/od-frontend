@@ -4,7 +4,8 @@ name: deploy
 #
 # Two tiers exist and they cannot share an image: `SITE_URL` and `WP_BASE` are
 # baked in at build time — the first into every canonical, the sitemap and
-# `robots.txt`, the second into `images.remotePatterns`. So a tier is a set of
+# `robots.txt`, the second into `images.remotePatterns` — and so is
+# `METRICA_COUNTER_ID`, which only production has. So a tier is a set of
 # repository variables, a Coolify application, and a build of its own.
 #
 # `stage` runs from `ci.yml` on every push to `main`. `prod` is dispatched by
@@ -49,6 +50,11 @@ jobs:
       WP_BASE: ${{ inputs.tier == 'prod' && vars.WP_BASE_PROD || vars.WP_BASE }}
       SITE_URL: ${{ inputs.tier == 'prod' && vars.SITE_URL_PROD || vars.SITE_URL }}
       WP_MEDIA_CDN: ${{ vars.WP_MEDIA_CDN }}
+      # Production's counter, and deliberately nothing for any other tier: one
+      # counter, one source (§4.9). Empty is a working configuration here, so it
+      # is not in the guard's list — the prod-only check below covers the case
+      # that matters.
+      METRICA_COUNTER_ID: ${{ inputs.tier == 'prod' && vars.METRICA_COUNTER_ID_PROD || '' }}
       APP: ${{ inputs.tier == 'prod' && vars.COOLIFY_APP_UUID_PROD || vars.COOLIFY_APP_UUID }}
 
     steps:
@@ -66,6 +72,13 @@ jobs:
           # mis-set variable before 8 000 canonical URLs are baked.
           if [ "${{ inputs.tier }}" = prod ] && [ "$SITE_URL" != https://obshee-delo.ru ]; then
             echo "::error::prod: SITE_URL is $SITE_URL, not the apex"
+            exit 1
+          fi
+          # A missing counter id fails nothing at runtime — the tag simply does
+          # not render, and nobody notices until someone opens Метрика a week
+          # later and finds a hole. So prod says so at build time.
+          if [ "${{ inputs.tier }}" = prod ] && [ -z "$METRICA_COUNTER_ID" ]; then
+            echo "::error::prod: METRICA_COUNTER_ID resolves to nothing — add the repository variable METRICA_COUNTER_ID_PROD"
             exit 1
           fi
           echo "$WP_BASE → $SITE_URL, application $APP"
@@ -98,6 +111,7 @@ jobs:
             WP_BASE=${{ env.WP_BASE }}
             WP_MEDIA_CDN=${{ env.WP_MEDIA_CDN }}
             SITE_URL=${{ env.SITE_URL }}
+            METRICA_COUNTER_ID=${{ env.METRICA_COUNTER_ID }}
           # The credentials are needed at build time too — without them
           # `httpClient` stubs and every prerendered page ships an empty header
           # and footer for the hour of `revalidate = 3600`. They must never be

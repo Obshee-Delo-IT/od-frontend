@@ -37,9 +37,16 @@ COPY . .
 ARG WP_BASE
 ARG WP_MEDIA_CDN
 ARG SITE_URL
+# Not a secret — it ships in the HTML of every page — but a per-tier value, and
+# one the public repository does not carry. Empty is the off switch, and the
+# wanted state on every tier but production. Build-time because the root layout
+# renders into prerendered HTML: setting it on a running container changes
+# nothing.
+ARG METRICA_COUNTER_ID
 ENV WP_BASE=$WP_BASE
 ENV WP_MEDIA_CDN=$WP_MEDIA_CDN
 ENV SITE_URL=$SITE_URL
+ENV METRICA_COUNTER_ID=$METRICA_COUNTER_ID
 
 # The credentials are needed *during* the build and are deliberately NOT build
 # args. Without them `httpClient` falls back to its stub, `pnpm build` still
