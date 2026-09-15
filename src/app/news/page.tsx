@@ -2,8 +2,14 @@ import { notFound } from 'next/navigation';
 import { NewsFilter, NewsGrid, type NewsFilterOption } from '@/modules/News';
 import { NewsletterSignup } from '@/modules/NewsletterSignup';
 import { fetchNewsList } from '@/shared/api';
-import { ARTICLES_HREF, NEWS_CATEGORIES, resolveNewsCategory } from '@/shared/config/newsCategories';
-import { canonicalUrl, OG_NEWS_IMAGE } from '@/shared/config/site';
+import {
+  ARTICLES_DESCRIPTION,
+  ARTICLES_HREF,
+  ARTICLES_TITLE,
+  NEWS_CATEGORIES,
+  resolveNewsCategory,
+} from '@/shared/config/newsCategories';
+import { canonicalUrl, ogCard, ogSectionImage, OG_ARTICLES_IMAGE, OG_NEWS_IMAGE } from '@/shared/config/site';
 import { Box } from '@/shared/ui/components/Box';
 import { PageHeader } from '@/shared/ui/components/PageHeader';
 import { Pagination } from '@/shared/ui/components/Pagination';
@@ -80,11 +86,20 @@ export const generateMetadata = async ({ searchParams }: NewsPageProps): Promise
   const scope = activeCategory && label ? `Новости: ${label}` : 'Новости';
   const title = `${scope}${currentPage > 1 ? `, страница ${currentPage}` : ''} — ОБЩЕЕ ДЕЛО`;
 
+  /* The alias's own card under the alias's own URL. A network caches a card
+     against `og:url`, so publishing a second one there would mean whichever of
+     the two pages is scraped first decides what both of them unfurl as. The
+     `<title>` stays this route's, because that is the tab of the page actually
+     being read. */
+  const card = isArticlesIndex
+    ? { title: ARTICLES_TITLE, description: ARTICLES_DESCRIPTION, images: [ogSectionImage(OG_ARTICLES_IMAGE)] }
+    : { title, description: DESCRIPTION, images: [ogSectionImage(OG_NEWS_IMAGE)] };
+
   return {
     title,
-    description: DESCRIPTION,
+    description: isArticlesIndex ? ARTICLES_DESCRIPTION : DESCRIPTION,
     alternates: { canonical: url },
-    openGraph: { url, title, description: DESCRIPTION, images: [OG_NEWS_IMAGE] },
+    openGraph: ogCard({ type: 'website', url, ...card }),
   };
 };
 

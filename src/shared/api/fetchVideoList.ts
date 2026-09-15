@@ -23,6 +23,23 @@ export interface VideoSummary {
   link: string;
   date: string | null;
   thumbnailUrl: string | null;
+  /**
+   * The thumbnail's pixels, when it came from the featured image — WP puts them
+   * in the `_embed` payload for free, and the film card states them so a crawler
+   * can lay the share out before it has fetched the file. `null` for the body
+   * image and the Kinescope poster, whose sizes nothing here knows.
+   */
+  thumbnailSize: { width?: number; height?: number } | null;
+  /**
+   * What the **social card** should advertise, which is not always what the
+   * page shows. The visible thumbnail falls back to the body's first image, and
+   * on a film that is as likely to be the «Скачать с Яндекс.Диска» button
+   * (294×68, measured on 50161 and 50167) as a frame — a card that renders
+   * blank in Facebook and WhatsApp. So the card takes the editor's featured
+   * image or the Kinescope poster, and otherwise nothing, which `ogCardImage`
+   * turns into the branded card.
+   */
+  cardImageUrl: string | null;
   excerpt: string | null;
   categories: number[];
   /** Kinescope video id — the on-site player embed (E4), when populated. */
@@ -105,7 +122,9 @@ export interface RawVideoPost {
   excerpt?: { rendered?: string };
   categories?: number[];
   acf?: RawAcf;
-  _embedded?: { 'wp:featuredmedia'?: Array<{ source_url?: string }> };
+  _embedded?: {
+    'wp:featuredmedia'?: Array<{ source_url?: string; media_details?: { width?: number; height?: number } }>;
+  };
 }
 
 const trimOrNull = (value?: string): string | null => {
@@ -132,16 +151,25 @@ const toDownloads = (acf: RawAcf): VideoDownload[] => {
 export const mapVideoSummary = async (post: RawVideoPost): Promise<VideoSummary> => {
   const acf = post.acf ?? {};
   const kinescopeId = trimOrNull(acf.kinescope_id);
+  const featured = post._embedded?.['wp:featuredmedia']?.[0];
+  // `resolveMediaUrl` answers null only for a nullish source, so a non-null
+  // `resolved` means the URL above it is the one that won — which is what makes
+  // it safe to attach the featured image's dimensions to it.
+  const resolved = await resolveMediaUrl(featured?.source_url ?? extractFirstImage(post.content?.rendered, wpBaseUrl));
+  const fromFeatured = Boolean(featured?.source_url);
+  const title = stripHtml(post.title?.rendered);
   return {
     id: post.id ?? 0,
-    title: stripHtml(post.title?.rendered),
+    title,
     link: post.link ?? '#',
     date: post.date ?? null,
-    thumbnailUrl:
-      (await resolveMediaUrl(
-        post._embedded?.['wp:featuredmedia']?.[0]?.source_url ?? extractFirstImage(post.content?.rendered, wpBaseUrl)
-      )) ?? kinescopePosterUrl(kinescopeId),
-    excerpt: buildNewsPreview(post.excerpt?.rendered, post.content?.rendered),
+    thumbnailUrl: resolved ?? kinescopePosterUrl(kinescopeId),
+    thumbnailSize:
+      resolved && fromFeatured
+        ? { width: featured?.media_details?.width, height: featured?.media_details?.height }
+        : null,
+    cardImageUrl: (fromFeatured ? resolved : null) ?? kinescopePosterUrl(kinescopeId),
+    excerpt: buildNewsPreview(post.excerpt?.rendered, post.content?.rendered, title),
     categories: post.categories ?? [],
     kinescopeId,
     watchUrl: trimOrNull(acf.watch_url),

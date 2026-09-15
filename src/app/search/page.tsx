@@ -1,5 +1,5 @@
 import { fetchSearch, type SearchSubtype } from '@/shared/api';
-import { canonicalUrl } from '@/shared/config/site';
+import { canonicalUrl, ogCard } from '@/shared/config/site';
 import { Box } from '@/shared/ui/components/Box';
 import { Link } from '@/shared/ui/components/Link';
 import { PageHeader } from '@/shared/ui/components/PageHeader';
@@ -8,6 +8,7 @@ import css from './page.module.css';
 import type { Metadata } from 'next';
 
 const TITLE = 'Поиск по сайту';
+const DESCRIPTION = 'Поиск по новостям, фильмам, материалам и страницам сайта «Общее дело».';
 const PER_PAGE = 20;
 
 /** What a hit is, in words, for the line under its title. */
@@ -59,11 +60,24 @@ const buildHref = ({ query, page }: { query: string; page: number }): string => 
  */
 export const generateMetadata = async ({ searchParams }: SearchPageProps): Promise<Metadata> => {
   const { query } = resolveParams(await searchParams);
+  const title = query ? `Поиск: ${query} — ОБЩЕЕ ДЕЛО` : `${TITLE} — ОБЩЕЕ ДЕЛО`;
+  const description = query ? `Результаты поиска по сайту «Общее дело»: ${query}.` : DESCRIPTION;
 
   return {
-    title: query ? `Поиск: ${query} — ОБЩЕЕ ДЕЛО` : `${TITLE} — ОБЩЕЕ ДЕЛО`,
+    title,
+    description,
     robots: { index: false, follow: true },
     alternates: { canonical: canonicalUrl('/search/') },
+    /* Declaring none kept the root layout's card, so a shared search link
+       unfurled as the home page. `noindex` says nothing about what a chat client
+       renders when someone pastes the URL.
+
+       `og:url` carries the query while the canonical does not, and the two
+       disagree on purpose: the canonical collapses every query onto one
+       indexable address, while a network caches the card *against* `og:url`, so
+       the bare form there would make every shared search unfurl as whichever
+       query was scraped first. */
+    openGraph: ogCard({ type: 'website', url: canonicalUrl(buildHref({ query, page: 1 })), title, description }),
   };
 };
 

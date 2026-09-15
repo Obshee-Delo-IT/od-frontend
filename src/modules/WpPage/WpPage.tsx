@@ -3,7 +3,7 @@ import { extractFirstImage } from '@/shared/api/extractFirstImage';
 import { wpBaseUrl } from '@/shared/api/httpClient';
 import { resolveMediaUrl } from '@/shared/api/mediaUrl';
 import { resolvePageSection } from '@/shared/config/pageSections';
-import { canonicalUrl, OG_DEFAULT_IMAGE, SITE_NAME } from '@/shared/config/site';
+import { canonicalUrl, ogCard, ogCardImage, SITE_NAME } from '@/shared/config/site';
 import { paginatedPath, parsePost, resolveContentHtml, resolveQueryPagination } from '@/shared/lib/wpContent';
 import { Box } from '@/shared/ui/components/Box';
 import { ImagePreviewClient } from '@/shared/ui/components/ImagePreview';
@@ -67,10 +67,9 @@ export const wpPageMetadata = async ({ page, path, pageNumber = 1 }: WpPageProps
     title,
     description,
     alternates: { canonical: url },
-    openGraph: {
+    openGraph: ogCard({
       type: 'article',
       url,
-      locale: 'ru_RU',
       title,
       description,
       /* A page carries no featured image (1 of 100 on od-stage does), so the
@@ -78,9 +77,11 @@ export const wpPageMetadata = async ({ page, path, pageNumber = 1 }: WpPageProps
          because the WordPress origin 301s an offloaded upload to the Yandex
          bucket and a crawler that doesn't follow the hop shows no image.
          `/contacts/` ends up on the branded card by the same route: all four of
-         its images are the truncated base64 blobs `extractFirstImage` skips. */
-      images: [image ?? OG_DEFAULT_IMAGE],
-    },
+         its images are the truncated base64 blobs `extractFirstImage` skips.
+         No dimensions: a body image is an `<img>` in HTML, and the pixels would
+         cost a second media request per page to learn. */
+      images: [ogCardImage(image)],
+    }),
   };
 };
 

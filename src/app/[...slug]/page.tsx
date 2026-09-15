@@ -11,7 +11,7 @@ import { cachedFetchWpPage } from '@/shared/api/fetchWpPage';
 import { client, wpFetch } from '@/shared/api/httpClient';
 import { ALL_FILM_CATEGORY_IDS } from '@/shared/config/filmCategories';
 import { isLegacyEmbedPage } from '@/shared/config/legacyEmbedPages';
-import { canonicalUrl } from '@/shared/config/site';
+import { canonicalUrl, ogCard } from '@/shared/config/site';
 import { decodeSegments, isEmbeddable, legacyPathname, loadLegacyDocument } from '@/shared/legacy';
 import type { Metadata } from 'next';
 
@@ -178,12 +178,15 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
         return wpPageMetadata({ page, path: nativePath, pageNumber });
       }
     }
-    if (pageNumber > 1) {
-      return {};
-    }
     // Always **our** canonical, never the legacy origin's: after cutover that
     // origin is a private frozen copy, and pointing at it would canonicalise
     // the site onto a host nobody can reach.
+    //
+    // `page/N/` of an embedded page comes through here too (ROUTE-15 serves it,
+    // the same document paginated by the frozen copy): returning `{}` for it
+    // left an indexable 200 with no canonical and a card that unfurled as the
+    // home page. `legacyPathname` keeps the page number, so the document it
+    // loads is the one the route renders.
     const path = legacyPathname(slug);
     const alternates = { canonical: canonicalUrl(path) };
     const legacy = await loadLegacyPage(path);
@@ -193,10 +196,19 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
       // instead of emitting a blank title.
       return { alternates };
     }
+    /* The card has to be declared here too, and for the inverse reason to
+       everywhere else: a branch that declares *no* `openGraph` keeps the root
+       layout's whole — so these six indexable pages had the legacy page's
+       `<title>` in the tab and «ОБЩЕЕ ДЕЛО» with the home page's description on
+       the card, and no `og:url` at all. Both strings are already in hand. */
+    const title = legacy.document.title ?? undefined;
+    const description = legacy.document.description ?? undefined;
+
     return {
-      title: legacy.document.title ?? undefined,
-      description: legacy.document.description ?? undefined,
+      title,
+      description,
       alternates,
+      openGraph: ogCard({ type: 'website', url: canonicalUrl(path), title, description }),
     };
   }
 

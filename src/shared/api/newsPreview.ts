@@ -43,20 +43,113 @@ const truncate = (text: string): string =>
         .replace(/\s+\S*$/, '')
         .trimEnd()}…`;
 
+/** Two Russian words' worth of characters. Below this a title is too generic to be a safe signal. */
+const MIN_TITLE_LEAD = 12;
+/** Below this the remainder is a stub, not a description — try the next source. */
+const MIN_REMAINDER = 40;
+const EDGE_PUNCT = /^[\s.,;:!?…—–-]+|[\s.,;:!?…—–-]+$/g;
+const LEADING_PUNCT = /^[\s.,;:!?…—–-]+/;
+
+/** Case-, ё- and quote-insensitive fold. Comparison only — never emitted. */
+const fold = (text: string): string =>
+  text
+    .toLowerCase()
+    .replace(/ё/g, 'е')
+    .replace(/[«»“”„‟"'’‘‚`]/g, '"');
+
+/** Where WordPress ends a line. A headline pasted as its own first line is followed by one of these. */
+const FIRST_BLOCK_END = /<\/(?:p|h[1-6]|div|li|blockquote|figcaption)>|<br\s*\/?>/i;
+
+/**
+ * Whether the **body** opens with a line that is nothing but the title — the
+ * editor's pasted headline, and the only case where cutting it is safe.
+ *
+ * The signal has to be read here rather than off the excerpt, because
+ * `wp_trim_excerpt` flattens the body's markup into one `<p>`: in
+ * `excerpt.rendered` the pasted headline and the sentence after it are the same
+ * paragraph, so a prefix match there cannot tell «ЗДОРОВЬЕ — ВАЖНЕЙШИЙ РЕСУРС\n21
+ * апреля в гимназии…» (two lines, an echo) from «Общее дело в Республике Саха
+ * продолжает работу…» (one sentence, whose subject happens to be the title). Cut
+ * the second and the description is a subjectless fragment.
+ */
+const opensWithTitleLine = (contentHtml?: string | null, title?: string | null): boolean => {
+  const bare = (title ?? '').replace(EDGE_PUNCT, '');
+  if (!contentHtml || bare.length < MIN_TITLE_LEAD) {
+    return false;
+  }
+  const end = contentHtml.search(FIRST_BLOCK_END);
+  const firstLine = stripHtml(end === -1 ? contentHtml : contentHtml.slice(0, end)).replace(EDGE_PUNCT, '');
+
+  return fold(firstLine) === fold(bare);
+};
+
+/**
+ * The same text with a leading verbatim copy of the title removed; `text`
+ * unchanged when there is none, and `''` when nothing usable is left — which
+ * the caller reads as "this source is exhausted" and moves to the next one.
+ *
+ * Editors paste the headline as the post's first line and leave the manual
+ * excerpt empty; WordPress then builds `excerpt.rendered` from the body's first
+ * ~55 words, so the excerpt opens with the title verbatim and the card prints
+ * the headline twice. Measured against production: 16 of the newest 20 posts —
+ * and 0 of 40 sampled across 2011-2022, so it is a recent editorial habit rather
+ * than a property of the archive.
+ *
+ * Deliberately only a **leading** copy, and only the **whole** title: «САХАР
+ * АТАКУЕТ» inside «ОПИСАНИЕ МУЛЬТФИЛЬМА «САХАР АТАКУЕТ» Ребенок снова…» is part
+ * of a sentence, and excising it would wreck the sentence.
+ *
+ * The comparison folds both sides, the slice indexes the original: `toLowerCase`
+ * is not length-preserving for every scalar (ẞ → ss), so folding before slicing
+ * would drift the cut.
+ */
+const withoutLeadingTitle = (text: string, title?: string | null): string => {
+  const bare = (title ?? '').replace(EDGE_PUNCT, '');
+  const skip = (text.match(LEADING_PUNCT)?.[0] ?? '').length;
+  if (bare.length < MIN_TITLE_LEAD || fold(text.slice(skip, skip + bare.length)) !== fold(bare)) {
+    return text;
+  }
+  const rest = text
+    .slice(skip + bare.length)
+    .replace(LEADING_PUNCT, '')
+    .trim();
+
+  return rest.length >= MIN_REMAINDER ? rest : '';
+};
+
 /**
  * Build the text preview for a news item: prefer WP's `excerpt.rendered`,
  * fall back to a truncated `content.rendered` when the excerpt is empty
  * (common for posts with no manual excerpt). Returns null when neither
  * yields text.
+ *
+ * Pass the post's `title` — stripped, as the fetchers already have it — to drop
+ * the headline echo described on {@link withoutLeadingTitle}. It is optional so
+ * that a caller which doesn't have one degrades to the old behaviour rather
+ * than to a wrong cut, and it is acted on only when {@link opensWithTitleLine}
+ * says the body really does open with the headline on a line of its own.
  */
-export const buildNewsPreview = (excerptHtml?: string | null, contentHtml?: string | null): string | null => {
+export const buildNewsPreview = (
+  excerptHtml?: string | null,
+  contentHtml?: string | null,
+  title?: string | null
+): string | null => {
   // The same MAX_PREVIEW bound as the content fallback: this feeds
   // `<meta name="description">`, and an unbounded excerpt ran to 793 chars.
-  const excerpt = truncate(stripHtml(excerptHtml?.replace(MORE_LINK, '')));
-  if (excerpt) {
-    return excerpt;
+  // Truncation runs *after* the cut, so the 300 chars are spent on text the
+  // reader hasn't just read in the headline — on one measured post the echo
+  // alone ate 170 of them.
+  const echo = opensWithTitleLine(contentHtml, title);
+  const excerpt = stripHtml(excerptHtml?.replace(MORE_LINK, ''));
+  const fromExcerpt = echo ? withoutLeadingTitle(excerpt, title) : excerpt;
+  if (fromExcerpt) {
+    return truncate(fromExcerpt);
   }
   const content = stripHtml(contentHtml);
+  // The echo-free body, else whatever text exists: a description that repeats
+  // the title still beats no description at all, and a post whose whole text is
+  // its own title («Письмо Путину. Откровение.») has nothing else to offer.
+  const text = (echo ? withoutLeadingTitle(content, title) : content) || excerpt || content;
 
-  return content ? truncate(content) : null;
+  return text ? truncate(text) : null;
 };

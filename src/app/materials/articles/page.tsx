@@ -1,17 +1,13 @@
 import { NewsGrid } from '@/modules/News';
 import { NewsletterSignup } from '@/modules/NewsletterSignup';
 import { fetchNewsList } from '@/shared/api';
-import { ARTICLES_HREF, NEWS_CATEGORIES } from '@/shared/config/newsCategories';
-import { canonicalUrl, OG_ARTICLES_IMAGE } from '@/shared/config/site';
+import { ARTICLES_DESCRIPTION, ARTICLES_HREF, ARTICLES_TITLE, NEWS_CATEGORIES } from '@/shared/config/newsCategories';
+import { canonicalUrl, ogCard, ogSectionImage, OG_ARTICLES_IMAGE } from '@/shared/config/site';
 import { Box } from '@/shared/ui/components/Box';
 import { PageHeader } from '@/shared/ui/components/PageHeader';
 import type { Metadata } from 'next';
 
 export const revalidate = 3600;
-
-const TITLE = 'Статьи для газет и журналов';
-const DESCRIPTION =
-  'Статьи о вреде алкоголя, табака и других психоактивных веществ — материалы «Общего дела» для газет и журналов.';
 
 /**
  * WP caps `per_page` at 100. The collection is 19 posts after ten years and
@@ -25,10 +21,16 @@ const PER_PAGE = 100;
 export const generateMetadata = (): Metadata => {
   const url = canonicalUrl(ARTICLES_HREF);
   return {
-    title: `${TITLE} — ОБЩЕЕ ДЕЛО`,
-    description: DESCRIPTION,
+    title: `${ARTICLES_TITLE} — ОБЩЕЕ ДЕЛО`,
+    description: ARTICLES_DESCRIPTION,
     alternates: { canonical: url },
-    openGraph: { url, title: TITLE, description: DESCRIPTION, images: [OG_ARTICLES_IMAGE] },
+    openGraph: ogCard({
+      type: 'website',
+      url,
+      title: ARTICLES_TITLE,
+      description: ARTICLES_DESCRIPTION,
+      images: [ogSectionImage(OG_ARTICLES_IMAGE)],
+    }),
   };
 };
 
@@ -61,7 +63,7 @@ const Page = async () => {
 
   return (
     <Box display="flex" flexDirection="column" gap={40} pt={20} pb={48}>
-      <PageHeader title={TITLE} breadcrumbs={breadcrumbItems} />
+      <PageHeader title={ARTICLES_TITLE} breadcrumbs={breadcrumbItems} />
 
       <NewsGrid items={items} emptyMessage="Статей не найдено." />
 

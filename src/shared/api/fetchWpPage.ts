@@ -181,11 +181,13 @@ export const fetchWpPage = async (path: string, pageNumber = 1): Promise<WpPageC
   // Everything but the body is the page's own and identical on every page of
   // it, so it is read from the first response — a title and a description that
   // drifted with the pagination would be a defect, not a feature.
+  const title = stripHtml(page.title?.rendered);
+
   return {
     id: page.id,
-    title: stripHtml(page.title?.rendered),
+    title,
     contentHtml,
-    description: buildNewsPreview(page.excerpt?.rendered, page.content?.rendered),
+    description: buildNewsPreview(page.excerpt?.rendered, page.content?.rendered, title),
     ancestors: await fetchAncestors(page.parent ?? 0),
   };
 };

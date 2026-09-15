@@ -40,3 +40,14 @@ export const resolveNewsCategory = (value: string | undefined | null): NewsCateg
  * canonicalises here, so the collection has one address rather than two.
  */
 export const ARTICLES_HREF = '/materials/articles/';
+
+/**
+ * The alias route's own copy, here rather than in `app/materials/articles/` so
+ * `/news/?category=articles` can advertise the same card without importing a
+ * route module. It has to be the same card: a network caches one against
+ * `og:url`, and both addresses publish the alias's, so two different cards there
+ * would mean whichever is scraped first decides what both of them unfurl as.
+ */
+export const ARTICLES_TITLE = 'Статьи для газет и журналов';
+export const ARTICLES_DESCRIPTION =
+  'Статьи о вреде алкоголя, табака и других психоактивных веществ — материалы «Общего дела» для газет и журналов.';

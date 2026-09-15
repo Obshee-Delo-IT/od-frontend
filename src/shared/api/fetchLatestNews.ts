@@ -49,18 +49,22 @@ export const fetchLatestNews = async (limit = 4): Promise<NewsSummary[]> => {
   }
   const data = (await res.json()) as RawPost[];
   return Promise.all(
-    data.map(async (post, index) => ({
-      id: post.id ?? 0,
-      title: stripHtml(post.title?.rendered),
-      link: post.link ?? '#',
-      date: post.date ?? null,
-      thumbnailUrl: await resolveMediaUrl(
-        post._embedded?.['wp:featuredmedia']?.[0]?.source_url ?? extractFirstImage(post.content?.rendered, wpBaseUrl)
-      ),
-      // Only the lead item is shown as the featured card with a text preview;
-      // the rest are compact cards (date + title only), so skip the work.
-      thumbnailRatio: mediaRatio(post._embedded?.['wp:featuredmedia']?.[0]),
-      excerpt: index === 0 ? buildNewsPreview(post.excerpt?.rendered, post.content?.rendered) : null,
-    }))
+    data.map(async (post, index) => {
+      const title = stripHtml(post.title?.rendered);
+
+      return {
+        id: post.id ?? 0,
+        title,
+        link: post.link ?? '#',
+        date: post.date ?? null,
+        thumbnailUrl: await resolveMediaUrl(
+          post._embedded?.['wp:featuredmedia']?.[0]?.source_url ?? extractFirstImage(post.content?.rendered, wpBaseUrl)
+        ),
+        // Only the lead item is shown as the featured card with a text preview;
+        // the rest are compact cards (date + title only), so skip the work.
+        thumbnailRatio: mediaRatio(post._embedded?.['wp:featuredmedia']?.[0]),
+        excerpt: index === 0 ? buildNewsPreview(post.excerpt?.rendered, post.content?.rendered, title) : null,
+      };
+    })
   );
 };
