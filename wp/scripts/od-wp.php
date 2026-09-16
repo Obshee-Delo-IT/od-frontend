@@ -1154,11 +1154,13 @@ function od_wp_short_films(): array
  * `$append = true`, so a film that already carries the category keeps exactly the
  * categories it has.
  *
- * **The term id it prints is the one the frontend needs.** `FILM_CATEGORIES` in
- * `src/shared/config/filmCategories.ts` — and its copy in `scripts/lib/wp.mjs` —
- * maps the URL segment to a WordPress id, and ids differ per install, so this
- * task's output is the input for that edit on whichever tier it has just run
- * against.
+ * **The frontend needs the slug, not the id it prints.** Ids differ per install
+ * — this task made «Короткометражные» 671 on od-stage and 670 on od-wp — so
+ * `FILM_CATEGORY_SLUGS` in `src/shared/config/filmCategories.ts` holds the slug
+ * and `src/shared/api/termIds.ts` looks the id up against whatever install is
+ * being read. Nothing to copy across after a run; the id below is printed for a
+ * human checking the result, and writing it into the frontend config is the bug
+ * that emptied `/video/short/` on the live site (2026-09-16).
  */
 function od_wp_create_short_category(bool $apply): void
 {
@@ -1205,7 +1207,7 @@ function od_wp_create_short_category(bool $apply): void
         }
 
         $term = get_term((int) $created['term_id'], 'category');
-        WP_CLI::success(sprintf('«%s» (#%d): created — this is the id `FILM_CATEGORIES` needs', $term->name, $term->term_id));
+        WP_CLI::success(sprintf('«%s» (#%d): created — the frontend reads the slug, not this id', $term->name, $term->term_id));
     }
 
     foreach ($short['films'] as $slug) {
