@@ -120,7 +120,9 @@ const resolvePostKind = cache(async (id: string): Promise<'film' | 'news' | null
  * that miss the seed are served on demand via `dynamicParams`.
  */
 export async function generateStaticParams() {
-  const catalogueIds = await allFilmCategoryIds();
+  // Best-effort like the two below it: a seed short of a few films is served on
+  // demand, while a throw here fails the whole build on an upstream hiccup.
+  const catalogueIds = await allFilmCategoryIds().catch(() => []);
   const [films, posts] = await Promise.all([
     wpFetch(`/wp/v2/posts?format=video&categories=${catalogueIds.join(',')}&per_page=20&_fields=id`)
       .then((res) => (res.ok ? (res.json() as Promise<Array<{ id?: number }>>) : []))

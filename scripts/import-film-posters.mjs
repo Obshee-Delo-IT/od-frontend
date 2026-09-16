@@ -44,7 +44,7 @@
  */
 
 import { idSet, readArgs } from './lib/args.mjs';
-import { fetchAllFilms, plainText, readEnv, wpFetch } from './lib/wp.mjs';
+import { fetchAllFilms, fetchFilmCategories, plainText, readEnv, wpFetch } from './lib/wp.mjs';
 
 const OPTIONS = {
   apply: { type: 'boolean', default: false },
@@ -287,9 +287,12 @@ const main = async () => {
   const only = idSet(args.only);
   const env = readEnv();
 
-  const films = (await fetchAllFilms(env, { fields: ['id', 'title', 'acf', 'content', 'featured_media'] })).filter(
-    (film) => !only || only.has(String(film.id))
-  );
+  // Scoped to the catalogue: «Видео события» event reports carry `format=video`
+  // too, and a poster written onto one draws a film's poster card on an event.
+  const { ids } = await fetchFilmCategories(env);
+  const films = (
+    await fetchAllFilms(env, { categories: ids, fields: ['id', 'title', 'acf', 'content', 'featured_media'] })
+  ).filter((film) => !only || only.has(String(film.id)));
 
   console.log(`${args.apply ? 'APPLY' : 'DRY RUN'} — ${films.length} film(s) in the catalogue\n`);
 

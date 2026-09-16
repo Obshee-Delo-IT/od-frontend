@@ -15,8 +15,12 @@
  */
 export const FILM_CATEGORY_SLUGS = ['movies', 'mult', 'roliki', 'short', 'famous'];
 
-/** «Видео события» — event reports, not part of the catalogue but worth naming. */
-export const EVENT_CATEGORY_SLUG = 'video-sobytiya';
+/**
+ * «Видео события» (52, slug `actual`) — event reports. Not part of the
+ * catalogue, and a top-level category rather than a child of «Видео», so it has
+ * to be asked for by name; the worksheet still labels its posts under `--all`.
+ */
+export const EVENT_CATEGORY_SLUG = 'actual';
 
 /** How many generic `download_N_*` slots `group_film_meta` defines. */
 export const DOWNLOAD_SLOTS = 5;
@@ -66,20 +70,34 @@ export const fetchTermIds = async (env, taxonomy, slugs) => {
 
 /** The catalogue's category ids and names on this install, resolved from slugs. */
 export const fetchFilmCategories = async (env) => {
-  const res = await wpFetch(env, '/wp/v2/categories?parent=85&per_page=100&_fields=id,slug,name');
+  const slugs = [...FILM_CATEGORY_SLUGS, EVENT_CATEGORY_SLUG];
+  const query = slugs.map(encodeURIComponent).join(',');
+  const res = await wpFetch(env, `/wp/v2/categories?slug=${query}&per_page=100&_fields=id,slug,name`);
   if (!res.ok) {
-    throw new Error(`WP returned ${res.status} for the «Видео» children`);
+    throw new Error(`WP returned ${res.status} for the catalogue categories`);
   }
-  const children = await res.json();
-  const catalogue = children.filter((category) => FILM_CATEGORY_SLUGS.includes(category.slug));
+  const terms = await res.json();
+  const idOf = (slug) => terms.find((category) => category.slug === slug)?.id;
   return {
-    ids: FILM_CATEGORY_SLUGS.map((slug) => catalogue.find((category) => category.slug === slug)?.id).filter(Boolean),
-    names: Object.fromEntries(children.map((category) => [category.id, plainText(category.name)])),
+    ids: FILM_CATEGORY_SLUGS.map(idOf).filter(Boolean),
+    names: Object.fromEntries(terms.map((category) => [category.id, plainText(category.name)])),
   };
 };
 
-/** Every `format=video` post in the given categories, following pagination. */
-export const fetchAllFilms = async (env, { categories = [], fields } = {}) => {
+/**
+ * Every `format=video` post in the given categories, following pagination.
+ *
+ * `categories` is required and has no default: the ids are per install, so
+ * there is no constant to fall back on, and an empty list means «every
+ * `format=video` post» — which is 187 posts against the catalogue's 84, the
+ * extra ones being «Видео события» event reports. A caller that wants that
+ * (`film:export --all`) says so by passing `[]`; a caller that forgets gets an
+ * error rather than the whole install.
+ */
+export const fetchAllFilms = async (env, { categories, fields } = {}) => {
+  if (!Array.isArray(categories)) {
+    throw new Error('fetchAllFilms needs `categories`: the ids from fetchFilmCategories, or [] for every video post');
+  }
   const films = [];
   const query = new URLSearchParams({ format: 'video', per_page: '100' });
   if (categories.length > 0) {
