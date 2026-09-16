@@ -18,14 +18,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { readArgs } from './lib/args.mjs';
 import { stringifyCsv } from './lib/csv.mjs';
-import {
-  ACF_FIELDS,
-  FILM_CATEGORY_IDS,
-  FILM_CATEGORY_NAMES,
-  fetchAllFilms,
-  plainText,
-  readEnv,
-} from './lib/wp.mjs';
+import { ACF_FIELDS, fetchAllFilms, fetchFilmCategories, plainText, readEnv } from './lib/wp.mjs';
 
 const HINT_COLUMNS = ['hint_body_youtube', 'hint_body_rutube', 'hint_body_downloads', 'hint_featured_image'];
 const META_COLUMNS = ['id', 'title', 'category', 'wp_link'];
@@ -53,8 +46,10 @@ const main = async () => {
   const args = readArgs(OPTIONS);
   const env = readEnv();
 
+  // Resolved per install: the ids differ between od-stage and od-wp.
+  const categories = await fetchFilmCategories(env);
   const films = await fetchAllFilms(env, {
-    categories: args.all ? [] : FILM_CATEGORY_IDS,
+    categories: args.all ? [] : categories.ids,
     fields: ['id', 'title', 'link', 'categories', 'acf', 'content', 'date', 'featured_media'],
   });
 
@@ -65,7 +60,7 @@ const main = async () => {
   const rows = films.map((film) => {
     const acf = film.acf ?? {};
     const hints = mineBody(film.content?.rendered);
-    const category = (film.categories ?? []).map((id) => FILM_CATEGORY_NAMES[id]).find(Boolean) ?? '—';
+    const category = (film.categories ?? []).map((id) => categories.names[id]).find(Boolean) ?? '—';
 
     return [
       film.id,

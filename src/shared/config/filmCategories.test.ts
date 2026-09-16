@@ -1,20 +1,40 @@
 import { describe, expect, it } from 'vitest';
-import { ALL_FILM_CATEGORY_IDS, catalogueHref, FILM_CATEGORIES, resolveFilmCategory } from './filmCategories';
+import { catalogueHref, FILM_CATEGORY_SEGMENTS, FILM_CATEGORY_SLUGS, resolveFilmCategory } from './filmCategories';
 
-describe('FILM_CATEGORIES', () => {
+describe('FILM_CATEGORY_SLUGS', () => {
   it('is keyed by the live site’s URL segments', () => {
     // These segments are the live URLs — /video/multy/ and /video/filmy/ are
     // the #2 and #3 entry pages on the site — so a rename here silently drops
     // that traffic into a 404.
-    expect(Object.keys(FILM_CATEGORIES)).toEqual(['filmy', 'multy', 'roliki', 'short', 'famous-people']);
+    expect(FILM_CATEGORY_SEGMENTS).toEqual(['filmy', 'multy', 'roliki', 'short', 'famous-people']);
   });
 
   it('serves «Короткометражные» — the category the nav always pointed at exists now', () => {
     expect(resolveFilmCategory('short')).toBe('short');
   });
 
-  it('exposes every id for the «Все» union', () => {
-    expect(ALL_FILM_CATEGORY_IDS).toEqual([581, 580, 86, 671, 559]);
+  it('holds WordPress slugs, not term ids', () => {
+    // Ids are per install — «Короткометражные» is 671 on od-stage and 670 on
+    // od-wp — and one build serves every tier, so the id is looked up from the
+    // slug at request time (`shared/api/termIds.ts`). A number here is the bug
+    // that emptied /video/short/ on the live site (2026-09-16).
+    Object.values(FILM_CATEGORY_SLUGS).forEach((slug) => {
+      expect(typeof slug).toBe('string');
+      expect(slug).toMatch(/^[a-z-]+$/);
+    });
+  });
+
+  it('keeps the WordPress slug separate from the URL segment', () => {
+    // The two differ for three of the five, and the segments are what search
+    // traffic lands on — mapping them by hand is the point of this object.
+    expect(FILM_CATEGORY_SLUGS.filmy).toBe('movies');
+    expect(FILM_CATEGORY_SLUGS.multy).toBe('mult');
+    expect(FILM_CATEGORY_SLUGS['famous-people']).toBe('famous');
+  });
+
+  it('gives each category its own slug', () => {
+    const slugs = Object.values(FILM_CATEGORY_SLUGS);
+    expect(new Set(slugs).size).toBe(slugs.length);
   });
 });
 

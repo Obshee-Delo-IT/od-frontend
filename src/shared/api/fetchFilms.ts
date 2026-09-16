@@ -1,9 +1,9 @@
-import { ALL_FILM_CATEGORY_IDS, HOME_FILM_CATEGORY_IDS } from '@/shared/config/filmCategories';
 import { WP_TAGS, wpCache } from './cacheTags';
 import { extractFirstImage } from './extractFirstImage';
 import { wpBaseUrl, wpFetch } from './httpClient';
 import { resolveMediaUrl } from './mediaUrl';
 import { stripHtml } from './newsPreview';
+import { allFilmCategoryIds, homeFilmCategoryIds } from './termIds';
 
 interface FilmSummary {
   id: number;
@@ -34,7 +34,7 @@ interface RawPost {
 /**
  * The newest films for the home page's «Фильмы» row, plus the catalogue's size.
  *
- * **Scoped to «Фильмы» and «Мультфильмы»** (`HOME_FILM_CATEGORY_IDS`) — 35 of the
+ * **Scoped to «Фильмы» and «Мультфильмы»** (`HOME_FILM_SEGMENTS`) — 35 of the
  * catalogue's 83.
  * `format=video` on its own is not «a film»: «Видео события» — event reports
  * with a video attached — carry the same post format, and there are more of them
@@ -44,18 +44,24 @@ interface RawPost {
  * were a report from Serbia and a slёt in Yakutia.
  *
  * The second request is a count-only probe (`per_page=1`, headers read, body
- * discarded) over `ALL_FILM_CATEGORY_IDS`: the CTA says «Все видео (83)» and
+ * discarded) over the whole catalogue: the CTA says «Все видео (83)» and
  * leads to `/video/`, so the number has to be the catalogue's, not this row's.
  * Hard-coding it is not an option — the ids and the counts are per-environment.
  */
 export const fetchFilms = async (limit = 6): Promise<FilmsResult> => {
+  const [homeIds, allIds] = await Promise.all([homeFilmCategoryIds(), allFilmCategoryIds()]);
+  // No ids means WordPress didn't answer (or the CI stub did): an empty
+  // `categories=` is a 400, and dropping it would return the event reports.
+  if (homeIds.length === 0 || allIds.length === 0) {
+    return { items: [], catalogueTotal: 0 };
+  }
   const [res, countRes] = await Promise.all([
     wpFetch(
-      `/wp/v2/posts?format=video&categories=${HOME_FILM_CATEGORY_IDS.join(',')}&per_page=${limit}&_embed=1`,
+      `/wp/v2/posts?format=video&categories=${homeIds.join(',')}&per_page=${limit}&_embed=1`,
       wpCache([WP_TAGS.posts, WP_TAGS.films])
     ),
     wpFetch(
-      `/wp/v2/posts?format=video&categories=${ALL_FILM_CATEGORY_IDS.join(',')}&per_page=1&_fields=id`,
+      `/wp/v2/posts?format=video&categories=${allIds.join(',')}&per_page=1&_fields=id`,
       wpCache([WP_TAGS.posts, WP_TAGS.films])
     ),
   ]);

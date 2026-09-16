@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { FILM_CATEGORIES, type FilmCategorySegment } from '@/shared/config/filmCategories';
+import { FILM_CATEGORY_SEGMENTS, type FilmCategorySegment } from '@/shared/config/filmCategories';
 import { SITE_NAME, siteUrl } from '@/shared/config/site';
 import { catalogueMetadata, cataloguePage, catalogueTopics } from './VideoCatalogue';
 
-const SEGMENTS = Object.keys(FILM_CATEGORIES) as FilmCategorySegment[];
+const SEGMENTS = FILM_CATEGORY_SEGMENTS;
 const canonicalOf = (segment: FilmCategorySegment | null, page?: number) =>
   catalogueMetadata(segment, page).alternates?.canonical;
 

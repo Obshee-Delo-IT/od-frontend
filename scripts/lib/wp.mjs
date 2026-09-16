@@ -5,17 +5,18 @@
  * under plain `node --env-file=.env`, outside the Next.js module graph.
  */
 
-/** Children of the «Видео» (85) taxonomy — the film catalogue. */
-export const FILM_CATEGORY_IDS = [581, 580, 86, 671, 559];
+/**
+ * Children of the «Видео» (85) taxonomy — the film catalogue, by slug.
+ *
+ * Slugs and not ids for the reason `src/shared/config/filmCategories.ts` gives:
+ * a term id is handed out by the install that created the term, so
+ * «Короткометражные» is 671 on od-stage and 670 on od-wp, and a script pointed
+ * at `.env.prod` with the other tier's number silently exports the wrong shelf.
+ */
+export const FILM_CATEGORY_SLUGS = ['movies', 'mult', 'roliki', 'short', 'famous'];
 
-export const FILM_CATEGORY_NAMES = {
-  581: 'Фильмы',
-  580: 'Мультфильмы',
-  86: 'Ролики',
-  671: 'Короткометражные',
-  559: 'Известные люди',
-  52: 'Видео события',
-};
+/** «Видео события» — event reports, not part of the catalogue but worth naming. */
+export const EVENT_CATEGORY_SLUG = 'video-sobytiya';
 
 /** How many generic `download_N_*` slots `group_film_meta` defines. */
 export const DOWNLOAD_SLOTS = 5;
@@ -50,8 +51,35 @@ export const wpFetch = async ({ base, auth }, path, init = {}) =>
     headers: { Authorization: auth, ...(init.body ? { 'Content-Type': 'application/json' } : {}), ...init.headers },
   });
 
+/**
+ * Term ids for the given slugs on the install `env` points at: `{slug: id}`.
+ * One request; a slug the install doesn't have is simply absent.
+ */
+export const fetchTermIds = async (env, taxonomy, slugs) => {
+  const query = slugs.map(encodeURIComponent).join(',');
+  const res = await wpFetch(env, `/wp/v2/${taxonomy}?slug=${query}&per_page=100&_fields=id,slug`);
+  if (!res.ok) {
+    throw new Error(`WP returned ${res.status} for ${taxonomy} slugs ${slugs.join(',')}`);
+  }
+  return Object.fromEntries((await res.json()).map((term) => [term.slug, term.id]));
+};
+
+/** The catalogue's category ids and names on this install, resolved from slugs. */
+export const fetchFilmCategories = async (env) => {
+  const res = await wpFetch(env, '/wp/v2/categories?parent=85&per_page=100&_fields=id,slug,name');
+  if (!res.ok) {
+    throw new Error(`WP returned ${res.status} for the «Видео» children`);
+  }
+  const children = await res.json();
+  const catalogue = children.filter((category) => FILM_CATEGORY_SLUGS.includes(category.slug));
+  return {
+    ids: FILM_CATEGORY_SLUGS.map((slug) => catalogue.find((category) => category.slug === slug)?.id).filter(Boolean),
+    names: Object.fromEntries(children.map((category) => [category.id, plainText(category.name)])),
+  };
+};
+
 /** Every `format=video` post in the given categories, following pagination. */
-export const fetchAllFilms = async (env, { categories = FILM_CATEGORY_IDS, fields } = {}) => {
+export const fetchAllFilms = async (env, { categories = [], fields } = {}) => {
   const films = [];
   const query = new URLSearchParams({ format: 'video', per_page: '100' });
   if (categories.length > 0) {

@@ -7,12 +7,12 @@ vi.mock('@/shared/api/httpClient', () => ({
   wpBaseUrl: 'https://wp.test',
 }));
 
-import { FILM_CATEGORIES } from '@/shared/config/filmCategories';
+import { FILM_CATEGORY_SEGMENTS } from '@/shared/config/filmCategories';
 import { canonicalUrl, siteUrl } from '@/shared/config/site';
 import sitemap from './sitemap';
 
 /** `/`, `/news/`, `/materials/`, `/materials/articles/`, `/projects/`, `/video/`, then one per segment. */
-const STATIC_COUNT = 6 + Object.keys(FILM_CATEGORIES).length;
+const STATIC_COUNT = 6 + FILM_CATEGORY_SEGMENTS.length;
 
 const postsPage = (ids: number[], headers: Record<string, string> = {}) =>
   new Response(JSON.stringify(ids.map((id) => ({ id, modified_gmt: '2016-05-19T08:57:08' }))), {
@@ -77,7 +77,7 @@ describe('sitemap', () => {
 
     const urls = (await sitemap()).map((entry) => entry.url);
 
-    Object.keys(FILM_CATEGORIES).forEach((segment) => {
+    FILM_CATEGORY_SEGMENTS.forEach((segment) => {
       expect(urls.filter((url) => url === `${siteUrl}/video/${segment}/`)).toHaveLength(1);
     });
   });

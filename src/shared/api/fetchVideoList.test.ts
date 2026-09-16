@@ -125,15 +125,34 @@ describe('fetchVideoList', () => {
     expect(wpFetch.mock.calls[0][0]).toContain('categories=581');
   });
 
-  it('OR-matches a list of categories and omits the filter entirely when empty', async () => {
+  it('OR-matches a list of categories', async () => {
     // A Response body can only be consumed once — build a fresh one per call.
     wpFetch.mockImplementation(async () => makeResponse([], { 'x-wp-total': '0', 'x-wp-totalpages': '0' }));
 
     await fetchVideoList({ category: [581, 580, 86, 559] });
     expect(wpFetch.mock.calls[0][0]).toContain(`categories=${encodeURIComponent('581,580,86,559')}`);
+  });
 
-    await fetchVideoList({ category: [] });
-    expect(wpFetch.mock.calls[1][0]).not.toContain('categories=');
+  it('answers with nothing when a filter resolved to nothing, and asks WordPress nothing', async () => {
+    // The ids come from `termIds.ts`, which drops a slug the install doesn't
+    // have. Omitting the parameter instead would answer with every
+    // `format=video` post — the «Видео события» event reports included — so an
+    // unknown category has to read as «no film matches», not as «no filter».
+    wpFetch.mockImplementation(async () => makeResponse([], { 'x-wp-total': '0', 'x-wp-totalpages': '0' }));
+    const empty = { items: [], totalPages: 0, total: 0 };
+
+    expect(await fetchVideoList({ category: [] })).toEqual(empty);
+    expect(await fetchVideoList({ category: [581], tags: [] })).toEqual(empty);
+    expect(wpFetch).not.toHaveBeenCalled();
+  });
+
+  it('still treats an omitted filter as «unfiltered»', async () => {
+    wpFetch.mockImplementation(async () => makeResponse([], { 'x-wp-total': '0', 'x-wp-totalpages': '0' }));
+
+    await fetchVideoList({});
+
+    expect(wpFetch.mock.calls[0][0]).not.toContain('categories=');
+    expect(wpFetch.mock.calls[0][0]).not.toContain('tags=');
   });
 
   it('returns an empty result for a non-2xx response', async () => {

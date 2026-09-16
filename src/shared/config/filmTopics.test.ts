@@ -3,7 +3,6 @@ import {
   FILM_TOPIC_KEYS,
   FILM_TOPIC_LABELS,
   FILM_TOPICS,
-  filmTopicIds,
   filmTopicLabels,
   type FilmTopicKey,
   resolveFilmTopics,
@@ -54,17 +53,28 @@ describe('FILM_TOPICS', () => {
     expect(new Set(labels).size).toBe(labels.length);
   });
 
-  it('gives each topic its own WordPress term id', () => {
-    const ids = Object.values(FILM_TOPICS);
-    expect(new Set(ids).size).toBe(ids.length);
+  it('gives each topic its own WordPress slug', () => {
+    const slugs = Object.values(FILM_TOPICS);
+    expect(new Set(slugs).size).toBe(slugs.length);
   });
 
-  it('keeps the two ids that pre-date the task', () => {
+  it('holds slugs, not term ids', () => {
+    // The ids `tag-film-topics` handed out differ between od-stage and od-wp,
+    // and one build serves both: a number here served «Наркотики» films under
+    // «Манипуляция» on the live site (2026-09-16). `shared/api/termIds.ts`
+    // resolves the id from the slug against whatever install is being read.
+    Object.values(FILM_TOPICS).forEach((slug) => {
+      expect(typeof slug).toBe('string');
+    });
+  });
+
+  it('keeps the two slugs that pre-date the task', () => {
     // «Алкоголь» and «Табак» existed on the install with no posts on them, so
     // the WP task reuses them rather than making a second term with the same
-    // name. Their ids are out of sequence for that reason, not by mistake.
-    expect(FILM_TOPICS.alcohol).toBe(213);
-    expect(FILM_TOPICS.tobacco).toBe(216);
+    // name — which is why their slugs are WordPress's percent-encoded form of
+    // a Russian name and not the latin slugs the task writes.
+    expect(FILM_TOPICS.alcohol).toBe('%d0%b0%d0%bb%d0%ba%d0%be%d0%b3%d0%be%d0%bb%d1%8c');
+    expect(FILM_TOPICS.tobacco).toBe('%d1%82%d0%b0%d0%b1%d0%b0%d0%ba');
   });
 });
 
@@ -79,7 +89,7 @@ describe('resolveFilmTopics', () => {
   });
 
   it('normalises to declaration order, so one selection has one address', () => {
-    // Ten topics are 1 023 selections; without this the same set of films would
+    // Nine topics are 511 selections; without this the same set of films would
     // have as many URLs as there are ways to spell it.
     expect(resolveFilmTopics('tobacco,alcohol')).toEqual(['alcohol', 'tobacco']);
     expect(resolveFilmTopics('gadgets,drugs,alcohol')).toEqual(['alcohol', 'drugs', 'gadgets']);
@@ -125,13 +135,6 @@ describe('toggleFilmTopic', () => {
   it('round-trips: on then off is where it started', () => {
     const start: FilmTopicKey[] = ['tobacco', 'health'];
     expect(toggleFilmTopic(toggleFilmTopic(start, 'faith'), 'faith')).toEqual(start);
-  });
-});
-
-describe('filmTopicIds', () => {
-  it('maps a selection to the ids the WP query takes', () => {
-    expect(filmTopicIds(['alcohol', 'tobacco'])).toEqual([213, 216]);
-    expect(filmTopicIds([])).toEqual([]);
   });
 });
 

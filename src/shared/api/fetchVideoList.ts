@@ -207,6 +207,14 @@ export const fetchVideoList = async ({
     _embed: '1',
   });
   const categories = (Array.isArray(category) ? category : [category]).filter(Boolean);
+  // A filter that resolved to nothing is not «no filter». The ids come from
+  // `termIds.ts`, which drops a slug the install doesn't have, and an omitted
+  // `categories` would answer with every `format=video` post — the «Видео
+  // события» event reports included. Empty in, empty out; `undefined` is how a
+  // caller says «unfiltered».
+  if ((category !== undefined && categories.length === 0) || (tags !== undefined && tags.length === 0)) {
+    return { items: [], totalPages: 0, total: 0 };
+  }
   if (categories.length > 0) {
     query.set('categories', categories.join(','));
   }

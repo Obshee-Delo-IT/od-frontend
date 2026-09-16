@@ -1,7 +1,7 @@
 import { setTimeout as sleep } from 'node:timers/promises';
 import { WP_TAGS, wpCache } from '@/shared/api/cacheTags';
 import { wpFetch } from '@/shared/api/httpClient';
-import { catalogueHref, FILM_CATEGORIES, type FilmCategorySegment } from '@/shared/config/filmCategories';
+import { catalogueHref, FILM_CATEGORY_SEGMENTS, type FilmCategorySegment } from '@/shared/config/filmCategories';
 import { isLegacyEmbedPage } from '@/shared/config/legacyEmbedPages';
 import { resolveLegacyUrl } from '@/shared/config/legacyRedirects';
 import { ARTICLES_HREF } from '@/shared/config/newsCategories';
@@ -254,7 +254,7 @@ const sitemap = async (): Promise<MetadataRoute.Sitemap> => {
     // into a URL that redirects. `/video/short/` is one of the five since the
     // category exists; the WP page still sitting at that path is deduped out
     // below rather than published twice.
-    ...Object.keys(FILM_CATEGORIES).map((segment) => ({
+    ...FILM_CATEGORY_SEGMENTS.map((segment) => ({
       url: canonicalUrl(catalogueHref({ segment: segment as FilmCategorySegment })),
       changeFrequency: 'weekly' as const,
       priority: 0.8,

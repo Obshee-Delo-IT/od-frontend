@@ -1,7 +1,8 @@
 import { notFound } from 'next/navigation';
 import { cachedFetchVideo, fetchVideoList, resolveMediaUrl } from '@/shared/api';
 import { wpBaseUrl } from '@/shared/api/httpClient';
-import { ALL_FILM_CATEGORY_IDS, catalogueHref } from '@/shared/config/filmCategories';
+import { allFilmCategoryIds } from '@/shared/api/termIds';
+import { catalogueHref } from '@/shared/config/filmCategories';
 import { canonicalUrl, ogCard, ogCardImage } from '@/shared/config/site';
 import { parsePost, resolveContentHtml } from '@/shared/lib/wpContent';
 import { Box } from '@/shared/ui/components/Box';
@@ -58,10 +59,11 @@ export const FilmPage = async ({ id }: FilmPageProps) => {
   }
 
   // Same sub-category when the film has one, otherwise the catalogue at large.
-  const relatedCategory = film.categories.find((category) => ALL_FILM_CATEGORY_IDS.includes(category));
+  const catalogueIds = await allFilmCategoryIds();
+  const relatedCategory = film.categories.find((category) => catalogueIds.includes(category));
   const { items: relatedItems } = await fetchVideoList({
     perPage: 4,
-    category: relatedCategory ?? ALL_FILM_CATEGORY_IDS,
+    category: relatedCategory ? [relatedCategory] : catalogueIds,
   });
   const related = relatedItems
     .filter((item) => item.id !== film.id)
