@@ -7,9 +7,13 @@
  * by key, so an unknown value silently degrades instead of erroring. That bug
  * shipped twice during A8; `legacyRedirects.test.ts` now asserts against it.
  *
- * The ids are environment-specific (blocker B5 in the prod-migration runbook),
- * so this is the one place to change when repointing `WP_BASE` — the same role
- * `filmCategories.ts` plays for the catalogue.
+ * **Ids here and slugs in `filmCategories.ts`, deliberately.** A term id is
+ * per install, which is why the catalogue resolves its ids from slugs through
+ * `shared/api/termIds.ts` (B5). These two are the exception that needs no
+ * lookup: «Новости» and «Статьи» pre-date every clone, so od-dev, od-stage and
+ * od-wp all hold them as 47 and 578 — measured 2026-09-16, and again whenever a
+ * new tier appears. A term *our own scripts create* never qualifies; those are
+ * numbered by whichever install ran the script.
  */
 export const NEWS_CATEGORIES = {
   'nashi-dela': 47,
