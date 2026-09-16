@@ -1,13 +1,9 @@
 import { notFound } from 'next/navigation';
 import { NewsletterSignup } from '@/modules/NewsletterSignup';
 import { fetchVideoList } from '@/shared/api';
-import {
-  ALL_FILM_CATEGORY_IDS,
-  catalogueHref,
-  FILM_CATEGORIES,
-  type FilmCategorySegment,
-} from '@/shared/config/filmCategories';
-import { filmTopicIds, filmTopicLabels, type FilmTopicKey, resolveFilmTopics } from '@/shared/config/filmTopics';
+import { allFilmCategoryIds, filmCategoryIds, filmTopicIds } from '@/shared/api/termIds';
+import { catalogueHref, type FilmCategorySegment } from '@/shared/config/filmCategories';
+import { filmTopicLabels, type FilmTopicKey, resolveFilmTopics } from '@/shared/config/filmTopics';
 import { canonicalUrl, ogCard, ogSectionImage } from '@/shared/config/site';
 import { Box } from '@/shared/ui/components/Box';
 import { PageHeader } from '@/shared/ui/components/PageHeader';
@@ -170,8 +166,10 @@ export const VideoCatalogue = async ({ segment, page, topics = [] }: VideoCatalo
   const { items, totalPages } = await fetchVideoList({
     page,
     perPage: PER_PAGE,
-    category: segment ? FILM_CATEGORIES[segment] : ALL_FILM_CATEGORY_IDS,
-    tags: filmTopicIds(topics),
+    category: segment ? await filmCategoryIds([segment]) : await allFilmCategoryIds(),
+    // `undefined` is «every topic»; an empty selection must not become an empty
+    // filter, which `fetchVideoList` reads as «no film matches».
+    tags: topics.length > 0 ? await filmTopicIds(topics) : undefined,
   });
 
   // A page past the end is not a page: `?page=999` answered 200 with zero

@@ -11,7 +11,19 @@ vi.mock('./mediaUrl', () => ({
   resolveMediaUrl: vi.fn(async (url: string | null) => url),
 }));
 
-import { ALL_FILM_CATEGORY_IDS, FILM_CATEGORIES, HOME_FILM_CATEGORY_IDS } from '@/shared/config/filmCategories';
+/* The ids are per install and resolved from slugs at request time, so the
+   numbers here are only stand-ins — what the test pins is which *scope* each
+   of the two requests carries. */
+const HOME_IDS = [581, 580];
+const ALL_IDS = [581, 580, 86, 670, 559];
+const ids = vi.hoisted(() => ({ home: [581, 580], all: [581, 580, 86, 670, 559] }));
+
+vi.mock('./termIds', () => ({
+  homeFilmCategoryIds: async () => ids.home,
+  allFilmCategoryIds: async () => ids.all,
+}));
+
+import { HOME_FILM_SEGMENTS } from '@/shared/config/filmCategories';
 import { fetchFilms } from './fetchFilms';
 
 describe('fetchFilms', () => {
@@ -23,14 +35,28 @@ describe('fetchFilms', () => {
     // The silent failure this guards: without the filter the newest posts win,
     // and «Видео события» outnumber the films 115 to 83.
     const [url] = wpFetch.mock.calls[0];
-    expect(url).toContain(`categories=${HOME_FILM_CATEGORY_IDS.join(',')}`);
+    expect(url).toContain(`categories=${HOME_IDS.join(',')}`);
     expect(url).toContain('per_page=12');
   });
 
-  it('leaves «Ролики» and «Известные люди» out of the row while the catalogue keeps them', () => {
-    expect(HOME_FILM_CATEGORY_IDS).not.toContain(FILM_CATEGORIES.roliki);
-    expect(HOME_FILM_CATEGORY_IDS).not.toContain(FILM_CATEGORIES['famous-people']);
-    expect(ALL_FILM_CATEGORY_IDS).toContain(FILM_CATEGORIES.roliki);
+  it('leaves «Ролики», «Короткометражные» and «Известные люди» out of the row', () => {
+    expect(HOME_FILM_SEGMENTS).toEqual(['filmy', 'multy']);
+  });
+
+  it('asks for nothing at all when no category resolved', async () => {
+    // An empty `categories=` is a 400 and dropping the parameter would answer
+    // with the «Видео события» event reports — so a WordPress that didn't
+    // answer (or the credential-free CI stub) yields an empty row, not a wrong
+    // one.
+    const callsBefore = wpFetch.mock.calls.length;
+    ids.home = [];
+    ids.all = [];
+
+    expect(await fetchFilms(12)).toEqual({ items: [], catalogueTotal: 0 });
+    expect(wpFetch.mock.calls).toHaveLength(callsBefore);
+
+    ids.home = HOME_IDS;
+    ids.all = ALL_IDS;
   });
 
   it('counts the whole catalogue for the CTA, not the row it renders', async () => {
@@ -47,7 +73,7 @@ describe('fetchFilms', () => {
 
     expect(items).toHaveLength(1);
     expect(catalogueTotal).toBe(83);
-    expect(wpFetch.mock.calls[1][0]).toContain(`categories=${ALL_FILM_CATEGORY_IDS.join(',')}`);
+    expect(wpFetch.mock.calls[1][0]).toContain(`categories=${ALL_IDS.join(',')}`);
   });
 
   it('falls back to an empty result when WordPress answers non-2xx', async () => {

@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation';
 import { catalogueMetadata, cataloguePage, catalogueTopics, VideoCatalogue } from '@/modules/Video/VideoCatalogue';
-import { FILM_CATEGORIES, resolveFilmCategory } from '@/shared/config/filmCategories';
+import { FILM_CATEGORY_SEGMENTS, resolveFilmCategory } from '@/shared/config/filmCategories';
 import type { Metadata } from 'next';
 
 export const revalidate = 3600;
@@ -11,7 +11,7 @@ interface CategoryPageProps {
 }
 
 /** Only the four real categories exist, so prerender all of them. */
-export const generateStaticParams = () => Object.keys(FILM_CATEGORIES).map((segment) => ({ segment }));
+export const generateStaticParams = () => FILM_CATEGORY_SEGMENTS.map((segment) => ({ segment }));
 
 export const generateMetadata = async ({ params, searchParams }: CategoryPageProps): Promise<Metadata> => {
   const segment = resolveFilmCategory((await params).segment);

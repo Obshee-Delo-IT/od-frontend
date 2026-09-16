@@ -6,12 +6,22 @@ import { TOPIC_PARAM, type FilmTopicKey } from './filmTopics';
  * Keyed by the URL segment, because the URL segment *is* the identity: each
  * category is a page at `/video/<segment>/`, and `/video/multy/` and
  * `/video/filmy/` are the #2 and #3 entry pages on the whole site (1 174 and
- * 1 106 entries in 91 days). Values are WP category ids.
+ * 1 106 entries in 91 days).
  *
- * **Single source of truth**: the catalogue pages, the related-films scope on a
- * film page, the SSG seed and the legacy redirects all read from here. The ids
- * differ per WordPress environment (blocker B5 in the prod-migration runbook),
- * so this is the one place to change when promoting to stage or prod.
+ * **Values are WordPress slugs, and the term ids are looked up from them** —
+ * `shared/api/termIds.ts`. They used to be the ids themselves, and that is the
+ * bug this replaces: a term id is assigned by the install that creates the
+ * term, so the ids the setup scripts produced on od-stage are not the ids the
+ * same scripts produced on od-wp. «Короткометражные» is 671 on one and 670 on
+ * the other, and after the cutover `/video/short/` on the live site queried a
+ * category that install doesn't have and answered «Фильмов не найдено» with
+ * twelve films sitting behind it (2026-09-16). A slug is written by the script,
+ * so it is the same everywhere, which is what makes one build serve every tier.
+ *
+ * Note the slugs are not the segments: WordPress holds `movies`, `mult` and
+ * `famous`, while the URLs this site must keep are `/video/filmy/`,
+ * `/video/multy/` and `/video/famous-people/`. The keys are live URLs —
+ * renaming one 404s real traffic.
  *
  * `short` («Короткометражные») is the newest of the five and was for a long time
  * the odd one out: the nav pointed at `/video/short/`, no such WP category
@@ -21,22 +31,24 @@ import { TOPIC_PARAM, type FilmTopicKey } from './filmTopics';
  * here and the redirect is gone. The films are mostly «Ролики» as well; a film
  * carries as many categories as it belongs to, and «Все» de-duplicates.
  */
-export const FILM_CATEGORIES = {
-  filmy: 581,
-  multy: 580,
-  roliki: 86,
-  short: 671,
-  'famous-people': 559,
+export const FILM_CATEGORY_SLUGS = {
+  filmy: 'movies',
+  multy: 'mult',
+  roliki: 'roliki',
+  short: 'short',
+  'famous-people': 'famous',
 } as const;
 
-export type FilmCategorySegment = keyof typeof FILM_CATEGORIES;
+export type FilmCategorySegment = keyof typeof FILM_CATEGORY_SLUGS;
 
 /**
- * «Все» is the union of the four sub-categories, not every `format=video`
+ * Declaration order — the filter tab order, and the order «Все» queries in.
+ *
+ * «Все» is the union of the five sub-categories, not every `format=video`
  * post: the unfiltered query is dominated by «Видео события» (52) event
  * reports, which aren't part of the film catalogue.
  */
-export const ALL_FILM_CATEGORY_IDS: number[] = Object.values(FILM_CATEGORIES);
+export const FILM_CATEGORY_SEGMENTS = Object.keys(FILM_CATEGORY_SLUGS) as FilmCategorySegment[];
 
 /**
  * The catalogue category a URL segment addresses, or `null` if it names none —
@@ -48,7 +60,7 @@ export const ALL_FILM_CATEGORY_IDS: number[] = Object.values(FILM_CATEGORIES);
  * `Object.prototype`.
  */
 export const resolveFilmCategory = (segment: string | undefined | null): FilmCategorySegment | null =>
-  segment && Object.hasOwn(FILM_CATEGORIES, segment) ? (segment as FilmCategorySegment) : null;
+  segment && Object.hasOwn(FILM_CATEGORY_SLUGS, segment) ? (segment as FilmCategorySegment) : null;
 
 /**
  * The canonical address of a catalogue page; `null` is «Все».
@@ -89,10 +101,10 @@ export const catalogueHref = ({
 /**
  * The home page's «Фильмы» row: «Фильмы» and «Мультфильмы» only.
  *
- * 35 posts of the catalogue's 83. The two categories left out are «Ролики» (13
- * short promo clips) and «Известные люди» (36 — the largest of the four, so an
- * unfiltered «newest» row was mostly talking heads); both read as filler beside
- * a full-length film. The catalogue is unchanged: the row's CTA leads to
- * `/video/`, where «Все» is still all four categories.
+ * 35 posts of the catalogue's 83. The categories left out are «Ролики» (13
+ * short promo clips), «Короткометражные» (12) and «Известные люди» (36 — the
+ * largest of them, so an unfiltered «newest» row was mostly talking heads); all
+ * three read as filler beside a full-length film. The catalogue is unchanged:
+ * the row's CTA leads to `/video/`, where «Все» is still every sub-category.
  */
-export const HOME_FILM_CATEGORY_IDS: number[] = [FILM_CATEGORIES.filmy, FILM_CATEGORIES.multy];
+export const HOME_FILM_SEGMENTS: FilmCategorySegment[] = ['filmy', 'multy'];

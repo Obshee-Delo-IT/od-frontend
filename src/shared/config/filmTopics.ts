@@ -5,27 +5,37 @@
  * Nine of them. «История и патриотизм» was a tenth and was dropped on
  * 2026-09-12: the five films under it were old clips, and the two worth keeping
  * («Почему князь Владимир выбрал Христианство?», «История трезвеннических
- * движений») are carried by «Вера» and «Алкоголь» anyway. Term 678 stays
- * unused in WordPress rather than being re-used for something else; a gap in
- * the ids is cheaper than a tag whose name no longer matches its films.
+ * движений») are carried by «Вера» and «Алкоголь» anyway. The term stays in
+ * WordPress rather than being re-used for something else — a tag whose name no
+ * longer matches its films is worse than an unused one — and on od-wp, which
+ * ran the task after the drop, it was never created at all.
  *
  * The categories say what a film *is* (фильм, мультфильм, ролик,
  * короткометражный, известные люди) and never what it is about, which is the
  * gap two reviewers reported independently in August 2026: a teacher wants *the
- * film about smoking*, not the newest film. These ten tags are that axis.
+ * film about smoking*, not the newest film. These nine tags are that axis.
  *
- * Values are WordPress `post_tag` ids, and they are **per environment** — the
- * same caveat as {@link FILM_CATEGORIES}, and the same single edit point when
- * `WP_BASE` is repointed. `wp/scripts/od-wp.php`'s `tag-film-topics` task
- * creates the terms and prints the ids it made; `od_wp_film_topics()` there is
- * the film-to-topic assignment itself. Two of the ten pre-date this — «Алкоголь»
- * (213) and «Табак» (216) were sitting on the install with no posts on them, so
- * the task reuses them, which is why their ids are out of sequence.
+ * Values are the WordPress **slugs**, and the term ids are looked up from them
+ * (`shared/api/termIds.ts`) — the same move, and for the same reason, as
+ * {@link FILM_CATEGORY_SLUGS}: an id is whatever the install that created the
+ * term handed out, so the ids `tag-film-topics` produced on od-stage are one
+ * apart from the ids the same task produced on od-wp, and a build carrying one
+ * set served the other tier «Наркотики» films under «Манипуляция» and nothing
+ * at all under «Гаджеты» (2026-09-16). `wp/scripts/od-wp.php`'s
+ * `tag-film-topics` task creates the terms; `od_wp_film_topics()` there is the
+ * film-to-topic assignment itself.
+ *
+ * «Алкоголь» and «Табак» are the two that pre-date the task — they were sitting
+ * on the install with no posts on them, so it reuses them, which is why their
+ * slugs are WordPress's percent-encoded transliteration of a Russian name
+ * rather than the latin slugs the task writes. Those two are `%d0%b0%d0%bb…` on
+ * every tier, and renaming them would move the `/tag/…/` archive the old site
+ * still answers for, so they stay as WordPress spelled them.
  *
  * **Ordinary tags, not a taxonomy of their own.** The install carries 384 tags,
  * ten years of one-off keywords, and nothing queries them; reading exactly these
- * ten ids is what makes them a filter, the same way `FILM_CATEGORIES` reads five
- * category ids out of a much larger tree.
+ * nine slugs is what makes them a filter, the same way {@link FILM_CATEGORY_SLUGS}
+ * reads five category slugs out of a much larger tree.
  *
  * Declaration order is the order of the chips. It is deliberate rather than
  * alphabetical or by size: the three substances first, because that is what the
@@ -33,15 +43,15 @@
  * («алкоголь, никотин, наркотики, мотивация»).
  */
 export const FILM_TOPICS = {
-  alcohol: 213,
-  tobacco: 216,
-  drugs: 672,
-  manipulation: 673,
-  family: 674,
-  meaning: 675,
-  health: 676,
-  faith: 677,
-  gadgets: 679,
+  alcohol: '%d0%b0%d0%bb%d0%ba%d0%be%d0%b3%d0%be%d0%bb%d1%8c',
+  tobacco: '%d1%82%d0%b0%d0%b1%d0%b0%d0%ba',
+  drugs: 'drugs',
+  manipulation: 'manipulation',
+  family: 'family',
+  meaning: 'meaning',
+  health: 'health',
+  faith: 'faith',
+  gadgets: 'gadgets',
 } as const;
 
 export type FilmTopicKey = keyof typeof FILM_TOPICS;
@@ -53,7 +63,7 @@ export type FilmTopicKey = keyof typeof FILM_TOPICS;
  * реклама», «Семья и отношения», «История и патриотизм», «Вера и традиция»,
  * «Гаджеты и игры»), which stay as they are: those name the tag for an editor
  * looking at a list of 384 of them, where the qualifier earns its place. Here
- * ten of them stand side by side under the heading «Тема», the context does the
+ * nine of them stand side by side under the heading «Тема», the context does the
  * qualifying, and the long forms cost two extra rows of wrapping on a phone —
  * the filter burying the films it is supposed to find.
  */
@@ -82,7 +92,7 @@ export const TOPIC_PARAM = 'topic';
  * `?topic=alcohol,tobacco` and `?topic=alcohol&topic=tobacco` — drops anything
  * that is not a topic, de-duplicates, and returns them in declaration order.
  *
- * **The normalising is the point, not tidiness.** Ten topics are 1 023 possible
+ * **The normalising is the point, not tidiness.** Nine topics are 511 possible
  * selections; without a canonical ordering the same set of films would have as
  * many addresses as there are ways to spell it, which is exactly the
  * near-duplicate family the catalogue routes already refuse to grow (SEO-10).
@@ -103,9 +113,6 @@ export const resolveFilmTopics = (value: string | string[] | undefined | null): 
 
   return FILM_TOPIC_KEYS.filter((key) => chosen.has(key));
 };
-
-/** The WordPress `post_tag` ids a selection queries. */
-export const filmTopicIds = (topics: FilmTopicKey[]): number[] => topics.map((topic) => FILM_TOPICS[topic]);
 
 /**
  * The selection a chip click produces: `topic` added if it was off, removed if
