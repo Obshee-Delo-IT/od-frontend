@@ -1,6 +1,7 @@
 import { Directions, FilmsCarousel, Hero, NarrowPromo, NewsGrid, StatsRow } from '@/modules/Home';
 import { NewsletterSignup } from '@/modules/NewsletterSignup';
 import { fetchFilms, fetchLatestNews } from '@/shared/api';
+import { jsonLdHtml, organizationJsonLd } from '@/shared/config/jsonLd';
 import {
   DIRECTIONS,
   DIRECTIONS_TITLE,
@@ -46,6 +47,14 @@ const HomePage = async () => {
 
   return (
     <Box display="flex" flexDirection="column" gap={48} py={48}>
+      {/* The `Organization` node lives on this page and no other: Google asks
+          for it once («You don't need to include it on every page of your
+          site»), and the root layout would have to reach WordPress's footer
+          widgets for values that are constants here. */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: jsonLdHtml(organizationJsonLd(DESCRIPTION)) }}
+      />
       <Hero />
       <StatsRow />
       <FilmsCarousel

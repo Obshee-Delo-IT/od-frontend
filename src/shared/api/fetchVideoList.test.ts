@@ -30,6 +30,7 @@ describe('fetchVideoList', () => {
             title: { rendered: '&#171;Наркотики&#187;' },
             link: 'https://wp.test/?p=71561',
             date: '2023-08-30T06:52:13',
+            date_gmt: '2023-08-30T03:52:13',
             categories: [581, 52],
             _embedded: { 'wp:featuredmedia': [{ source_url: 'https://wp.test/a.jpg' }] },
             acf: {
@@ -61,6 +62,11 @@ describe('fetchVideoList', () => {
     // The title is printed as text — WP's entities are decoded, not passed on.
     expect(film.title).toBe('«Наркотики»');
     expect(film.categories).toEqual([581, 52]);
+    // Two stamps, and they are not interchangeable: `date` is site-local with no
+    // offset and is what the card prints, `dateGmt` is the instant the film
+    // page's `VideoObject` publishes as `uploadDate`.
+    expect(film.date).toBe('2023-08-30T06:52:13');
+    expect(film.dateGmt).toBe('2023-08-30T03:52:13');
     expect(film.watchUrl).toBeNull();
     expect(film.downloads).toEqual([
       { url: 'https://disk.yandex.ru/i/full', label: 'Полн. версия • 30 мин • 872 Мб' },

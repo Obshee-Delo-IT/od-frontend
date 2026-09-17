@@ -22,6 +22,14 @@ export interface VideoSummary {
   title: string;
   link: string;
   date: string | null;
+  /**
+   * The same instant as {@link date}, in UTC and with the zone designator WP
+   * omits still to be appended — `date` is site-local and carries no offset, so
+   * it is a stamp to print and not a time to publish. Read by the film page's
+   * `VideoObject`, where `uploadDate` is one of the three properties Google
+   * requires.
+   */
+  dateGmt: string | null;
   thumbnailUrl: string | null;
   /**
    * The thumbnail's pixels, when it came from the featured image — WP puts them
@@ -116,6 +124,7 @@ export interface RawVideoPost {
   id?: number;
   link?: string;
   date?: string;
+  date_gmt?: string;
   format?: string;
   title?: { rendered?: string };
   content?: { rendered?: string };
@@ -163,6 +172,7 @@ export const mapVideoSummary = async (post: RawVideoPost): Promise<VideoSummary>
     title,
     link: post.link ?? '#',
     date: post.date ?? null,
+    dateGmt: post.date_gmt ?? null,
     thumbnailUrl: resolved ?? kinescopePosterUrl(kinescopeId),
     thumbnailSize:
       resolved && fromFeatured

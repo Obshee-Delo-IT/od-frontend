@@ -1,1 +1,1 @@
-export { FilmPlayer } from './FilmPlayer';
+export { FilmPlayer, kinescopeEmbedUrl } from './FilmPlayer';

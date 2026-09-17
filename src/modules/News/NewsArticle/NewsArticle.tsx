@@ -6,6 +6,7 @@ import { cachedFetchNews } from '@/shared/api/fetchNews';
 import { wpBaseUrl } from '@/shared/api/httpClient';
 import { resolveMediaUrl } from '@/shared/api/mediaUrl';
 import { buildNewsPreview, stripHtml } from '@/shared/api/newsPreview';
+import { jsonLdHtml, newsJsonLd } from '@/shared/config/jsonLd';
 import { canonicalUrl, ogCard, ogCardImage } from '@/shared/config/site';
 import { formatDate } from '@/shared/lib/formatDate';
 import { parsePost, resolveContentHtml } from '@/shared/lib/wpContent';
@@ -22,6 +23,26 @@ interface NewsArticleProps {
   id: string;
 }
 
+/* The editor's own lead image, with the body's first image only as a fallback.
+   The newest 100 posts all carry `featured_media` (against 1 of 100 pages);
+   uniformly over all 8 286, 49 of 76 do — the 2013-2016 archive is what the rest
+   is. So this is a picture someone chose for the post, where the body's first
+   image is whatever the layout happens to open with.
+
+   Both go through the resolution pipeline rather than the raw URL: the WordPress
+   origin **301s** an offloaded upload to the Yandex bucket, and a social crawler
+   that doesn't follow the hop shows no image at all.
+
+   Stated once because the card and the JSON-LD must name the same picture, and
+   free to call twice: the fetch is React-`cache()`d and `resolveMediaUrl`'s HEAD
+   probe is memoised, so the second caller in a render pass adds no request. */
+const leadImage = async (post: Awaited<ReturnType<typeof cachedFetchNews>>, id: string) => {
+  const featured = await cachedFetchFeaturedImage(post?.featured_media, id);
+  const url = featured?.url ?? (await resolveMediaUrl(extractFirstImage(post?.content?.rendered, wpBaseUrl)));
+
+  return { featured, url };
+};
+
 /**
  * `id` is passed in rather than read off the post because the canonical URL is
  * the legacy `/<id>/` this route was reached by — the same address the sitemap
@@ -37,17 +58,7 @@ export const newsMetadata = async (
   // the headline dropped when the body opens by repeating it.
   const description = buildNewsPreview(post?.excerpt?.rendered, post?.content?.rendered, title) ?? undefined;
   const url = canonicalUrl(`/${id}/`);
-  /* The editor's own lead image, with the body's first image only as a fallback.
-     The newest 100 posts all carry `featured_media` (against 1 of 100 pages);
-     uniformly over all 8 286, 49 of 76 do — the 2013-2016 archive is what the
-     rest is. So this is a picture someone chose for the post, where the body's
-     first image is whatever the layout happens to open with.
-
-     Both go through the resolution pipeline rather than the raw URL: the
-     WordPress origin **301s** an offloaded upload to the Yandex bucket, and a
-     social crawler that doesn't follow the hop shows no image at all. */
-  const featured = await cachedFetchFeaturedImage(post?.featured_media, id);
-  const image = featured?.url ?? (await resolveMediaUrl(extractFirstImage(post?.content?.rendered, wpBaseUrl)));
+  const { featured, url: image } = await leadImage(post, id);
 
   return {
     title,
@@ -88,6 +99,19 @@ export const NewsArticle = async ({ id }: NewsArticleProps) => {
   const parsed = parsePost(await resolveContentHtml(data?.content?.rendered, true));
   const date = formatDate(data?.date);
 
+  /* The same fields the card already states, said again in schema.org's words —
+     no extra request: every fetch behind them is `cache()`d and shared with
+     `newsMetadata` in this render pass. WP omits the zone designator on its GMT
+     timestamps, so `Z` is appended here exactly as the card does it. */
+  const schema = newsJsonLd({
+    id,
+    headline: title,
+    description: buildNewsPreview(data?.excerpt?.rendered, data?.content?.rendered, title || undefined),
+    image: (await leadImage(data, id)).url,
+    datePublished: data?.date_gmt ? `${data.date_gmt}Z` : null,
+    dateModified: data?.modified_gmt ? `${data.modified_gmt}Z` : null,
+  });
+
   return (
     <Box
       pt={{
@@ -107,6 +131,7 @@ export const NewsArticle = async ({ id }: NewsArticleProps) => {
           naming the article they had opened (A11Y-01). Hidden rather than drawn:
           where the title appears is the mock's decision, and this is the same
           string the `<title>` and the last crumb already carry. */}
+      {schema && <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdHtml(schema) }} />}
       <VisuallyHidden>
         <h1>{title}</h1>
       </VisuallyHidden>

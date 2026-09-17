@@ -21,6 +21,16 @@ interface FilmPlayerProps {
  * the bare poster. Renders nothing when there is neither a stream nor a poster
  * (the download pills below are then the only affordance).
  */
+/**
+ * The player embed for a Kinescope id.
+ *
+ * Exported because the film page's `VideoObject` states the same URL as
+ * `embedUrl`: two copies of a template would be two things to change, and a
+ * schema advertising a player the page does not use is worse than none.
+ */
+export const kinescopeEmbedUrl = (kinescopeId: string): string =>
+  `https://kinescope.io/embed/${encodeURIComponent(kinescopeId)}`;
+
 export const FilmPlayer: React.FC<FilmPlayerProps> = ({ title, kinescopeId, watchUrl, posterUrl, className }) => {
   if (kinescopeId) {
     return (
@@ -31,7 +41,7 @@ export const FilmPlayer: React.FC<FilmPlayerProps> = ({ title, kinescopeId, watc
         {/* eslint-disable-next-line react/iframe-missing-sandbox */}
         <iframe
           className={css.iframe}
-          src={`https://kinescope.io/embed/${encodeURIComponent(kinescopeId)}`}
+          src={kinescopeEmbedUrl(kinescopeId)}
           title={title}
           allow="autoplay; fullscreen; picture-in-picture; encrypted-media; gyroscope; accelerometer; clipboard-write; screen-wake-lock;"
           allowFullScreen
