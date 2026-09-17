@@ -63,3 +63,29 @@ describe("WordPress's own search URL", () => {
     expect(response?.headers.get('location')).toBeNull();
   });
 });
+
+/**
+ * Measured on production 2026-09-17: `https://obshee-delo.ru//` answered 200 and
+ * rendered «Application error: a client-side exception has occurred», thrown by
+ * Next's own `AppRouter` — `new URL('//', location.href)` has no host. `//74794/`
+ * failed one step later, in `replaceState`, for being cross-origin.
+ */
+describe('a path with a doubled leading slash', () => {
+  it.each([
+    ['//', 'https://site.test/'],
+    ['//74794/', 'https://site.test/74794/'],
+    ['///news/', 'https://site.test/news/'],
+    ['//search/?q=%D1%82%D0%B0%D0%B1%D0%B0%D0%BA', 'https://site.test/search/?q=%D1%82%D0%B0%D0%B1%D0%B0%D0%BA'],
+  ])('301s %s onto %s', (path, location) => {
+    const response = proxy(request(path));
+
+    expect(response?.status).toBe(301);
+    expect(response?.headers.get('location')).toBe(location);
+  });
+
+  it('leaves a doubled slash anywhere but the front alone', () => {
+    const response = proxy(request('/news//'));
+
+    expect(response?.status).toBe(200);
+  });
+});
