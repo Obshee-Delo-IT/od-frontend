@@ -3,6 +3,7 @@ import { cachedFetchVideo, fetchVideoList, resolveMediaUrl } from '@/shared/api'
 import { wpBaseUrl } from '@/shared/api/httpClient';
 import { allFilmCategoryIds } from '@/shared/api/termIds';
 import { catalogueHref } from '@/shared/config/filmCategories';
+import { jsonLdHtml, filmJsonLd } from '@/shared/config/jsonLd';
 import { canonicalUrl, ogCard, ogCardImage } from '@/shared/config/site';
 import { parsePost, resolveContentHtml } from '@/shared/lib/wpContent';
 import { Box } from '@/shared/ui/components/Box';
@@ -11,7 +12,7 @@ import { ImagePreviewClient } from '@/shared/ui/components/ImagePreview';
 import { GutenbergProvider } from '@/shared/ui/theme';
 import { CollapsibleBody } from '../CollapsibleBody';
 import { FilmActions } from '../FilmActions';
-import { FilmPlayer } from '../FilmPlayer';
+import { FilmPlayer, kinescopeEmbedUrl } from '../FilmPlayer';
 import { FilmPosterCard } from '../FilmPosterCard';
 import { RelatedFilms } from '../RelatedFilms';
 import { absolutizeWpMedia, aspectRatioFromUrl, extractFilmPoster } from '../utils';
@@ -99,8 +100,23 @@ export const FilmPage = async ({ id }: FilmPageProps) => {
   const posterDownloadUrl = film.posterDownloadUrl ?? extracted.posterDownloadUrl;
   const hasPosterCard = Boolean(posterImageUrl || posterDownloadUrl);
 
+  /* `cardImageUrl`, not the visible thumbnail, for the reason the card states
+     above — and no node at all when there is no still or no date. That guard is
+     what keeps this off the «Видео события» reports: the catch-all sends every
+     `format=video` post here, which on production is 187 of them against 84
+     films, and a report has no player and often no image. */
+  const schema = filmJsonLd({
+    id: film.id,
+    name: film.title,
+    description: film.excerpt,
+    thumbnailUrl: film.cardImageUrl,
+    uploadDate: film.dateGmt ? `${film.dateGmt}Z` : null,
+    embedUrl: film.kinescopeId ? kinescopeEmbedUrl(film.kinescopeId) : null,
+  });
+
   return (
     <Box display="flex" flexDirection="column" gap={{ mobile: 32, smallDesktop: 40, desktop: 40 }} pt={20} pb={48}>
+      {schema && <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdHtml(schema) }} />}
       {/* Slash-terminated: `trailingSlash: true` makes the slashless twin a redirect. */}
       <Breadcrumbs items={[{ label: 'Видео', href: catalogueHref({ segment: null }) }, { label: film.title }]} />
 
