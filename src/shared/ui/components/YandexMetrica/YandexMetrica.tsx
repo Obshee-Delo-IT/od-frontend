@@ -50,8 +50,21 @@ const LOADER_SNIPPET = `(function(m,e,t,r,i,k,a){
  * ⚠ Expect the counter's numbers to step up and do not read it as double
  * counting: production's copy is `type="rocketlazyloadscript"`, so it fires only
  * after the visitor's first interaction and a visit without one sends nothing at
- * all. `next/script` has no such delay, so every traffic figure in `docs/` comes
- * from a counter that saw less than this one will.
+ * all. `lazyOnload` waits for `load`, not for a click, so every traffic figure in
+ * `docs/` still comes from a counter that saw less than this one will.
+ *
+ * **`lazyOnload`, not `afterInteractive`, and that is a bug fix** (2026-09-17).
+ * `tag.js` appends an `<iframe>` as a direct child of `<html>` — measured with a
+ * `MutationObserver` on production, ~2 s after `load`. Land that while React is
+ * still hydrating and React finds an element it did not render under `<html>`,
+ * reports hydration error #418 and throws the server HTML away to re-render the
+ * whole document on the client: the flicker readers were reporting on articles,
+ * and a blank «Application error» page whenever that second render also threw.
+ * Measured the same day against production: **6 of 130 loads** failed with the
+ * counter on, **0 of 78** with `mc.yandex.ru` blocked, and **0 of 78** on
+ * od-stage, which renders this same build with no counter configured. Strategy
+ * is the whole fix: `lazyOnload` injects the snippet after `window.load`, which
+ * is after hydration, so `tag.js` cannot be in the race at all.
  *
  * ⚠ Scroll maps, form analytics and Webvisor 1.0 do not work on an SPA — the
  * same guide says so. Webvisor 2.0, the clickmap and the link map do.
@@ -60,7 +73,7 @@ export const YandexMetrica: React.FC = () =>
   /* Only the tier that owns the counter renders it — see `METRICA_ENABLED`. */
   METRICA_ENABLED ? (
     <>
-      <Script id="yandex-metrica" strategy="afterInteractive" dangerouslySetInnerHTML={{ __html: LOADER_SNIPPET }} />
+      <Script id="yandex-metrica" strategy="lazyOnload" dangerouslySetInnerHTML={{ __html: LOADER_SNIPPET }} />
       {/* Production's pixel, kept. It is the one part that must be in the served
           HTML, since it is what a visitor without JavaScript sends. */}
       <noscript>

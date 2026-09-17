@@ -45,7 +45,10 @@ describe('YandexMetrica', () => {
     expect(mocks.scripts).toHaveLength(1);
     // `inline-script-id` is a lint error, but a missing id also breaks next/script's own dedup.
     expect(mocks.scripts[0].id).toBe('yandex-metrica');
-    expect(mocks.scripts[0].strategy).toBe('afterInteractive');
+    // `lazyOnload`, not `afterInteractive`: `tag.js` appends an `<iframe>` to
+    // `<html>`, and landing that during hydration is what made React throw the
+    // server HTML away and re-render the whole document (#418).
+    expect(mocks.scripts[0].strategy).toBe('lazyOnload');
     expect(snippet()).toContain('https://mc.yandex.ru/metrika/tag.js');
     expect(snippet()).toContain(`ym(${COUNTER_ID}, 'init', {`);
     expect(snippet()).toContain('clickmap:true');
