@@ -31,7 +31,17 @@ export const clientErrorReport = (event: ErrorEvent, origin: string): ClientErro
     return null;
   }
 
-  const message = (event.message ?? '').slice(0, MAX_FIELD);
+  /**
+   * `event.message` first looks like the obvious field and is not: production
+   * reported `{"message":"Uncaught "}` for the router's own
+   * `TypeError: Failed to construct 'URL'` — the browser had nothing to append
+   * after «Uncaught». The `error` object carries the text in that case, so it
+   * wins when it has one, and `event.message` stays the fallback for the
+   * errors that arrive without an object at all (a cross-origin script, and
+   * React's recoverable hydration report).
+   */
+  const thrown = event.error instanceof Error ? `${event.error.name}: ${event.error.message}`.trim() : '';
+  const message = (thrown === ':' ? '' : thrown || (event.message ?? '')).trim().slice(0, MAX_FIELD);
   if (!message) {
     return null;
   }
