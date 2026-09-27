@@ -24,6 +24,20 @@ import { legacyOrigin } from '@/shared/legacy/legacyOrigin';
  * `/video`, `/news`, `/page` and `/category` plus an exact-path table, so the
  * paths that newly arrive fall straight through.
  */
+const WP_UPLOAD = /^\/wp-content\/uploads\//i;
+const WP_INTERNAL = /^\/(?:wp-content|wp-includes|wp-admin)(?:\/|$)|\.php$/i;
+
+/**
+ * WordPress's own paths, which this site does not serve. Left to the catch-all
+ * page, each one — theme assets old pages still reference, and scanners probing
+ * `/wp-admin/`, `/xmlrpc.php` and the like — rendered a 404 page that ISR then
+ * stored as a page of its own, ~7 files per URL; they were ~40 % of what piled
+ * up on the VPS disk (servers-agent 2026-09-25-od-vps-disk-full-next-rce).
+ * Answering here never reaches the renderer.
+ */
+export const wordpressPath = (pathname: string): 'upload' | 'other' | null =>
+  WP_UPLOAD.test(pathname) ? 'upload' : WP_INTERNAL.test(pathname) ? 'other' : null;
+
 export const proxy = (request: NextRequest) => {
   /**
    * Alias domains first, before anything else can answer on one of them. The
@@ -69,6 +83,20 @@ export const proxy = (request: NextRequest) => {
     }
 
     return NextResponse.rewrite(new URL(font, legacyOrigin), { request: { headers } });
+  }
+
+  const wp = wordpressPath(request.nextUrl.pathname);
+  if (wp === 'upload') {
+    // Old `/wp-content/uploads/…` links (other sites, cached search results)
+    // pointed at the apex while WordPress served it. The file is on the WP
+    // origin; 302 rather than 301 because that host is ours to move.
+    const wpBase = process.env.WP_BASE;
+    return wpBase
+      ? NextResponse.redirect(new URL(request.nextUrl.pathname, wpBase), 302)
+      : new NextResponse(null, { status: 404 });
+  }
+  if (wp === 'other') {
+    return new NextResponse(null, { status: 404, headers: { 'cache-control': 'public, max-age=3600' } });
   }
 
   // WordPress's `/?s=<term>` — the one legacy shape that is a query string, and

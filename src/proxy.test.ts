@@ -63,3 +63,32 @@ describe("WordPress's own search URL", () => {
     expect(response?.headers.get('location')).toBeNull();
   });
 });
+
+describe('WordPress paths this site does not serve', () => {
+  it('sends an old upload link to the WP origin', () => {
+    vi.stubEnv('WP_BASE', 'https://wp.test');
+    const response = proxy(request('/wp-content/uploads/2021/02/logo.png'));
+
+    expect(response?.status).toBe(302);
+    expect(response?.headers.get('location')).toBe('https://wp.test/wp-content/uploads/2021/02/logo.png');
+    vi.unstubAllEnvs();
+  });
+
+  it.each([
+    '/wp-content/themes/welfare/js/script.js',
+    '/wp-includes/js/jquery.js',
+    '/wp-admin/',
+    '/wp-admin',
+    '/xmlrpc.php',
+    '/news/wp-login.php',
+  ])('answers %s with a 404 before the page renderer', (path) => {
+    const response = proxy(request(path));
+
+    expect(response?.status).toBe(404);
+    expect(response?.headers.get('x-middleware-next')).toBeNull();
+  });
+
+  it.each(['/news/', '/wp-contents-of-a-post/', '/legacy-font/fonts/x.woff'])('leaves %s alone', (path) => {
+    expect(proxy(request(path))?.status).not.toBe(404);
+  });
+});
