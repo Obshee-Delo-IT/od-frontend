@@ -26,24 +26,6 @@ import { legacyOrigin } from '@/shared/legacy/legacyOrigin';
  */
 export const proxy = (request: NextRequest) => {
   /**
-   * A path that begins with a second slash is a *protocol-relative URL* to the
-   * App Router's own client, which resolves `canonicalUrl` with `new URL(url,
-   * location.href)`: `//74794/` reads `74794` as the host, and the router either
-   * throws `Failed to construct 'URL'` (`//`) or is refused by `replaceState` as
-   * cross-origin (`//<anything>/`). Either way the render never starts and the
-   * visitor gets a blank «Application error» page — on a **200**, so no status
-   * check sees it. Collapsing the run to one slash is the whole fix: `//74794/`
-   * and `/74794/` were always the same document.
-   *
-   * First, before the alias-host rule, because that rule rebuilds the redirect
-   * from this same pathname and would carry the double slash onto the apex.
-   */
-  if (request.nextUrl.pathname.startsWith('//')) {
-    const collapsed = `${request.nextUrl.pathname.replace(/^\/+/, '/')}${request.nextUrl.search}`;
-    return NextResponse.redirect(new URL(collapsed, request.url), 301);
-  }
-
-  /**
    * Alias domains first, before anything else can answer on one of them. The
    * organisation owns two `.рф` spellings and the `www.` form of all three
    * names, and until cutover the old install's `.htaccess` was what folded them
