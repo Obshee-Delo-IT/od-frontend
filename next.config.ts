@@ -110,7 +110,20 @@ const nextConfig: NextConfig = {
   experimental: {
     staticGenerationRetryCount: 3,
     staticGenerationMaxConcurrency: 4,
+    // Pages and fetch responses regenerated at runtime stay in the in-memory
+    // LRU below instead of being written to disk. On disk nothing is ever
+    // evicted: every URL a crawler or scanner asked for once stayed forever —
+    // ~5 GB/day of fetch-cache plus GBs of ISR output inside the container, and
+    // the 40 GB VPS disk filled up (servers-agent 2026-09-25-od-vps-disk-full-
+    // next-rce). Measured: almost nothing was ever read back from disk, so the
+    // disk copy bought no hit rate. Pages prerendered at build are still read
+    // from disk. Cost: a cold cache after every restart/deploy.
+    isrFlushToDisk: false,
   },
+
+  // The LRU that now holds all runtime cache (default 50 MB). The container is
+  // limited to 1 GB and used ~180 MB before this.
+  cacheMaxMemorySize: 256 * 1024 * 1024,
 };
 
 export default nextConfig;
