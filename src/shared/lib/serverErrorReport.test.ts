@@ -55,6 +55,15 @@ describe('serverErrorReport', () => {
     expect(serverErrorReport(thrown, request, context)).toBeNull();
   });
 
+  it('says whether anyone was waiting for the render', () => {
+    const error = new Error('fetch failed');
+
+    expect(serverErrorReport(error, request, context)?.revalidateReason).toBe('');
+    expect(serverErrorReport(error, request, { ...context, revalidateReason: 'stale' })?.revalidateReason).toBe(
+      'stale'
+    );
+  });
+
   it('caps the message and the stack', () => {
     const error = new Error('x'.repeat(5_000));
     error.stack = 'y'.repeat(5_000);
