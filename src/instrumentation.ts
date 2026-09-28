@@ -27,6 +27,17 @@ export const onRequestError: Instrumentation.onRequestError = (error, request, c
     return;
   }
 
+  /**
+   * **A failure nobody was waiting for is a warning, not an error.** There is
+   * no retry anywhere in this app — `httpClient` has none, and Next's
+   * `staticGenerationRetryCount` is a build-time export setting — but ISR is
+   * the next best thing: when a *cached* page fails to refresh, Next goes on
+   * serving the copy it has and tries again on the next request, so a visitor
+   * saw a page and never knew. `revalidateReason` is empty only when someone
+   * was actually waiting, and that is the case worth waking anyone for.
+   */
   // eslint-disable-next-line no-console -- the whole point of the hook
-  console.error('[server-error]', JSON.stringify(report));
+  const write = report.revalidateReason ? console.warn : console.error;
+
+  write('[server-error]', JSON.stringify(report));
 };

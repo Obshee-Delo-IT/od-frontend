@@ -14,6 +14,13 @@ export interface ServerErrorReport {
   /** The route pattern, e.g. `/[...slug]` — `path` is the URL that asked for it. */
   routePath: string;
   /**
+   * Empty when a visitor was waiting for this render — i.e. when the failure
+   * became their 500. `stale` means it was a background refresh of a page
+   * already in the cache, which Next keeps serving, so nobody saw anything;
+   * `on-demand` is a purge from `/api/revalidate/`, with nobody waiting either.
+   */
+  revalidateReason: string;
+  /**
    * Kept, with a caveat: in a standalone build the app's own frames are chunk
    * offsets, so what earns its bytes here are the `node_modules` frames — which
    * is where a WordPress fetch fails, and that is the likeliest 500 on this site.
@@ -42,7 +49,7 @@ const MAX_STACK = 1_200;
 export const serverErrorReport = (
   error: unknown,
   request: Readonly<{ path: string; method: string }>,
-  context: Readonly<{ routeType: string; routePath: string }>
+  context: Readonly<{ routeType: string; routePath: string; revalidateReason?: string }>
 ): ServerErrorReport | null => {
   const carried = (error as { digest?: unknown } | null)?.digest;
   const digest = typeof carried === 'string' ? carried : '';
@@ -63,6 +70,7 @@ export const serverErrorReport = (
     method: request.method,
     routeType: context.routeType,
     routePath: context.routePath.slice(0, MAX_FIELD),
+    revalidateReason: context.revalidateReason ?? '',
     stack: (error instanceof Error ? (error.stack ?? '') : '').slice(0, MAX_STACK),
   };
 };
