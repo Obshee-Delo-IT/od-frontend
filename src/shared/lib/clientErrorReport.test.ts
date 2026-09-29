@@ -53,3 +53,31 @@ describe('clientErrorReport', () => {
     expect(report?.message).toHaveLength(300);
   });
 });
+
+describe('clientErrorReport — where the page was when it broke', () => {
+  it('reports the referrer and the children of <html>', () => {
+    const event = new ErrorEvent('error', {
+      error: new Error('boom'),
+      filename: 'https://obshee-delo.ru/chunk.js',
+    });
+
+    const report = clientErrorReport(event, 'https://obshee-delo.ru');
+
+    expect(report?.top).toBe('HEAD,BODY');
+    expect(report?.referrer).toBe(document.referrer);
+  });
+
+  it('shows a node no part of this app rendered', () => {
+    const injected = document.createElement('div');
+    document.documentElement.append(injected);
+
+    const event = new ErrorEvent('error', {
+      error: new Error('boom'),
+      filename: 'https://obshee-delo.ru/chunk.js',
+    });
+
+    expect(clientErrorReport(event, 'https://obshee-delo.ru')?.top).toBe('HEAD,BODY,DIV');
+
+    injected.remove();
+  });
+});

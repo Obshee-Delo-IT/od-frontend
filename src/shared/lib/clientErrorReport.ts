@@ -6,6 +6,16 @@ export interface ClientErrorReport {
   column: number;
   /** The address the visitor was on — the one thing a stack frame never says. */
   url: string;
+  /** Where they came from. An in-app browser opened from search looks different here. */
+  referrer: string;
+  /**
+   * The tag names of `<html>`'s children at the moment of the error, e.g.
+   * `HEAD,BODY`. React's own hydration message lists «a browser extension
+   * messes with the HTML before React loaded» among the causes, and this is the
+   * cheapest way to see one: anything past `HEAD,BODY` was put there by
+   * something that is not this application.
+   */
+  top: string;
 }
 
 /** Keeps one field from turning a crash report into a payload. */
@@ -46,11 +56,17 @@ export const clientErrorReport = (event: ErrorEvent, origin: string): ClientErro
     return null;
   }
 
+  const doc = typeof document === 'undefined' ? null : document;
+
   return {
     message,
     source: source.slice(0, MAX_FIELD),
     line: event.lineno ?? 0,
     column: event.colno ?? 0,
     url: (typeof location === 'undefined' ? '' : location.pathname + location.search).slice(0, MAX_FIELD),
+    referrer: (doc?.referrer ?? '').slice(0, MAX_FIELD),
+    top: Array.from(doc?.documentElement.children ?? [], (element) => element.tagName)
+      .join(',')
+      .slice(0, MAX_FIELD),
   };
 };

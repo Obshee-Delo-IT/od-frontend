@@ -45,10 +45,10 @@ describe('YandexMetrica', () => {
     expect(mocks.scripts).toHaveLength(1);
     // `inline-script-id` is a lint error, but a missing id also breaks next/script's own dedup.
     expect(mocks.scripts[0].id).toBe('yandex-metrica');
-    // `lazyOnload`, not `afterInteractive`: `tag.js` appends an `<iframe>` to
-    // `<html>`, and landing that during hydration is what made React throw the
-    // server HTML away and re-render the whole document (#418).
-    expect(mocks.scripts[0].strategy).toBe('lazyOnload');
+    // `afterInteractive`, the default. `lazyOnload` shipped for two days as the
+    // suspected fix for the #418 flicker and made the report rate worse, not
+    // better — see the component's doc comment and notes §A4e.
+    expect(mocks.scripts[0].strategy).toBe('afterInteractive');
     expect(snippet()).toContain('https://mc.yandex.ru/metrika/tag.js');
     expect(snippet()).toContain(`ym(${COUNTER_ID}, 'init', {`);
     expect(snippet()).toContain('clickmap:true');
