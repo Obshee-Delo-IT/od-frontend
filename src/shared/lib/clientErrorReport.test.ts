@@ -67,6 +67,33 @@ describe('clientErrorReport — where the page was when it broke', () => {
     expect(report?.referrer).toBe(document.referrer);
   });
 
+  it('carries both snapshots of <body>, so a DOM change before hydration shows', () => {
+    document.body.innerHTML = '<main></main>';
+    const event = new ErrorEvent('error', {
+      error: new Error('boom'),
+      filename: 'https://obshee-delo.ru/chunk.js',
+    });
+
+    const unchanged = clientErrorReport(event, 'https://obshee-delo.ru', 'MAIN');
+    expect(unchanged?.bodyBefore).toBe('MAIN');
+    expect(unchanged?.bodyAfter).toBe('MAIN');
+
+    document.body.insertAdjacentHTML('beforeend', '<div id="injected"></div>');
+    const changed = clientErrorReport(event, 'https://obshee-delo.ru', 'MAIN');
+    expect(changed?.bodyBefore).toBe('MAIN');
+    expect(changed?.bodyAfter).toBe('MAIN,DIV');
+  });
+
+  it('collapses a run of the same tag', () => {
+    document.body.innerHTML = '<main></main><script></script><script></script><script></script>';
+    const event = new ErrorEvent('error', {
+      error: new Error('boom'),
+      filename: 'https://obshee-delo.ru/chunk.js',
+    });
+
+    expect(clientErrorReport(event, 'https://obshee-delo.ru')?.bodyAfter).toBe('MAIN,SCRIPT×3');
+  });
+
   it('shows a node no part of this app rendered', () => {
     const injected = document.createElement('div');
     document.documentElement.append(injected);

@@ -1,4 +1,4 @@
-import { clientErrorReport } from '@/shared/lib/clientErrorReport';
+import { childTagNames, clientErrorReport } from '@/shared/lib/clientErrorReport';
 import { collapseLeadingSlashes } from '@/shared/lib/collapseLeadingSlashes';
 
 /**
@@ -17,6 +17,25 @@ const collapsed = collapseLeadingSlashes(window.location.pathname);
 if (collapsed) {
   window.location.replace(`${collapsed}${window.location.search}${window.location.hash}`);
 }
+
+/**
+ * `<body>`'s children exactly as the server's HTML was parsed, before React has
+ * seen the document.
+ *
+ * This is the one measurement this file can take and nothing else can. Three
+ * things can make React report a hydration mismatch, and the reports so far
+ * cannot tell them apart: something modified the DOM before hydration, the
+ * browser's parser restructured invalid markup, or the client render genuinely
+ * produced different output. Comparing this snapshot with the same list at the
+ * moment of the error separates the first from the other two — and `top`
+ * already showed that whatever it is, it is not sitting directly under
+ * `<html>`.
+ *
+ * `document.body` can still be null here on a document Next has not finished
+ * streaming, hence the optional chain; an empty string then reads as «not
+ * taken» rather than «empty body».
+ */
+const bodyBefore = childTagNames(document.body);
 
 /**
  * The first uncaught error of the page load, posted to `/api/client-error/`.
@@ -38,7 +57,7 @@ window.addEventListener('error', (event) => {
   if (reported) {
     return;
   }
-  const report = clientErrorReport(event, window.location.origin);
+  const report = clientErrorReport(event, window.location.origin, bodyBefore);
   if (!report) {
     return;
   }

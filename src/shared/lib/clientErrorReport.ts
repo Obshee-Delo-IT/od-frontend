@@ -16,7 +16,37 @@ export interface ClientErrorReport {
    * something that is not this application.
    */
   top: string;
+  /**
+   * `<body>`'s children as the document was parsed, before React touched it —
+   * taken in `instrumentation-client.ts`, which Next loads ahead of hydration.
+   */
+  bodyBefore: string;
+  /** The same list at the moment of the error. */
+  bodyAfter: string;
 }
+
+/**
+ * The tag names of an element's children, with runs collapsed — `DIV,SCRIPT×14`
+ * rather than fourteen repetitions of the same word, because Next's bootstrap
+ * alone puts a dozen `<script>` at the end of every body and the field has 300
+ * characters to say something with.
+ *
+ * Exported because the «before» half is taken from `instrumentation-client.ts`,
+ * a module no test can import without Next's own bootstrap around it.
+ */
+export const childTagNames = (parent: Element | null | undefined): string => {
+  const runs: Array<[string, number]> = [];
+  for (const { tagName } of Array.from(parent?.children ?? [])) {
+    const last = runs.at(-1);
+    if (last && last[0] === tagName) {
+      last[1] += 1;
+    } else {
+      runs.push([tagName, 1]);
+    }
+  }
+
+  return runs.map(([tag, count]) => (count > 1 ? `${tag}×${count}` : tag)).join(',');
+};
 
 /** Keeps one field from turning a crash report into a payload. */
 const MAX_FIELD = 300;
@@ -35,7 +65,7 @@ const MAX_FIELD = 300;
  * No `error.stack`: in a production build it is minified chunk offsets, which
  * cost 2 KB a report and say less than `message` plus `source:line`.
  */
-export const clientErrorReport = (event: ErrorEvent, origin: string): ClientErrorReport | null => {
+export const clientErrorReport = (event: ErrorEvent, origin: string, bodyBefore = ''): ClientErrorReport | null => {
   const source = event.filename ?? '';
   if (source && !source.startsWith(origin)) {
     return null;
@@ -65,8 +95,8 @@ export const clientErrorReport = (event: ErrorEvent, origin: string): ClientErro
     column: event.colno ?? 0,
     url: (typeof location === 'undefined' ? '' : location.pathname + location.search).slice(0, MAX_FIELD),
     referrer: (doc?.referrer ?? '').slice(0, MAX_FIELD),
-    top: Array.from(doc?.documentElement.children ?? [], (element) => element.tagName)
-      .join(',')
-      .slice(0, MAX_FIELD),
+    top: childTagNames(doc?.documentElement).slice(0, MAX_FIELD),
+    bodyBefore: bodyBefore.slice(0, MAX_FIELD),
+    bodyAfter: childTagNames(doc?.body).slice(0, MAX_FIELD),
   };
 };
