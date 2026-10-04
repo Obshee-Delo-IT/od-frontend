@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { stripProfileCardFields } from './profileBody';
+import { profileSummary, stripProfileCardFields } from './profileBody';
 
 /** Profile 71225 as od-dev stores it after `od_pages_profile_team()` has run. */
 const RECORD = [
@@ -112,5 +112,25 @@ describe('stripProfileCardFields', () => {
 
       expect(stripProfileCardFields(html, card)).toBe(html);
     });
+  });
+});
+
+describe('profileSummary', () => {
+  it('is the remainder as plain text, one line per paragraph or item', () => {
+    const html = [
+      '<p><strong>Координатор</strong></p>',
+      '<p>Иванов Иван</p>',
+      '<ul><li>Лектор</li><li>Психолог &#8212; педагог</li></ul>',
+      '<p>Образование:<br>Юрист</p>',
+      '<p><a href="tel:+70000000000">1</a></p>',
+    ].join('\n');
+
+    expect(profileSummary(html, { name: 'Иванов Иван', role: 'Координатор' })).toBe(
+      'Лектор\nПсихолог — педагог\nОбразование:\nЮрист'
+    );
+  });
+
+  it('is empty when the card already says everything', () => {
+    expect(profileSummary('<p><strong>Координатор</strong></p>', { role: 'Координатор' })).toBe('');
   });
 });
