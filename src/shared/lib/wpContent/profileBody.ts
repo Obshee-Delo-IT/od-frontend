@@ -1,3 +1,5 @@
+import { stripHtml } from '@/shared/api/newsPreview';
+
 /**
  * What is left of a `profile` record's body once the card above it has said its
  * part — for `/profile/[slug]`, which draws the same `PersonCard` the team page
@@ -9,7 +11,7 @@
  * third role, education, a bio, and the phone numbers that are still typed as
  * plain text and therefore never became contact rows. Dropping the body would
  * lose all of it; keeping it whole would print the role and every contact twice.
- * So three things come out, and only three:
+ * So four things come out, and only four:
  *
  * 1. **The first `<figure>`** — the photograph, which the card shows.
  * 2. **A paragraph that is nothing but a bold run** — which is exactly the shape
@@ -21,6 +23,15 @@
  *    `t.me`; the four schemes `parseProfileBody()` turns into rows. The whole
  *    paragraph goes, label and all, because «E-mail: <a…>» is one line about one
  *    contact.
+ *
+ * 4. **A paragraph or list item that only repeats the card** — once the name
+ *    and the role are taken out of its text, nothing is left. That is
+ *    «Тимашев Александр Валерьевич» on a line of its own, «<b>Координатор
+ *    проекта</b> Кабаков Павел Дмитриевич», and the role as the first item of a
+ *    bulleted list, which is where `parseProfileBody()` found it: 30 of the 136
+ *    records on prod printed one of these twice (2026-10-05). A line that says
+ *    anything more — «город Воркута Координатор проекта …», a phone typed as
+ *    text — stays whole.
  *
  * Nothing else is touched, and a record whose body this empties renders no body
  * at all rather than an empty column.
@@ -42,6 +53,24 @@ const BOLD_ONLY_PARAGRAPH = /<p\b[^>]*>\s*<(strong|b)\b[^>]*>[\s\S]*?<\/\1>\s*<\
 const CONTACT_PARAGRAPH =
   /<p\b[^>]*>(?:(?!<\/p>)[\s\S])*<a\b[^>]*href=["'](?:tel:|mailto:|https?:\/\/(?:www\.)?(?:vk\.(?:com|ru)|t(?:elegram)?\.me))(?:(?!<\/p>)[\s\S])*<\/p>/gi;
 
+/** An innermost `<p>` or `<li>` — no paragraph or item nested inside it. */
+const TEXT_BLOCK = /<(p|li)\b[^>]*>((?:(?!<\/?(?:p|li)\b)[\s\S])*)<\/\1>/gi;
+const EMPTY_LIST = /<(ul|ol)\b[^>]*>\s*<\/\1>/gi;
+const MEDIA = /<(?:img|figure|iframe|video|audio)\b/i;
+
+/** Case-folded plain text, so «Департамента» in a heading matches the role's «департамента». */
+const plain = (html: string): string => stripHtml(html).toLowerCase();
+
+/** True when `html` holds text and all of it is `card`'s strings — punctuation aside. */
+const repeatsCard = (html: string, card: string[]): boolean => {
+  const text = plain(html);
+  if (!text || MEDIA.test(html)) {
+    return false;
+  }
+  const left = card.reduce((rest, field) => rest.split(field).join(' '), text);
+  return !/[\p{L}\p{N}]/u.test(left);
+};
+
 /** Markup with no text and no media left — whitespace, `&nbsp;` and empty wrappers. */
 const isBlank = (html: string): boolean =>
   html
@@ -49,12 +78,29 @@ const isBlank = (html: string): boolean =>
     .replace(/<[^>]*>/g, '')
     .replace(/&nbsp;|\s/g, '') === '';
 
-export const stripProfileCardFields = (html?: string | null): string => {
+/** What the card above the body already prints: its name and its subtitle. */
+interface CardText {
+  name?: string | null;
+  role?: string | null;
+}
+
+export const stripProfileCardFields = (html?: string | null, { name, role }: CardText = {}): string => {
   if (!html) {
     return '';
   }
 
-  const rest = html.replace(FIRST_FIGURE, '').replace(BOLD_ONLY_PARAGRAPH, '').replace(CONTACT_PARAGRAPH, '');
+  // Longest first, so a role that contains the name is not cut in half by it.
+  const card = [name, role]
+    .map((field) => plain(field ?? ''))
+    .filter(Boolean)
+    .sort((a, b) => b.length - a.length);
+
+  const rest = html
+    .replace(FIRST_FIGURE, '')
+    .replace(BOLD_ONLY_PARAGRAPH, '')
+    .replace(CONTACT_PARAGRAPH, '')
+    .replace(TEXT_BLOCK, (block) => (card.length > 0 && repeatsCard(block, card) ? '' : block))
+    .replace(EMPTY_LIST, '');
 
   return isBlank(rest) ? '' : rest;
 };

@@ -76,7 +76,7 @@ const Page = async ({ params }: ProfilePageProps) => {
     notFound();
   }
 
-  const rest = stripProfileCardFields(profile.contentHtml);
+  const rest = stripProfileCardFields(profile.contentHtml, { name: profile.name, role: profile.subtitle });
   const body = rest ? parsePost(await resolveContentHtml(rest, false), { liftHeader: false }).body : null;
 
   return (

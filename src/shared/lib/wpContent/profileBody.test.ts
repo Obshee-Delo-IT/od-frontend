@@ -74,4 +74,43 @@ describe('stripProfileCardFields', () => {
 
     expect(stripProfileCardFields(html)).toContain('/b.jpg');
   });
+
+  describe('a line that only repeats the card', () => {
+    // Shapes from prod records, 2026-10-05 — `kabakov`, `тимашев-…`, `malenkin`, `chagaev`.
+    const card = { name: 'Кабаков Павел Дмитриевич', role: 'Координатор проекта' };
+
+    it('drops the role and the name on one line', () => {
+      const html = '<p class="wp-block-paragraph"><strong>Координатор проекта</strong> Кабаков Павел Дмитриевич</p>';
+
+      expect(stripProfileCardFields(html, card)).toBe('');
+    });
+
+    it('drops the name on a line of its own', () => {
+      const html = '<p>Кабаков Павел Дмитриевич</p><p>Руководитель Воронежского отделения</p>';
+
+      expect(stripProfileCardFields(html, card)).toBe('<p>Руководитель Воронежского отделения</p>');
+    });
+
+    it('drops the role as a list item, and the list once it is empty', () => {
+      const html = '<ul>\n<li><strong>Координатор проекта</strong></li>\n</ul><p>Образование: высшее</p>';
+
+      expect(stripProfileCardFields(html, card)).toBe('<p>Образование: высшее</p>');
+    });
+
+    it('ignores case, the way an editor retyped the role', () => {
+      expect(stripProfileCardFields('<p>Координатор Проекта</p>', card)).toBe('');
+    });
+
+    it('keeps a line that says more than the card', () => {
+      const html = '<p>город Воркута Координатор проекта Кабаков Павел Дмитриевич</p>';
+
+      expect(stripProfileCardFields(html, card)).toBe(html);
+    });
+
+    it('keeps a line that only contains part of the role', () => {
+      const html = '<p>Координатор</p>';
+
+      expect(stripProfileCardFields(html, card)).toBe(html);
+    });
+  });
 });
