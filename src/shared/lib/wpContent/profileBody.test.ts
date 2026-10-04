@@ -57,6 +57,23 @@ describe('stripProfileCardFields', () => {
     expect(stripProfileCardFields(null)).toBe('');
   });
 
+  it('drops a contact line pasted as a bare <div>, not the column around it', () => {
+    // `/team/`'s Дегтярёв: Word paste, one `<div>` per line.
+    const html = [
+      '<div class="wp-block-column">',
+      '<div><span>тел</span><span>. <a href="tel:+79629507561">+7 (962) 950-75-61</a></span></div>',
+      '<div><a href="mailto:post27@bk.ru">post27@bk.ru</a></div>',
+      '<div><span>inst. degtyarev_aleksey_od</span></div>',
+      '</div>',
+    ].join('\n');
+
+    const rest = stripProfileCardFields(html);
+
+    expect(rest).not.toContain('tel:');
+    expect(rest).not.toContain('mailto:');
+    expect(rest).toContain('inst. degtyarev_aleksey_od');
+  });
+
   it('never swallows the paragraphs between two it drops', () => {
     const html = '<p><a href="tel:+70000000000">1</a></p><p>биография</p><p><a href="mailto:a@b.ru">a</a></p>';
 

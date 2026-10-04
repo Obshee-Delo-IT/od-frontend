@@ -22,7 +22,9 @@ import { stripHtml } from '@/shared/api/newsPreview';
  * 3. **A paragraph holding a contact link** — `tel:`, `mailto:`, `vk.com`,
  *    `t.me`; the four schemes `parseProfileBody()` turns into rows. The whole
  *    paragraph goes, label and all, because «E-mail: <a…>» is one line about one
- *    contact.
+ *    contact. A bare `<div>` counts as a paragraph: text pasted from Word
+ *    arrives as one `<div>` per line, and that is how `/team/`'s Дегтярёв came
+ *    to show his phone, e-mail and VK twice.
  *
  * 4. **A paragraph or list item that only repeats the card** — once the name
  *    and the role are taken out of its text, nothing is left. That is
@@ -44,17 +46,19 @@ const FIRST_FIGURE = /<figure\b[\s\S]*?<\/figure>/i;
 const BOLD_ONLY_PARAGRAPH = /<p\b[^>]*>\s*<(strong|b)\b[^>]*>[\s\S]*?<\/\1>\s*<\/p>/i;
 
 /**
- * A paragraph containing a link to one of the four contact schemes.
+ * An innermost paragraph or `<div>` containing a link to one of the four contact
+ * schemes.
  *
- * `(?:(?!<\/p>)[\s\S])*` rather than `[\s\S]*?` — a lazy wildcard would happily
- * cross a `</p>` and swallow the paragraphs in between when the *next* one holds
- * the link.
+ * `(?:(?!<\/?(?:p|div)\b)[\s\S])*` rather than `[\s\S]*?` — a lazy wildcard
+ * would happily cross a `</p>` and swallow the paragraphs in between when the
+ * *next* one holds the link, and a `<div>` that wraps others (every record's
+ * column) must never match as a whole.
  */
 const CONTACT_PARAGRAPH =
-  /<p\b[^>]*>(?:(?!<\/p>)[\s\S])*<a\b[^>]*href=["'](?:tel:|mailto:|https?:\/\/(?:www\.)?(?:vk\.(?:com|ru)|t(?:elegram)?\.me))(?:(?!<\/p>)[\s\S])*<\/p>/gi;
+  /<(p|div)\b[^>]*>(?:(?!<\/?(?:p|div)\b)[\s\S])*<a\b[^>]*href=["'](?:tel:|mailto:|https?:\/\/(?:www\.)?(?:vk\.(?:com|ru)|t(?:elegram)?\.me))(?:(?!<\/?(?:p|div)\b)[\s\S])*<\/\1>/gi;
 
-/** An innermost `<p>` or `<li>` — no paragraph or item nested inside it. */
-const TEXT_BLOCK = /<(p|li)\b[^>]*>((?:(?!<\/?(?:p|li)\b)[\s\S])*)<\/\1>/gi;
+/** An innermost `<p>`, `<li>` or `<div>` — no paragraph, item or div nested inside it. */
+const TEXT_BLOCK = /<(p|li|div)\b[^>]*>((?:(?!<\/?(?:p|li|div)\b)[\s\S])*)<\/\1>/gi;
 const EMPTY_LIST = /<(ul|ol)\b[^>]*>\s*<\/\1>/gi;
 const MEDIA = /<(?:img|figure|iframe|video|audio)\b/i;
 
@@ -105,8 +109,8 @@ export const stripProfileCardFields = (html?: string | null, { name, role }: Car
   return isBlank(rest) ? '' : rest;
 };
 
-/** Where one line of the body ends: a paragraph, an item, a heading, a `<br>`. */
-const LINE_END = /<\/(?:p|li|h[1-6])>|<br\s*\/?>/gi;
+/** Where one line of the body ends: a paragraph, an item, a div, a heading, a `<br>`. */
+const LINE_END = /<\/(?:p|li|div|h[1-6])>|<br\s*\/?>/gi;
 
 /**
  * The same remainder as plain text, one line per paragraph — for a card that
