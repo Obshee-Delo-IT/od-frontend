@@ -105,4 +105,15 @@ foreach (array_merge($page['tags'], $profile['tags']) as $tag) {
     od_test("{$tag} is in the wp namespace the endpoint validates", str_starts_with($tag, 'wp:'));
 }
 
+// `wp od-revalidate` reads each argument by its shape.
+od_test(
+    'the CLI sorts digits into postIds, /paths into paths and the rest into tags',
+    OD_Revalidate::cli_body(['wp:pages', '74664', '/contacts/', 'wp']) === [
+        'tags'    => ['wp:pages', 'wp'],
+        'postIds' => [74664],
+        'paths'   => ['/contacts/'],
+    ]
+);
+od_test('a negative or mixed id is not an id', OD_Revalidate::cli_body(['-1', '12a']) === ['tags' => ['-1', '12a']]);
+
 od_test_summary();
