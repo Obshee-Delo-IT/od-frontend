@@ -1,4 +1,5 @@
 import Image from 'next/image';
+import NextLink from 'next/link';
 import {
   BaseIconProps,
   EmailIcon,
@@ -38,6 +39,13 @@ export interface PersonCardProps {
    */
   photo?: PersonPhoto | null;
   contacts?: PersonContact[];
+  /**
+   * The person's own page. Set, it makes the whole card a link there — the
+   * name's anchor is stretched over the card, the way the WordPress teaser's
+   * title and featured image both linked to the profile. Unset on the profile
+   * page itself, which would only link to itself.
+   */
+  href?: string;
 }
 
 const CONTACT_ICONS: Record<PersonContactKind, React.FC<BaseIconProps>> = {
@@ -62,7 +70,7 @@ const CONTACT_ICONS: Record<PersonContactKind, React.FC<BaseIconProps>> = {
  * `Link` wraps `next/link`, which has nothing to prefetch for a non-`http`
  * scheme and an off-site host.
  */
-export const PersonCard: React.FC<PersonCardProps> = ({ name, subtitle, photo, contacts = [] }) => (
+export const PersonCard: React.FC<PersonCardProps> = ({ name, subtitle, photo, contacts = [], href }) => (
   <article className={photo ? `${css.card} ${css.withPhoto}` : css.card}>
     {photo ? (
       <div className={css.photo}>
@@ -78,7 +86,15 @@ export const PersonCard: React.FC<PersonCardProps> = ({ name, subtitle, photo, c
             use, which is what lines the whole block up in Figma. */}
         {photo ? null : <UserIcon size={24} className={css.contactIcon} aria-hidden />}
         <div className={css.names}>
-          <p className={css.name}>{name}</p>
+          <p className={css.name}>
+            {href ? (
+              <NextLink href={href} className={css.nameLink}>
+                {name}
+              </NextLink>
+            ) : (
+              name
+            )}
+          </p>
           {subtitle ? <p className={css.subtitle}>{subtitle}</p> : null}
         </div>
       </div>

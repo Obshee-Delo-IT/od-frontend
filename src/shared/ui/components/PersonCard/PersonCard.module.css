@@ -12,6 +12,7 @@
    class is the same trick `modules/Header` uses against Radix's `:where()` rules
    — see `implementation-notes.md` §C9. */
 .card {
+  position: relative;
   display: flex;
   padding: 20px;
   border-radius: 12px;
@@ -56,6 +57,25 @@
   color: var(--gray-7);
 }
 
+/* The profile link, stretched over the whole card by its `::after`. The contact
+   anchors below are positioned too and come later in the DOM, so they paint
+   above the overlay and stay clickable. Hovering the overlay hovers the link. */
+.nameLink.nameLink {
+  color: inherit;
+  text-decoration: none;
+}
+
+.nameLink.nameLink::after {
+  position: absolute;
+  content: '';
+  inset: 0;
+}
+
+.nameLink.nameLink:hover {
+  color: var(--red-10);
+  text-decoration: underline;
+}
+
 .contacts.contacts {
   display: flex;
   /* Bottom of the text column. Figma draws `space-between` on the photo card and
@@ -84,6 +104,7 @@
 }
 
 .contact.contact a {
+  position: relative;
   color: var(--red-8);
   overflow-wrap: anywhere;
   text-decoration: none;

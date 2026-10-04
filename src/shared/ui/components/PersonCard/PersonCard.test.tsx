@@ -44,6 +44,14 @@ describe('<PersonCard />', () => {
     expect(screen.getByRole('img', { name: 'Х' })).toHaveAttribute('src', 'https://cdn.test/p.jpg');
   });
 
+  it('links the name to the profile page when given an href', () => {
+    renderInTheme(<PersonCard name="Х" href="/profile/x/" contacts={CONTACTS} />);
+
+    // Slashless: `next/link` normalises it here, `trailingSlash: true` restores it in the app.
+    expect(screen.getByRole('link', { name: 'Х' })).toHaveAttribute('href', '/profile/x');
+    expect(screen.getAllByRole('link')).toHaveLength(4);
+  });
+
   it('survives a record with nothing but a name', () => {
     renderInTheme(<PersonCard name="Х" />);
 
