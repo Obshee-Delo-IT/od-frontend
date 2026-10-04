@@ -54,22 +54,21 @@ export const resolveProfileEmbeds = async (html: string): Promise<Map<string, Re
     // A record with no title has nothing to head the card with, so it takes the
     // same route as a missing one: the link stays a link.
     if (profile?.name) {
+      const withPhoto = teamGrid || fromCard.has(href);
       entries.push([
         href,
         <PersonCard
           key={href}
           name={profile.name}
           subtitle={profile.subtitle}
-          photo={teamGrid || fromCard.has(href) ? profile.photo : null}
+          photo={withPhoto ? profile.photo : null}
           contacts={profile.contacts}
           href={href}
-          // Only the regional query cards, which have room beside the photo:
-          // `/team/` and the `metodichki` banner draw exactly the fields their
-          // mocks do.
+          // Every photo card — `/team/` and the regional ones alike — fits it
+          // into the room beside the photo. The photo-less banner has no such
+          // room: it is as tall as its own text.
           summary={
-            fromCard.has(href)
-              ? profileSummary(profile.contentHtml, { name: profile.name, role: profile.subtitle })
-              : null
+            withPhoto ? profileSummary(profile.contentHtml, { name: profile.name, role: profile.subtitle }) : null
           }
         />,
       ]);
