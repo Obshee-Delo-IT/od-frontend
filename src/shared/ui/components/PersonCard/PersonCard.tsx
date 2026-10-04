@@ -46,6 +46,13 @@ export interface PersonCardProps {
    * page itself, which would only link to itself.
    */
   href?: string;
+  /**
+   * What the record says beyond these fields — `/profile/<slug>/` passes the
+   * rest of the body. It sits in the text column between the role and the
+   * contacts, so a short record no longer leaves the card's right half empty and
+   * its one extra line stranded under it.
+   */
+  children?: React.ReactNode;
 }
 
 const CONTACT_ICONS: Record<PersonContactKind, React.FC<BaseIconProps>> = {
@@ -70,7 +77,7 @@ const CONTACT_ICONS: Record<PersonContactKind, React.FC<BaseIconProps>> = {
  * `Link` wraps `next/link`, which has nothing to prefetch for a non-`http`
  * scheme and an off-site host.
  */
-export const PersonCard: React.FC<PersonCardProps> = ({ name, subtitle, photo, contacts = [], href }) => (
+export const PersonCard: React.FC<PersonCardProps> = ({ name, subtitle, photo, contacts = [], href, children }) => (
   <article className={photo ? `${css.card} ${css.withPhoto}` : css.card}>
     {photo ? (
       <div className={css.photo}>
@@ -98,6 +105,7 @@ export const PersonCard: React.FC<PersonCardProps> = ({ name, subtitle, photo, c
           {subtitle ? <p className={css.subtitle}>{subtitle}</p> : null}
         </div>
       </div>
+      {children}
       {contacts.length > 0 ? (
         <ul className={css.contacts}>
           {contacts.map(({ kind, href, label }) => {
