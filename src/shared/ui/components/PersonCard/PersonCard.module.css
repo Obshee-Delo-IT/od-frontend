@@ -161,6 +161,50 @@
   line-height: var(--line-height-3);
 }
 
+/* The record's other lines, in the role's type, fitted into the room the card
+   already has and never growing it. The box is a size container: its content
+   counts for nothing in the column's height (`container-type: size`), it grows
+   into whatever the photo leaves between the role and the contacts (`flex: 1
+   1 0`), and its -15px bottom margin cancels the extra column gap it adds — so a
+   card with no room left is exactly as tall as without it. The text then picks
+   its line count from the box's height, keeping the 15px gap above the
+   contacts. Measured over the 73 region pages of a local build: two lines fit
+   on 62 of the 65 cards that have something to say. */
+.summary {
+  min-height: 0;
+  flex: 1 1 0;
+  margin-bottom: -15px;
+  container-type: size;
+}
+
+/* `pre-line` keeps one paragraph per line, as the record wrote them. */
+.summaryText.summaryText {
+  display: -webkit-box;
+  overflow: hidden;
+  margin: 0;
+  -webkit-box-orient: vertical;
+  color: var(--gray-7);
+  font-size: var(--font-size-3);
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  line-height: var(--line-height-3);
+  white-space: pre-line;
+}
+
+/* 15 gap + 2 × 22.4 (16px at 140%); 15 + 22.4 for one line. */
+@container (height < 60px) {
+  .summaryText.summaryText {
+    -webkit-line-clamp: 1;
+    line-clamp: 1;
+  }
+}
+
+@container (height < 38px) {
+  .summaryText.summaryText {
+    display: none;
+  }
+}
+
 /* `team-1-mob`: the photo drops to 80 × 104 and the text stacks under it. Kept
    last so it overrides the two-column rules above without extra specificity. */
 @media (--mobile) {
@@ -171,5 +215,13 @@
   .withPhoto .photo {
     width: 80px;
     height: 104px;
+  }
+
+  /* Stacked, the card has no photo-tall row to fit into — it is as tall as its
+     text — so the summary is an ordinary two-line block. */
+  .summary {
+    flex: none;
+    margin-bottom: 0;
+    container-type: normal;
   }
 }

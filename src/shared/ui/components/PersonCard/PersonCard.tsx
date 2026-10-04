@@ -53,6 +53,13 @@ export interface PersonCardProps {
    * its one extra line stranded under it.
    */
   children?: React.ReactNode;
+  /**
+   * The rest of the record as plain text, one line per paragraph — the regional
+   * cards' version of `children`. It only ever takes the room the card already
+   * has between the role and the contacts: two lines with an ellipsis, one when
+   * that is all that fits, none on a card the contacts already fill.
+   */
+  summary?: string | null;
 }
 
 const CONTACT_ICONS: Record<PersonContactKind, React.FC<BaseIconProps>> = {
@@ -77,7 +84,15 @@ const CONTACT_ICONS: Record<PersonContactKind, React.FC<BaseIconProps>> = {
  * `Link` wraps `next/link`, which has nothing to prefetch for a non-`http`
  * scheme and an off-site host.
  */
-export const PersonCard: React.FC<PersonCardProps> = ({ name, subtitle, photo, contacts = [], href, children }) => (
+export const PersonCard: React.FC<PersonCardProps> = ({
+  name,
+  subtitle,
+  photo,
+  contacts = [],
+  href,
+  children,
+  summary,
+}) => (
   <article className={photo ? `${css.card} ${css.withPhoto}` : css.card}>
     {photo ? (
       <div className={css.photo}>
@@ -105,6 +120,11 @@ export const PersonCard: React.FC<PersonCardProps> = ({ name, subtitle, photo, c
           {subtitle ? <p className={css.subtitle}>{subtitle}</p> : null}
         </div>
       </div>
+      {summary ? (
+        <div className={css.summary}>
+          <p className={css.summaryText}>{summary}</p>
+        </div>
+      ) : null}
       {children}
       {contacts.length > 0 ? (
         <ul className={css.contacts}>

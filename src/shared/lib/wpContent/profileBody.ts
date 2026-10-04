@@ -104,3 +104,18 @@ export const stripProfileCardFields = (html?: string | null, { name, role }: Car
 
   return isBlank(rest) ? '' : rest;
 };
+
+/** Where one line of the body ends: a paragraph, an item, a heading, a `<br>`. */
+const LINE_END = /<\/(?:p|li|h[1-6])>|<br\s*\/?>/gi;
+
+/**
+ * The same remainder as plain text, one line per paragraph — for a card that
+ * cannot hold the body's markup and clamps whatever it is given (the regional
+ * `/contacts/<region>/` cards). Empty when the card already says everything.
+ */
+export const profileSummary = (html?: string | null, card: CardText = {}): string =>
+  stripProfileCardFields(html, card)
+    .split(LINE_END)
+    .map((line) => stripHtml(line))
+    .filter(Boolean)
+    .join('\n');

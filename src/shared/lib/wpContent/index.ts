@@ -1,5 +1,5 @@
 export { parsePost } from './parsePost';
-export { stripProfileCardFields } from './profileBody';
+export { profileSummary, stripProfileCardFields } from './profileBody';
 export { collectProfileHrefs, collectQueryCardProfileHrefs, profileSlug } from './profileLinks';
 export { resolveContentHtml } from './resolveContentHtml';
 export { resolveContentAssets } from './resolveContentAssets';

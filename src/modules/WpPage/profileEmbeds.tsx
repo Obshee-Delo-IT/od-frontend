@@ -1,6 +1,6 @@
 import { ReactNode } from 'react';
 import { cachedFetchProfile } from '@/shared/api/fetchProfile';
-import { collectProfileHrefs, collectQueryCardProfileHrefs, profileSlug } from '@/shared/lib/wpContent';
+import { collectProfileHrefs, collectQueryCardProfileHrefs, profileSlug, profileSummary } from '@/shared/lib/wpContent';
 import { PersonCard } from '@/shared/ui/components/PersonCard';
 
 /**
@@ -63,6 +63,14 @@ export const resolveProfileEmbeds = async (html: string): Promise<Map<string, Re
           photo={teamGrid || fromCard.has(href) ? profile.photo : null}
           contacts={profile.contacts}
           href={href}
+          // Only the regional query cards, which have room beside the photo:
+          // `/team/` and the `metodichki` banner draw exactly the fields their
+          // mocks do.
+          summary={
+            fromCard.has(href)
+              ? profileSummary(profile.contentHtml, { name: profile.name, role: profile.subtitle })
+              : null
+          }
         />,
       ]);
     }
