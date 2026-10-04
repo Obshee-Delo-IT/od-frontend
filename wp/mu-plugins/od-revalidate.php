@@ -28,6 +28,13 @@
  * With either of the first two undefined the plugin does nothing at all, which
  * is the wanted state on an instance whose frontend isn't deployed yet.
  *
+ * It also adds `wp od-revalidate <target>...` for purging by hand — the
+ * constants are already here, so nobody has to go looking for the secret:
+ *
+ *   wp od-revalidate wp:pages            every WordPress page
+ *   wp od-revalidate 74664 /contacts/    one post and one route
+ *   wp od-revalidate wp                  everything the frontend fetched
+ *
  * **The PHP here is deliberately old-fashioned** — no typed properties, no
  * `str_starts_with`, no `void` returns. One file has to run on both installs,
  * and prod is WordPress 5.5.5 on PHP 7.x (`mod_php7`), where 7.4+ syntax is a
@@ -84,6 +91,9 @@ final class OD_Revalidate {
 
 	/** @var bool */
 	private static $scheduled = false;
+
+	/** @var string What the last `send()` got back, for the CLI to print. */
+	private static $last_status = '';
 
 	public static function boot() {
 		if ( ! self::configured() ) {
@@ -179,9 +189,7 @@ final class OD_Revalidate {
 	}
 
 	/**
-	 * Fires one POST per chunk. Public so a purge can be triggered by hand:
-	 *
-	 *   wp --skip-plugins=clearfy-pro eval 'OD_Revalidate::send( array( "tags" => array( "wp" ) ) );'
+	 * Fires one POST. `wp od-revalidate` is the by-hand way in.
 	 *
 	 * @param array $body Request body — postIds, tags or paths.
 	 * @return bool Whether the purge landed.
@@ -215,6 +223,8 @@ final class OD_Revalidate {
 			? 'WP_Error: ' . $response->get_error_message()
 			: 'HTTP ' . wp_remote_retrieve_response_code( $response ) . ' ' . wp_remote_retrieve_body( $response );
 
+		self::$last_status = $status;
+
 		if ( is_wp_error( $response ) || wp_remote_retrieve_response_code( $response ) >= 400 ) {
 			// A wrong secret and a dead host look the same from here, and both
 			// want the same answer: stop asking for a while, and say so once.
@@ -228,6 +238,58 @@ final class OD_Revalidate {
 		}
 
 		return true;
+	}
+
+	/**
+	 * Purges the frontend's cache by hand.
+	 *
+	 * Each target is read by its shape: digits are a post id, a leading `/` is a
+	 * route path, anything else is a cache tag. The route decides what is legal —
+	 * a tag outside `wp*`, or more than 50 of one kind, comes back as its 400.
+	 *
+	 * ## OPTIONS
+	 *
+	 * <target>...
+	 * : Post ids, route paths (`/contacts/`) or tags (`wp`, `wp:pages`, `wp:profiles`, `wp:menus`, …).
+	 *
+	 * ## EXAMPLES
+	 *
+	 *     wp od-revalidate wp:pages
+	 *     wp od-revalidate 74664 /contacts/
+	 *
+	 * @param string[] $args Targets.
+	 */
+	public static function cli( $args ) {
+		if ( ! self::configured() ) {
+			WP_CLI::error( 'OD_REVALIDATE_URL / OD_REVALIDATE_SECRET are not defined on this install.' );
+		}
+
+		if ( ! self::send( self::cli_body( $args ) ) ) {
+			WP_CLI::error( self::$last_status );
+		}
+
+		// The frontend answers again, so the editors' saves may stop skipping it.
+		delete_transient( self::BREAKER_KEY );
+		WP_CLI::success( self::$last_status );
+	}
+
+	/**
+	 * @param string[] $targets CLI arguments.
+	 * @return array Request body.
+	 */
+	public static function cli_body( array $targets ) {
+		$body = array();
+		foreach ( $targets as $target ) {
+			if ( ctype_digit( $target ) ) {
+				$body['postIds'][] = (int) $target;
+			} elseif ( '/' === substr( $target, 0, 1 ) ) {
+				$body['paths'][] = $target;
+			} else {
+				$body['tags'][] = $target;
+			}
+		}
+
+		return $body;
 	}
 
 	/** Sends everything this request collected, deduplicated, in chunks. */
@@ -341,3 +403,7 @@ final class OD_Revalidate {
 }
 
 OD_Revalidate::boot();
+
+if ( defined( 'WP_CLI' ) && WP_CLI ) {
+	WP_CLI::add_command( 'od-revalidate', array( 'OD_Revalidate', 'cli' ) );
+}
