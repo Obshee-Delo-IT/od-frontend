@@ -2141,16 +2141,24 @@ h2:has(+ .od-tiles) {
 }
 
 /* ------------------------------------------------------------------------- *
- * `/profile/<slug>/` — what is left of a record's body under its card (D3).
+ * `/profile/<slug>/` — what is left of a record's body, in its card's text
+ * column between the role and the contacts (D3).
  *
  * The class is put on by the route, not by the content: unlike `od-covers` and
  * `od-team` this is not a shape an editor chose, it is the shape all 139 records
- * already have — `group > columns > [photograph, text]`. The card above draws the
+ * already have — `group > columns > [photograph, text]`. The card draws the
  * photograph, `stripProfileCardFields()` removes it, and an emptied column would
  * otherwise hold its 50 % of the row open beside the prose. Unstacking the row is
  * the whole fix; the empty column then takes no height at all. */
 .od-profile-body .wp-block-columns {
   display: block;
+}
+
+/* The card's column already spaces its rows; the closing paragraph's 1em and
+   core's 1.75em under `.wp-block-columns` would triple that above the contacts.
+   Every level, since the body is wrapped four deep. */
+.od-profile-body :last-child {
+  margin-bottom: 0;
 }
 
 /* ------------------------------------------------------------------------- *
