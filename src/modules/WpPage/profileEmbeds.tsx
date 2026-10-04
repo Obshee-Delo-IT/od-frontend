@@ -62,6 +62,7 @@ export const resolveProfileEmbeds = async (html: string): Promise<Map<string, Re
           subtitle={profile.subtitle}
           photo={teamGrid || fromCard.has(href) ? profile.photo : null}
           contacts={profile.contacts}
+          href={href}
         />,
       ]);
     }
