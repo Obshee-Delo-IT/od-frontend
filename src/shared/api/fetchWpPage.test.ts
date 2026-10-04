@@ -41,6 +41,19 @@ describe('fetchWpPage', () => {
   });
 
   /**
+   * A page body holds WordPress's own rendering of its `core/query` loops — the
+   * regional coordinators, the «События» list — so a profile or post purge has
+   * to reach it, not only a page edit.
+   */
+  it('tags the body with every type its query loops can list', async () => {
+    wpFetch.mockResolvedValue(makeResponse([page()]));
+
+    await fetchWpPage('/healthy-russia/');
+
+    expect(wpFetch.mock.calls[0][1].next.tags).toEqual(expect.arrayContaining(['wp:pages', 'wp:posts', 'wp:profiles']));
+  });
+
+  /**
    * The breadcrumb the sub-page mocks draw. One request per level, outermost
    * first, so `/materials/printed-products/` reads «Материалы → Печатная
    * продукция» rather than starting at the page itself.

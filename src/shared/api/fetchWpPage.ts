@@ -108,7 +108,12 @@ const requestPage = async (path: string, slug: string, extra = ''): Promise<RawP
     per_page: '10',
     _fields: 'id,link,parent,title,content,excerpt',
   });
-  const res = await wpFetch(`/wp/v2/pages?${query}${extra}`, wpCache([WP_TAGS.pages]));
+  // Three tags, not one: WordPress renders a page's `core/query` loops into its
+  // `content`, so the regional pages' coordinator cards and «События» list are
+  // part of this response. Tagged `wp:pages` alone, a new profile or news post
+  // purged the route but its re-render read this body back from the data cache,
+  // and the new card waited out the hour (2026-10-05).
+  const res = await wpFetch(`/wp/v2/pages?${query}${extra}`, wpCache([WP_TAGS.pages, WP_TAGS.posts, WP_TAGS.profiles]));
   if (!res.ok) {
     return null;
   }
