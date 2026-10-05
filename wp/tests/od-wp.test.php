@@ -293,6 +293,25 @@ od_test(
         === '<ul></ul>'
 );
 
+/* ------------------------------------------------------- retired pages */
+
+foreach (od_wp_retired_pages() as $path) {
+    od_test($path . ': a page path with no slashes at the ends', $path !== '' && trim($path, '/') === $path);
+}
+
+// What `od_pages_tiles()` writes, two cards of `/about/`'s portrait row.
+$tile = static function (string $id, string $href): string {
+    return sprintf("<!-- wp:column {\"className\":\"od-tile od-tile--%1\$s\"} -->\n<div class=\"wp-block-column od-tile od-tile--%1\$s\"><!-- wp:heading {\"level\":3} -->\n<h3 class=\"wp-block-heading\">x</h3>\n<!-- /wp:heading -->\n<!-- wp:paragraph {\"className\":\"od-tile-link\"} -->\n<p class=\"od-tile-link\"><a href=\"%2\$s\">Подробнее</a></p>\n<!-- /wp:paragraph -->\n</div>\n<!-- /wp:column -->\n", $id, $href);
+};
+$row = "<!-- wp:columns {\"className\":\"od-tiles\"} -->\n<div class=\"wp-block-columns od-tiles\">%s</div>\n<!-- /wp:columns -->\n";
+$tiles = sprintf($row, $tile('about-reviews', '/about/reviews/') . $tile('about-udostoverenie', '/about/udostoverenie/'));
+$kept = sprintf($row, $tile('about-reviews', '/about/reviews/'));
+
+od_test('the card linking the page goes, its neighbour stays byte for byte', od_wp_strip_tiles($tiles, '/about/udostoverenie/') === $kept);
+od_test('a second pass changes nothing', od_wp_strip_tiles($kept, '/about/udostoverenie/') === $kept);
+od_test('a link outside a card is not a card', od_wp_strip_tiles('<p><a href="/about/udostoverenie/">x</a></p>', '/about/udostoverenie/') === '<p><a href="/about/udostoverenie/">x</a></p>');
+od_test('a longer path with the same start is another page', od_wp_strip_tiles($tiles, '/about/') === $tiles);
+
 /* ------------------ «Короткометражные», the fifth catalogue category -------- */
 
 $short = od_wp_short_films();

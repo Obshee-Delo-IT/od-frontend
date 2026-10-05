@@ -26,6 +26,11 @@ describe('resolveLegacyUrl', () => {
     expect(resolveLegacyUrl('/contacts/smolenskaya/')).toBeNull();
   });
 
+  it('sends the retired certificate page to its section', () => {
+    expect(resolveLegacyUrl('/about/udostoverenie/')).toBe('/about/');
+    expect(resolveLegacyUrl('/about/')).toBeNull();
+  });
+
   it('turns WordPress path pagination into the query param we use', () => {
     expect(resolveLegacyUrl('/video/filmy/page/2/')).toBe('/video/filmy/?page=2');
     expect(resolveLegacyUrl('/news/page/2/')).toBe('/news/?page=2');
@@ -126,6 +131,7 @@ describe('resolveLegacyUrl', () => {
   it('never lands on a destination that itself redirects', () => {
     const paths = [
       '/contacts/rezan-oblast/',
+      '/about/udostoverenie/',
       '/video/filmy/page/2/',
       '/news/page/2/',
       '/page/2/',
