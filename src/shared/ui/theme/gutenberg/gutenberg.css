@@ -991,10 +991,6 @@ h2:has(+ .od-tiles) {
   background-image: url('/figma/cards/about-reviews.svg');
 }
 
-.od-tile--about-udostoverenie::before {
-  background-image: url('/figma/cards/about-udostoverenie.svg');
-}
-
 /* The one card with no drawing of its own. `/materials/`'s «Статьи» tile —
    press, and portrait at 200 × 200, so it stands as tall in the card's box as
    the four exported above it. The landscape `direction-*` drawings it used to

@@ -27,21 +27,26 @@ const NEWS_CATEGORY_ALIASES: Record<string, string> = {
 };
 
 /**
- * The second page a region had, onto the one that is kept.
+ * Pages drafted in WordPress, onto the page that takes their place.
  *
- * Two regions were published twice, and `merge-duplicate-branches` in
- * `wp/scripts/od-wp.php` drafts the copy after moving its coordinator onto the
- * page the map links. A drafted page does not 404 here — the catch-all falls
- * back to the A6 iframe and serves the *old* site's copy of it — so without
- * these two rules the retired address goes on publishing stale contacts to
- * anyone holding the link.
+ * A drafted page does not 404 here — the catch-all falls back to the A6 iframe
+ * and serves the *old* site's copy of it — so without a rule the retired
+ * address goes on publishing it to anyone holding the link.
+ *
+ * - The second page a region had, onto the one that is kept: two regions were
+ *   published twice, and `merge-duplicate-branches` in `wp/scripts/od-wp.php`
+ *   drafts the copy after moving its coordinator onto the page the map links.
+ *   The PHP registry is the same pair the other way round.
+ * - `/about/udostoverenie/`, onto its section: `retire-pages` in the same file
+ *   (2026-10-05). Publishing it again means deleting this line too.
  *
  * Keyed and valued by full path, since both halves are real URLs rather than a
- * pattern; the PHP registry is the same pair the other way round.
+ * pattern.
  */
-const RETIRED_BRANCHES: Record<string, string> = {
+const RETIRED_PAGES: Record<string, string> = {
   '/contacts/rezan-oblast/': '/contacts/ryazanskaya/',
   '/contacts/smolenskaya-oblasti/': '/contacts/smolenskaya/',
+  '/about/udostoverenie/': '/about/',
 };
 
 /** A legacy path segment as a page number; junk and «page 1» alike mean 1. */
@@ -101,7 +106,7 @@ export const resolveLegacySearch = (pathname: string, term: string | null): stri
 export const resolveLegacyUrl = (pathname: string): string | null => {
   const [first, second, third, fourth, fifth] = pathname.split('/').filter(Boolean);
 
-  const retired = RETIRED_BRANCHES[pathname];
+  const retired = RETIRED_PAGES[pathname];
   if (retired) {
     return retired;
   }

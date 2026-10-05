@@ -4036,11 +4036,14 @@ const OD_ABOUT_CARDS = [
     ['id' => 'about-smi', 'title' => 'СМИ о нас', 'href' => '/about/smi/'],
 ];
 
-/** The three the mock draws portrait, under the partner strip. */
+/**
+ * The ones the mock draws portrait, under the partner strip. It draws three: the
+ * third, «Удостоверение», went with its page (`od_wp_retired_pages()` in
+ * `od-wp.php`, 2026-10-05).
+ */
 const OD_ABOUT_CARDS_SMALL = [
     ['id' => 'about-stories', 'title' => 'Истории активистов', 'href' => '/about/activist-stories/'],
     ['id' => 'about-reviews', 'title' => 'Благодарственные письма', 'href' => '/about/reviews/'],
-    ['id' => 'about-udostoverenie', 'title' => 'Удостоверение', 'href' => '/about/udostoverenie/'],
 ];
 
 /**

@@ -24,15 +24,15 @@
  * **Adding a task.** One function, called from the runner at the bottom, taking
  * `$apply` and doing nothing but logging when it is false. Whatever it needs to
  * know goes in a registry function above it, so the data can be read and tested
- * without WordPress. There are thirteen today — {@see od_wp_tag_programme_films()},
+ * without WordPress. There are fourteen today — {@see od_wp_tag_programme_films()},
  * {@see od_wp_rename_pages()}, {@see od_wp_order_pages()},
  * {@see od_wp_draft_empty_branches()}, {@see od_wp_edit_menu()},
  * {@see od_wp_create_profiles()}, {@see od_wp_untag_video_events()},
  * {@see od_wp_rehost_posters()}, {@see od_wp_merge_duplicate_branches()},
  * {@see od_wp_strip_footer_links()}, {@see od_wp_create_short_category()},
- * {@see od_wp_tag_film_topics()} and {@see od_wp_author_footer()} — and still no
- * framework between them, because thirteen calls in a row is not a thing that
- * needs one.
+ * {@see od_wp_tag_film_topics()}, {@see od_wp_author_footer()} and
+ * {@see od_wp_retire_pages()} — and still no framework between them, because
+ * fourteen calls in a row is not a thing that needs one.
  *
  * House rules, same as `od-pages.php`: dry run by default, writing takes the
  * positional argument `apply`, everything is idempotent, and **posts are
@@ -1359,6 +1359,120 @@ function od_wp_strip_footer_links(bool $apply): void
     }
 }
 
+/**
+ * Pages taken off the site, by path: drafted, with the nav items that point at
+ * one deleted and every `od-tile` card that links it removed from the page that
+ * carries it.
+ *
+ * **`about/udostoverenie`** — «сними с публикации и убери ссылки на неё»
+ * (2026-10-05). Its two links were the «Удостоверение» card on `/about/` and the
+ * header's «О нас» item; `/sitemap/` and `sitemap.xml` list published pages only,
+ * so they follow on their own.
+ *
+ * A draft is not a 404 here — the catch-all falls back to the A6 iframe and
+ * serves the old site's copy — so each path is also in `RETIRED_PAGES`
+ * (`src/shared/config/legacyRedirects.ts`). Publishing one again means taking
+ * it out of both.
+ *
+ * @return array<int, string>
+ */
+function od_wp_retired_pages(): array
+{
+    return ['about/udostoverenie'];
+}
+
+/**
+ * Every `od-tile` column whose markup links `$href`, removed from `$html`.
+ *
+ * A tile is the column {@see od_pages_tiles()} writes — a heading and one
+ * «Подробнее» link, no nested column — so the first closing comment is its own.
+ * Anything else is returned byte for byte. Pure, and tested without WordPress.
+ */
+function od_wp_strip_tiles(string $html, string $href): string
+{
+    $pattern = '~<!--\s*wp:column\s*\{[^}]*"className":"od-tile\b[^}]*\}\s*-->.*?<!--\s*/wp:column\s*-->\s*~s';
+
+    return (string) preg_replace_callback($pattern, static function (array $m) use ($href): string {
+        return strpos($m[0], 'href="' . $href . '"') !== false ? '' : $m[0];
+    }, $html);
+}
+
+/**
+ * Applies {@see od_wp_retired_pages()}.
+ *
+ * The nav items go by the page they point at, not through
+ * {@see od_wp_menu_edits()}: off the admin, `wp_get_nav_menu_items()` drops an
+ * item whose page is not published, so once the page is a draft that task can no
+ * longer see it — which is how #27987 outlived the first run on production.
+ *
+ * Through `$wpdb->update`, as {@see od_wp_draft_empty_branches()} is and for the
+ * same reason. That also means no `save_post`, so nothing purges the frontend:
+ * run `wp od-revalidate wp:pages wp:menus` after `apply`.
+ */
+function od_wp_retire_pages(bool $apply): void
+{
+    global $wpdb;
+
+    $pages = get_posts([
+        'post_type' => 'page',
+        'post_status' => 'publish',
+        'numberposts' => -1,
+    ]);
+
+    foreach (od_wp_retired_pages() as $path) {
+        $href = '/' . $path . '/';
+        $page = get_page_by_path($path);
+
+        if (!$page) {
+            WP_CLI::warning(sprintf('%s: no such page', $href));
+            continue;
+        }
+
+        foreach (wp_get_associated_nav_menu_items($page->ID, 'post_type', 'page') as $item) {
+            WP_CLI::log(sprintf('%s: nav item #%d to be deleted', $href, $item));
+
+            if ($apply && wp_delete_post($item, true)) {
+                WP_CLI::success(sprintf('%s: nav item #%d deleted', $href, $item));
+            }
+        }
+
+        if ($page->post_status !== 'publish') {
+            WP_CLI::log(sprintf('%s (#%d): already %s, skipped', $href, $page->ID, $page->post_status));
+        } else {
+            WP_CLI::log(sprintf('%s (#%d): publish -> draft', $href, $page->ID));
+
+            if ($apply) {
+                if ($wpdb->update($wpdb->posts, ['post_status' => 'draft'], ['ID' => $page->ID], ['%s'], ['%d']) === false) {
+                    WP_CLI::warning(sprintf('%s (#%d): write failed', $href, $page->ID));
+                } else {
+                    clean_post_cache($page->ID);
+                }
+            }
+        }
+
+        foreach ($pages as $carrier) {
+            $stripped = od_wp_strip_tiles($carrier->post_content, $href);
+            if ($stripped === $carrier->post_content) {
+                continue;
+            }
+
+            WP_CLI::log(sprintf('%s: its card on /%s/ (#%d) to be removed', $href, get_page_uri($carrier), $carrier->ID));
+
+            if (!$apply) {
+                continue;
+            }
+
+            if ($wpdb->update($wpdb->posts, ['post_content' => $stripped], ['ID' => $carrier->ID], ['%s'], ['%d']) === false) {
+                WP_CLI::warning(sprintf('/%s/ (#%d): write failed', get_page_uri($carrier), $carrier->ID));
+                continue;
+            }
+
+            clean_post_cache($carrier->ID);
+            $carrier->post_content = $stripped;
+        }
+    }
+}
+
 // ---------------------------------------------------------------------------
 /**
  * The nine subjects the 84 catalogue films divide into, and which films each holds.
@@ -1933,6 +2047,7 @@ $tasks = [
     'create-short-category' => 'od_wp_create_short_category',
     'tag-film-topics' => 'od_wp_tag_film_topics',
     'author-footer' => 'od_wp_author_footer',
+    'retire-pages' => 'od_wp_retire_pages',
 ];
 
 $positional = $args ?? [];
