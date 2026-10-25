@@ -101,4 +101,10 @@ ARG METRICA_COUNTER_ID
 ENV METRICA_COUNTER_ID=$METRICA_COUNTER_ID
 USER nextjs
 ENV HOSTNAME="0.0.0.0"
+# glibc gives every thread its own malloc arena and rarely hands freed pages
+# back, and sharp/libvips allocate from many threads: on prod the V8 heap is
+# capped at 384 MB yet RSS climbed past the 1 GB limit within two days, almost all
+# of it anonymous mappings outside the heap, until the cgroup OOM-killed the
+# server (2026-10-24). Two arenas is what sharp's docs recommend on glibc.
+ENV MALLOC_ARENA_MAX=2
 CMD ["node", "server.js"]
