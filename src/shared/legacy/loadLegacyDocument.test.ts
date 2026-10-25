@@ -205,7 +205,7 @@ describe('upstream status mapping (LCP-004)', () => {
     expect(String(warn.mock.calls[0][0])).toContain('ECONNREFUSED');
   });
 
-  it('refuses to proxy a non-HTML body', async () => {
+  it('refuses to proxy a non-HTML body, and calls it missing rather than transient', async () => {
     vi.spyOn(console, 'warn').mockImplementation(() => {});
     const { impl } = recorder(
       () => new Response('%PDF-1.4', { status: 200, headers: { 'content-type': 'application/pdf' } })
@@ -213,7 +213,7 @@ describe('upstream status mapping (LCP-004)', () => {
 
     const result = await loader(impl)(['brochure']);
 
-    expect(result.status).toBe('unavailable');
+    expect(result.status).toBe('missing');
     expect(JSON.stringify(result)).not.toContain('PDF');
   });
 

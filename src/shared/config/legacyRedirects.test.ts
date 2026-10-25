@@ -26,6 +26,21 @@ describe('resolveLegacyUrl', () => {
     expect(resolveLegacyUrl('/contacts/smolenskaya/')).toBeNull();
   });
 
+  it('sends a WordPress feed to the page it belonged to', () => {
+    expect(resolveLegacyUrl('/61905/feed/')).toBe('/61905/');
+    expect(resolveLegacyUrl('/61905/feed/rss2/')).toBe('/61905/');
+    expect(resolveLegacyUrl('/tag/%D0%B4%D0%B5%D1%82%D0%B8/feed/')).toBe('/tag/%D0%B4%D0%B5%D1%82%D0%B8/');
+    expect(resolveLegacyUrl('/feed/')).toBe('/');
+    expect(resolveLegacyUrl('/feed/atom/')).toBe('/');
+    expect(resolveLegacyUrl('/comments/feed/')).toBe('/');
+    // One hop where the parent is itself a legacy address.
+    expect(resolveLegacyUrl('/category/oblast/piter/feed/')).toBe('/news/');
+    expect(resolveLegacyUrl('/news/page/2/feed/')).toBe('/news/?page=2');
+    // Only a trailing feed segment counts.
+    expect(resolveLegacyUrl('/feed/something/')).toBeNull();
+    expect(resolveLegacyUrl('/about/feedback/')).toBeNull();
+  });
+
   it('sends the retired certificate page to its section', () => {
     expect(resolveLegacyUrl('/about/udostoverenie/')).toBe('/about/');
     expect(resolveLegacyUrl('/about/')).toBeNull();

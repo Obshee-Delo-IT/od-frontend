@@ -103,8 +103,42 @@ export const resolveLegacySearch = (pathname: string, term: string | null): stri
   return query ? `/search/?q=${encodeURIComponent(query)}` : '/search/';
 };
 
+/** WordPress's feed formats, as the segment after `/feed/`. */
+const FEED_FORMATS = new Set(['rss', 'rss2', 'atom', 'rdf']);
+
+/**
+ * WordPress served a feed under every archive and post — `/feed/`,
+ * `/<id>/feed/`, `/tag/<slug>/feed/`, `/comments/feed/`, optionally with a
+ * format segment. This site has no feeds, and crawlers still request ~1 300 of
+ * them a day (prod, 2026-10-25), each of which went to the A6 upstream. The
+ * page the feed belonged to is the closest thing left, and a post's feed was
+ * only its comments.
+ */
+const feedParent = (segments: string[]): string[] | null => {
+  const last = segments.length - 1;
+  const at =
+    segments[last] === 'feed'
+      ? last
+      : segments[last - 1] === 'feed' && FEED_FORMATS.has(segments[last])
+        ? last - 1
+        : -1;
+  if (at < 0) {
+    return null;
+  }
+  const parent = segments.slice(0, at);
+  return parent.length === 1 && parent[0] === 'comments' ? [] : parent;
+};
+
 export const resolveLegacyUrl = (pathname: string): string | null => {
-  const [first, second, third, fourth, fifth] = pathname.split('/').filter(Boolean);
+  const segments = pathname.split('/').filter(Boolean);
+  const feed = feedParent(segments);
+  if (feed) {
+    const parent = feed.length ? `/${feed.join('/')}/` : '/';
+    // Through the table again, so `/category/<x>/feed/` takes one hop, not two.
+    return resolveLegacyUrl(parent) ?? parent;
+  }
+
+  const [first, second, third, fourth, fifth] = segments;
 
   const retired = RETIRED_PAGES[pathname];
   if (retired) {
