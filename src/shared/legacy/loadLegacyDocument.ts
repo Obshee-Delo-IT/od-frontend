@@ -250,9 +250,13 @@ export const createLegacyLoader = (overrides: Partial<LegacyLoaderDeps> = {}) =>
         legacyWarn(`upstream ${response.status} for ${path}`);
         return { status: 'unavailable' };
       }
+      // A definitive answer, not a transient one: a 200 that is an RSS feed or
+      // a PDF stays one. As `unavailable` the page rendered the embed — a 200
+      // around an iframe whose own request failed the same way — for every
+      // `/<post>/feed/` a crawler held: ~1 250 a day on prod (2026-10-25).
       if (!isHtml(response.headers.get('content-type'))) {
         legacyWarn(`upstream non-HTML for ${path}`);
-        return { status: 'unavailable' };
+        return { status: 'missing' };
       }
 
       const html = await readBounded(response, deps.maxBytes);
